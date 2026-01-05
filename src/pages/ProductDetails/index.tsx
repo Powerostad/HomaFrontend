@@ -1,24 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Heart,
   Sparkles,
-  Truck,
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-  ScanLine,
-  Share2,
-  Star,
-  Store,
-  Search,
-  ArrowRight,
-  ChevronRight,
-  ChevronLeft
+  RefreshCw,
+  Store as StoreIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MOCK_STORES, Store as StoreType } from '../../data/mock';
 import { useProduct } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Button } from '../../components/ui/button';
@@ -26,55 +14,86 @@ import { trackEvent } from '../../utils/analytics';
 import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
 import { ContextBar } from '../../components/ContextBar';
+import { ProductSocialGallery } from '../../components/ProductSocialGallery';
+import { fetchShopByUsername } from '../../services/shopService';
+import { fetchProduct } from '../../services/productService';
+import type { Shop } from '../../types/shop';
+import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
 
-const exampleImage = "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800";
-
-const PRODUCT_SIZES = [
-  { id: 's1', name: 'تک‌نفره', dimensions: '۱۵۰ در ۲۲۰ سانتی‌متر', price: 3490000 },
-  { id: 's2', name: 'دونفره', dimensions: '۲۰۰ در ۲۲۰ سانتی‌متر', price: 3990000 },
-  { id: 's3', name: 'کینگ', dimensions: '۲۴۰ در ۲۲۰ سانتی‌متر', price: 3990000 },
-  { id: 's4', name: 'سوپرکینگ', dimensions: '۲۶۰ در ۲۴۰ سانتی‌متر', price: 5290000 },
-];
-
-const COLORS = [
-  { id: 'c1', name: 'چیتا', hex: '#d2b48c', code: '۹۱۶۱/۰۸۸/۱۰۶' },
-  { id: 'c2', name: 'پلنگی', hex: '#4b3621', code: '۹۱۶۱/۰۸۸/۲۰۰' },
-];
+/**
+ * Convert APIProduct to the legacy Product type for existing components
+ */
+function apiProductToProduct(apiProduct: APIProduct): Product {
+  return {
+    id: apiProduct.uniqueLink,
+    name: apiProduct.name,
+    price: apiProduct.price,
+    category: apiProduct.categoryDisplay,
+    images: [apiProduct.imageUrl],
+    thumbnail: apiProduct.imageUrl,
+    brand: apiProduct.shopName,
+    description: apiProduct.description,
+    currency: 'تومان',
+    status: 'active',
+    seller: {
+      name: apiProduct.shopName,
+      verified: true,
+    },
+  };
+}
 
 export function ProductDetailsPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
   const navigate = useNavigate();
   const { setProduct } = useProduct();
   const [product, setProductData] = useState<Product | null>(null);
-  const [store, setStoreData] = useState<StoreType | null>(null);
+  const [store, setStoreData] = useState<Shop | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(PRODUCT_SIZES[0].id);
-  const [selectedColor, setSelectedColor] = useState(COLORS[0].id);
 
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
-      console.log('ProductDetailsPage: fetching for slug:', slug, 'productId:', productId);
-      const foundStore = MOCK_STORES.find(s => s.slug.toLowerCase() === slug?.toLowerCase());
-      if (foundStore) {
-        setStoreData(foundStore);
-        const foundProduct = foundStore.products.find(p => p.id === productId);
-        
-        if (foundProduct) {
-             if (foundProduct.id === 'p1' && foundStore.slug === 'classic-furniture') {
-                 setProductData({ ...foundProduct, thumbnail: exampleImage });
-             } else {
-                 setProductData(foundProduct);
-             }
-        }
-      } else {
-        console.error('ProductDetailsPage: store not found for slug:', slug);
+    if (!slug || !productId) return;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      // Step 1: Fetch shop by slug
+      const shopResult = await fetchShopByUsername(slug);
+
+      if (!shopResult.success || !shopResult.data) {
+        setError(shopResult.error || 'فروشگاه یافت نشد');
+        setIsLoading(false);
+        return;
       }
+
+      setStoreData(shopResult.data);
+
+      // Track analytics
+      trackEvent('view_store', { storeId: shopResult.data.id, storeName: shopResult.data.name });
+
+      // Step 2: Fetch product by unique_link (productId from URL is the UUID)
+      const productResult = await fetchProduct(productId);
+
+      if (!productResult.success || !productResult.data) {
+        setError(productResult.error || 'محصول یافت نشد');
+        setIsLoading(false);
+        return;
+      }
+
+      // Convert API product to local Product type
+      const convertedProduct = apiProductToProduct(productResult.data);
+      setProductData(convertedProduct);
+
+      // Track product view
+      trackEvent('view_product', { productId: productResult.data.uniqueLink, productName: productResult.data.name });
+
       setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
+    };
+
+    loadData();
   }, [slug, productId]);
 
   const handleTestDecor = () => {
@@ -85,13 +104,46 @@ export function ProductDetailsPage() {
     }
   };
 
+  const handleRetry = () => {
+    if (slug && productId) {
+      setError(null);
+      setIsLoading(true);
+      window.location.reload();
+    }
+  };
+
   if (isLoading) {
-    return <HomaLoader />;
+    return <HomaLoader message="در حال دریافت اطلاعات محصول..." />;
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
+        <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
+          <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
+        </div>
+        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{error}</h2>
+        <div className="flex gap-3 mt-4">
+          <Button
+            onClick={handleRetry}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} />
+            تلاش مجدد
+          </Button>
+          <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
+            بازگشت
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (!product) return <div className="p-8 text-center text-muted-foreground">محصول یافت نشد</div>;
 
-  const currentPrice = PRODUCT_SIZES.find(s => s.id === selectedSize)?.price || product.price;
+  // Future use: const currentPrice = PRODUCT_SIZES.find(s => s.id === selectedSize)?.price || product.price;
 
   return (
     <div className="min-h-screen bg-[#FDFDFB] selection:bg-black/5 flex flex-col" dir="rtl">
@@ -121,29 +173,31 @@ export function ProductDetailsPage() {
                   transition={{ duration: 1, ease: "easeOut" }}
                   className="w-full h-full"
                 >
-                  <ImageWithFallback 
-                    src={product.thumbnail} 
-                    alt={product.name} 
+                  <ImageWithFallback
+                    src={product.images?.[activeImageIdx] || product.thumbnail}
+                    alt={product.name}
                     className="w-full h-full object-cover aspect-square"
                   />
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            {/* Vertical Thumbnails */}
-            <div className="hidden md:flex flex-col gap-2 shrink-0">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <button 
-                  key={i}
-                  onClick={() => setActiveImageIdx(i)}
-                  className={`w-20 h-20 overflow-hidden border transition-all duration-300 ${
-                    activeImageIdx === i ? 'border-black' : 'border-transparent opacity-40 hover:opacity-100'
-                  }`}
-                >
-                  <ImageWithFallback src={product.thumbnail} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {/* Vertical Thumbnails - only show if multiple images */}
+            {product.images && product.images.length > 1 && (
+              <div className="hidden md:flex flex-col gap-2 shrink-0">
+                {product.images.map((imgSrc, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImageIdx(i)}
+                    className={`w-20 h-20 overflow-hidden border transition-all duration-300 ${
+                      activeImageIdx === i ? 'border-black' : 'border-transparent opacity-40 hover:opacity-100'
+                    }`}
+                  >
+                    <ImageWithFallback src={imgSrc} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* EDITORIAL INFO PANEL */}
@@ -152,83 +206,32 @@ export function ProductDetailsPage() {
               
               {/* Product Heading */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-[10px] text-black/40 font-bold uppercase tracking-widest">
-                  <span>اتاق خواب</span>
-                  <ChevronLeft size={10} />
-                  <span>کالای خواب</span>
-                  <ChevronLeft size={10} />
-                  <span>کاور لحاف</span>
-                </div>
-                
+                {product.category && (
+                  <div className="flex items-center gap-2 text-[10px] text-black/40 font-bold uppercase tracking-widest">
+                    <span>{product.category}</span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <h1 className="text-[22px] md:text-[24px] font-bold text-black leading-tight tracking-wide">
                     {product.name}
                   </h1>
                   <div className="flex items-baseline gap-2">
                     <span className="text-[16px] md:text-[18px] font-bold text-black">
-                      {PRODUCT_SIZES[0].price.toLocaleString()} تومان - {PRODUCT_SIZES[PRODUCT_SIZES.length-1].price.toLocaleString()} تومان
+                      {product.price?.toLocaleString()} تومان
                     </span>
                   </div>
                 </div>
+              </div>
 
-                <div className="pt-2">
-                  <p className="text-[11px] text-black/40 font-bold uppercase tracking-widest mb-2">
-                    رنگ: {COLORS.find(c => c.id === selectedColor)?.name} | کد {COLORS.find(c => c.id === selectedColor)?.code}
+              {/* Description */}
+              {product.description && (
+                <div className="py-6 border-t border-black/[0.05]">
+                  <p className="text-[13px] text-black/60 leading-relaxed font-medium">
+                    {product.description}
                   </p>
-                  <div className="flex gap-3">
-                    {COLORS.map((color) => (
-                      <button
-                        key={color.id}
-                        onClick={() => setSelectedColor(color.id)}
-                        className={`w-6 h-6 rounded-full border p-0.5 transition-all ${
-                          selectedColor === color.id ? 'border-black' : 'border-transparent'
-                        }`}
-                      >
-                        <div 
-                          className="w-full h-full rounded-full" 
-                          style={{ backgroundColor: color.hex }} 
-                        />
-                      </button>
-                    ))}
-                  </div>
                 </div>
-              </div>
-
-              <div className="py-6 border-t border-black/[0.05] space-y-4">
-                <p className="text-[13px] text-black/60 leading-relaxed font-medium">
-                  کاور لحاف با تراکم ۳۰۰ رشته‌ای، بافته شده از ساتن مرغوب با طرح حیوانات.
-                </p>
-                <p className="text-[13px] text-black/60 leading-relaxed font-medium">
-                  دارای دکمه‌های پنهان در قسمت پایین برای بستن آسان.
-                </p>
-              </div>
-
-              {/* Size Selection */}
-              <div className="space-y-4 pt-4 border-t border-black/[0.05]">
-                <span className="text-[11px] font-bold text-black/40 uppercase tracking-widest">انتخاب سایز</span>
-                <div className="flex flex-col border-b border-black/[0.05]">
-                  {PRODUCT_SIZES.map((size) => (
-                    <button
-                      key={size.id}
-                      onClick={() => setSelectedSize(size.id)}
-                      className={`flex items-center justify-between py-4 group transition-all ${
-                        selectedSize === size.id ? 'bg-black/5 px-2' : 'hover:bg-black/[0.02] px-0'
-                      }`}
-                    >
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-[14px] font-bold text-black">{size.name}</span>
-                        <span className="text-[12px] text-black/30 font-medium">({size.dimensions})</span>
-                      </div>
-                      <span className="text-[14px] font-bold text-black">
-                        {size.price.toLocaleString()} تومان
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <button className="text-[11px] font-bold text-black/40 underline underline-offset-4 uppercase tracking-widest">
-                  راهنمای سایز
-                </button>
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div className="pt-8 space-y-3">
@@ -264,6 +267,16 @@ export function ProductDetailsPage() {
             </div>
           </div>
         </div>
+
+        {/* Social Gallery - User Try-On Images */}
+        {productId && (
+          <div className="mt-16 md:mt-24 px-6 md:px-0">
+            <ProductSocialGallery
+              productId={productId}
+              productName={product.name}
+            />
+          </div>
+        )}
       </main>
 
       {/* STICKY MOBILE CTA */}
