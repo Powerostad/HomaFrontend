@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  homav-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-https://api.myhoma.ir}
+        - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
+        - VITE_API_IMAGE_PROCESSING_TIMEOUT=${VITE_API_IMAGE_PROCESSING_TIMEOUT:-600000}
+        - VITE_PUBLIC_POSTHOG_KEY=${VITE_PUBLIC_POSTHOG_KEY}
+        - VITE_PUBLIC_POSTHOG_HOST=${VITE_PUBLIC_POSTHOG_HOST:-https://eu.posthog.com}
+    container_name: homav-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - homav-network
+    labels:
+      - "dokploy.app.name=homav-frontend"
+      - "dokploy.app.description=HomaV React Frontend Application"
+      - "dokploy.app.version=0.1.0"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  homav-network:
+    driver: bridge
+    name: homav-network
