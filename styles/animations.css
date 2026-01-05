@@ -1,0 +1,446 @@
+/**
+ * HOMA Platform - Advanced Animations
+ * Apple/Notion inspired smooth animations
+ */
+
+/* Entrance Animations */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale Animations */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Rotation Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progress Animations */
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Skeleton Loading */
+@keyframes skeletonWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Bounce Animations */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Shake Animation (for errors) */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Glow Animation (for CTAs) */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(227, 30, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(227, 30, 36, 0.6);
+  }
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Heartbeat Animation */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(0.9);
+  }
+  20%, 40% {
+    transform: scale(1.1);
+  }
+}
+
+/* Typing Indicator */
+@keyframes typingDot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Gradient Animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Marquee Animation (New) */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(50%); } /* RTL direction: positive value moves right */
+}
+
+/* Auto Swap Animation (New) */
+@keyframes autoSwap {
+  0%, 40% { opacity: 0; }   /* Show 'before' image */
+  50%, 90% { opacity: 1; }  /* Show 'after' image */
+  100% { opacity: 0; }
+}
+
+/* Utility Classes */
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-top {
+  animation: slideInFromTop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-scale-out {
+  animation: scaleOut 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 3s linear infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+.animate-swap {
+  animation: autoSwap 4s ease-in-out infinite;
+}
+
+/* Marquee Right Animation */
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee-right {
+  animation: marqueeRight 20s linear infinite;
+}
+
+/* Staggered Animations */
+.animate-stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.animate-stagger-4 {
+  animation-delay: 0.4s;
+}
+
+.animate-stagger-5 {
+  animation-delay: 0.5s;
+}
+
+/* Hover Animations */
+.hover-scale:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+.hover-scale-lg:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+  transition: transform 0.3s ease;
+}
+
+.hover-brightness:hover {
+  filter: brightness(1.1);
+  transition: filter 0.2s ease;
+}
+
+/* Loading States */
+.loading-spinner {
+  border: 3px solid rgba(227, 30, 36, 0.1);
+  border-top-color: #E31E24;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-dots span {
+  animation: typingDot 1.4s infinite;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Image Load States */
+.image-loading {
+  background: linear-gradient(
+    90deg,
+    #f5f5f5 0%,
+    #e5e5e5 50%,
+    #f5f5f5 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonWave 1.5s ease-in-out infinite;
+}
+
+/* Transition Groups */
+.transition-fast {
+  transition: all 0.15s ease;
+}
+
+.transition-base {
+  transition: all 0.3s ease;
+}
+
+.transition-slow {
+  transition: all 0.5s ease;
+}
+
+.transition-bounce {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Page Transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
