@@ -1,0 +1,403 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Import Vazirmatn font for Persian/Farsi text */
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   TAILWIND V4 THEME CONFIGURATION
+   Maps CSS tokens to Tailwind utilities
+   ======================================== */
+@theme inline {
+  /* Surface/Background Colors - use as: bg-surface-page, bg-surface-elevated */
+  --color-surface-page: var(--color-surface-page);
+  --color-surface-default: var(--color-surface-default);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-surface-inverse: var(--color-surface-inverse);
+
+  /* Brand Colors - use as: bg-brand-primary, text-brand-primary */
+  --color-brand-primary: var(--color-brand-primary);
+  --color-brand-secondary: var(--color-brand-secondary);
+
+  /* Content/Text Colors - use as: text-content-primary, text-content-secondary */
+  --color-content-primary: var(--color-content-primary);
+  --color-content-secondary: var(--color-content-secondary);
+  --color-content-muted: var(--color-content-muted);
+  --color-content-inverse: var(--color-content-inverse);
+  --color-content-brand: var(--color-content-brand);
+
+  /* Border Colors - use as: border-subtle, border-strong */
+  --color-border-default: var(--color-border-default);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-inverse: var(--color-border-inverse);
+
+  /* Interactive Colors - use as: bg-interactive-primary */
+  --color-interactive-primary: var(--color-interactive-primary);
+  --color-interactive-primary-hover: var(--color-interactive-primary-hover);
+  --color-interactive-primary-active: var(--color-interactive-primary-active);
+  --color-interactive-secondary: var(--color-interactive-secondary);
+  --color-interactive-destructive: var(--color-interactive-destructive);
+
+  /* Feedback Colors - use as: bg-feedback-success, text-feedback-error */
+  --color-feedback-success: var(--color-feedback-success);
+  --color-feedback-warning: var(--color-feedback-warning);
+  --color-feedback-error: var(--color-feedback-error);
+  --color-feedback-info: var(--color-feedback-info);
+  --color-feedback-bg: var(--color-feedback-bg);
+
+  /* Shadcn/UI compatibility colors (keep for existing components) */
+  --color-background: var(--color-surface-muted);
+  --color-foreground: var(--color-content-primary);
+  --color-card: var(--color-surface-default);
+  --color-card-foreground: var(--color-content-primary);
+  --color-popover: var(--color-surface-elevated);
+  --color-popover-foreground: var(--color-content-primary);
+  --color-primary: var(--color-interactive-primary);
+  --color-primary-foreground: var(--color-content-inverse);
+  --color-secondary: var(--color-interactive-secondary);
+  --color-secondary-foreground: var(--color-content-primary);
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: var(--color-content-secondary);
+  --color-accent: var(--color-brand-primary);
+  --color-accent-foreground: var(--color-content-inverse);
+  --color-accent-light: var(--color-brand-secondary);
+  --color-accent-light-foreground: var(--color-content-primary);
+  --color-destructive: var(--color-interactive-destructive);
+  --color-destructive-foreground: var(--color-content-inverse);
+  --color-border: var(--color-border-subtle);
+  --color-input: transparent;
+  --color-input-background: var(--color-surface-default);
+  --color-ring: var(--color-feedback-info);
+
+  /* Z-Index Scale - use as: z-modal, z-toast, z-loader */
+  --z-index-base: var(--z-base);
+  --z-index-dropdown: var(--z-dropdown);
+  --z-index-sticky: var(--z-sticky);
+  --z-index-fixed: var(--z-fixed);
+  --z-index-modal-backdrop: var(--z-modal-backdrop);
+  --z-index-modal: var(--z-modal);
+  --z-index-popover: var(--z-popover);
+  --z-index-toast: var(--z-toast);
+  --z-index-tooltip: var(--z-tooltip);
+  --z-index-loader: var(--z-loader);
+
+  /* Border Radius - use as: rounded-sm, rounded-xl */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+  --radius-button: var(--radius-button);
+
+  /* Shadows - use as: shadow-sm, shadow-lg, shadow-button */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-button: var(--shadow-button);
+  --shadow-button-hover: var(--shadow-button-hover);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    direction: rtl;
+    font-size: var(--text-base);
+  }
+
+  body {
+    @apply bg-surface-page text-content-primary;
+    font-family: var(--font-family-primary);
+    direction: rtl;
+  }
+}
+
+/* ========================================
+   TYPOGRAPHY DEFAULTS
+   Only applied to elements without Tailwind text classes
+   ======================================== */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-4xl);
+      font-weight: var(--font-weight-bold);
+      line-height: 1.3;
+    }
+
+    h2 {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-bold);
+      line-height: 1.4;
+    }
+
+    h3 {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.4;
+    }
+
+    h4 {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.5;
+    }
+
+    p, label, button, input {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    .caption {
+      font-family: var(--font-family-primary);
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+@layer utilities {
+  /* Glass Effects */
+  .glass {
+    background: var(--glass-light);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+  }
+
+  .glass-strong {
+    background: var(--glass-light-strong);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+  }
+
+  .glass-dark {
+    background: var(--glass-dark);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+  }
+
+  .glass-dark-strong {
+    background: var(--glass-dark-strong);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+  }
+
+  /* Font Family Utilities */
+  .font-primary {
+    font-family: var(--font-family-primary);
+  }
+
+  .font-display {
+    font-family: var(--font-family-display);
+  }
+}
+
+/* ========================================
+   COMPONENT STYLES
+   Reusable component patterns
+   ======================================== */
+
+/* Primary Dark Button */
+.btn-primary-dark {
+  height: 52px;
+  padding: 0 18px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-interactive-primary);
+  color: var(--color-content-inverse);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  box-shadow: var(--shadow-button);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-primary-dark:hover {
+  background: var(--color-interactive-primary-hover);
+  box-shadow: var(--shadow-button-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary-dark:active {
+  background: var(--color-interactive-primary-active);
+  transform: translateY(0px);
+  box-shadow: var(--shadow-button);
+}
+
+.btn-primary-dark:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-button), var(--shadow-button-focus);
+}
+
+@media (max-width: 768px) {
+  .btn-primary-dark {
+    height: 48px;
+    width: 100%;
+  }
+}
+
+/* Glass Primary Button */
+.btn-glass-primary {
+  height: 52px;
+  padding: 0 18px;
+  border-radius: var(--radius-button);
+  background: rgba(22, 119, 255, 0.80);
+  backdrop-filter: blur(var(--blur-lg));
+  -webkit-backdrop-filter: blur(var(--blur-lg));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: var(--color-content-inverse);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  box-shadow: 0 8px 32px rgba(22, 119, 255, 0.30);
+  transition: all var(--transition-slow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-glass-primary:hover {
+  background: rgba(22, 119, 255, 0.90);
+  box-shadow: 0 12px 40px rgba(22, 119, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-glass-primary:active {
+  transform: translateY(0px);
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.20);
+}
+
+@media (max-width: 768px) {
+  .btn-glass-primary {
+    height: 48px;
+    width: 100%;
+  }
+}
+
+/* ========================================
+   CARD STYLES
+   ======================================== */
+
+/* Unibody Card (Mobile product cards) */
+.unibody-card {
+  background: var(--color-surface-default);
+  border-radius: var(--radius-3xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border-default);
+}
+
+.unibody-card__hero {
+  position: relative;
+}
+
+.unibody-card__hero img {
+  width: 100%;
+  height: min(46vh, 420px);
+  object-fit: cover;
+  display: block;
+}
+
+.unibody-card__hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, var(--color-surface-default) 100%);
+  z-index: 10;
+}
+
+.unibody-card__content {
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-surface-default);
+  position: relative;
+  z-index: 11;
+  margin-top: -1px;
+}
+
+/* ========================================
+   HERO SECTION STYLES
+   ======================================== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Hero side gradient overlay (desktop) */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(247, 247, 245, 0) 0%,
+    rgba(247, 247, 245, 0.55) 55%,
+    rgba(247, 247, 245, 0.92) 78%,
+    rgba(247, 247, 245, 1) 100%
+  );
+}
+
+@media (max-width: 768px) {
+  .hero::after {
+    background: linear-gradient(
+      180deg,
+      rgba(247, 247, 245, 0) 0%,
+      rgba(247, 247, 245, 0) 60%,
+      rgba(247, 247, 245, 0.5) 82%,
+      rgba(247, 247, 245, 0.92) 100%
+    );
+  }
+}
+
+/* Hero chip/badge */
+.hero-chip {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--glass-light);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-content-primary);
+  font-size: var(--text-xs);
+  z-index: 20;
+}

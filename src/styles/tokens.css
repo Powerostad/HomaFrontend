@@ -1,0 +1,204 @@
+/**
+ * HOMA Design System - Design Tokens
+ * ===================================
+ * Single source of truth for all design values.
+ *
+ * Usage in Tailwind CSS v4:
+ * - Colors: bg-surface-page, text-content-primary, border-subtle
+ * - Z-Index: z-modal, z-toast, z-loader
+ * - Spacing: Uses Tailwind defaults (p-4, m-6, gap-8)
+ * - Typography: Uses Tailwind defaults + custom font families
+ *
+ * IMPORTANT: Do NOT use hardcoded values like bg-[#F7F7F5] or z-[9999]
+ * Always use semantic tokens defined here.
+ */
+
+:root {
+  /* ========================================
+     BRAND COLORS
+     ======================================== */
+  --color-brand-primary: #E31E24;        /* Homa Red - accent buttons, highlights */
+  --color-brand-secondary: #F5E6D3;      /* Homa Cream - secondary backgrounds */
+
+  /* ========================================
+     SURFACE/BACKGROUND COLORS
+     Reduced from 149 variations to 5 semantic tokens
+     ======================================== */
+  --color-surface-page: #F7F7F5;         /* Main page background (was: bg-[#F7F7F5]) */
+  --color-surface-default: #FFFFFF;      /* Cards, modals, containers */
+  --color-surface-elevated: #FDFDFB;     /* Elevated elements, dropdowns */
+  --color-surface-muted: #F2F2F7;        /* Subtle backgrounds, disabled states */
+  --color-surface-inverse: #080808;      /* Dark backgrounds, inverse sections */
+
+  /* ========================================
+     TEXT/CONTENT COLORS
+     ======================================== */
+  --color-content-primary: #1a1a1a;      /* Main text (was: text-[#1a1a1a]) */
+  --color-content-secondary: #6B7280;    /* Secondary text (was: text-[#6B7280]) */
+  --color-content-muted: #9CA3AF;        /* Placeholder, disabled text */
+  --color-content-inverse: #FFFFFF;      /* Text on dark backgrounds */
+  --color-content-brand: #E31E24;        /* Brand-colored text */
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --color-border-default: rgba(0, 0, 0, 0.03);   /* Subtle borders (was: border-black/[0.03]) */
+  --color-border-subtle: #E9E9E6;               /* Light borders */
+  --color-border-strong: rgba(0, 0, 0, 0.1);    /* More visible borders */
+  --color-border-inverse: rgba(255, 255, 255, 0.1); /* Borders on dark backgrounds */
+
+  /* ========================================
+     INTERACTIVE STATE COLORS
+     ======================================== */
+  --color-interactive-primary: #111111;         /* Primary button bg */
+  --color-interactive-primary-hover: #0B0B0B;
+  --color-interactive-primary-active: #000000;
+  --color-interactive-secondary: rgba(120, 120, 128, 0.16);
+  --color-interactive-destructive: #FF383C;
+
+  /* ========================================
+     FEEDBACK COLORS
+     ======================================== */
+  --color-feedback-success: #00312D;
+  --color-feedback-warning: #FC6F20;
+  --color-feedback-error: #5D0D02;
+  --color-feedback-info: #0088FF;
+  --color-feedback-bg: #FEE8D0;
+
+  /* ========================================
+     Z-INDEX SCALE
+     Systematic layering (was: chaos with z-[9999], z-[9998], etc.)
+     ======================================== */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-toast: 700;
+  --z-tooltip: 800;
+  --z-loader: 9999;
+
+  /* ========================================
+     SPACING SCALE
+     Based on 4px grid (matches Tailwind defaults)
+     ======================================== */
+  --space-0: 0;
+  --space-1: 4px;     /* Tailwind: p-1 */
+  --space-2: 8px;     /* Tailwind: p-2 */
+  --space-3: 12px;    /* Tailwind: p-3 */
+  --space-4: 16px;    /* Tailwind: p-4 */
+  --space-5: 20px;    /* Tailwind: p-5 */
+  --space-6: 24px;    /* Tailwind: p-6 */
+  --space-8: 32px;    /* Tailwind: p-8 */
+  --space-10: 40px;   /* Tailwind: p-10 */
+  --space-12: 48px;   /* Tailwind: p-12 */
+  --space-16: 64px;   /* Tailwind: p-16 */
+  --space-20: 80px;   /* Tailwind: p-20 */
+  --space-24: 96px;   /* Tailwind: p-24 */
+
+  /* ========================================
+     TYPOGRAPHY - Font Families
+     ======================================== */
+  --font-family-primary: 'Vazirmatn', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+
+  /* ========================================
+     TYPOGRAPHY - Font Sizes
+     ======================================== */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;
+
+  /* ========================================
+     TYPOGRAPHY - Font Weights
+     ======================================== */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-none: 0;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+  --radius-full: 9999px;
+
+  /* Button-specific radius */
+  --radius-button: 18px;
+  --radius-button-pill: 100px;
+
+  /* ========================================
+     SHADOWS / ELEVATION
+     ======================================== */
+  --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0px 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0px 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0px 16px 44px rgba(0, 0, 0, 0.10);
+
+  /* Button shadows */
+  --shadow-button: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-button-hover: 0 12px 34px rgba(0, 0, 0, 0.14);
+  --shadow-button-focus: 0 0 0 3px rgba(17, 17, 17, 0.18);
+
+  /* ========================================
+     GLASS / BLUR EFFECTS
+     ======================================== */
+  --glass-light: rgba(255, 255, 255, 0.8);
+  --glass-light-strong: rgba(255, 255, 255, 0.9);
+  --glass-dark: rgba(0, 0, 0, 0.6);
+  --glass-dark-strong: rgba(0, 0, 0, 0.8);
+
+  --blur-sm: 4px;
+  --blur-md: 12px;
+  --blur-lg: 24px;
+  --blur-xl: 40px;
+
+  /* ========================================
+     TRANSITIONS / ANIMATIONS
+     ======================================== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ========================================
+     LAYOUT CONSTANTS
+     ======================================== */
+  --header-height: 56px;
+  --max-width-content: 1440px;
+  --max-width-narrow: 680px;
+}
+
+/* ========================================
+   DARK MODE OVERRIDES
+   ======================================== */
+.dark {
+  --color-surface-page: #1C1C1E;
+  --color-surface-default: #2C2C2E;
+  --color-surface-elevated: #3A3A3C;
+  --color-surface-muted: #48484A;
+  --color-surface-inverse: #FFFFFF;
+
+  --color-content-primary: #FFFFFF;
+  --color-content-secondary: rgba(235, 235, 245, 0.6);
+  --color-content-muted: rgba(235, 235, 245, 0.3);
+  --color-content-inverse: #1a1a1a;
+
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-subtle: rgba(84, 84, 88, 1);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
+}

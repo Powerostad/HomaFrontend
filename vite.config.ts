@@ -8,10 +8,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './components'),
-      '@styles': path.resolve(__dirname, './styles'),
-      '@utils': path.resolve(__dirname, './utils'),
-      '@types': path.resolve(__dirname, './types'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@context': path.resolve(__dirname, './src/context'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@types': path.resolve(__dirname, './src/types'),
+      '@layout': path.resolve(__dirname, './src/layout'),
+      '@data': path.resolve(__dirname, './src/data'),
     },
   },
   css: {
