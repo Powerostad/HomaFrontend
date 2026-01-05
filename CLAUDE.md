@@ -84,6 +84,18 @@ Tailwind CSS v4 with custom design tokens in `tokens.css`. **Always use semantic
 - Font: Vazirmatn (loaded via CDN)
 - HTML `direction: rtl` is set globally in `globals.css`
 
+### Error Messages (Persian Only)
+**CRITICAL: All error messages shown to users MUST be in Persian.**
+
+- Never display English error messages in the UI (e.g., "Failed to fetch", "Network Error")
+- Use `translateErrorMessage()` from `@/utils/apiClient` to convert browser errors to Persian
+- All catch blocks should use Persian fallback messages: `'خطای ناشناخته'` (unknown error)
+- Common Persian error patterns:
+  - Connection: `'خطا در برقراری ارتباط با سرور'`
+  - Timeout: `'زمان درخواست به پایان رسید'`
+  - Server: `'خطای داخلی سرور'`
+  - Unknown: `'خطای ناشناخته'`
+
 ### Animation Library
 Uses `motion` (v11.15.0), not `framer-motion`. Same API but lighter bundle.
 
