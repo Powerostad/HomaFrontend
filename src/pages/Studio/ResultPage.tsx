@@ -1,40 +1,40 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
-import { 
+import { useNavigate, useParams } from 'react-router-dom';
+import {
   X,
   ArrowRight,
   Share2,
   Download,
   Heart,
   Bookmark,
-  ArrowLeftRight,
-  CheckCircle2,
-  Sparkles,
-  Plus,
-  ShoppingBag,
-  Layers,
-  LayoutTemplate,
-  Maximize2
+  Maximize2,
+  Loader2,
+  Users,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { useStudio } from '../../context/StudioContext';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { BeforeAfterSlider } from '../../components/BeforeAfterSlider';
-import { Button } from '../../components/ui/button';
+import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
 import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
 import { ProductDetailSheet, Product } from './components/ProductDetailSheet';
 import { AuthModal } from '../../components/AuthModal';
-import { DecisionPointOverlay } from '../../components/DecisionPointOverlay';
+import { HomaLoader } from '../../components/HomaLoader';
+import { toast } from 'sonner';
+import { submitToGallery } from '@/services/socialGalleryService';
+import { downloadImage, getDownloadErrorMessage } from '@/utils/downloadUtils';
+import type { MatchedProduct } from '@/services/studioService';
 
-// --- Mock Data ---
-const MOCK_RESULT_IMAGE = "https://images.unsplash.com/photo-1597665863042-47e00964d899?q=80&w=1200&auto=format&fit=crop";
-const MOCK_BEFORE_IMAGE = "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200&auto=format&fit=crop";
+// --- Fallback Mock Data (only used when API data not available) ---
+const FALLBACK_RESULT_IMAGE = "https://images.unsplash.com/photo-1597665863042-47e00964d899?q=80&w=1200&auto=format&fit=crop";
 
-const INITIAL_PRODUCTS: (Product & { store?: string; style?: string })[] = [
-  { 
-    id: '1', 
-    name: 'افشان کلاسیک', 
+const FALLBACK_PRODUCTS: (Product & { store?: string; style?: string })[] = [
+  {
+    id: '1',
+    name: 'افشان کلاسیک',
     price: 12500000,
     category: 'فرش',
     style: 'دستباف',
@@ -42,9 +42,9 @@ const INITIAL_PRODUCTS: (Product & { store?: string; style?: string })[] = [
     image: 'https://images.unsplash.com/photo-1594125675036-153d1b064762?q=80&w=300&auto=format&fit=crop',
     hotspot: { x: 50, y: 75 }
   },
-  { 
-    id: '2', 
-    name: 'جستر راحتی', 
+  {
+    id: '2',
+    name: 'جستر راحتی',
     price: 28000000,
     category: 'مبل',
     style: 'مینیمال',
@@ -52,9 +52,9 @@ const INITIAL_PRODUCTS: (Product & { store?: string; style?: string })[] = [
     image: 'https://images.unsplash.com/photo-1759722665629-29df6ee4f9a5?q=80&w=300&auto=format&fit=crop',
     hotspot: { x: 45, y: 55 }
   },
-  { 
-    id: '3', 
-    name: 'آباژور مدرن', 
+  {
+    id: '3',
+    name: 'آباژور مدرن',
     price: 1450000,
     category: 'نورپردازی',
     style: 'مدرن',
@@ -64,36 +64,179 @@ const INITIAL_PRODUCTS: (Product & { store?: string; style?: string })[] = [
   }
 ];
 
+/**
+ * Convert API matched product to UI Product format
+ */
+function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string } {
+  return {
+    id: String(product.id),
+    name: product.name,
+    price: product.price,
+    category: product.category || 'محصول',
+    store: product.shopName || 'فروشگاه هوما',
+    image: product.imageUrl,
+    hotspot: { x: 50, y: 50 + index * 10 }, // Default hotspots
+  };
+}
+
 export function StudioResultPage() {
   const navigate = useNavigate();
-  const { selectedFile, isLoggedIn, setUser } = useApp() as any;
-  
+  // Note: Route param is named "jobId" in App.tsx, but we use "sessionId" internally
+  const { jobId: sessionId } = useParams<{ jobId: string }>();
+  const { selectedFile } = useApp() as any;
+  const { isLoggedIn, isInitialized, login } = useAuth();
+  const {
+    activeSession,
+    activeSessionId,
+    loadSession,
+    clearActiveSession
+  } = useStudio();
+
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [displayProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(!isLoggedIn);
+  // Initialize as false - will be set by useEffect after auth initialization
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showExitDecision, setShowExitDecision] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [_isMenuOpen, _setIsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmittingToGallery, setIsSubmittingToGallery] = useState(false);
+  const [isSubmittedToGallery, setIsSubmittedToGallery] = useState(false);
+
+  // --- Gallery Submission Handler ---
+  const handleSubmitToGallery = async () => {
+    // Require login
+    if (!isLoggedIn) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // Need session ID to submit
+    const currentSessionId = sessionId || activeSessionId;
+    if (!currentSessionId) {
+      toast.error('جلسه طراحی برای ارسال به گالری موجود نیست');
+      return;
+    }
+
+    setIsSubmittingToGallery(true);
+    const result = await submitToGallery({ session_id: currentSessionId });
+    setIsSubmittingToGallery(false);
+
+    if (result.success) {
+      setIsSubmittedToGallery(true);
+      toast.success('طراحی شما برای نمایش در گالری ارسال شد');
+    } else {
+      toast.error(result.error || 'خطا در ارسال به گالری');
+    }
+  };
+
+  // --- Download Handler (with mobile share + PNG conversion) ---
+  const handleDownload = async () => {
+    // Use API result image or fallback
+    const imageUrl = activeSession?.redesignedImageUrl;
+    if (!imageUrl) {
+      toast.error('تصویری برای دانلود موجود نیست');
+      return;
+    }
+
+    toast.info('در حال آماده‌سازی...');
+
+    const result = await downloadImage({
+      imageUrl,
+      filename: `homa-studio-${Date.now()}`,
+      useAuth: true,
+    });
+
+    if (result.success) {
+      toast.success(result.method === 'share' ? 'تصویر آماده اشتراک‌گذاری شد' : 'تصویر دانلود شد');
+    } else {
+      toast.error(getDownloadErrorMessage(result.error));
+    }
+  };
+
+  // Determine result image - use API data or fallback
+  const resultImage = useMemo(() => {
+    if (activeSession?.redesignedImageUrl) {
+      return activeSession.redesignedImageUrl;
+    }
+    return FALLBACK_RESULT_IMAGE;
+  }, [activeSession]);
+
+  // Transform API products to UI format
+  const displayProducts = useMemo(() => {
+    if (activeSession?.items && activeSession.items.length > 0) {
+      // Flatten all matched products from all items
+      const products: (Product & { store?: string; style?: string })[] = [];
+      activeSession.items.forEach((item, itemIndex) => {
+        item.matchedProducts.forEach((product, productIndex) => {
+          products.push(matchedProductToUIProduct(product, itemIndex * 10 + productIndex));
+        });
+      });
+      return products.length > 0 ? products : FALLBACK_PRODUCTS;
+    }
+    return FALLBACK_PRODUCTS;
+  }, [activeSession]);
 
   const totalPrice = displayProducts.reduce((acc, curr) => acc + curr.price, 0);
 
+  // Load session data if not already in context
+  // IMPORTANT: Wait for auth initialization AND login before making API calls
   useEffect(() => {
+    const loadSessionData = async () => {
+      // Must wait for auth to initialize first
+      if (!isInitialized) {
+        return;
+      }
+
+      // Must be logged in to fetch session data (API requires auth)
+      if (!isLoggedIn) {
+        return;
+      }
+
+      // If we have a sessionId from URL but no active session (or different session)
+      if (sessionId && (!activeSession || activeSessionId !== sessionId)) {
+        setIsLoading(true);
+        const result = await loadSession(sessionId);
+        setIsLoading(false);
+
+        if (!result.success) {
+          toast.error(result.error || 'خطا در دریافت نتیجه طراحی');
+        }
+      }
+    };
+
+    loadSessionData();
+  }, [sessionId, activeSession, activeSessionId, loadSession, isInitialized, isLoggedIn]);
+
+  // Only check login state after auth is initialized (prevents flash on refresh)
+  useEffect(() => {
+    if (!isInitialized) {
+      // Still loading auth state from localStorage - wait
+      return;
+    }
+
     if (!isLoggedIn) {
       setIsAuthModalOpen(true);
       setIsFullScreen(false);
+    } else {
+      // User is logged in - ensure modal is closed
+      setIsAuthModalOpen(false);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isInitialized]);
 
   useEffect(() => {
     if (selectedFile) {
+      // User uploaded file in current session - use data URL
       const reader = new FileReader();
       reader.onload = (e) => setOriginalImage(e.target?.result as string);
       reader.readAsDataURL(selectedFile);
+    } else if (activeSession?.roomImageUrl) {
+      // Navigated to existing session - use API-provided room image URL
+      setOriginalImage(activeSession.roomImageUrl);
     }
-  }, [selectedFile]);
+  }, [selectedFile, activeSession?.roomImageUrl]);
 
   // Content shared between mobile/desktop (Zara Home Editorial Style)
   const InsightContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
@@ -220,9 +363,23 @@ export function StudioResultPage() {
     </div>
   );
 
+  // Show loader while auth is initializing to prevent flash of login modal
+  if (!isInitialized) {
+    return (
+      <div className="h-screen w-full bg-background flex items-center justify-center" dir="rtl">
+        <HomaLoader />
+      </div>
+    );
+  }
+
+  // Show loader while session data is loading (after auth is ready)
+  // The loading overlay will show during API fetch
+  const needsSessionLoad = sessionId && (!activeSession || activeSessionId !== sessionId);
+  const showSessionLoader = isLoggedIn && needsSessionLoad;
+
   return (
     <div className="h-screen w-full bg-background relative overflow-hidden flex flex-col font-vazirmatn select-none" dir="rtl">
-      
+
       {/* 1. Mobile-only Global Header */}
       {!isFullScreen && (
         <div className="md:hidden">
@@ -254,17 +411,27 @@ export function StudioResultPage() {
 
         {/* LEFT PANEL (Main Hero Area) */}
         <div className="hidden md:block flex-1 h-full bg-zinc-900 relative overflow-hidden group">
-          <ImageWithFallback 
-            src={MOCK_RESULT_IMAGE}
-            alt="Studio Result" 
+          <AuthenticatedImage
+            src={resultImage}
+            alt="Studio Result"
+            imageWidth={1200}
+            imageQuality={85}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-0 scale-105 blur-sm' : 'opacity-100 scale-100'}`}
           />
           {originalImage && (
-            <img 
-              src={originalImage}
-              alt="Original" 
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-            />
+            originalImage.startsWith('data:') ? (
+              <img
+                src={originalImage}
+                alt="Original"
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+              />
+            ) : (
+              <AuthenticatedImage
+                src={originalImage}
+                alt="Original"
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+              />
+            )
           )}
 
           {/* Floating Actions (Try-On Style) */}
@@ -279,7 +446,15 @@ export function StudioResultPage() {
               </button>
               
               <div className="flex gap-3">
-                <button 
+                <button
+                  onClick={handleSubmitToGallery}
+                  disabled={isSubmittingToGallery || isSubmittedToGallery}
+                  className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSubmittedToGallery ? 'bg-white border-white text-green-600' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'} ${isSubmittingToGallery ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title="اشتراک در گالری عمومی"
+                >
+                  {isSubmittingToGallery ? <Loader2 size={20} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={20} /> : <Users size={20} />}
+                </button>
+                <button
                   onClick={() => setIsSaved(!isSaved)}
                   className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSaved ? 'bg-white border-white text-accent' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'}`}
                 >
@@ -325,13 +500,33 @@ export function StudioResultPage() {
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             {/* Hero Image */}
             <div className="relative w-full h-[65vh]">
-              <ImageWithFallback 
-                src={MOCK_RESULT_IMAGE}
-                alt="Studio Result" 
-                className={`w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+              <AuthenticatedImage
+                src={resultImage}
+                alt="Studio Result"
+                imageWidth={800}
+                imageQuality={80}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
               />
-              <button 
-                className="absolute inset-0"
+              {/* Original room image for before/after toggle */}
+              {originalImage && (
+                originalImage.startsWith('data:') ? (
+                  <img
+                    src={originalImage}
+                    alt="Original"
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                ) : (
+                  <AuthenticatedImage
+                    src={originalImage}
+                    alt="Original"
+                    imageWidth={800}
+                    imageQuality={80}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                )
+              )}
+              <button
+                className="absolute inset-0 z-10"
                 onClick={() => setIsFullScreen(true)}
               />
 
@@ -344,13 +539,23 @@ export function StudioResultPage() {
                   <ArrowRight size={20} />
                 </button>
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setIsSaved(!isSaved)} 
+                  <button
+                    onClick={handleSubmitToGallery}
+                    disabled={isSubmittingToGallery || isSubmittedToGallery}
+                    className={`w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSubmittedToGallery ? 'text-green-600 bg-white' : 'text-white bg-black/20'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
+                  >
+                    {isSubmittingToGallery ? <Loader2 size={16} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={16} /> : <Users size={16} />}
+                  </button>
+                  <button
+                    onClick={() => setIsSaved(!isSaved)}
                     className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSaved ? 'text-accent bg-white' : 'text-white'}`}
                   >
                     <Heart size={18} className={isSaved ? 'fill-current' : ''} />
                   </button>
-                  <button className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90">
+                  <button
+                    onClick={handleDownload}
+                    className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90"
+                  >
                     <Download size={18} />
                   </button>
                 </div>
@@ -404,18 +609,29 @@ export function StudioResultPage() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Image Container - Full Bleed */}
+              {/* Note: Using same size params as desktop view (1200x85) to reuse cached blob URL for instant display */}
               <div className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-8">
-                <ImageWithFallback 
-                  src={MOCK_RESULT_IMAGE}
-                  alt="Studio Result" 
+                <AuthenticatedImage
+                  src={resultImage}
+                  alt="Studio Result"
+                  imageWidth={1200}
+                  imageQuality={85}
                   className={`max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
                 />
                 {originalImage && (
-                  <img 
-                    src={originalImage}
-                    alt="Original" 
-                    className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
-                  />
+                  originalImage.startsWith('data:') ? (
+                    <img
+                      src={originalImage}
+                      alt="Original"
+                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                    />
+                  ) : (
+                    <AuthenticatedImage
+                      src={originalImage}
+                      alt="Original"
+                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                    />
+                  )
                 )}
                 {/* Subtle Gradient Overlays for UI Readability */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
@@ -433,10 +649,13 @@ export function StudioResultPage() {
                 </div>
                 
                 <div className="flex gap-3">
-                  <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-2xl flex items-center justify-center text-white border border-white/10 hover:bg-white/20 transition-all active:scale-90">
+                  <button
+                    onClick={handleDownload}
+                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-2xl flex items-center justify-center text-white border border-white/10 hover:bg-white/20 transition-all active:scale-90"
+                  >
                     <Download size={20} />
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsSaved(!isSaved)}
                     className={`w-12 h-12 rounded-full backdrop-blur-2xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSaved ? 'bg-white text-accent' : 'bg-white/10 text-white hover:bg-white/20'}`}
                   >
@@ -511,11 +730,12 @@ export function StudioResultPage() {
               </div>
 
               <div className="flex flex-col gap-3 w-full">
-                <button 
+                <button
                   onClick={() => {
                     setIsSaved(true);
                     setShowExitDecision(false);
-                    navigate('/studio/upload');
+                    clearActiveSession();
+                    navigate('/studio');
                   }}
                   className="w-full h-[56px] bg-black text-white rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
@@ -535,15 +755,32 @@ export function StudioResultPage() {
         )}
       </AnimatePresence>
 
+      {/* Loading Overlay - shows during session load or when session needs loading */}
+      <AnimatePresence>
+        {(isLoading || showSessionLoader) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] bg-background/80 backdrop-blur-sm flex items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-black/40" />
+              <span className="text-[14px] font-medium text-black/60">در حال بارگذاری...</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Auth Modal over the Result */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
+      <AuthModal
+        isOpen={isAuthModalOpen}
         onClose={() => {
           if (isLoggedIn) setIsAuthModalOpen(false);
           else navigate('/studio/upload');
-        }} 
-        onSuccess={(user) => {
-          setUser?.(user);
+        }}
+        onSuccess={(user, tokens) => {
+          login(user, tokens);
           setIsAuthModalOpen(false);
         }}
       />
