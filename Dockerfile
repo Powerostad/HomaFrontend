@@ -29,11 +29,18 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Print environment for debugging
+RUN echo "=== Build Environment ===" && \
+    echo "VITE_API_BASE_URL: $VITE_API_BASE_URL" && \
+    echo "VITE_API_TIMEOUT: $VITE_API_TIMEOUT"
+
 # Build the application (outputs to dist/ per vite.config.ts)
 RUN npm run build
 
-# Verify build output
-RUN echo "=== Build output ===" && ls -la dist/
+# Verify build output - fail if index.html is missing
+RUN echo "=== Build output ===" && \
+    ls -la dist/ && \
+    test -f dist/index.html || (echo "ERROR: dist/index.html not found!" && exit 1)
 
 # Production stage with Nginx
 FROM nginx:alpine AS production
