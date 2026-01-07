@@ -174,7 +174,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
 
   return (
     <div className="bg-white relative min-h-screen">
-      <Header showBackButton={false} />
+      <Header />
       
       {/* Main Container */}
       <div className="px-6 pt-[104px] pb-8">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SimpleButton as Button } from "./SimpleButton";
 import { motion, AnimatePresence } from "motion/react";
-import { Download, RotateCcw, AlertTriangle, Store, Check, X } from "lucide-react";
+import { Download, RotateCcw, Store, Check, X } from "lucide-react";
 import { ProductChip } from "./ProductChip";
 import { Header } from "./Header";
 import type { Product } from "../types/product";
@@ -23,15 +23,15 @@ interface ProductVisualizationProps {
 
 export function ProductVisualization({
   product,
-  userImage,
-  fileName,
+  userImage: _userImage,
+  fileName: _fileName,
   placementSuccess,
   onSave,
-  onShare,
-  onChangeVariant,
+  onShare: _onShare,
+  onChangeVariant: _onChangeVariant,
   onTryAnother,
   onViewProductDetails,
-  onPurchase,
+  onPurchase: _onPurchase,
   onBackToStore
 }: ProductVisualizationProps) {
   const [isSaved, setIsSaved] = useState(false);
@@ -58,7 +58,7 @@ export function ProductVisualization({
 
   return (
     <div className="min-h-screen bg-white">
-      <Header showBackButton={false} />
+      <Header />
 
       <div className="pt-14">
         <motion.div

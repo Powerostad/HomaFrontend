@@ -1,4 +1,3 @@
-import React from "react";
 import { motion } from "motion/react";
 import { Phone, ShieldCheck, MessageCircle, Send } from "lucide-react";
 import { Header } from "../../components/Header";

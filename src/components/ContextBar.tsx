@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { formatPriceFromRial } from '../utils/formatters';
 
 interface BreadcrumbItem {
   label: string;
@@ -50,7 +50,7 @@ export function ContextBar({ items, price }: ContextBarProps) {
       {price !== undefined && (
         <div className="flex items-baseline gap-1 mr-4 shrink-0">
           <span className="font-bold text-foreground" style={{ fontSize: 'var(--text-h4-size)' }}>
-            {price.toLocaleString('fa-IR')}
+            {formatPriceFromRial(price, false)}
           </span>
           <span className="text-muted-foreground" style={{ fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-medium)' }}>
             تومان

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useCallback, type ReactNode } from "react";
 import { Product } from "../types/product";
 import { StudioProject } from "../types/studio";
 
@@ -125,9 +125,21 @@ function AppContextBridge({ children }: { children: ReactNode }) {
     hasFeedbackForCurrentImage: feedback.hasFeedbackForCurrentImage,
     setHasFeedbackForCurrentImage: feedback.setHasFeedbackForCurrentImage,
 
-    // Auth
+    // Auth - with backwards-compatible setUser shim
     user: auth.user,
-    setUser: auth.setUser,
+    setUser: useCallback((userData: { id: string; name: string; phone?: string } | null) => {
+      console.warn('[AppContext] setUser is deprecated. Use useAuth().login(user, tokens) instead.');
+      if (userData) {
+        // Create placeholder tokens for backwards compatibility
+        // This won't work with real backend - use proper login flow
+        auth.login(userData, {
+          access: `placeholder_${userData.id}`,
+          refresh: `placeholder_refresh_${userData.id}`,
+        });
+      } else {
+        auth.logout();
+      }
+    }, [auth]),
     isLoggedIn: auth.isLoggedIn,
   };
 

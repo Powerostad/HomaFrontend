@@ -1,5 +1,3 @@
-import React from 'react';
-import { motion } from 'motion/react';
 import { Image as ImageIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Upload, X, File as FileIcon, Image as ImageIcon } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { SimpleButton } from "./SimpleButton";
 import { motion, AnimatePresence } from "motion/react";
 

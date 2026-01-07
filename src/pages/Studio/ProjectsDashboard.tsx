@@ -93,7 +93,7 @@ export function StudioProjectsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
       <Header transparent={false} />
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 md:px-20 py-20 md:py-32">

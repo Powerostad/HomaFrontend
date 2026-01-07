@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
-import { motion } from "motion/react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 const imgEmpty = "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200";
 const imgWithCurtains = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
-import { Tag, ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react";
 
 export function ShoppingPropSection() {
   const navigate = useNavigate();
@@ -131,25 +130,16 @@ export function ShoppingPropSection() {
   );
 }
 
-function TagItem({ x, y, label, price }: { x: string; y: string; label: string; price: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 1, delay: 0.5 }}
-      className="absolute group/tag cursor-pointer"
-      style={{ left: x, top: y }}
-    >
-      <div className="relative">
-        <div className="w-2 h-2 bg-white rounded-full shadow-xl relative z-10" />
-        <div className="absolute inset-0 w-2 h-2 bg-white rounded-full animate-ping opacity-40" />
-
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/40 backdrop-blur-xl px-4 py-2 border border-white/20 opacity-0 translate-x-4 transition-all duration-700 group-hover/tag:opacity-100 group-hover/tag:translate-x-0 w-40">
-          <p className="text-[11px] font-medium text-content-primary mb-1" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{label}</p>
-          <p className="text-[10px] font-light text-content-secondary" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{price} تومان</p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+// Future use: TagItem component for product hotspots
+// function TagItem({ x, y, label, price }: { x: string; y: string; label: string; price: string }) {
+//   return (
+//     <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="absolute" style={{ left: x, top: y }}>
+//       <div className="relative">
+//         <div className="w-2 h-2 bg-white rounded-full" />
+//         <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/40 backdrop-blur-xl px-4 py-2">
+//           <p>{label}</p><p>{price} تومان</p>
+//         </div>
+//       </div>
+//     </motion.div>
+//   );
+// }

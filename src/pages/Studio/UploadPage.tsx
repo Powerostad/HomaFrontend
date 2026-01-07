@@ -1,45 +1,36 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Camera, 
-  Sparkles, 
-  Image as ImageIcon, 
-  Info, 
-  Check, 
-  X, 
-  AlertCircle, 
-  Upload, 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronRight,
-  CheckCircle2,
-  XCircle,
-  Zap,
-  Maximize2,
-  MoveHorizontal,
-  ScanLine
+import {
+  ArrowLeft,
+  Camera,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useStudio } from '../../context/StudioContext';
+import { useAuth } from '../../context/AuthContext';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { Button } from '../../components/ui/button';
 import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
 import { DecisionPointOverlay } from '../../components/DecisionPointOverlay';
+import { AuthModal } from '../../components/AuthModal';
+import { toast } from 'sonner';
+import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
+import { fetchImageAsFile } from '../../utils/imageUtils';
 
 export function StudioUploadPage() {
   const navigate = useNavigate();
   const { setSelectedFile, trackKPI } = useApp();
+  const { startSession, isCreatingSession, clearActiveSession } = useStudio();
+  const { isLoggedIn, login } = useAuth();
   const [preview, setPreview] = useState<string | null>(null);
   const [showDecision, setShowDecision] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setLocalSelectedFile] = useState<File | null>(null);
+  const [isLoadingPreset, setIsLoadingPreset] = useState(false);
+  const [loadingPresetId, setLoadingPresetId] = useState<number | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const GUIDELINES = [
-    { id: 'frame', label: 'کل فضا داخل کادر', icon: <Maximize2 size={12} strokeWidth={1.5} /> },
-    { id: 'light', label: 'نور کافی و طبیعی', icon: <Zap size={12} strokeWidth={1.5} /> },
-    { id: 'sharp', label: 'عکس صاف و شفاف', icon: <ScanLine size={12} strokeWidth={1.5} /> },
-  ];
 
   const EXAMPLES = {
     good: {
@@ -57,7 +48,7 @@ export function StudioUploadPage() {
 
   const PRESETS = [
     { id: 1, name: 'پذیرایی مدرن', image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=400' },
-    { id: 2, name: 'اتاق خواب روشن', image: 'https://images.unsplash.com/photo-1505693416388-db5ce9772896?q=80&w=400' },
+    { id: 2, name: 'اتاق خواب روشن', image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=400' },
     { id: 3, name: 'نشیمن گرم', image: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=400' },
     { id: 4, name: 'فضای ناهارخوری', image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?q=80&w=400' },
   ];
@@ -66,6 +57,7 @@ export function StudioUploadPage() {
     if (file && file.type.startsWith('image/')) {
       trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
       setSelectedFile(file);
+      setLocalSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
@@ -75,9 +67,87 @@ export function StudioUploadPage() {
     }
   };
 
-  const handleProceed = () => {
+  /**
+   * Handle preset image selection
+   * Fetches the image URL, converts to File, and triggers the same flow as file upload
+   */
+  const handlePresetSelect = async (preset: { id: number; name: string; image: string }) => {
+    // Prevent double-clicks
+    if (isLoadingPreset) return;
+
+    setIsLoadingPreset(true);
+    setLoadingPresetId(preset.id);
+
+    // Track KPI for preset selection (distinct from manual upload)
+    trackKPI('preset_selected', { presetId: preset.id, presetName: preset.name });
+
+    // Fetch and convert to File
+    const result = await fetchImageAsFile(
+      preset.image,
+      `preset-${preset.id}-${preset.name.replace(/\s+/g, '-')}.jpg`
+    );
+
+    if (!result.success) {
+      setIsLoadingPreset(false);
+      setLoadingPresetId(null);
+      toast.error(result.error);
+      return;
+    }
+
+    const file = result.file;
+
+    // Set file in state (same as handleFile)
+    setSelectedFile(file);
+    setLocalSelectedFile(file);
+
+    // Set preview (use original URL for faster display)
+    setPreview(preset.image);
+    setShowDecision(true);
+
+    setIsLoadingPreset(false);
+    setLoadingPresetId(null);
+  };
+
+  /**
+   * Proceed with the upload process
+   * @param skipAuthCheck - Set to true when called from auth success callback
+   *                        (user just authenticated, but isLoggedIn state hasn't updated yet)
+   */
+  const handleProceed = async (skipAuthCheck = false) => {
+    if (!selectedFile) {
+      toast.error('لطفا یک تصویر انتخاب کنید');
+      return;
+    }
+
+    // Check if user is logged in before proceeding
+    // Skip this check if we just came from successful authentication
+    if (!skipAuthCheck && !isLoggedIn) {
+      setShowDecision(false); // Close decision overlay first
+      setShowAuthModal(true);
+      return;
+    }
+
     trackKPI('upload_confirmed');
-    navigate('/studio/progress');
+
+    // Clear any previous session state
+    clearActiveSession();
+    setUploadProgress(0);
+
+    // Start the session with API call
+    const result = await startSession(selectedFile, (progress) => {
+      setUploadProgress(progress);
+    });
+
+    if (result.success && result.sessionId) {
+      // Save sessionId to storage for recovery on page reload
+      saveToStorage(STORAGE_KEYS.STUDIO_SESSION_ID, result.sessionId);
+
+      // Navigate to progress page with sessionId in URL for recovery
+      navigate(`/studio/progress?sessionId=${result.sessionId}`);
+    } else {
+      // Show error toast
+      toast.error(result.error || 'خطا در ایجاد جلسه طراحی');
+    }
   };
 
   return (
@@ -161,16 +231,29 @@ export function StudioUploadPage() {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {PRESETS.map(preset => (
-              <div key={preset.id} className="group cursor-pointer space-y-3">
+              <div
+                key={preset.id}
+                className={`group cursor-pointer space-y-3 ${isLoadingPreset && loadingPresetId !== preset.id ? 'pointer-events-none opacity-50' : ''}`}
+                onClick={() => !isLoadingPreset && handlePresetSelect(preset)}
+              >
                 <div className="relative aspect-[4/5] bg-white overflow-hidden">
                   <ImageWithFallback src={preset.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button 
-                      onClick={() => handleProceed()}
-                      className="bg-white text-black text-[10px] font-bold px-4 py-2 uppercase tracking-widest"
-                    >
-                      انتخاب
-                    </button>
+                  {/* Overlay - show loading spinner or select label */}
+                  <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                    loadingPresetId === preset.id
+                      ? 'bg-black/30 opacity-100'
+                      : 'bg-black/5 opacity-0 group-hover:opacity-100'
+                  }`}>
+                    {loadingPresetId === preset.id ? (
+                      <div className="bg-white text-black text-[10px] font-bold px-4 py-2 uppercase tracking-widest flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>در حال بارگذاری...</span>
+                      </div>
+                    ) : (
+                      <span className="bg-white text-black text-[10px] font-bold px-4 py-2 uppercase tracking-widest">
+                        انتخاب
+                      </span>
+                    )}
                   </div>
                 </div>
                 <h3 className="text-[11px] text-black/60 uppercase tracking-widest text-center">{preset.name}</h3>
@@ -221,16 +304,21 @@ export function StudioUploadPage() {
       </div>
 
       {/* DECISION POINT OVERLAY */}
-      <DecisionPointOverlay 
+      <DecisionPointOverlay
         isOpen={showDecision}
-        onClose={() => setShowDecision(false)}
-        title="تصویر شما آماده است"
-        description="لطفاً تایید کنید که تصویر انتخابی شفاف و دارای نور کافی است."
+        onClose={() => !isCreatingSession && setShowDecision(false)}
+        title={isCreatingSession ? "در حال آپلود..." : "تصویر شما آماده است"}
+        description={
+          isCreatingSession
+            ? `${uploadProgress}% آپلود شده`
+            : "لطفاً تایید کنید که تصویر انتخابی شفاف و دارای نور کافی است."
+        }
         image={preview || undefined}
         primaryCTA={{
-          label: "تایید",
+          label: isCreatingSession ? "در حال ارسال..." : "تایید",
           onClick: handleProceed,
-          icon: <Sparkles size={18} />
+          icon: isCreatingSession ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />,
+          disabled: isCreatingSession
         }}
         secondaryCTA={{
           label: "انتخاب مجدد",
@@ -238,24 +326,41 @@ export function StudioUploadPage() {
             setShowDecision(false);
             fileInputRef.current?.click();
           },
-          icon: <Camera size={18} />
+          icon: <Camera size={18} />,
+          disabled: isCreatingSession
         }}
         exitAction={{
           label: "انصراف",
           onClick: () => {
-            setShowDecision(false);
-            setPreview(null);
+            if (!isCreatingSession) {
+              setShowDecision(false);
+              setPreview(null);
+            }
           }
         }}
         type="accent"
       />
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
         accept="image/*"
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(user, tokens) => {
+          login(user, tokens);
+          setShowAuthModal(false);
+          // After login, automatically proceed with the upload
+          // Pass skipAuthCheck=true because user just authenticated
+          // but React state (isLoggedIn) hasn't updated yet
+          handleProceed(true);
+        }}
       />
     </div>
   );

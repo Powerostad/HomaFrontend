@@ -1,72 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams, useParams } from 'react-router-dom';
 import {
    ArrowRight,
    Share2,
    Download,
    ShoppingBag,
-   Image as ImageIcon,
    Maximize2,
-   ChevronLeft,
    X,
    Menu,
    Heart,
-   CheckCircle2
+   CheckCircle2,
+   Users,
+   Loader2,
+   AlertCircle
 } from "lucide-react";
-import { useApp } from '../../context/AppContext';
 import { useAuth, useUpload, useProduct } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { Button } from '../../components/ui/button';
+import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
 import { Header } from '../../components/Header';
-import { Logo } from '../../components/Logo';
-import { MOCK_STORES } from '../../data/mock';
+import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '../../utils/downloadUtils';
 import { AuthModal } from '../../components/AuthModal';
 import { SidebarMenu } from '../../components/SidebarMenu';
 import { toast } from "sonner";
+import { submitToGallery } from '../../services/socialGalleryService';
+import { getResultImageUrl } from '../../services/visualizationService';
+import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
+import { getProductById } from '../../utils/productLoader';
+import { formatPriceFromRial } from '../../utils/formatters';
 import type { User } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
-const resultImage = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
 
-// --- Constants ---
-// const ABSTRACT_CHROME_URL = "https://images.unsplash.com/photo-1631663026562-1f55f0ecac3e?q=80&w=600"; // Unused
+// --- Helper to build specifications from product data ---
+function buildSpecifications(
+   product: Product | null,
+   selectedSize: string | null
+): Array<{ label: string; value: string }> {
+   const specs: Array<{ label: string; value: string }> = [];
 
-// --- Helper for Persian Digits ---
-const toPersianDigits = (value: number | string) => {
-   if (value === undefined || value === null) return '';
-   const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-   return value.toString().replace(/\d/g, (x) => farsiDigits[parseInt(x)]);
-};
+   // For rugs: show selected dimension
+   const isRug = product?.category === 'rug_and_carpet' ||
+      product?.category === 'فرش و قالی' ||
+      product?.category?.toLowerCase() === 'rug';
 
-// --- Mock Data ---
-const MOCK_RESULT_IMAGE = resultImage;
-
-const PRODUCT_CENTRIC_RECOMMENDATIONS = [
-   {
-      id: 'rel-1',
-      name: 'آباژور مدرن لونا',
-      price: 3450000,
-      image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=400',
-      category: 'نورپردازی',
-      reason: 'برای تعادل نوری در شب',
-      specs: [
-         { label: 'جنس پایه', value: 'فلز آنودایز شده' },
-         { label: 'ابعاد', value: '۴۵ × ۲۰ سانتی‌متر' }
-      ]
-   },
-   {
-      id: 'rel-2',
-      name: 'گلدان مدرن بیستون',
-      price: 1200000,
-      image: 'https://images.unsplash.com/photo-1581781870027-04212e231e96?q=80&w=400',
-      category: 'دکوراتیو',
-      reason: 'برای گرم‌تر شدن فضا',
-      specs: [
-         { label: 'متریال', value: 'سرامیک دست‌ساز' },
-         { label: 'رنگ', value: 'کرم مات' }
-      ]
+   if (isRug && selectedSize) {
+      // Find matching display label for the selected size code
+      const sizeIndex = product?.availableSizes?.indexOf(selectedSize) ?? -1;
+      const displaySize = sizeIndex >= 0 && product?.availableSizesDisplay?.[sizeIndex]
+         ? product.availableSizesDisplay[sizeIndex]
+         : selectedSize;
+      specs.push({ label: 'ابعاد', value: displaySize });
    }
-];
+
+   // For all products: show extra_details entries
+   if (product?.extraDetails) {
+      Object.entries(product.extraDetails).forEach(([key, value]) => {
+         const displayValue = Array.isArray(value) ? value.join('، ') : value;
+         specs.push({ label: key, value: displayValue });
+      });
+   }
+
+   return specs;
+}
 
 function copyToClipboard(text: string) {
    try {
@@ -106,19 +101,115 @@ function fallbackCopy(text: string) {
 
 export function TryOnResultPage() {
    const navigate = useNavigate();
+   const [searchParams] = useSearchParams();
+   const { productId } = useParams<{ productId: string }>();
    const { isLoggedIn, login } = useAuth();
-   const { selectedFile } = useUpload();
-   const { product } = useProduct();
+   const {
+      selectedFile,
+      visualizedImageUrl,
+      setVisualizedImageUrl,
+      resultImageId,
+      setResultImageId,
+      setResultImagePath,
+      selectedSize
+   } = useUpload();
+   const { product, setProduct } = useProduct();
+
+   // URL params for recovery (productId now comes from URL path)
+   const urlResultId = searchParams.get('resultId');
+   const urlResultPath = searchParams.get('path');
+
+   // Recovery state
+   const [isRecovering, setIsRecovering] = useState(false);
+   const [recoveryFailed, setRecoveryFailed] = useState(false);
+
+   /**
+    * Recovery effect - restore state from URL params or sessionStorage
+    * This enables page reload and bookmarking/sharing of result URLs
+    */
+   useEffect(() => {
+      const recoverState = async () => {
+         // Skip if we already have the visualized image
+         if (visualizedImageUrl) return;
+
+         setIsRecovering(true);
+
+         // Try to recover from URL params first, then sessionStorage
+         let recoveredPath = urlResultPath ? decodeURIComponent(urlResultPath) : null;
+         let recoveredId = urlResultId ? parseInt(urlResultId, 10) : null;
+
+         // If no URL params, try sessionStorage
+         if (!recoveredPath || !recoveredId) {
+            const storedResult = loadFromStorage<StoredTryOnResult>(STORAGE_KEYS.TRYON_RESULT);
+            if (storedResult) {
+               recoveredPath = recoveredPath || storedResult.path;
+               recoveredId = recoveredId || storedResult.id;
+            }
+         }
+
+         // If we found recovery data, restore state
+         if (recoveredPath) {
+            const recoveredUrl = getResultImageUrl(recoveredPath);
+            setVisualizedImageUrl(recoveredUrl);
+            if (recoveredId) setResultImageId(recoveredId);
+            if (recoveredPath) setResultImagePath(recoveredPath);
+            console.log('[TryOnResult] Recovered from:', urlResultPath ? 'URL' : 'storage', { path: recoveredPath, id: recoveredId });
+         } else {
+            // No recovery possible
+            setRecoveryFailed(true);
+            console.warn('[TryOnResult] No recovery data found');
+         }
+
+         setIsRecovering(false);
+      };
+
+      recoverState();
+   }, [visualizedImageUrl, urlResultPath, urlResultId, setVisualizedImageUrl, setResultImageId, setResultImagePath]);
+
+   /**
+    * Product recovery - restore product from URL path param
+    * productId is now always in URL: /try-on/:productId/result
+    */
+   useEffect(() => {
+      const recoverProduct = async () => {
+         // Skip if we already have the product
+         if (product) return;
+
+         // productId comes from URL path (always available)
+         if (productId) {
+            console.log('[TryOnResult] Recovering product from URL path:', productId);
+            try {
+               const loadedProduct = await getProductById(productId);
+               if (loadedProduct) {
+                  setProduct(loadedProduct as Product);
+               }
+            } catch (error) {
+               console.error('[TryOnResult] Failed to recover product:', error);
+            }
+         }
+      };
+
+      recoverProduct();
+   }, [product, productId, setProduct]);
+
+   // Use API result - no fallback, real data only
+   const resultImageUrl = visualizedImageUrl;
+
    const [originalImage, setOriginalImage] = useState<string | null>(null);
    const [showOriginal, setShowOriginal] = useState(false);
    const [isSaved, setIsSaved] = useState(false);
    const [isFullScreen, setIsFullScreen] = useState(false);
-   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+   const [_showDownloadMenu, setShowDownloadMenu] = useState(false);
    const [isMenuOpen, setIsMenuOpen] = useState(false);
    const [showExitConfirm, setShowExitConfirm] = useState(false);
    const [showAutoSaveNotice, setShowAutoSaveNotice] = useState(false);
    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); // Changed: Default to false
    const [pendingRedirect, setPendingRedirect] = useState(false);
+   const [isSubmittingToGallery, setIsSubmittingToGallery] = useState(false);
+   const [isSubmittedToGallery, setIsSubmittedToGallery] = useState(false);
+   const [isDownloading, setIsDownloading] = useState(false);
+   const [preparedDownloadData, setPreparedDownloadData] = useState<PreparedDownload | null>(null);
+   const [showDownloadReady, setShowDownloadReady] = useState(false);
 
    // --- Initial Auth Check (Removed forced login) ---
    // useEffect(() => {
@@ -163,8 +254,11 @@ export function TryOnResultPage() {
       }
    };
 
-   const handleAuthSuccess = (userData: User) => {
-      login(userData);
+   const handleAuthSuccess = (
+      userData: User,
+      tokens: { access: string; refresh: string }
+   ) => {
+      login(userData, tokens);
       setIsAuthModalOpen(false);
 
       if (pendingRedirect) {
@@ -173,37 +267,103 @@ export function TryOnResultPage() {
       }
    };
 
-   const confirmExit = () => {
-      setShowExitConfirm(false);
-      handleStoreNavigation();
-   };
-
-   // --- Store Navigation Logic ---
-   const handleStoreNavigation = () => {
-      // ALWAYS trigger the exit request modal when trying to leave via these specific buttons
-      setShowExitConfirm(true);
-   };
+   // Future use: const confirmExit = () => { setShowExitConfirm(false); handleStoreNavigation(); };
+   // Future use: const handleStoreNavigation = () => { setShowExitConfirm(true); };
 
    const executeStoreNavigation = () => {
-      const sellerName = product?.seller?.name || product?.brand;
-      const store = MOCK_STORES.find(s => s.name === sellerName);
-      if (store) {
-         navigate(`/store/${store.slug}`);
+      // Try shopSlug from API product first, then seller.slug
+      const shopSlug = product?.shopSlug || product?.seller?.slug;
+      if (shopSlug) {
+         navigate(`/store/${shopSlug}`);
       } else {
+         // Fallback to explore if no shop slug available
          navigate('/explore');
       }
    };
 
-   // --- Download Logic ---
-   const handleDownload = (type: 'before' | 'after' | 'both') => {
-      toast.info('در حال آماده‌سازی فایل...');
+   // --- Download Logic (two-phase for Chrome compatibility) ---
+   // Phase 1: Prepare download (async, no user gesture needed)
+   const handleDownload = async () => {
+      if (!resultImageUrl) {
+         toast.error('تصویری برای دانلود موجود نیست');
+         return;
+      }
+
+      setIsDownloading(true);
+
+      const result = await prepareDownload({
+         imageUrl: resultImageUrl,
+         filename: `homa-tryon-${Date.now()}`,
+         useAuth: true,
+      });
+
+      setIsDownloading(false);
+
+      if (result.success) {
+         setPreparedDownloadData(result.data);
+         setShowDownloadReady(true);
+      } else {
+         toast.error(getDownloadErrorMessage(result.error));
+      }
+
       setShowDownloadMenu(false);
    };
 
-   // --- Add to Cart Logic ---
-   const handleAddToCart = () => {
-      toast.success('به سبد خرید اضافه شد');
+   // Phase 2: Trigger download with fresh user gesture
+   const handleConfirmDownload = async () => {
+      if (!preparedDownloadData) return;
+
+      // Try share first on mobile
+      const shared = await triggerShare(preparedDownloadData);
+      if (shared) {
+         toast.success('تصویر آماده اشتراک‌گذاری شد');
+      } else {
+         // Fallback to download
+         triggerDownload(preparedDownloadData);
+         toast.success('تصویر دانلود شد');
+      }
+
+      setPreparedDownloadData(null);
+      setShowDownloadReady(false);
    };
+
+   // Cancel download
+   const handleCancelDownload = () => {
+      if (preparedDownloadData) {
+         preparedDownloadData.cleanup();
+      }
+      setPreparedDownloadData(null);
+      setShowDownloadReady(false);
+   };
+
+   // --- Gallery Submission ---
+   const handleSubmitToGallery = async () => {
+      // Require login to submit
+      if (!isLoggedIn) {
+         setIsAuthModalOpen(true);
+         return;
+      }
+
+      // Need image_id to submit
+      if (!resultImageId) {
+         toast.error('تصویری برای ارسال به گالری موجود نیست');
+         return;
+      }
+
+      setIsSubmittingToGallery(true);
+      const result = await submitToGallery({ image_id: resultImageId });
+      setIsSubmittingToGallery(false);
+
+      if (result.success) {
+         setIsSubmittedToGallery(true);
+         toast.success('تصویر شما برای نمایش در گالری ارسال شد');
+      } else {
+         toast.error(result.error || 'خطا در ارسال به گالری');
+      }
+   };
+
+   // --- Add to Cart Logic ---
+   // Future use: const handleAddToCart = () => { toast.success('به سبد خرید اضافه شد'); };
 
    useEffect(() => {
       if (selectedFile) {
@@ -216,46 +376,54 @@ export function TryOnResultPage() {
    // Extract content to avoid duplication
    interface ProductContentProps {
       product: Product | null;
-      toPersianDigits: (value: number | string) => string;
       setShowExitConfirm: React.Dispatch<React.SetStateAction<boolean>>;
       navigate: ReturnType<typeof useNavigate>;
       isDesktop: boolean;
+      selectedSize: string | null;
    }
 
    const ProductContent = ({
       product,
-      toPersianDigits,
       setShowExitConfirm,
       navigate,
-      isDesktop
+      isDesktop,
+      selectedSize
    }: ProductContentProps) => {
+      // Build specifications from real data
+      const specifications = buildSpecifications(product, selectedSize);
       return (
          <div className={`flex flex-col gap-12 ${isDesktop ? 'px-12' : 'px-8'} pb-[96px] bg-[#FDFDFB]`}>
             {/* Product Header Section - Editorial Style */}
-            <div className="flex flex-col gap-6 pb-8 border-b border-black/[0.08]">
-               <span className="text-[15px] font-bold uppercase tracking-[0.3em] text-black/40 text-[rgba(7,7,7,0.73)]">محصول تست شده</span>
-               <div className="flex gap-6 items-start">
-                  <div className="relative w-[100px] h-[100px] overflow-hidden flex-shrink-0 border border-black/[0.05] bg-black/[0.02]">
-                     <ImageWithFallback
-                        src={product?.image || MOCK_RESULT_IMAGE}
-                        alt={product?.name}
-                        className="w-full h-full object-cover grayscale-[0.2]"
-                     />
-                  </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                     <h1 className="text-[20px] font-light text-black leading-tight tracking-tight">{product?.name || 'مبل مدرن کالکشن پاییز'}</h1>
-                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-[17px] font-regular text-black">
-                           {toPersianDigits((product?.price || 3450000).toLocaleString())}
-                        </span>
-                        <span className="text-[11px] font-light text-black/60">تومان</span>
+            {product && (
+               <div className="flex flex-col gap-6 pb-8 border-b border-black/[0.08]">
+                  <span className="text-[15px] font-bold uppercase tracking-[0.3em] text-black/40 text-[rgba(7,7,7,0.73)]">محصول تست شده</span>
+                  <div className="flex gap-6 items-start">
+                     <div className="relative w-[100px] h-[100px] overflow-hidden flex-shrink-0 border border-black/[0.05] bg-black/[0.02]">
+                        <ImageWithFallback
+                           src={product.images?.[0]}
+                           alt={product.name}
+                           className="w-full h-full object-cover grayscale-[0.2]"
+                        />
                      </div>
-                     <span className="text-[9px] font-bold text-black/40 uppercase tracking-[0.2em] mt-1">
-                        {product?.seller?.name || product?.brand || 'HOMA COLLECTION'}
-                     </span>
+                     <div className="flex-1 flex flex-col gap-2">
+                        <h1 className="text-[20px] font-light text-black leading-tight tracking-tight">{product.name}</h1>
+                        {product.price && (
+                           <div className="flex items-baseline gap-1.5">
+                              <span className="text-[17px] font-regular text-black">
+                                 {formatPriceFromRial(product.price, false)}
+                              </span>
+                              <span className="text-[11px] font-light text-black/60">تومان</span>
+                           </div>
+                        )}
+                        {(product.seller?.name || product.brand) && (
+                           <span className="text-[9px] font-bold text-black/40 uppercase tracking-[0.2em] mt-1">
+                              {product.seller?.name || product.brand}
+                           </span>
+                        )}
+                     </div>
                   </div>
                </div>
-            </div>
+            )}
 
             {/* Navigation Links - Clean & Minimal */}
             <div className="flex flex-col border-b border-black/[0.08]">
@@ -278,50 +446,18 @@ export function TryOnResultPage() {
                </h3>
 
                <div className="flex flex-col">
-                  {[
-                     { label: 'ابعاد کلی', value: product?.dimensions || '210 x 95 x 85 cm' },
-                     { label: 'جنس و متریال', value: product?.material || 'چوب بلوط و کتان' },
-                     { label: 'دستورالعمل نگهداری', value: product?.maintenance || 'نظافت تخصصی' },
-                     { label: 'مبدا طراحی', value: product?.origin || 'کالکشن هُما ۲۰۲۴' }
-                  ].map((detail, idx) => (
-                     <div key={idx} className="flex justify-between items-center py-4 border-b border-black/[0.05]">
-                        <span className="text-[13px] text-black/40 font-light">{detail.label}</span>
-                        <span className="text-[13px] font-regular text-black" dir={detail.label === 'ابعاد کلی' ? 'ltr' : 'rtl'}>{detail.value}</span>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* Recommendations - Zara Look Grid */}
-            <div id="recommendations-section" className="flex flex-col gap-6 scroll-mt-24">
-               <div className="flex justify-between items-end border-b border-black/[0.05] pb-2">
-                  <h4 className="text-[14px] font-bold text-black uppercase tracking-[0.2em]">تکمیل چیدمان</h4>
-                  <span className="text-[10px] font-bold text-black/30 uppercase tracking-[0.1em]">{toPersianDigits(PRODUCT_CENTRIC_RECOMMENDATIONS.length)} مورد</span>
-               </div>
-
-               <div className="grid grid-cols-2 gap-4">
-                  {PRODUCT_CENTRIC_RECOMMENDATIONS.slice(0, 2).map((item) => (
-                     <div
-                        key={item.id}
-                        className="flex flex-col gap-4 group cursor-pointer"
-                     >
-                        <div className="relative aspect-[3/4] bg-black/[0.02] overflow-hidden">
-                           <ImageWithFallback
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover grayscale-[0.1] transition-transform duration-1000 group-hover:scale-105"
-                           />
+                  {specifications.length > 0 ? (
+                     specifications.map((detail, idx) => (
+                        <div key={idx} className="flex justify-between items-center py-4 border-b border-black/[0.05]">
+                           <span className="text-[13px] text-black/40 font-light">{detail.label}</span>
+                           <span className="text-[13px] font-regular text-black" dir={detail.label === 'ابعاد' ? 'ltr' : 'rtl'}>{detail.value}</span>
                         </div>
-                        <div className="flex flex-col gap-1">
-                           <h5 className="text-[11px] font-bold text-black uppercase tracking-[0.05em] leading-tight truncate">
-                              {item.name}
-                           </h5>
-                           <p className="text-[12px] font-regular text-black">
-                              {toPersianDigits(item.price.toLocaleString())} <span className="text-[10px] font-light opacity-60">تومان</span>
-                           </p>
-                        </div>
+                     ))
+                  ) : (
+                     <div className="py-4 text-center">
+                        <span className="text-[13px] text-black/40 font-light">مشخصات موجود نیست</span>
                      </div>
-                  ))}
+                  )}
                </div>
             </div>
 
@@ -394,6 +530,55 @@ export function TryOnResultPage() {
       );
    };
 
+   // Recovery loading state
+   if (isRecovering) {
+      return (
+         <div className="h-screen w-full bg-background flex flex-col items-center justify-center font-vazirmatn" dir="rtl">
+            <Header />
+            <div className="flex flex-col items-center gap-4">
+               <Loader2 size={40} className="animate-spin text-black/30" />
+               <p className="text-[14px] text-black/50">در حال بازیابی نتیجه...</p>
+            </div>
+         </div>
+      );
+   }
+
+   // Recovery failed state - no result data found
+   if (recoveryFailed && !resultImageUrl) {
+      return (
+         <div className="h-screen w-full bg-background flex flex-col font-vazirmatn" dir="rtl">
+            <Header />
+            <div className="flex-1 flex flex-col items-center justify-center px-6">
+               <div className="w-20 h-20 rounded-full bg-black/5 flex items-center justify-center mb-6">
+                  <AlertCircle size={40} className="text-black/30" />
+               </div>
+               <h1 className="text-[24px] font-bold text-black mb-3 text-center">
+                  نتیجه یافت نشد
+               </h1>
+               <p className="text-[14px] text-black/50 mb-8 text-center max-w-[300px] leading-relaxed">
+                  امکان بازیابی نتیجه وجود ندارد. ممکن است نتیجه در گالری شما ذخیره شده باشد.
+               </p>
+               <div className="flex flex-col gap-3 w-full max-w-[280px]">
+                  {isLoggedIn && (
+                     <button
+                        onClick={() => navigate('/account/gallery')}
+                        className="h-14 bg-black text-white text-[14px] font-bold uppercase tracking-[0.1em] hover:bg-black/90 transition-all flex items-center justify-center"
+                     >
+                        مشاهده گالری
+                     </button>
+                  )}
+                  <button
+                     onClick={() => navigate(`/try-on/${productId}/upload`)}
+                     className="h-14 bg-white border border-black/10 text-black text-[14px] font-medium hover:bg-black/[0.02] transition-all"
+                  >
+                     امتحان دوباره
+                  </button>
+               </div>
+            </div>
+         </div>
+      );
+   }
+
    return (
       <div className="h-screen w-full bg-background relative overflow-hidden flex flex-col font-vazirmatn select-none" dir="rtl">
          {/* 1. Mobile-only Global Header */}
@@ -435,20 +620,27 @@ export function TryOnResultPage() {
 
                <ProductContent
                   product={product}
-                  toPersianDigits={toPersianDigits}
                   setShowExitConfirm={setShowExitConfirm}
                   navigate={navigate}
                   isDesktop={true}
+                  selectedSize={selectedSize}
                />
             </div>
 
             {/* 3. Left Hero (Image Area) - Desktop Only */}
             <div className="hidden md:block flex-1 h-full bg-secondary relative overflow-hidden group">
-               <ImageWithFallback
-                  src={MOCK_RESULT_IMAGE}
-                  alt="Try-On Result"
-                  className={`w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
-               />
+               {/* Show result image only when available */}
+               {resultImageUrl ? (
+                  <AuthenticatedImage
+                     src={resultImageUrl}
+                     alt="Try-On Result"
+                     className={`w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+                  />
+               ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-black/5">
+                     <span className="text-black/30 text-sm">تصویر نتیجه موجود نیست</span>
+                  </div>
+               )}
                {originalImage && (
                   <img
                      src={originalImage}
@@ -473,16 +665,25 @@ export function TryOnResultPage() {
                      {/* Top Right: Actions */}
                      <div className="flex gap-3">
                         <button
+                           onClick={handleSubmitToGallery}
+                           disabled={isSubmittingToGallery || isSubmittedToGallery}
+                           className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSubmittedToGallery ? 'bg-white border-white text-green-600 shadow-lg' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'} ${isSubmittingToGallery ? 'opacity-50 cursor-not-allowed' : ''}`}
+                           title="اشتراک در گالری عمومی"
+                        >
+                           {isSubmittingToGallery ? <Loader2 size={20} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={20} /> : <Users size={20} />}
+                        </button>
+                        <button
                            onClick={() => setIsSaved(!isSaved)}
                            className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSaved ? 'bg-white border-white text-accent shadow-lg' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'}`}
                         >
                            <Heart size={20} className={isSaved ? 'fill-current' : ''} />
                         </button>
                         <button
-                           onClick={() => handleDownload('after')}
-                           className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90"
+                           onClick={() => handleDownload()}
+                           disabled={isDownloading}
+                           className={`w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90 ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                           <Download size={20} />
+                           {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
                         </button>
                      </div>
                   </div>
@@ -508,11 +709,18 @@ export function TryOnResultPage() {
                   <div
                      className={`relative w-full h-[65vh] z-0`}
                   >
-                     <ImageWithFallback
-                        src={MOCK_RESULT_IMAGE}
-                        alt="Try-On Result"
-                        className={`w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
-                     />
+                     {/* Show result image only when available */}
+                     {resultImageUrl ? (
+                        <AuthenticatedImage
+                           src={resultImageUrl}
+                           alt="Try-On Result"
+                           className={`w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+                        />
+                     ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-black/5">
+                           <span className="text-black/30 text-sm">تصویر نتیجه موجود نیست</span>
+                        </div>
+                     )}
 
                      {/* Full Screen Trigger Overlay (Invisible button over image) */}
                      <button
@@ -535,8 +743,15 @@ export function TryOnResultPage() {
                            <ArrowRight size={20} className="rotate-0" />
                         </button>
 
-                        {/* Top Right: Like + Save (Download) */}
+                        {/* Top Right: Like + Save (Download) + Gallery */}
                         <div className="flex gap-2">
+                           <button
+                              onClick={(e) => { e.stopPropagation(); handleSubmitToGallery(); }}
+                              disabled={isSubmittingToGallery || isSubmittedToGallery}
+                              className={`w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSubmittedToGallery ? 'text-green-600 bg-white' : 'text-white bg-black/20'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
+                           >
+                              {isSubmittingToGallery ? <Loader2 size={16} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={16} /> : <Users size={16} />}
+                           </button>
                            <button
                               onClick={(e) => { e.stopPropagation(); setIsSaved(!isSaved); }}
                               className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSaved ? 'text-accent bg-white' : 'text-white'}`}
@@ -544,10 +759,11 @@ export function TryOnResultPage() {
                               <Heart size={18} className={isSaved ? 'fill-current' : ''} />
                            </button>
                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDownload('after'); }}
-                              className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90"
+                              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                              disabled={isDownloading}
+                              className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90 ${isDownloading ? 'opacity-50' : ''}`}
                            >
-                              <Download size={18} />
+                              {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                            </button>
                         </div>
                      </div>
@@ -571,31 +787,24 @@ export function TryOnResultPage() {
                   <div className="relative -mt-6 bg-card rounded-t-[32px] pt-8 shadow-[0_-8px_30px_rgba(0,0,0,0.1)] z-30 min-h-[500px]">
                      <ProductContent
                         product={product}
-                        toPersianDigits={toPersianDigits}
                         setShowExitConfirm={setShowExitConfirm}
                         navigate={navigate}
                         isDesktop={false}
+                        selectedSize={selectedSize}
                      />
                   </div>
                </div>
 
                {/* Sticky Bottom Bar - Zara Editorial Style */}
                <div className="absolute bottom-0 left-0 right-0 p-6 bg-[#FDFDFB]/95 backdrop-blur-md border-t border-black/5 z-[100] flex gap-2">
-                  <button
-                     onClick={() => {
-                        const section = document.getElementById('recommendations-section');
-                        if (section) {
-                           section.scrollIntoView({
-                              behavior: 'smooth',
-                              block: 'start'
-                           });
-                        }
-                     }}
-                     className="flex-1 h-14 bg-black text-white text-[15px] font-bold uppercase tracking-[0.1em] transition-all active:scale-[0.98]"
-                  >
-                     تکمیل چیدمان
-                  </button>
-                  <div className="flex border border-black/10">
+                  <div className="flex-1 flex border border-black/10">
+                     <button
+                        onClick={handleSubmitToGallery}
+                        disabled={isSubmittingToGallery || isSubmittedToGallery}
+                        className={`w-14 h-14 flex items-center justify-center border-l border-black/10 transition-colors ${isSubmittedToGallery ? 'bg-green-50 text-green-600' : 'bg-white hover:bg-black/[0.02]'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
+                     >
+                        {isSubmittingToGallery ? <Loader2 size={18} strokeWidth={1.2} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={18} strokeWidth={1.2} /> : <Users size={18} strokeWidth={1.2} />}
+                     </button>
                      <button
                         onClick={() => setIsSaved(!isSaved)}
                         className="w-14 h-14 flex items-center justify-center border-l border-black/10 bg-white hover:bg-black/[0.02] transition-colors"
@@ -632,11 +841,18 @@ export function TryOnResultPage() {
 
                   {/* Full Screen Image Container (Maintains Aspect Ratio) */}
                   <div className="relative max-w-full max-h-[80vh] aspect-[4/5] overflow-hidden rounded-[20px] shadow-2xl border border-white/10">
-                     <ImageWithFallback
-                        src={MOCK_RESULT_IMAGE}
-                        alt="Try-On Result"
-                        className={`w-full h-full object-contain transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
-                     />
+                     {/* Show result image only when available */}
+                     {resultImageUrl ? (
+                        <AuthenticatedImage
+                           src={resultImageUrl}
+                           alt="Try-On Result"
+                           className={`w-full h-full object-contain transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+                        />
+                     ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-white/5">
+                           <span className="text-white/30 text-sm">تصویر نتیجه موجود نیست</span>
+                        </div>
+                     )}
                      {originalImage && (
                         <img
                            src={originalImage}
@@ -755,7 +971,53 @@ export function TryOnResultPage() {
             )}
          </AnimatePresence>
 
-         {/* 8. AUTH MODAL (Matches Studio Flow exactly) */}
+         {/* 8. DOWNLOAD READY MODAL */}
+         <AnimatePresence>
+            {showDownloadReady && (
+               <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md"
+               >
+                  <motion.div
+                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                     animate={{ scale: 1, opacity: 1, y: 0 }}
+                     exit={{ scale: 1.05, opacity: 0 }}
+                     className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[32px] p-8 max-w-[340px] w-full shadow-[0_24px_80px_rgba(0,0,0,0.15)] flex flex-col items-center text-center gap-6"
+                  >
+                     <div className="w-16 h-16 bg-white dark:bg-white/10 rounded-full flex items-center justify-center shadow-inner">
+                        <Download size={28} className="text-foreground" />
+                     </div>
+
+                     <div className="flex flex-col gap-2">
+                        <h3 className="text-[18px] font-bold text-foreground">تصویر آماده است</h3>
+                        <p className="text-[14px] text-foreground/70 leading-relaxed font-medium">
+                           برای ذخیره تصویر روی دکمه زیر کلیک کنید
+                        </p>
+                     </div>
+
+                     <div className="flex flex-col gap-3 w-full">
+                        <button
+                           onClick={handleConfirmDownload}
+                           className="w-full h-[56px] bg-foreground text-background rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                        >
+                           <Download size={18} />
+                           ذخیره تصویر
+                        </button>
+                        <button
+                           onClick={handleCancelDownload}
+                           className="w-full h-[56px] bg-white/20 text-foreground border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
+                        >
+                           انصراف
+                        </button>
+                     </div>
+                  </motion.div>
+               </motion.div>
+            )}
+         </AnimatePresence>
+
+         {/* 9. AUTH MODAL (Matches Studio Flow exactly) */}
          <AuthModal
             isOpen={isAuthModalOpen}
             onClose={() => {

@@ -161,7 +161,6 @@ const mockProducts: Record<string, Product> = {
     },
     brand: "Nordic Home",
     category: "furniture",
-    stock: 3,
     status: "active",
     images: [
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
@@ -238,7 +237,6 @@ const mockProducts: Record<string, Product> = {
       verified: false
     },
     category: "lighting",
-    stock: 12,
     status: "active",
     images: [
       "https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=800",
@@ -372,4 +370,35 @@ export function validateProduct(product: Product): {
   }
 
   return { isValid: true };
+}
+
+/**
+ * Get product by ID - unified function that works with both mock data and API
+ * Used for restoring product from URL params or sessionStorage
+ *
+ * @param productId - The product ID (could be mock ID like prod_18 or backend unique_link)
+ */
+export async function getProductById(productId: string): Promise<Product | null> {
+  // First try mock products (for local development/testing)
+  if (mockProducts[productId]) {
+    return mockProducts[productId];
+  }
+
+  // TODO: Add API call to fetch product by unique_link from backend
+  // For now, try to find in mock products by unique_link-like IDs
+  // In production, this should call: GET /products/{unique_link}/
+
+  // Try fetching from API if it looks like a backend ID (UUID format or unique_link)
+  try {
+    // Check if this might be a backend unique_link (not a prod_* ID)
+    if (!productId.startsWith('prod_')) {
+      // Try API call - this would need to be implemented based on your API
+      // For now, return null and let the caller handle it
+      console.log('[productLoader] Unknown product ID format:', productId);
+    }
+  } catch (error) {
+    console.error('[productLoader] Failed to fetch product:', error);
+  }
+
+  return null;
 }

@@ -17,6 +17,7 @@ import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000; // 30 seconds
+const UPLOAD_TIMEOUT = Number(import.meta.env.VITE_UPLOAD_TIMEOUT) || 180000; // 3 minutes for uploads
 
 /**
  * تنظیمات API
@@ -24,7 +25,30 @@ const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000; // 30 sec
 export const apiConfig = {
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT,
+  uploadTimeout: UPLOAD_TIMEOUT,
 };
+
+// =============================================================================
+// URL Builder Helper
+// =============================================================================
+
+/**
+ * Build full URL from base URL and endpoint
+ * Properly handles leading slashes to avoid new URL() path resolution issues
+ *
+ * @example
+ * buildURL('/users/otp/send/') => 'http://localhost:8000/api/v1/users/otp/send/'
+ */
+function buildURL(endpoint: string): URL {
+  // Remove leading slash from endpoint if present
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  // Ensure base URL ends with slash
+  const cleanBase = apiConfig.baseURL.endsWith('/')
+    ? apiConfig.baseURL
+    : `${apiConfig.baseURL}/`;
+
+  return new URL(cleanEndpoint, cleanBase);
+}
 
 // =============================================================================
 // Token Refresh State (Module-level singleton)
@@ -101,15 +125,28 @@ export function getRefreshToken(): string | null {
 }
 
 /**
- * Clear all auth data from storage
+ * Custom event name for forced logout (token refresh failure)
+ * AuthContext listens for this event to sync React state with localStorage
  */
-export function clearAuthData(): void {
+export const AUTH_LOGOUT_EVENT = 'auth:forced-logout';
+
+/**
+ * Clear all auth data from storage
+ * @param dispatchEvent - If true, dispatches a custom event for AuthContext to sync state (default: false)
+ */
+export function clearAuthData(dispatchEvent: boolean = false): void {
   localStorage.removeItem(AUTH_STORAGE_KEYS.AUTH_STATE);
   localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
   localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN);
   // Legacy cleanup
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
+
+  // Dispatch event so AuthContext can sync its React state
+  if (dispatchEvent) {
+    console.log('[Auth] Dispatching forced logout event');
+    window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT));
+  }
 }
 
 // =============================================================================
@@ -125,13 +162,15 @@ async function refreshAccessToken(): Promise<string | null> {
 
   if (!refreshToken) {
     console.log('[Auth] No refresh token available');
+    // Clear any stale auth data and notify AuthContext
+    clearAuthData(true);
     return null;
   }
 
   try {
     console.log('[Auth] Refreshing access token...');
 
-    const url = new URL('/users/refresh/', apiConfig.baseURL);
+    const url = buildURL('/users/refresh/');
     const response = await fetch(url.toString(), {
       method: 'POST',
       headers: {
@@ -143,26 +182,31 @@ async function refreshAccessToken(): Promise<string | null> {
 
     if (!response.ok) {
       console.log('[Auth] Refresh failed with status:', response.status);
-      // Refresh token is invalid/expired - clear all auth
-      clearAuthData();
+      // Refresh token is invalid/expired - clear all auth and notify AuthContext
+      clearAuthData(true);
       return null;
     }
 
     const data = await response.json();
 
-    // Token refresh endpoint returns { access: "..." } directly
-    const newAccessToken = data.access;
-
-    if (newAccessToken) {
-      setAccessToken(newAccessToken);
-      console.log('[Auth] Token refreshed successfully');
-      return newAccessToken;
+    if (data.access) {
+      // Token rotation: backend returns new refresh token along with access token
+      // Must store both to prevent blacklisted token issues on next refresh
+      if (data.refresh) {
+        setStoredTokens({ access: data.access, refresh: data.refresh });
+        console.log('[Auth] Token refreshed successfully (with new refresh token)');
+      } else {
+        // Fallback: only access token returned (non-rotating config)
+        setAccessToken(data.access);
+        console.log('[Auth] Token refreshed successfully');
+      }
+      return data.access;
     }
 
     return null;
   } catch (error) {
     console.error('[Auth] Token refresh error:', error);
-    clearAuthData();
+    clearAuthData(true);
     return null;
   }
 }
@@ -316,7 +360,7 @@ export interface APIResponse<T = unknown> {
 // Request Options
 // =============================================================================
 
-export interface RequestOptions extends Omit<RequestInit, 'headers'> {
+export interface RequestOptions extends Omit<RequestInit, 'headers' | 'signal'> {
   /**
    * Skip adding Authorization header (for public endpoints)
    */
@@ -329,6 +373,11 @@ export interface RequestOptions extends Omit<RequestInit, 'headers'> {
    * Skip automatic retry on 401 (prevent infinite loops)
    */
   skipRetryOn401?: boolean;
+  /**
+   * External AbortSignal for request cancellation
+   * If provided, the request will use this signal instead of the internal timeout controller
+   */
+  signal?: AbortSignal;
 }
 
 // =============================================================================
@@ -343,11 +392,11 @@ export async function apiGet<T>(
   params?: Record<string, unknown>,
   options?: RequestOptions
 ): Promise<APIResponse<T>> {
-  const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, ...fetchOptions } = options || {};
+  const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, signal: externalSignal, ...fetchOptions } = options || {};
 
   try {
     // ساخت URL با query parameters
-    const url = new URL(endpoint, apiConfig.baseURL);
+    const url = buildURL(endpoint);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -358,17 +407,27 @@ export async function apiGet<T>(
 
     console.log('[API GET]', url.toString());
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
+    // Use external signal if provided, otherwise create timeout-based controller
+    let controller: AbortController | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let signal: AbortSignal;
+
+    if (externalSignal) {
+      signal = externalSignal;
+    } else {
+      controller = new AbortController();
+      timeoutId = setTimeout(() => controller!.abort(), apiConfig.timeout);
+      signal = controller.signal;
+    }
 
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: buildHeaders(customHeaders, skipAuth),
-      signal: controller.signal,
+      signal,
       ...fetchOptions,
     });
 
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
 
     // Handle 401 with automatic retry
     if (response.status === 401 && !skipRetryOn401) {
@@ -442,7 +501,7 @@ export async function apiPost<T>(
   const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, ...fetchOptions } = options || {};
 
   try {
-    const url = new URL(endpoint, apiConfig.baseURL);
+    const url = buildURL(endpoint);
     console.log('[API POST]', url.toString(), body);
 
     const controller = new AbortController();
@@ -520,10 +579,18 @@ export async function apiPost<T>(
 
 /**
  * آپلود فایل با FormData
+ *
+ * @param endpoint - API endpoint path
+ * @param file - File to upload
+ * @param fieldName - Field name for the file in FormData (default: 'file')
+ * @param additionalData - Additional form data fields
+ * @param onProgress - Progress callback (0-100)
+ * @param options - Request options
  */
 export async function apiUpload<T>(
   endpoint: string,
   file: File,
+  fieldName: string = 'file',
   additionalData?: Record<string, unknown>,
   onProgress?: (progress: number) => void,
   options?: RequestOptions
@@ -531,15 +598,16 @@ export async function apiUpload<T>(
   const { skipAuth = false, skipRetryOn401 = false } = options || {};
 
   try {
-    const url = new URL(endpoint, apiConfig.baseURL);
+    const url = buildURL(endpoint);
     console.log('[API Upload]', url.toString(), {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
+      fieldName,
     });
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append(fieldName, file);
 
     // اضافه کردن data های اضافی
     if (additionalData) {
@@ -574,7 +642,7 @@ export async function apiUpload<T>(
 
           if (newToken) {
             // Retry the upload with new token
-            const retryResult = await apiUpload<T>(endpoint, file, additionalData, onProgress, {
+            const retryResult = await apiUpload<T>(endpoint, file, fieldName, additionalData, onProgress, {
               ...options,
               skipRetryOn401: true
             });
@@ -636,7 +704,7 @@ export async function apiUpload<T>(
 
       // Start request
       xhr.open('POST', url.toString());
-      xhr.timeout = apiConfig.timeout;
+      xhr.timeout = apiConfig.uploadTimeout;
 
       // Add Authorization header if available and not skipped
       if (!skipAuth && tokens?.access) {
@@ -666,7 +734,7 @@ export async function apiPut<T>(
   const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, ...fetchOptions } = options || {};
 
   try {
-    const url = new URL(endpoint, apiConfig.baseURL);
+    const url = buildURL(endpoint);
     console.log('[API PUT]', url.toString(), body);
 
     const controller = new AbortController();
@@ -743,7 +811,7 @@ export async function apiDelete<T>(
   const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, ...fetchOptions } = options || {};
 
   try {
-    const url = new URL(endpoint, apiConfig.baseURL);
+    const url = buildURL(endpoint);
     console.log('[API DELETE]', url.toString());
 
     const controller = new AbortController();
@@ -807,6 +875,38 @@ export async function apiDelete<T>(
       statusCode: 500,
     };
   }
+}
+
+// =============================================================================
+// Authenticated Image Fetching
+// =============================================================================
+
+/**
+ * Fetch an image URL with authentication headers and return a blob URL
+ * This is needed because <img> tags don't send Authorization headers
+ *
+ * @param imageUrl - The API URL for the image (can be full URL or relative path)
+ * @returns Object URL (blob:...) that can be used in <img src>
+ */
+export async function fetchAuthenticatedImage(imageUrl: string): Promise<string> {
+  const tokens = getStoredTokens();
+  const headers: Record<string, string> = {};
+
+  if (tokens?.access) {
+    headers['Authorization'] = `Bearer ${tokens.access}`;
+  }
+
+  const response = await fetch(imageUrl, { headers });
+
+  if (!response.ok) {
+    throw new APIError(
+      `خطا در بارگذاری تصویر: ${response.status}`,
+      response.status
+    );
+  }
+
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
 }
 
 /**

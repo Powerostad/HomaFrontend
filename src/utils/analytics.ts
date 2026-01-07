@@ -171,17 +171,14 @@ class AnalyticsService {
   /**
    * ارسال به backend (placeholder)
    */
-  private async sendToBackend(event: AnalyticsEvent) {
-    // در production، این تابع باید رویداد را به backend ارسال کند
-    // مثلاً با استفاده از fetch یا Supabase
-    
-    // مثال:
-    // await fetch('/api/analytics', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(event),
-    // });
-  }
+  // Future use: Placeholder for sending analytics events to backend
+  // private async sendToBackend(event: AnalyticsEvent) {
+  //   await fetch('/api/analytics', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(event),
+  //   });
+  // }
 
   /**
    * نمایش گزارش KPIs در console

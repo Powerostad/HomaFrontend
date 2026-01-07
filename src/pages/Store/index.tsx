@@ -1,83 +1,218 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, SlidersHorizontal, ArrowRight, ArrowLeft, Sparkles, ChevronRight } from 'lucide-react';
-import { MOCK_STORES, Store, DecorExample } from '../../data/mock';
-import { useApp } from '../../context/AppContext';
+import { Star, Sparkles, RefreshCw, Store as StoreIcon } from 'lucide-react';
+// SlidersHorizontal - TODO: Uncomment when filter UI is implemented
+import { useProduct, useShop } from '../../context/AppProviders';
 import { trackEvent } from '../../utils/analytics';
 import { motion } from 'motion/react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { GalleryProductCard } from '../../components/store/GalleryProductCard';
 import { Skeleton } from '../../components/ui/skeleton';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose, DrawerDescription } from '../../components/ui/drawer';
 import { Button } from '../../components/ui/button';
 import { ContextBar } from '../../components/ContextBar';
 import { Header } from '../../components/Header';
 import { HomaLoader } from '../../components/HomaLoader';
+import { fetchProductsByShop } from '../../services/productService';
+import { formatPriceFromRial, toPersianDigits } from '../../utils/formatters';
+import type { Shop } from '../../types/shop';
+import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
 
-const exampleImage = 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200';
+/**
+ * Convert APIProduct to the legacy Product type for existing components
+ */
+function apiProductToProduct(apiProduct: APIProduct): Product {
+  return {
+    id: apiProduct.uniqueLink, // Use uniqueLink as ID for navigation
+    name: apiProduct.name,
+    price: apiProduct.price,
+    category: apiProduct.categoryDisplay,
+    images: [apiProduct.imageUrl],
+    thumbnail: apiProduct.imageUrl,
+    brand: apiProduct.shopName,
+    description: apiProduct.description,
+    currency: 'تومان',
+    status: 'active',
+    seller: {
+      name: apiProduct.shopName,
+      verified: true,
+    },
+  };
+}
 
-type GridItem =
-  | { type: 'homa-special'; data: Product }
-  | { type: 'product'; data: Product }
-  | { type: 'decor'; data: DecorExample };
+// =============================================================================
+// Main Component
+// =============================================================================
 
 export function StorePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { setProduct } = useApp();
-  const [store, setStore] = useState<Store | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'popular' | 'new'>('all');
-  const [gridItems, setGridItems] = useState<GridItem[]>([]);
+  const { setProduct } = useProduct();
+  const { getShop, getError: getShopError, invalidateShop } = useShop();
 
+  // State
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<APIProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [_activeTab, _setActiveTab] = useState<'all' | 'popular' | 'new'>('all'); // TODO: Implement tab filtering
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Track if initial load is done to prevent showing loader on cached data
+  const initialLoadDone = useRef(false);
+
+  // Track which shop's products we've already fetched to prevent duplicate requests
+  const productsFetchedForShop = useRef<string | null>(null);
+
+  const PAGE_SIZE = 20;
+
+  // Derived state from context
+  const shopError = slug ? getShopError(slug) : null;
+
+  // Fetch shop details and products
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const foundStore = MOCK_STORES.find(s => s.slug.toLowerCase() === slug?.toLowerCase());
-      setStore(foundStore);
+    if (!slug) return;
 
-      if (foundStore) {
-        const interleaved: GridItem[] = [];
-        const products = [...foundStore.products];
-        const decors = [...(foundStore.decorExamples || [])];
+    // Reset refs when slug changes (navigating to different shop)
+    initialLoadDone.current = false;
+    productsFetchedForShop.current = null;
 
-        let productIdx = 0;
-        let decorIdx = 0;
+    const abortController = new AbortController();
 
-        // Add HOMA Special at the beginning
-        if (products.length > 0) {
-          interleaved.push({ type: 'homa-special', data: products[productIdx++] });
-        }
+    const loadShopAndProducts = async () => {
+      // Step 1: Get shop from cache or fetch (ShopContext handles caching)
+      const shopData = await getShop(slug, { signal: abortController.signal });
 
-        while (productIdx < products.length || decorIdx < decors.length) {
-          for (let i = 0; i < 4 && productIdx < products.length; i++) {
-            interleaved.push({ type: 'product', data: products[productIdx++] });
-          }
-          if (decorIdx < decors.length) {
-            interleaved.push({ type: 'decor', data: decors[decorIdx++] });
-          }
-        }
+      // Don't update state if request was aborted (component unmounting)
+      if (abortController.signal.aborted) return;
 
-        setGridItems(interleaved);
-        trackEvent('view_store', { storeId: foundStore.id, storeName: foundStore.name });
+      if (!shopData) {
+        // Error is already set in context
+        initialLoadDone.current = true;
+        return;
       }
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [slug]);
+
+      setShop(shopData);
+      initialLoadDone.current = true;
+
+      // Track analytics
+      trackEvent('view_store', { storeId: shopData.id, storeName: shopData.name });
+
+      // Step 2: Fetch products for this shop
+      // Skip if we've already fetched products for this shop (prevents duplicate requests on re-renders)
+      if (productsFetchedForShop.current === shopData.name) {
+        return;
+      }
+
+      setIsLoadingProducts(true);
+      setCurrentPage(1);
+      productsFetchedForShop.current = shopData.name; // Mark as fetching
+
+      const productsResult = await fetchProductsByShop(shopData.name, { page_size: PAGE_SIZE, page: 1 }, { signal: abortController.signal });
+
+      // Don't update state if request was aborted (component unmounting)
+      if (abortController.signal.aborted) {
+        // Reset the ref so next mount can fetch
+        productsFetchedForShop.current = null;
+        return;
+      }
+
+      if (productsResult.success && productsResult.data) {
+        setProducts(productsResult.data.products);
+        setHasMore(productsResult.data.hasMore);
+      } else {
+        // Don't show error if just no products - show empty state
+        setProducts([]);
+        setHasMore(false);
+      }
+
+      setIsLoadingProducts(false);
+    };
+
+    loadShopAndProducts();
+
+    return () => {
+      abortController.abort(); // Cleanup: abort in-flight requests
+    };
+  }, [slug, getShop]);
 
   const handleTryOn = (product: Product) => {
     trackEvent('click_try_on', { productId: product.id, source: 'store_page' });
     setProduct(product);
-    navigate('/try-on/upload');
+    // Use product's uniqueLink or id in URL path
+    const productUrlId = (product as unknown as { uniqueLink?: string }).uniqueLink
+      || (product as unknown as { unique_link?: string }).unique_link
+      || product.id;
+    navigate(`/try-on/${productUrlId}/upload`);
   };
 
-  if (isLoading) {
+  const handleRetry = () => {
+    if (slug) {
+      // Invalidate cache and re-trigger fetch
+      invalidateShop(slug);
+      initialLoadDone.current = false;
+      setShop(null);
+      // Force re-render to trigger useEffect
+      window.location.reload();
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!shop || isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    const productsResult = await fetchProductsByShop(shop.name, {
+      page_size: PAGE_SIZE,
+      page: nextPage
+    });
+
+    if (productsResult.success && productsResult.data) {
+      setProducts(prev => [...prev, ...productsResult.data!.products]);
+      setHasMore(productsResult.data.hasMore);
+      setCurrentPage(nextPage);
+    }
+
+    setIsLoadingMore(false);
+  };
+
+  // Loading state - show loader if:
+  // 1. Initial load hasn't completed yet (no shop, no error), OR
+  // 2. Actively loading from context
+  // This prevents flash of "not found" before loading state kicks in
+  if (!initialLoadDone.current && !shop && !shopError) {
     return <HomaLoader message="در حال دریافت اطلاعات فروشگاه..." />;
   }
 
-  if (!store && !isLoading) {
+  // Error state
+  if (shopError && !shop) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
+        <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
+          <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
+        </div>
+        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{shopError}</h2>
+        <div className="flex gap-3 mt-4">
+          <Button
+            onClick={handleRetry}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} />
+            تلاش مجدد
+          </Button>
+          <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
+            بازگشت
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!shop) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
         <h2 className="text-xl font-bold mb-2 font-vazirmatn">فروشگاه پیدا نشد</h2>
@@ -99,48 +234,58 @@ export function StorePage() {
         items={[
           { label: 'خانه', href: '/' },
           { label: 'فروشگاه‌ها', href: '/explore' },
-          { label: store?.name || 'فروشگاه' }
+          { label: shop.name }
         ]}
       />
 
       {/* 3. STORE HEADER (EDITORIAL IDENTITY) */}
       <header className="pt-6 pb-3 px-6 md:px-16 max-w-[1440px] mx-auto w-full">
-        {!isLoading && store && (
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white border border-black/5 overflow-hidden shrink-0 shadow-sm">
-                  <ImageWithFallback src={store.logo} className="w-full h-full object-cover scale-110" />
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-[28px] md:text-[34px] font-medium text-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                    {store.name}
-                  </h1>
-                  <div className="flex items-center gap-2">
-                    <div className="px-2 py-0.5 bg-black/[0.03] rounded-sm flex items-center gap-1.5 border border-black/[0.05]">
-                      <Star size={10} className="fill-black text-black opacity-30" />
-                      <span className="text-[10px] font-bold text-black/40">{toPersianDigits(store.rating)}</span>
-                    </div>
-                    <span className="text-[11px] text-black/30 font-medium uppercase tracking-widest">{toPersianDigits(store.productCount)} محصول منتخب</span>
-                  </div>
-                </div>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white border border-black/5 overflow-hidden shrink-0 shadow-sm">
+                {shop.logoUrl ? (
+                  <ImageWithFallback src={shop.logoUrl} className="w-full h-full object-cover scale-110" />
+                ) : (
+                  <StoreIcon size={32} className="text-black/20" strokeWidth={1} />
+                )}
               </div>
-
-              <div className="flex items-center gap-4">
-                <p className="hidden md:block text-[13px] text-black/40 font-medium leading-relaxed max-w-xs text-start">
-                  مجموعه‌ای از بهترین کالاهای {store.name} که توسط تیم طراحی هُما برای چیدمان‌های مدرن دست‌چین شده‌اند.
-                </p>
+              <div className="space-y-1">
+                <h1 className="text-[28px] md:text-[34px] font-medium text-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                  {shop.name}
+                </h1>
+                <div className="flex items-center gap-2">
+                  <div className="px-2 py-0.5 bg-black/[0.03] rounded-sm flex items-center gap-1.5 border border-black/[0.05]">
+                    <Star size={10} className="fill-black text-black opacity-30" />
+                    <span className="text-[10px] font-bold text-black/40">@{shop.username}</span>
+                  </div>
+                  <span className="text-[11px] text-black/30 font-medium uppercase tracking-widest">{toPersianDigits(shop.productCount)} محصول</span>
+                </div>
               </div>
             </div>
 
-            <div className="h-px w-full bg-black/[0.05] mt-2" />
+            <div className="flex items-center gap-4">
+              <p className="hidden md:block text-[13px] text-black/40 font-medium leading-relaxed max-w-xs text-start">
+                مجموعه‌ای از بهترین کالاهای {shop.name} که توسط تیم طراحی هُما برای چیدمان‌های مدرن دست‌چین شده‌اند.
+              </p>
+            </div>
           </div>
-        )}
+
+          <div className="h-px w-full bg-black/[0.05] mt-2" />
+        </div>
       </header>
 
       {/* 4. FILTER ROW (Zara Home Editorial) */}
       <div className="px-6 md:px-16 max-w-[1440px] mx-auto w-full mb-12 flex items-center justify-between mt-6">
         <div className="flex items-center gap-1.5">
+          {/* Only show "همه" tab for now */}
+          <button
+            className="h-9 px-6 rounded-none text-[10px] font-bold uppercase tracking-[0.2em] transition-all border bg-black text-white border-black"
+            style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
+          >
+            همه
+          </button>
+          {/* TODO: Uncomment when tab filtering is implemented
           {(['all', 'popular', 'new'] as const).map((tab) => (
             <button
               key={tab}
@@ -156,71 +301,105 @@ export function StorePage() {
               {tab === 'new' && 'جدید'}
             </button>
           ))}
+          */}
         </div>
 
-        <button className="flex items-center gap-2 px-4 py-2 border border-black/10 rounded-none hover:bg-black/[0.02] transition-colors group">
+        {/* TODO: Uncomment when filter functionality is implemented */}
+        {/* <button className="flex items-center gap-2 px-4 py-2 border border-black/10 rounded-none hover:bg-black/[0.02] transition-colors group">
           <span className="text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] group-hover:text-black transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>فیلترها</span>
           <SlidersHorizontal size={14} className="text-black/40 group-hover:text-black transition-colors" strokeWidth={1.5} />
-        </button>
+        </button> */}
       </div>
 
-      {/* 5. PRODUCT GRID (CONTINUOUS) */}
+      {/* 5. PRODUCT GRID */}
       <main className="px-6 md:px-16 max-w-[1440px] mx-auto w-full pb-32">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-[16px] gap-y-[18px] md:gap-y-[20px]">
-          {isLoading ? (
-            [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          {isLoadingProducts ? (
+            // Loading skeleton
+            [...Array(8)].map((_, i) => (
               <div key={i} className="flex flex-col gap-2">
                 <Skeleton className="aspect-[4/5] w-full rounded-[16px]" />
                 <Skeleton className="w-2/3 h-4" />
                 <Skeleton className="w-1/2 h-3" />
               </div>
             ))
+          ) : products.length === 0 ? (
+            // Empty state
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
+                <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[16px] font-medium text-black/80 mb-2">
+                هنوز محصولی اضافه نشده
+              </h3>
+              <p className="text-[13px] text-black/40 max-w-xs">
+                این فروشگاه هنوز محصولی برای نمایش ندارد.
+              </p>
+            </div>
           ) : (
-            gridItems.map((item: GridItem, idx: number) => {
-              if (item.type === 'homa-special') {
+            // Products grid
+            products.map((apiProduct, idx) => {
+              const product = apiProductToProduct(apiProduct);
+              const isFirst = idx === 0 && products.length > 1;
+
+              if (isFirst && apiProduct.isPromoted) {
                 return (
                   <motion.div
-                    key="homa-special"
+                    key={apiProduct.id}
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 1 }}
                     className="col-span-2 md:col-span-2"
                   >
-                    <HomaSpecialCard product={item.data} onTryOn={() => handleTryOn(item.data)} />
+                    <HomaSpecialCard
+                      product={product}
+                      apiProduct={apiProduct}
+                      onTryOn={() => handleTryOn(product)}
+                    />
                   </motion.div>
                 );
               }
-              if (item.type === 'product') {
-                const displayProduct = item.data;
-                return (
-                  <motion.div
-                    key={`${displayProduct.id}-${idx}`}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
-                    onClick={() => navigate(`/store/${slug}/product/${displayProduct.id}`)}
-                  >
-                    <GalleryProductCard product={displayProduct} onTryOn={() => handleTryOn(displayProduct)} />
-                  </motion.div>
-                );
-              } else {
-                return (
-                  <motion.div
-                    key={`${item.data.id}-${idx}`}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1 }}
-                  >
-                    <DecorGridCard decor={item.data} />
-                  </motion.div>
-                );
-              }
+
+              return (
+                <motion.div
+                  key={apiProduct.id}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  onClick={() => navigate(`/store/${slug}/product/${apiProduct.uniqueLink}`)}
+                >
+                  <GalleryProductCard
+                    product={product}
+                    onTryOn={() => handleTryOn(product)}
+                  />
+                </motion.div>
+              );
             })
           )}
         </div>
+
+        {/* Load More Button */}
+        {!isLoadingProducts && products.length > 0 && hasMore && (
+          <div className="flex justify-center mt-12 mb-8">
+            <Button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              variant="outline"
+              className="h-12 px-8 rounded-none border-black/10 text-black hover:bg-black/5 text-[12px] font-bold tracking-widest"
+            >
+              {isLoadingMore ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-black/20 border-t-black/60 rounded-full animate-spin" />
+                  در حال بارگذاری...
+                </span>
+              ) : (
+                'مشاهده بیشتر'
+              )}
+            </Button>
+          </div>
+        )}
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#FDFDFB] to-transparent pointer-events-none z-10" />
@@ -228,53 +407,32 @@ export function StorePage() {
   );
 }
 
-// 4) DECOR GRID CARD - Minimal & Faded Label
-function DecorGridCard({ decor }: { decor: DecorExample }) {
-  return (
-    <div className="flex flex-col group cursor-pointer w-full">
-      {/* Editorial Style: Sharp Corners */}
-      <div className="relative aspect-[4/5] w-full rounded-none overflow-hidden bg-black/[0.02]">
-        <ImageWithFallback
-          src={decor.image}
-          alt={decor.title}
-          className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-[1.01]"
-        />
+// =============================================================================
+// Sub-components
+// =============================================================================
 
-        {/* Real Home Label: Small, 0.6 opacity, minimal corner label */}
-        <div className="absolute top-4 right-4 opacity-60">
-          <div className="px-2 py-1 bg-black/10 backdrop-blur-sm border border-white/10">
-            <span className="text-[9px] font-bold text-white tracking-widest uppercase">فضای واقعی</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col pt-3 px-0">
-        <h3 className="text-[13px] md:text-[14px] font-medium text-black/60 line-clamp-1 leading-tight group-hover:text-black transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-          {decor.title}
-        </h3>
-        <p className="text-[10px] font-bold text-black/20 mt-2 tracking-widest uppercase">
-          {toPersianDigits(decor.productCount)} محصول هماهنگ
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// 7) HOMA SPECIAL RECOMMENDATION CARD
-function HomaSpecialCard({ product, onTryOn }: { product: Product; onTryOn: () => void }) {
+function HomaSpecialCard({
+  product,
+  apiProduct,
+  onTryOn
+}: {
+  product: Product;
+  apiProduct: APIProduct;
+  onTryOn: () => void;
+}) {
   const navigate = useNavigate();
   const { slug } = useParams();
 
   return (
     <div
       className="relative w-full aspect-[1.6/1] rounded-none overflow-hidden group cursor-pointer bg-[var(--accent-light)] border border-black/[0.03] flex flex-col md:flex-row"
-      onClick={() => navigate(`/store/${slug}/product/${product.id}`)}
+      onClick={() => navigate(`/store/${slug}/product/${apiProduct.uniqueLink}`)}
     >
       {/* Content Section */}
       <div className="absolute inset-0 md:relative md:w-1/2 p-5 md:p-14 flex flex-col justify-between z-20">
         <div className="space-y-3 md:space-y-6">
           <div className="inline-flex items-center gap-2 border-b border-[var(--accent)] text-[var(--accent)] pb-1 w-fit">
-            <Sparkles size={10} md:size={12} strokeWidth={2} />
+            <Sparkles size={12} strokeWidth={2} />
             <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em]">پیشنهاد ادیتوریال هُما</span>
           </div>
 
@@ -299,7 +457,7 @@ function HomaSpecialCard({ product, onTryOn }: { product: Product; onTryOn: () =
             امتحان در فضای من
           </button>
           <span className="text-[14px] md:text-[18px] font-bold text-[var(--accent)]">
-            {toPersianDigits(product.price?.toLocaleString() || '۰')} تومان
+            {formatPriceFromRial(product.price ?? 0)}
           </span>
         </div>
       </div>
@@ -307,7 +465,7 @@ function HomaSpecialCard({ product, onTryOn }: { product: Product; onTryOn: () =
       {/* Image Section */}
       <div className="absolute inset-0 md:relative md:w-1/2 overflow-hidden z-10">
         <ImageWithFallback
-          src={product.thumbnail || product.image}
+          src={apiProduct.imageUrl}
           className="w-full h-full object-cover grayscale-[0.05] group-hover:grayscale-0 transition-transform duration-[2000ms] group-hover:scale-[1.05]"
         />
         <div className="absolute inset-0 bg-gradient-to-l from-[var(--accent-light)] via-[var(--accent-light)]/90 to-transparent md:hidden" />
@@ -315,12 +473,3 @@ function HomaSpecialCard({ product, onTryOn }: { product: Product; onTryOn: () =
     </div>
   );
 }
-
-// Helper for Persian Digits
-const toPersianDigits = (num: number | string) => {
-  if (num === undefined || num === null) return '';
-  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return num
-    .toString()
-    .replace(/\d/g, (x) => farsiDigits[parseInt(x)]);
-};

@@ -1,37 +1,117 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Camera,
-  Sparkles,
-  Maximize2,
-  Zap,
-  ScanLine
-} from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../../context/AppProviders';
-import { useAuth, useUpload, useProduct } from '../../context/AppProviders';
+import { useUpload, useProduct } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
-import { DecisionPointOverlay } from '../../components/DecisionPointOverlay';
-import { AuthModal } from '../../components/AuthModal';
-import type { User } from '../../context/AuthContext';
+import { SizeSelectionModal, type SizeOption } from '../../components/SizeSelectionModal';
+import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
+import { getProductById } from '../../utils/productLoader';
+import { toast } from 'sonner';
+import type { Product } from '../../types/product';
+import type { APIProduct } from '../../types/apiProduct';
+
+/**
+ * Extract available sizes from a product (handles both API and mock formats)
+ *
+ * @param product - Product from context (could be API or mock format)
+ * @returns Array of size options with code and display label
+ */
+function getAvailableSizes(product: Product | APIProduct | null): SizeOption[] {
+  if (!product) return [];
+
+  // Check raw backend format (available_sizes - snake_case from API response)
+  // This is the most common case when product comes directly from backend
+  const backendProduct = product as unknown as {
+    available_sizes?: string[];
+    available_sizes_display?: string[];
+  };
+  if (backendProduct.available_sizes && backendProduct.available_sizes.length > 0) {
+    const displayLabels = backendProduct.available_sizes_display;
+    return backendProduct.available_sizes.map((code, index) => ({
+      code,
+      display: displayLabels?.[index] || code,
+    }));
+  }
+
+  // Check transformed API product format (availableSizes - camelCase)
+  const apiProduct = product as APIProduct;
+  if (apiProduct.availableSizes && apiProduct.availableSizes.length > 0) {
+    const displayLabels = (apiProduct as unknown as { availableSizesDisplay?: string[] }).availableSizesDisplay;
+    return apiProduct.availableSizes.map((code, index) => ({
+      code,
+      display: displayLabels?.[index] || code,
+    }));
+  }
+
+  // Check mock product format (variants.sizes)
+  const mockProduct = product as Product;
+  if (mockProduct.variants?.sizes && mockProduct.variants.sizes.length > 0) {
+    return mockProduct.variants.sizes
+      .filter((s) => s.available)
+      .map((s) => ({ code: s.name, display: s.name }));
+  }
+
+  return [];
+}
 
 export function TryOnUploadPage() {
   const navigate = useNavigate();
+  const { productId } = useParams<{ productId: string }>();
   const { trackKPI } = useSession();
-  const { login } = useAuth();
-  const { setSelectedFile } = useUpload();
-  const { product } = useProduct();
-  const [preview, setPreview] = useState<string | null>(null);
-  const [showDecision, setShowDecision] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
+  const { setSelectedFile, setSelectedSize } = useUpload();
+  const { product, setProduct } = useProduct();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const GUIDELINES = [
-    { id: 'frame', label: 'کل فضا داخل کادر', icon: <Maximize2 size={12} strokeWidth={1.5} /> },
-    { id: 'light', label: 'نور کافی و طبیعی', icon: <Zap size={12} strokeWidth={1.5} /> },
-    { id: 'sharp', label: 'عکس صاف و شفاف', icon: <ScanLine size={12} strokeWidth={1.5} /> },
-  ];
+  // Size selection modal state
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [availableSizes, setAvailableSizes] = useState<SizeOption[]>([]);
+
+  /**
+   * Load product from URL param on mount
+   * Product ID is now always in URL path: /try-on/:productId/upload
+   */
+  useEffect(() => {
+    const loadProduct = async () => {
+      // Validate productId from URL
+      if (!productId) {
+        toast.error('شناسه محصول یافت نشد');
+        navigate('/explore');
+        return;
+      }
+
+      // If we already have the correct product loaded, just save to storage
+      const currentProductId = (product as Product)?.id ||
+        (product as unknown as { uniqueLink?: string })?.uniqueLink ||
+        (product as unknown as { unique_link?: string })?.unique_link;
+
+      if (product && currentProductId === productId) {
+        saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
+        return;
+      }
+
+      // Load product by ID from URL
+      console.log('[TryOnUpload] Loading product from URL:', productId);
+      try {
+        const loadedProduct = await getProductById(productId);
+        if (loadedProduct) {
+          setProduct(loadedProduct as Product);
+          saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
+        } else {
+          toast.error('محصول یافت نشد');
+          navigate('/explore');
+        }
+      } catch (error) {
+        console.error('[TryOnUpload] Failed to load product:', error);
+        toast.error('خطا در بارگذاری محصول');
+        navigate('/explore');
+      }
+    };
+
+    loadProduct();
+  }, [productId, product, setProduct, navigate]);
 
   const EXAMPLES = {
     good: {
@@ -47,28 +127,64 @@ export function TryOnUploadPage() {
     }
   };
 
+  /**
+   * Handle file selection with size logic:
+   * - 0 sizes: proceed without size
+   * - 1 size: auto-select and proceed
+   * - 2+ sizes: show modal for user selection
+   */
   const handleFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
       if (trackKPI) trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-        setShowDecision(true);
-      };
-      reader.readAsDataURL(file);
+
+      // Check for available sizes
+      const sizes = getAvailableSizes(product);
+      console.log('[Upload] Product sizes:', { product, sizes, sizesCount: sizes.length });
+
+      if (sizes.length === 0) {
+        // No sizes - proceed without size selection
+        setSelectedSize(null);
+        setSelectedFile(file);
+        navigate(`/try-on/${productId}/progress`);
+      } else if (sizes.length === 1) {
+        // Single size - auto-select and proceed
+        setSelectedSize(sizes[0].code);
+        setSelectedFile(file);
+        navigate(`/try-on/${productId}/progress`);
+      } else {
+        // Multiple sizes - show selection modal
+        setPendingFile(file);
+        setAvailableSizes(sizes);
+        setShowSizeModal(true);
+      }
     }
   };
 
-  const handleProceed = () => {
-    if (trackKPI) trackKPI('upload_confirmed');
-    navigate('/try-on/progress');
+  /**
+   * Handle size selection from modal
+   */
+  const handleSizeSelect = (sizeCode: string) => {
+    if (pendingFile) {
+      setSelectedSize(sizeCode);
+      setSelectedFile(pendingFile);
+      setShowSizeModal(false);
+      setPendingFile(null);
+      navigate(`/try-on/${productId}/progress`);
+    }
   };
 
-  const handleAuthSuccess = (userData: User) => {
-    login(userData);
-    setShowAuth(false);
-    navigate('/try-on/progress');
+  /**
+   * Handle modal close without selection
+   */
+  const handleSizeModalClose = () => {
+    setShowSizeModal(false);
+    setPendingFile(null);
+    // Reset file input so user can select again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    // Inform user they need to re-select
+    toast.info('برای ادامه، لطفا مجددا عکس انتخاب کنید');
   };
 
   return (
@@ -161,49 +277,21 @@ export function TryOnUploadPage() {
         </div>
       </div>
 
-      {/* DECISION POINT OVERLAY */}
-      <DecisionPointOverlay 
-        isOpen={showDecision}
-        onClose={() => setShowDecision(false)}
-        title="تصویر شما آماده است"
-        description="لطفاً تایید کنید که تصویر انتخابی شفاف و دارای نور کافی است."
-        image={preview || undefined}
-        primaryCTA={{
-          label: "تایید",
-          onClick: handleProceed,
-          icon: <Sparkles size={18} />
-        }}
-        secondaryCTA={{
-          label: "انتخاب مجدد",
-          onClick: () => {
-            setShowDecision(false);
-            fileInputRef.current?.click();
-          },
-          icon: <Camera size={18} />
-        }}
-        exitAction={{
-          label: "انصراف",
-          onClick: () => {
-            setShowDecision(false);
-            setPreview(null);
-          }
-        }}
-        type="accent"
-      />
-
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
         accept="image/*"
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
 
-      {/* AUTH MODAL */}
-      <AuthModal 
-        isOpen={showAuth}
-        onClose={() => setShowAuth(false)}
-        onSuccess={handleAuthSuccess}
+      {/* Size Selection Modal (for rugs with multiple sizes) */}
+      <SizeSelectionModal
+        isOpen={showSizeModal}
+        sizes={availableSizes}
+        productName={product?.name}
+        onSelect={handleSizeSelect}
+        onClose={handleSizeModalClose}
       />
     </div>
   );

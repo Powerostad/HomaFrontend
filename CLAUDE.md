@@ -96,6 +96,21 @@ Tailwind CSS v4 with custom design tokens in `tokens.css`. **Always use semantic
   - Server: `'خطای داخلی سرور'`
   - Unknown: `'خطای ناشناخته'`
 
+### Price Formatting (Rial → Toman)
+**CRITICAL: Backend prices are stored in Rial. Frontend displays Toman (1 Toman = 10 Rial).**
+
+- Always use `formatPriceFromRial()` from `@/utils/formatters` for displaying prices from the API
+- Never use raw `.toLocaleString()` on prices from the backend
+- The function handles: Rial→Toman conversion (÷10), Persian digits, thousand separators, currency suffix
+- Usage examples:
+  ```typescript
+  import { formatPriceFromRial } from '@/utils/formatters';
+
+  formatPriceFromRial(15000000)        // '۱,۵۰۰,۰۰۰ تومان'
+  formatPriceFromRial(15000000, false) // '۱,۵۰۰,۰۰۰' (no currency suffix)
+  ```
+- For non-price numbers (counts, quantities), use `toPersianDigits()` from the same module
+
 ### Animation Library
 Uses `motion` (v11.15.0), not `framer-motion`. Same API but lighter bundle.
 

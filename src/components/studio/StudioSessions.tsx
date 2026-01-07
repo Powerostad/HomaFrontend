@@ -1,23 +1,20 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Plus, 
-  ShoppingBag, 
-  Heart, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Check, 
-  ExternalLink,
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Heart,
+  Check,
   History,
   Sparkles,
   MoreHorizontal,
   Pin
 } from 'lucide-react';
-import { StudioProject, StudioSession, StudioRecommendation } from '../../types/studio';
+import { StudioProject } from '../../types/studio';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { formatPriceFromRial } from '../../utils/formatters';
 
 interface StudioSessionsProps {
   project: StudioProject;
@@ -194,7 +191,7 @@ export function StudioSessions({
 
                                         <div className="flex items-center justify-between mt-auto">
                                           <div className="flex items-baseline gap-1">
-                                            <span className="text-[14px] font-bold text-foreground">{item.price.toLocaleString()}</span>
+                                            <span className="text-[14px] font-bold text-foreground">{formatPriceFromRial(item.price, false)}</span>
                                             <span className="text-[9px] font-medium text-muted-foreground">تومان</span>
                                           </div>
                                           

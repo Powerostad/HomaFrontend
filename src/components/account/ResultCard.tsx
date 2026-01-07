@@ -2,7 +2,6 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { MoreVertical, Share2, Trash2, Pin, PinOff } from 'lucide-react';
-import { toPersianDigits } from '../../utils/helpers'; // I'll create this helper
 
 interface ResultCardProps {
   result: {

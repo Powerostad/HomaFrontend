@@ -14,7 +14,9 @@ export interface Product {
   seller: {
     name: string;
     verified: boolean;
+    slug?: string;  // Store slug for navigation
   };
+  shopSlug?: string;  // Direct shop slug from backend API
   brand?: string;
   category: string;
   variants?: {
@@ -33,11 +35,16 @@ export interface Product {
   originalPrice?: number;
   discountPercentage?: number;
   
-  // Technical Details
+  // Technical Details (legacy - may be populated from mock data)
   dimensions?: string;
   material?: string;
   maintenance?: string;
   origin?: string;
+
+  // Backend API fields
+  extraDetails?: Record<string, string | string[]> | null;
+  availableSizes?: string[];
+  availableSizesDisplay?: string[];
 }
 
 export interface UTMParams {

@@ -47,8 +47,11 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
     }
   };
 
-  const handleAuthSuccess = (userData: User) => {
-    login(userData);
+  const handleAuthSuccess = (
+    userData: User,
+    tokens: { access: string; refresh: string }
+  ) => {
+    login(userData, tokens);
     setIsAuthOpen(false);
   };
 
@@ -72,7 +75,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-[400px] bg-[var(--bg-page)] z-[9999] shadow-none border-l border-[var(--border-subtle)] flex flex-col overflow-hidden font-vazirmatn"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-[400px] bg-surface-default z-[9999] shadow-none border-l border-[var(--border-subtle)] flex flex-col overflow-hidden font-vazirmatn"
             dir="rtl"
           >
             {/* 1. Header Area - Zara Style */}
@@ -186,7 +189,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
             </div>
 
             {/* 3. Footer Area */}
-            <div className="flex-shrink-0 p-8 border-t border-[var(--border-subtle)] bg-[var(--bg-page)]">
+            <div className="flex-shrink-0 p-8 border-t border-[var(--border-subtle)] bg-surface-default">
                <div className="flex justify-between items-center opacity-40">
                   <span className="text-[9px] font-bold uppercase tracking-[0.4em]">Homa Edition 2026</span>
                   <span className="text-[9px] font-bold uppercase tracking-[0.4em]">v4.0</span>

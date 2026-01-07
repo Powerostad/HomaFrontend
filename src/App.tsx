@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes as RouterRoutes, Route as RouterRoute, 
 import { AppProvider } from "./context/AppContext";
 import { Layout } from "./layout/Layout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Import Pages directly instead of lazy to prevent "white screen" hydration issues in this environment
 import { ProductLandingPage } from "./pages/ProductLanding/Page";
@@ -72,21 +73,56 @@ export default function App() {
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />
               <RouterRoute path="studio/progress" element={<StudioProgressPage />} />
               <RouterRoute path="studio/result/:jobId" element={<StudioResultPage />} />
-              <RouterRoute path="studio/projects" element={<StudioProjectsDashboard />} />
-              <RouterRoute path="studio/project/:projectId" element={<StudioProjectDetailsPage />} />
+              {/* Studio Projects - requires login */}
+              <RouterRoute path="studio/projects" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <StudioProjectsDashboard />
+                </ProtectedRoute>
+              } />
+              <RouterRoute path="studio/project/:projectId" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <StudioProjectDetailsPage />
+                </ProtectedRoute>
+              } />
 
               {/* Try On Flow (Simple/Light - Single Product) */}
-              <RouterRoute path="try-on" element={<TryOnUploadPage />} />
-              <RouterRoute path="try-on/upload" element={<TryOnUploadPage />} />
-              <RouterRoute path="try-on/progress" element={<TryOnProgressPage />} />
-              <RouterRoute path="try-on/result" element={<TryOnResultPage />} />
+              {/* New URL pattern: /try-on/:productId/upload|progress|result */}
+              <RouterRoute path="try-on/:productId/upload" element={<TryOnUploadPage />} />
+              <RouterRoute path="try-on/:productId/progress" element={<TryOnProgressPage />} />
+              {/* Try-On result requires login - shows modal over blurred result */}
+              <RouterRoute path="try-on/:productId/result" element={
+                <ProtectedRoute fallback="modal">
+                  <TryOnResultPage />
+                </ProtectedRoute>
+              } />
+              {/* Backward compatibility: redirect old URLs to explore */}
+              <RouterRoute path="try-on" element={<Navigate to="/explore" replace />} />
+              <RouterRoute path="try-on/upload" element={<Navigate to="/explore" replace />} />
+              <RouterRoute path="try-on/progress" element={<Navigate to="/explore" replace />} />
+              <RouterRoute path="try-on/result" element={<Navigate to="/explore" replace />} />
 
-              {/* Account & User Space */}
+              {/* Account & User Space - Protected with redirect */}
               <RouterRoute path="login" element={<LoginPage />} />
-              <RouterRoute path="account/gallery" element={<AccountGalleryPage />} />
-              <RouterRoute path="account/gallery/:id" element={<AccountGalleryDetailPage />} />
-              <RouterRoute path="account/orders" element={<div className="p-20 text-center">صفحه سفارش‌ها (بزودی)</div>} />
-              <RouterRoute path="account/settings" element={<div className="p-20 text-center">تنظیمات حساب (بزودی)</div>} />
+              <RouterRoute path="account/gallery" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <AccountGalleryPage />
+                </ProtectedRoute>
+              } />
+              <RouterRoute path="account/gallery/:id" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <AccountGalleryDetailPage />
+                </ProtectedRoute>
+              } />
+              <RouterRoute path="account/orders" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <div className="p-20 text-center">صفحه سفارش‌ها (بزودی)</div>
+                </ProtectedRoute>
+              } />
+              <RouterRoute path="account/settings" element={
+                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                  <div className="p-20 text-center">تنظیمات حساب (بزودی)</div>
+                </ProtectedRoute>
+              } />
             </RouterRoute>
           </RouterRoutes>
           </Suspense>

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { Product } from "../types/product";
 import { Header } from "./Header";
+import { formatPriceFromRial } from "../utils/formatters";
 
 interface ProductGalleryProps {
   products: Product[];
@@ -29,7 +30,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
   }, [products, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] flex flex-col font-vazirmatn" dir="rtl">
+    <div className="min-h-screen bg-surface-page flex flex-col font-vazirmatn" dir="rtl">
       {/* Editorial Navigation Overlay */}
       <Header transparent={false} />
 
@@ -141,7 +142,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                    </h2>
                    <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
                       <span className="text-[14px] font-medium text-[var(--muted-foreground)]">
-                        {product.price ? `${product.price.toLocaleString('fa-IR')} ${product.currency}` : "Price upon request"}
+                        {product.price ? formatPriceFromRial(product.price) : "Price upon request"}
                       </span>
                       <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-40 group-hover:translate-x-1 transition-all" />
                    </div>

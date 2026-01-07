@@ -23,8 +23,9 @@ import {
   refreshToken,
   logout as authLogout,
   updateProfile as authUpdateProfile,
+  getProfile as authGetProfile,
 } from '@/services/authService';
-import { getStoredTokens, clearAuthData } from '@/utils/apiClient';
+import { getStoredTokens, clearAuthData, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
 import type { User, AuthTokens, AuthContextType } from '@/types/auth';
 
 // Re-export User type for backwards compatibility
@@ -78,9 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] Token refreshed successfully');
         }
 
-        // Token is valid (or was just refreshed) - restore user
-        setUser(storedState.user);
-        console.log('[Auth] Session restored for user:', storedState.user.name || storedState.user.phone);
+        // Token is valid (or was just refreshed) - fetch fresh profile
+        console.log('[Auth] Fetching fresh profile...');
+        const profileResult = await authGetProfile();
+
+        if (profileResult.success && profileResult.user) {
+          setUser(profileResult.user);
+          console.log('[Auth] Session restored with fresh profile for:', profileResult.user.name || profileResult.user.phone);
+        } else {
+          // Profile fetch failed but we have stored data - use that
+          setUser(storedState.user);
+          console.log('[Auth] Profile fetch failed, using stored data for:', storedState.user.name || storedState.user.phone);
+        }
       } catch (error) {
         console.error('[Auth] Init error:', error);
         clearAuthData();
@@ -93,16 +103,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ==========================================================================
+  // Listen for forced logout events (e.g., token refresh failure)
+  // ==========================================================================
+  useEffect(() => {
+    const handleForcedLogout = () => {
+      console.log('[Auth] Received forced logout event - clearing user state');
+      setUser(null);
+    };
+
+    window.addEventListener(AUTH_LOGOUT_EVENT, handleForcedLogout);
+    return () => window.removeEventListener(AUTH_LOGOUT_EVENT, handleForcedLogout);
+  }, []);
+
+  // ==========================================================================
   // Actions
   // ==========================================================================
 
   /**
    * Login with user data and tokens from OTP verification
+   * Optionally fetches fresh profile to ensure we have latest data
    */
-  const login = useCallback((userData: User, tokens: AuthTokens) => {
+  const login = useCallback(async (userData: User, tokens: AuthTokens) => {
+    // Store auth state and set user immediately for fast UI response
     storeAuthState(userData, tokens);
     setUser(userData);
     console.log('[Auth] User logged in:', userData.name || userData.phone);
+
+    // Fetch fresh profile in background to ensure we have latest data
+    // This is non-blocking - we don't wait for it
+    authGetProfile()
+      .then((result) => {
+        if (result.success && result.user) {
+          setUser(result.user);
+          console.log('[Auth] Profile synced after login');
+        }
+      })
+      .catch(() => {
+        // Profile fetch failed - we already have user data from login
+        console.log('[Auth] Profile sync failed, using login data');
+      });
   }, []);
 
   /**

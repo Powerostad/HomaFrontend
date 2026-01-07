@@ -13,7 +13,6 @@ interface HeaderProps {
 }
 
 export function Header({
-  theme = "light",
   transparent = false,
   disableNavigation = false,
   hideSpacer = false
@@ -22,8 +21,11 @@ export function Header({
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { isLoggedIn, login } = useAuth();
 
-  const handleAuthSuccess = (userData: { id: string; name: string; phone?: string }) => {
-    login(userData);
+  const handleAuthSuccess = (
+    userData: { id: string; name: string; phone?: string },
+    tokens: { access: string; refresh: string }
+  ) => {
+    login(userData, tokens);
     setIsAuthOpen(false);
   };
 

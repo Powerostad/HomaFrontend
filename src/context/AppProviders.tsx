@@ -1,30 +1,33 @@
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { AuthProvider } from "./AuthContext";
 import { ProductProvider } from "./ProductContext";
 import { UploadProvider } from "./UploadContext";
 import { StudioProvider } from "./StudioContext";
 import { FeedbackProvider } from "./FeedbackContext";
 import { SessionProvider } from "./SessionContext";
+import { ShopProvider } from "./ShopContext";
 
 /**
  * AppProviders - Combines all context providers
  *
  * Provider order matters! Inner providers can access outer provider values.
- * Order: Session > Auth > Product > Upload > Studio > Feedback
+ * Order: Session > Auth > Shop > Product > Upload > Studio > Feedback
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <AuthProvider>
-        <ProductProvider>
-          <UploadProvider>
-            <StudioProvider>
-              <FeedbackProvider>
-                {children}
-              </FeedbackProvider>
-            </StudioProvider>
-          </UploadProvider>
-        </ProductProvider>
+        <ShopProvider>
+          <ProductProvider>
+            <UploadProvider>
+              <StudioProvider>
+                <FeedbackProvider>
+                  {children}
+                </FeedbackProvider>
+              </StudioProvider>
+            </UploadProvider>
+          </ProductProvider>
+        </ShopProvider>
       </AuthProvider>
     </SessionProvider>
   );
@@ -32,6 +35,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
 // Re-export all hooks for convenient importing
 export { useAuth } from "./AuthContext";
+export { useShop } from "./ShopContext";
 export { useProduct } from "./ProductContext";
 export { useUpload } from "./UploadContext";
 export { useStudio } from "./StudioContext";

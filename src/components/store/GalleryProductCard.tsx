@@ -1,19 +1,7 @@
-import React from "react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
-import { Sparkles, Star } from "lucide-react";
-import { Button } from "../ui/button";
-
-export interface Product {
-  id: string;
-  name: string;
-  seller: { name: string };
-  variants: { sizes?: string[], colors?: string[] };
-  rating: number;
-  price: number;
-  originalPrice?: number;
-  discountPercentage?: number;
-  thumbnail: string;
-}
+import { Sparkles } from "lucide-react";
+import type { Product } from "../../types/product";
+import { formatPriceFromRial } from "../../utils/formatters";
 
 interface GalleryProductCardProps {
   product: Product;
@@ -59,7 +47,7 @@ export function GalleryProductCard({ product, onTryOn }: GalleryProductCardProps
         {/* Price: Minimalist, Muted Grey */}
         <div className="flex items-center gap-1.5 mt-2 text-black/30">
           <span className="text-[11px] md:text-[12px] font-bold uppercase tracking-tight">
-            {toPersianDigits(product.price.toLocaleString())}
+            {formatPriceFromRial(product.price ?? 0, false)}
           </span>
           <span className="text-[10px] md:text-[11px] font-medium opacity-60">تومان</span>
         </div>
@@ -69,12 +57,3 @@ export function GalleryProductCard({ product, onTryOn }: GalleryProductCardProps
     </div>
   );
 }
-
-// Helper for Persian Digits
-const toPersianDigits = (value: number | string) => {
-  if (value === undefined || value === null) return '';
-  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return value
-    .toString()
-    .replace(/\d/g, (x) => farsiDigits[parseInt(x)]);
-};

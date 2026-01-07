@@ -6,8 +6,9 @@ import {
   SimpleDialogDescription as DialogDescription,
 } from "./SimpleDialog";
 import { SimpleButton as Button } from "./SimpleButton";
-import { ExternalLink, CheckCircle, Upload } from "lucide-react";
+import { CheckCircle, Upload } from "lucide-react";
 import type { Product } from "../types/product";
+import { formatPriceFromRial } from "../utils/formatters";
 
 interface ProductDetailsModalProps {
   open: boolean;
@@ -22,10 +23,10 @@ export function ProductDetailsModal({
   product,
   onUploadSticky 
 }: ProductDetailsModalProps) {
-  const displayPrice = product.price 
-    ? `${product.price.toLocaleString('fa-IR')} ${product.currency}`
+  const displayPrice = product.price
+    ? formatPriceFromRial(product.price)
     : product.priceRange
-    ? `${product.priceRange.min.toLocaleString('fa-IR')} - ${product.priceRange.max.toLocaleString('fa-IR')} ${product.currency}`
+    ? `${formatPriceFromRial(product.priceRange.min, false)} - ${formatPriceFromRial(product.priceRange.max)}`
     : null;
 
   return (

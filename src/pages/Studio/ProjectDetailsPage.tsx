@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight,
   Settings,
@@ -8,14 +8,12 @@ import {
   Download,
   ShoppingBag,
   Sparkles,
-  History,
   Layout,
-  Plus,
   MessageSquare
 } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { StudioSessions } from '../../components/studio/StudioSessions';
-import { useStudio } from '../../context/AppProviders';
+import { useStudio } from '../../context/StudioContext';
 import { StudioProject, StudioSession, StudioRecommendation } from '../../types/studio';
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
@@ -191,7 +189,7 @@ export function StudioProjectDetailsPage() {
                 project={project}
                 onAddToShoppingList={handleAddToShoppingList}
                 onAddAllToShoppingList={handleAddAllToShoppingList}
-                onLikeProduct={(id) => toast.info('محصول به علاقه‌مندی‌ها اضافه شد')}
+                onLikeProduct={(_id) => toast.info('محصول به علاقه‌مندی‌ها اضافه شد')}
                 onCreateNewSession={() => navigate('/studio/upload')}
               />
             </motion.div>

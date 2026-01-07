@@ -1,8 +1,7 @@
-import React from "react";
 import { motion } from "motion/react";
 import { Logo } from "./Logo";
 
-export function HomaLoader({ message = "در حال بارگذاری..." }: { message?: string }) {
+export function HomaLoader({ message: _message = "در حال بارگذاری..." }: { message?: string }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white" dir="rtl">
       <motion.div 

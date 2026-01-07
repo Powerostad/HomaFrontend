@@ -15,18 +15,9 @@ export function UploadPage() {
     navigate("/precheck");
   };
 
-  const handleBack = () => {
-    navigate("/");
-  };
-
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col">
-      <Header 
-        showBackButton={true} 
-        onBack={handleBack}
-        showHomeButton={true}
-        onHome={() => navigate("/")}
-      />
+      <Header />
       
       <main className="flex-grow flex flex-col items-center justify-center px-[var(--spacing-md)] py-20 relative overflow-hidden">
         {/* Ambient Background */}

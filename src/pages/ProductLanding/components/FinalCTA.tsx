@@ -1,5 +1,3 @@
-import React from "react";
-import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 
 export function FinalCTA({ onGetStarted }: { onGetStarted: () => void }) {

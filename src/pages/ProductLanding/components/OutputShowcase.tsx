@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Plus, ArrowLeft, ArrowRight, Share2, Info, ChevronLeft, ChevronRight, Zap, ScanLine, Maximize2, ShoppingBag } from "lucide-react";
+import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +35,7 @@ const PRODUCTS = [
 ];
 
 export function OutputShowcase({
-    onGetStarted
+    onGetStarted: _onGetStarted
 }: OutputShowcaseProps) {
     const navigate = useNavigate();
 

@@ -53,7 +53,7 @@ interface FeedbackSurveyProps {
   onFeedbackSubmit: (feedback: 'satisfied' | 'neutral' | 'dissatisfied' | null) => void;
 }
 
-export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyProps) {
+export function FeedbackSurvey({ onFeedbackSubmit }: FeedbackSurveyProps) {
   const [sliderValue, setSliderValue] = useState(100);
   const [currentState, setCurrentState] = useState<FeedbackState>('good');
   const sliderRef = useRef<HTMLInputElement>(null);

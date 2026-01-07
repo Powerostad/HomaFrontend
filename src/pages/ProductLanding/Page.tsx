@@ -5,13 +5,11 @@ import {
   parseEntryParams,
   fetchProduct,
   fetchAllProducts,
-  validateProduct,
 } from "../../utils/productLoader";
 
 // Shared Components
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
-import { ZoomParallax } from "../../components/ZoomParallax";
 
 // Page Specific Components
 import { HeroSection } from "./components/HeroSection";
@@ -20,10 +18,6 @@ import { OutputShowcase } from "./components/OutputShowcase";
 import { ComparisonSection } from "./components/ComparisonSection";
 import { ShoppingPropSection } from "./components/ShoppingPropSection";
 import { HomaLoader } from "../../components/HomaLoader";
-
-const PARALLAX_IMAGES = [
-  // ... kept for reference if needed, but not used in render
-];
 
 export function ProductLandingPage() {
   const navigate = useRouterNavigate();
@@ -68,7 +62,9 @@ export function ProductLandingPage() {
 
   const handleGetStarted = () => {
     trackKPI("CTA Clicked", { location: "Landing" });
-    navigate("/try-on/upload"); // Changed: Now goes to try-on instead of studio
+    // Navigate to explore page where users can select a product to try-on
+    // (Try-on flow now requires a product ID in URL: /try-on/:productId/upload)
+    navigate("/explore");
   };
 
   if (isLoading) {

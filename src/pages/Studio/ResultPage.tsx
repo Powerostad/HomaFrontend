@@ -10,8 +10,7 @@ import {
   Bookmark,
   Maximize2,
   Loader2,
-  Users,
-  CheckCircle2
+  // Users, CheckCircle2 - TODO: Uncomment when gallery submission is enabled
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -24,8 +23,9 @@ import { ProductDetailSheet, Product } from './components/ProductDetailSheet';
 import { AuthModal } from '../../components/AuthModal';
 import { HomaLoader } from '../../components/HomaLoader';
 import { toast } from 'sonner';
-import { submitToGallery } from '@/services/socialGalleryService';
-import { downloadImage, getDownloadErrorMessage } from '@/utils/downloadUtils';
+// import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
+import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
+import { formatPriceFromRial, toPersianDigits } from '@/utils/formatters';
 import type { MatchedProduct } from '@/services/studioService';
 
 // --- Fallback Mock Data (only used when API data not available) ---
@@ -67,7 +67,7 @@ const FALLBACK_PRODUCTS: (Product & { store?: string; style?: string })[] = [
 /**
  * Convert API matched product to UI Product format
  */
-function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string } {
+function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string; isPromoted?: boolean } {
   return {
     id: String(product.id),
     name: product.name,
@@ -76,6 +76,7 @@ function matchedProductToUIProduct(product: MatchedProduct, index: number): Prod
     store: product.shopName || 'فروشگاه هوما',
     image: product.imageUrl,
     hotspot: { x: 50, y: 50 + index * 10 }, // Default hotspots
+    isPromoted: product.isPromoted,
   };
 }
 
@@ -102,58 +103,106 @@ export function StudioResultPage() {
   const [showExitDecision, setShowExitDecision] = useState(false);
   const [_isMenuOpen, _setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmittingToGallery, setIsSubmittingToGallery] = useState(false);
-  const [isSubmittedToGallery, setIsSubmittedToGallery] = useState(false);
+  // TODO: Uncomment when gallery submission is enabled
+  // const [isSubmittingToGallery, setIsSubmittingToGallery] = useState(false);
+  // const [isSubmittedToGallery, setIsSubmittedToGallery] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [preparedDownloadData, setPreparedDownloadData] = useState<PreparedDownload | null>(null);
+  const [showDownloadReady, setShowDownloadReady] = useState(false);
+
+  // TODO: Enable gallery submission when try-on flow is fixed
+  // Check if any item has a completed try-on (required for gallery submission)
+  // const hasCompletedTryOn = activeSession?.items?.some(item => item.tryonStatus === 'completed') ?? false;
 
   // --- Gallery Submission Handler ---
-  const handleSubmitToGallery = async () => {
-    // Require login
-    if (!isLoggedIn) {
-      setIsAuthModalOpen(true);
-      return;
-    }
+  // const handleSubmitToGallery = async () => {
+  //   // Require login
+  //   if (!isLoggedIn) {
+  //     setIsAuthModalOpen(true);
+  //     return;
+  //   }
+  //
+  //   // Need session ID to submit
+  //   const currentSessionId = sessionId || activeSessionId;
+  //   if (!currentSessionId) {
+  //     toast.error('جلسه طراحی برای ارسال به گالری موجود نیست');
+  //     return;
+  //   }
+  //
+  //   // Find item with completed try-on
+  //   const itemWithTryOn = activeSession?.items?.find(item => item.tryonStatus === 'completed');
+  //   if (!itemWithTryOn?.id) {
+  //     toast.error('ابتدا باید یک محصول را امتحان کنید');
+  //     return;
+  //   }
+  //
+  //   setIsSubmittingToGallery(true);
+  //   const result = await submitToGallery({
+  //     session_id: currentSessionId,
+  //     item_id: itemWithTryOn.id
+  //   });
+  //   setIsSubmittingToGallery(false);
+  //
+  //   if (result.success) {
+  //     setIsSubmittedToGallery(true);
+  //     toast.success('طراحی شما برای نمایش در گالری ارسال شد');
+  //   } else {
+  //     toast.error(result.error || 'خطا در ارسال به گالری');
+  //   }
+  // };
 
-    // Need session ID to submit
-    const currentSessionId = sessionId || activeSessionId;
-    if (!currentSessionId) {
-      toast.error('جلسه طراحی برای ارسال به گالری موجود نیست');
-      return;
-    }
-
-    setIsSubmittingToGallery(true);
-    const result = await submitToGallery({ session_id: currentSessionId });
-    setIsSubmittingToGallery(false);
-
-    if (result.success) {
-      setIsSubmittedToGallery(true);
-      toast.success('طراحی شما برای نمایش در گالری ارسال شد');
-    } else {
-      toast.error(result.error || 'خطا در ارسال به گالری');
-    }
-  };
-
-  // --- Download Handler (with mobile share + PNG conversion) ---
+  // --- Download Logic (two-phase for Chrome compatibility) ---
+  // Phase 1: Prepare download (async, no user gesture needed)
   const handleDownload = async () => {
-    // Use API result image or fallback
     const imageUrl = activeSession?.redesignedImageUrl;
     if (!imageUrl) {
       toast.error('تصویری برای دانلود موجود نیست');
       return;
     }
 
-    toast.info('در حال آماده‌سازی...');
+    setIsDownloading(true);
 
-    const result = await downloadImage({
+    const result = await prepareDownload({
       imageUrl,
       filename: `homa-studio-${Date.now()}`,
       useAuth: true,
     });
 
+    setIsDownloading(false);
+
     if (result.success) {
-      toast.success(result.method === 'share' ? 'تصویر آماده اشتراک‌گذاری شد' : 'تصویر دانلود شد');
+      setPreparedDownloadData(result.data);
+      setShowDownloadReady(true);
     } else {
       toast.error(getDownloadErrorMessage(result.error));
     }
+  };
+
+  // Phase 2: Trigger download with fresh user gesture
+  const handleConfirmDownload = async () => {
+    if (!preparedDownloadData) return;
+
+    // Try share first on mobile
+    const shared = await triggerShare(preparedDownloadData);
+    if (shared) {
+      toast.success('تصویر آماده اشتراک‌گذاری شد');
+    } else {
+      // Fallback to download
+      triggerDownload(preparedDownloadData);
+      toast.success('تصویر دانلود شد');
+    }
+
+    setPreparedDownloadData(null);
+    setShowDownloadReady(false);
+  };
+
+  // Cancel download
+  const handleCancelDownload = () => {
+    if (preparedDownloadData) {
+      preparedDownloadData.cleanup();
+    }
+    setPreparedDownloadData(null);
+    setShowDownloadReady(false);
   };
 
   // Determine result image - use API data or fallback
@@ -254,8 +303,8 @@ export function StudioResultPage() {
         </div>
         
         <div className="flex flex-col">
-          {displayProducts.map((item, index) => {
-            const isTopPick = index === 0;
+          {displayProducts.map((item) => {
+            const isTopPick = (item as { isPromoted?: boolean }).isPromoted === true;
             return (
               <div 
                 key={item.id}
@@ -307,7 +356,7 @@ export function StudioResultPage() {
 
                     <div className="flex items-baseline gap-1.5 mt-2">
                       <span className="text-[18px] font-bold text-black tabular-nums tracking-tighter">
-                        {item.price.toLocaleString('fa-IR')}
+                        {formatPriceFromRial(item.price, false)}
                       </span>
                       <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                         تومان
@@ -334,12 +383,12 @@ export function StudioResultPage() {
           <div className="space-y-1">
             <span className="block text-[9px] text-black/30 font-bold uppercase tracking-[0.3em]">Collection Summary</span>
             <span className="block text-[11px] text-black/60 font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              {displayProducts.length.toLocaleString('fa-IR')} محصول در لیست نهایی
+              {toPersianDigits(displayProducts.length)} محصول در لیست نهایی
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-[26px] font-bold text-black tabular-nums tracking-tighter">
-              {totalPrice.toLocaleString('fa-IR')}
+              {formatPriceFromRial(totalPrice, false)}
             </span>
             <span className="text-[10px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
               تومان
@@ -446,14 +495,16 @@ export function StudioResultPage() {
               </button>
               
               <div className="flex gap-3">
+{/* TODO: Enable after try-on flow is fixed
                 <button
                   onClick={handleSubmitToGallery}
-                  disabled={isSubmittingToGallery || isSubmittedToGallery}
-                  className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSubmittedToGallery ? 'bg-white border-white text-green-600' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'} ${isSubmittingToGallery ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  title="اشتراک در گالری عمومی"
+                  disabled={isSubmittingToGallery || isSubmittedToGallery || !hasCompletedTryOn}
+                  className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSubmittedToGallery ? 'bg-white border-white text-green-600' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'} ${(isSubmittingToGallery || !hasCompletedTryOn) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={hasCompletedTryOn ? "اشتراک در گالری عمومی" : "ابتدا یک محصول را امتحان کنید"}
                 >
                   {isSubmittingToGallery ? <Loader2 size={20} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={20} /> : <Users size={20} />}
                 </button>
+*/}
                 <button
                   onClick={() => setIsSaved(!isSaved)}
                   className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSaved ? 'bg-white border-white text-accent' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'}`}
@@ -539,13 +590,15 @@ export function StudioResultPage() {
                   <ArrowRight size={20} />
                 </button>
                 <div className="flex gap-2">
+{/* TODO: Enable after try-on flow is fixed
                   <button
                     onClick={handleSubmitToGallery}
-                    disabled={isSubmittingToGallery || isSubmittedToGallery}
-                    className={`w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSubmittedToGallery ? 'text-green-600 bg-white' : 'text-white bg-black/20'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
+                    disabled={isSubmittingToGallery || isSubmittedToGallery || !hasCompletedTryOn}
+                    className={`w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSubmittedToGallery ? 'text-green-600 bg-white' : 'text-white bg-black/20'} ${(isSubmittingToGallery || !hasCompletedTryOn) ? 'opacity-50' : ''}`}
                   >
                     {isSubmittingToGallery ? <Loader2 size={16} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={16} /> : <Users size={16} />}
                   </button>
+*/}
                   <button
                     onClick={() => setIsSaved(!isSaved)}
                     className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSaved ? 'text-accent bg-white' : 'text-white'}`}
@@ -554,9 +607,10 @@ export function StudioResultPage() {
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90"
+                    disabled={isDownloading}
+                    className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90 ${isDownloading ? 'opacity-50' : ''}`}
                   >
-                    <Download size={18} />
+                    {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                   </button>
                 </div>
               </div>
@@ -651,9 +705,10 @@ export function StudioResultPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={handleDownload}
-                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-2xl flex items-center justify-center text-white border border-white/10 hover:bg-white/20 transition-all active:scale-90"
+                    disabled={isDownloading}
+                    className={`w-12 h-12 rounded-full bg-white/10 backdrop-blur-2xl flex items-center justify-center text-white border border-white/10 hover:bg-white/20 transition-all active:scale-90 ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <Download size={20} />
+                    {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
                   </button>
                   <button
                     onClick={() => setIsSaved(!isSaved)}
@@ -772,6 +827,54 @@ export function StudioResultPage() {
         )}
       </AnimatePresence>
 
+      {/* Download Ready Modal */}
+      <AnimatePresence>
+        {showDownloadReady && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 1.05, opacity: 0 }}
+              className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[32px] p-8 max-w-[340px] w-full shadow-[0_24px_80px_rgba(0,0,0,0.15)] flex flex-col items-center text-center gap-6"
+            >
+              <div className="w-16 h-16 bg-white dark:bg-white/10 rounded-full flex items-center justify-center shadow-inner">
+                <Download size={28} className="text-foreground" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <h3 className="text-[18px] font-bold text-foreground" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>تصویر آماده است</h3>
+                <p className="text-[14px] text-foreground/70 leading-relaxed font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                  برای ذخیره تصویر روی دکمه زیر کلیک کنید
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  onClick={handleConfirmDownload}
+                  className="w-full h-[56px] bg-foreground text-background rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                  style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
+                >
+                  <Download size={18} />
+                  ذخیره تصویر
+                </button>
+                <button
+                  onClick={handleCancelDownload}
+                  className="w-full h-[56px] bg-white/20 text-foreground border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
+                  style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
+                >
+                  انصراف
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Auth Modal over the Result */}
       <AuthModal
         isOpen={isAuthModalOpen}
@@ -784,7 +887,7 @@ export function StudioResultPage() {
           setIsAuthModalOpen(false);
         }}
       />
-      
+
     </div>
   );
 }

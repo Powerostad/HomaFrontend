@@ -142,7 +142,7 @@ export async function saveVisualization(
  * Tracking KPIs
  */
 export interface TrackEventRequest {
-  eventType: 'upload_start' | 'upload_success' | 'upload_error' | 'view_result' | 'click_purchase' | 'feedback';
+  eventType: 'upload_start' | 'upload_success' | 'upload_error' | 'view_result' | 'click_purchase' | 'feedback' | 'save_visualization' | 'feedback_survey';
   productId: string;
   sessionId?: string;
   userId?: string;

@@ -4,18 +4,20 @@ import {
   Heart,
   Sparkles,
   RefreshCw,
-  Store as StoreIcon
+  Store as StoreIcon,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useProduct } from '../../context/AppProviders';
+import { useProduct, useShop } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Button } from '../../components/ui/button';
 import { trackEvent } from '../../utils/analytics';
 import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
 import { ContextBar } from '../../components/ContextBar';
-import { ProductSocialGallery } from '../../components/ProductSocialGallery';
-import { fetchShopByUsername } from '../../services/shopService';
+import { formatPriceFromRial } from '../../utils/formatters';
+// TODO: Re-enable when backend /api/recommendations/gallery/product is ready
+// import { ProductSocialGallery } from '../../components/ProductSocialGallery';
 import { fetchProduct } from '../../services/productService';
 import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
@@ -47,41 +49,62 @@ export function ProductDetailsPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
   const navigate = useNavigate();
   const { setProduct } = useProduct();
+  const { getShop, getError: getShopError, invalidateShop } = useShop();
+
   const [product, setProductData] = useState<Product | null>(null);
+  const [apiProduct, setApiProduct] = useState<APIProduct | null>(null);
   const [store, setStoreData] = useState<Shop | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
+  const [productError, setProductError] = useState<string | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Derived state from shop context
+  const shopError = slug ? getShopError(slug) : null;
 
   useEffect(() => {
     if (!slug || !productId) return;
 
+    const abortController = new AbortController();
+
     const loadData = async () => {
-      setIsLoading(true);
-      setError(null);
+      setIsLoadingProduct(true);
+      setProductError(null);
 
-      // Step 1: Fetch shop by slug
-      const shopResult = await fetchShopByUsername(slug);
+      // Step 1: Get shop from cache or fetch (ShopContext handles caching)
+      const shopData = await getShop(slug, { signal: abortController.signal });
 
-      if (!shopResult.success || !shopResult.data) {
-        setError(shopResult.error || 'فروشگاه یافت نشد');
-        setIsLoading(false);
+      // Don't update state if request was aborted (component unmounting)
+      if (abortController.signal.aborted) return;
+
+      if (!shopData) {
+        // Error is already set in context
+        setIsLoadingProduct(false);
         return;
       }
 
-      setStoreData(shopResult.data);
+      setStoreData(shopData);
 
       // Track analytics
-      trackEvent('view_store', { storeId: shopResult.data.id, storeName: shopResult.data.name });
+      trackEvent('view_store', { storeId: shopData.id, storeName: shopData.name });
 
       // Step 2: Fetch product by unique_link (productId from URL is the UUID)
-      const productResult = await fetchProduct(productId);
+      const productResult = await fetchProduct(productId, { signal: abortController.signal });
+
+      // Don't update state if request was aborted (component unmounting)
+      if (abortController.signal.aborted) return;
 
       if (!productResult.success || !productResult.data) {
-        setError(productResult.error || 'محصول یافت نشد');
-        setIsLoading(false);
+        // Only show error if not aborted
+        if (!abortController.signal.aborted) {
+          setProductError(productResult.error || 'محصول یافت نشد');
+          setIsLoadingProduct(false);
+        }
         return;
       }
+
+      // Store raw API product for extra_details access
+      setApiProduct(productResult.data);
 
       // Convert API product to local Product type
       const convertedProduct = apiProductToProduct(productResult.data);
@@ -90,34 +113,49 @@ export function ProductDetailsPage() {
       // Track product view
       trackEvent('view_product', { productId: productResult.data.uniqueLink, productName: productResult.data.name });
 
-      setIsLoading(false);
+      setIsLoadingProduct(false);
     };
 
     loadData();
-  }, [slug, productId]);
+
+    return () => {
+      abortController.abort(); // Cleanup: abort in-flight requests
+    };
+  }, [slug, productId, getShop]);
 
   const handleTestDecor = () => {
-    if (product) {
-      trackEvent('click_test_decor_single_cta', { productId: product.id });
-      setProduct(product);
-      navigate('/try-on/upload');
+    // Use apiProduct (which has availableSizes) instead of stripped-down product
+    if (apiProduct) {
+      trackEvent('click_test_decor_single_cta', { productId: apiProduct.uniqueLink });
+      // Store apiProduct with all fields including availableSizes
+      // Type assertion needed as context expects Product, but APIProduct is compatible
+      setProduct(apiProduct as unknown as Product);
+      // Navigate with product's uniqueLink in URL path
+      navigate(`/try-on/${apiProduct.uniqueLink}/upload`);
     }
   };
 
   const handleRetry = () => {
     if (slug && productId) {
-      setError(null);
-      setIsLoading(true);
+      // Invalidate shop cache and re-trigger fetch
+      invalidateShop(slug);
+      setStoreData(null);
+      setProductData(null);
+      setProductError(null);
       window.location.reload();
     }
   };
 
-  if (isLoading) {
+  // Combined error from shop or product
+  const error = shopError || productError;
+
+  // Loading state - show loader while fetching product data
+  if (isLoadingProduct) {
     return <HomaLoader message="در حال دریافت اطلاعات محصول..." />;
   }
 
   // Error state
-  if (error) {
+  if (error && !product) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
         <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
@@ -218,7 +256,7 @@ export function ProductDetailsPage() {
                   </h1>
                   <div className="flex items-baseline gap-2">
                     <span className="text-[16px] md:text-[18px] font-bold text-black">
-                      {product.price?.toLocaleString()} تومان
+                      {product.price ? formatPriceFromRial(product.price) : '۰ تومان'}
                     </span>
                   </div>
                 </div>
@@ -257,11 +295,46 @@ export function ProductDetailsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 pt-6 border-t border-black/[0.05]">
-                  <button className="text-[11px] font-bold text-black/60 uppercase tracking-widest text-start hover:text-black">جزئیات محصول</button>
-                  <button className="text-[11px] font-bold text-black/60 uppercase tracking-widest text-start hover:text-black">ارسال و بازگشت</button>
-                  <button className="text-[11px] font-bold text-black/60 uppercase tracking-widest text-start hover:text-black">موجودی در فروشگاه‌ها</button>
-                </div>
+                {/* Product Details Toggle */}
+                {apiProduct?.extraDetails && Object.keys(apiProduct.extraDetails).length > 0 && (
+                  <div className="pt-6 border-t border-black/[0.05]">
+                    <button
+                      onClick={() => setShowDetails(!showDetails)}
+                      className="flex items-center justify-between w-full text-[11px] font-bold text-black/60 uppercase tracking-widest hover:text-black transition-colors"
+                    >
+                      <span>جزئیات محصول</span>
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {showDetails && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <table className="w-full mt-4 text-[13px]">
+                            <tbody>
+                              {Object.entries(apiProduct.extraDetails).map(([key, value]) => (
+                                <tr key={key} className="border-b border-black/[0.05]">
+                                  <td className="py-3 text-black/40 font-medium w-1/3">{key}</td>
+                                  <td className="py-3 text-black/80 font-medium">
+                                    {Array.isArray(value) ? value.join('، ') : value}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -269,6 +342,7 @@ export function ProductDetailsPage() {
         </div>
 
         {/* Social Gallery - User Try-On Images */}
+        {/* TODO: Re-enable when backend /api/recommendations/gallery/product is ready
         {productId && (
           <div className="mt-16 md:mt-24 px-6 md:px-0">
             <ProductSocialGallery
@@ -277,6 +351,7 @@ export function ProductDetailsPage() {
             />
           </div>
         )}
+        */}
       </main>
 
       {/* STICKY MOBILE CTA */}

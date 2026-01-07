@@ -1,23 +1,35 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User } from "lucide-react";
+import { User as UserIcon } from "lucide-react";
 import { useAuth } from "../../context/AppProviders";
+import { AuthModal } from "../../components/AuthModal";
+import { getAndClearAuthRedirect } from "../../components/ProtectedRoute";
+import type { User, AuthTokens } from "../../types/auth";
 
 /**
  * LoginPage - User authentication page
- * Uses new AuthContext for login/logout
+ * Shows AuthModal for OTP-based login
  */
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { isLoggedIn, login } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const handleLogin = () => {
-    // Simulate login with mock user
-    login({
-      id: `user_${Date.now()}`,
-      name: 'کاربر هُما',
-      phone: '۰۹۱۲۰۰۰۰۰۰۰',
-    });
-    navigate(-1); // Go back to where they were
+  // If already logged in, redirect
+  useEffect(() => {
+    if (isLoggedIn) {
+      const redirectPath = getAndClearAuthRedirect();
+      navigate(redirectPath || "/", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
+  const handleAuthSuccess = (user: User, tokens: AuthTokens) => {
+    login(user, tokens);
+    setIsAuthModalOpen(false);
+
+    // Redirect to intended destination or home
+    const redirectPath = getAndClearAuthRedirect();
+    navigate(redirectPath || "/", { replace: true });
   };
 
   return (
@@ -38,7 +50,7 @@ export function LoginPage() {
               color: "var(--color-brand-primary)",
             }}
           >
-            <User size={32} strokeWidth={1.5} />
+            <UserIcon size={32} strokeWidth={1.5} />
           </div>
         </div>
 
@@ -59,7 +71,7 @@ export function LoginPage() {
 
         <div className="flex flex-col gap-4">
           <button
-            onClick={handleLogin}
+            onClick={() => setIsAuthModalOpen(true)}
             className="w-full h-14 rounded-2xl font-bold transition-transform active:scale-95"
             style={{
               background: "var(--color-brand-primary)",
@@ -86,6 +98,13 @@ export function LoginPage() {
           ورود کمتر از یک دقیقه زمان می‌برد.
         </p>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }

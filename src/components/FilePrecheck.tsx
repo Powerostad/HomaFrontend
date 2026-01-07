@@ -194,13 +194,13 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
 
   const hasError = checks.some(c => c.type === "error");
   const hasWarning = checks.some(c => c.type === "warning");
-  const allSuccess = checks.length > 0 && checks.every(c => c.type === "success");
-  const completedChecks = checks.length;
-  const totalChecks = 4;
+  // Future use: const allSuccess = checks.length > 0 && checks.every(c => c.type === "success");
+  // Future use: const completedChecks = checks.length;
+  // Future use: const totalChecks = 4;
 
   return (
     <div className="bg-white relative min-h-screen">
-      <Header onBack={onRetake} showBackButton={true} />
+      <Header />
       
       {/* Main Container */}
       <div className="px-6 pt-[104px] pb-8">

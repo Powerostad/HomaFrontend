@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 import { ChevronRight, ChevronLeft } from "lucide-react";

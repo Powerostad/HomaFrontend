@@ -1,33 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  Store, 
-  Check, 
-  Heart,
+import { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Check,
   RotateCw,
   Sparkles,
-  Info,
   LayoutGrid,
-  ListFilter,
   Bookmark,
   Share2,
-  Package,
-  Ruler,
   Truck,
   ShieldCheck,
-  ChevronLeft,
   Plus
 } from 'lucide-react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogClose
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription
 } from '../../../components/ui/dialog';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import { formatPriceFromRial } from '../../../utils/formatters';
 
 // --- Types ---
 export interface Product {
@@ -36,6 +29,8 @@ export interface Product {
   price: number;
   image: string;
   category: string;
+  store?: string;
+  style?: string;
   hotspot?: { x: number; y: number };
 }
 
@@ -74,14 +69,6 @@ const MOCK_ALTERNATIVES = [
     image: 'https://images.unsplash.com/photo-1596280687729-c725593c6628?q=80&w=300&auto=format&fit=crop'
   }
 ];
-
-// Helper for Persian Digits
-const toPersianDigits = (num: number | string) => {
-  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return num
-    .toString()
-    .replace(/\d/g, (x) => farsiDigits[parseInt(x)]);
-};
 
 // Tabs Configuration
 const TABS = [
@@ -281,7 +268,7 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
                             <div className="flex flex-col items-end">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-[22px] font-bold text-black tabular-nums">
-                                        {toPersianDigits(product.price.toLocaleString())}
+                                        {formatPriceFromRial(product.price, false)}
                                     </span>
                                     <span className="text-[12px] text-black/40 font-bold">تومان</span>
                                 </div>
@@ -466,7 +453,7 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
                 <div className="flex items-baseline gap-1.5">
                     <span className="text-[10px] text-black/30 font-bold uppercase tracking-widest">قیمت:</span>
                     <span className="text-[18px] font-bold text-black tabular-nums">
-                       {toPersianDigits(product.price.toLocaleString())}
+                       {formatPriceFromRial(product.price, false)}
                     </span>
                     <span className="text-[10px] text-black/40 font-bold">تومان</span>
                 </div>

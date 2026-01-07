@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Send, CheckCircle2, ArrowRight, User, ShoppingBag, Instagram, Phone, Box, AlignLeft, ChevronDown, ArrowLeft, LayoutTemplate } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { CheckCircle2, ChevronDown, ArrowLeft, LayoutTemplate } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
-import { Footer } from '../../components/Footer';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 
 export function CollaborationPage() {
@@ -53,7 +52,7 @@ export function CollaborationPage() {
         </svg>
       </div>
 
-      <Header showBackButton={true} onBack={() => navigate(-1)} theme="dark" />
+      <Header theme="dark" />
       
       <main className="flex-grow flex flex-col md:flex-row relative z-10 pt-20">
         {/* Left Side: Editorial Image (Sticky on Desktop) - Hidden on mobile */}
