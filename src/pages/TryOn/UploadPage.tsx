@@ -7,7 +7,7 @@ import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
 import { SizeSelectionModal, type SizeOption } from '../../components/SizeSelectionModal';
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
-import { getProductById } from '../../utils/productLoader';
+import { fetchProduct } from '../../services/productService';
 import { toast } from 'sonner';
 import type { Product } from '../../types/product';
 import type { APIProduct } from '../../types/apiProduct';
@@ -69,6 +69,9 @@ export function TryOnUploadPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [availableSizes, setAvailableSizes] = useState<SizeOption[]>([]);
 
+  // Product loading state - prevents file selection before product is loaded
+  const [isProductLoading, setIsProductLoading] = useState(true);
+
   /**
    * Load product from URL param on mount
    * Product ID is now always in URL path: /try-on/:productId/upload
@@ -78,35 +81,49 @@ export function TryOnUploadPage() {
       // Validate productId from URL
       if (!productId) {
         toast.error('شناسه محصول یافت نشد');
+        setIsProductLoading(false);
         navigate('/explore');
         return;
       }
 
-      // If we already have the correct product loaded, just save to storage
-      const currentProductId = (product as Product)?.id ||
-        (product as unknown as { uniqueLink?: string })?.uniqueLink ||
-        (product as unknown as { unique_link?: string })?.unique_link;
+      // If we already have a product loaded, check if it matches the URL productId
+      // The productId in URL could match any of: id, uniqueLink, or unique_link
+      if (product) {
+        const productIdFromContext = (product as Product)?.id;
+        const uniqueLink = (product as unknown as { uniqueLink?: string })?.uniqueLink;
+        const unique_link = (product as unknown as { unique_link?: string })?.unique_link;
 
-      if (product && currentProductId === productId) {
-        saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
-        return;
+        // Check if URL productId matches ANY of the product's identifiers
+        const isMatch = productId === productIdFromContext ||
+                        productId === uniqueLink ||
+                        productId === unique_link;
+
+        if (isMatch) {
+          saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
+          setIsProductLoading(false);
+          return;
+        }
       }
 
-      // Load product by ID from URL
-      console.log('[TryOnUpload] Loading product from URL:', productId);
+      // Load product by ID (uniqueLink) from URL via API
+      console.log('[TryOnUpload] Loading product from API:', productId);
+      setIsProductLoading(true);
       try {
-        const loadedProduct = await getProductById(productId);
-        if (loadedProduct) {
-          setProduct(loadedProduct as Product);
+        const result = await fetchProduct(productId);
+        if (result.success && result.data) {
+          // Store the APIProduct in context (cast as Product for compatibility)
+          setProduct(result.data as unknown as Product);
           saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
         } else {
-          toast.error('محصول یافت نشد');
+          toast.error(result.error || 'محصول یافت نشد');
           navigate('/explore');
         }
       } catch (error) {
         console.error('[TryOnUpload] Failed to load product:', error);
         toast.error('خطا در بارگذاری محصول');
         navigate('/explore');
+      } finally {
+        setIsProductLoading(false);
       }
     };
 
@@ -134,12 +151,28 @@ export function TryOnUploadPage() {
    * - 2+ sizes: show modal for user selection
    */
   const handleFile = (file: File) => {
+    // Guard: Ensure product is loaded before processing file
+    if (!product) {
+      toast.error('لطفا صبر کنید تا اطلاعات محصول بارگذاری شود');
+      console.warn('[Upload] handleFile called with null product');
+      return;
+    }
+
     if (file && file.type.startsWith('image/')) {
       if (trackKPI) trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
 
+      // Debug: Log product details and available sizes
+      console.log('[Upload] handleFile called:', {
+        productId: (product as unknown as { id?: string | number })?.id,
+        productName: product?.name,
+        productUniqueLink: (product as unknown as { uniqueLink?: string })?.uniqueLink,
+        availableSizes: (product as unknown as { availableSizes?: string[] })?.availableSizes,
+        available_sizes: (product as unknown as { available_sizes?: string[] })?.available_sizes,
+      });
+
       // Check for available sizes
       const sizes = getAvailableSizes(product);
-      console.log('[Upload] Product sizes:', { product, sizes, sizesCount: sizes.length });
+      console.log('[Upload] getAvailableSizes result:', { sizes, sizesCount: sizes.length });
 
       if (sizes.length === 0) {
         // No sizes - proceed without size selection
@@ -257,18 +290,28 @@ export function TryOnUploadPage() {
           <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
             {/* Primary Actions: Side by Side Grid */}
             <div className="w-full grid grid-cols-2 gap-3">
-              <button 
+              <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-12 bg-black text-white text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/90 transition-all active:scale-[0.98] flex items-center justify-center"
+                  disabled={isProductLoading}
+                  className={`h-12 text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
+                    isProductLoading
+                      ? 'bg-black/50 text-white/70 cursor-not-allowed'
+                      : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
+                  }`}
               >
-                  <span>گرفتن عکس</span>
+                  <span>{isProductLoading ? 'در حال بارگذاری...' : 'گرفتن عکس'}</span>
               </button>
 
-              <button 
+              <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-12 bg-white border border-black/10 text-black text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/[0.02] transition-all active:scale-[0.98] flex items-center justify-center"
+                  disabled={isProductLoading}
+                  className={`h-12 border text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
+                    isProductLoading
+                      ? 'bg-white/50 border-black/5 text-black/50 cursor-not-allowed'
+                      : 'bg-white border-black/10 text-black hover:bg-black/[0.02] active:scale-[0.98]'
+                  }`}
               >
-                  <span>گالری</span>
+                  <span>{isProductLoading ? 'صبر کنید...' : 'گالری'}</span>
               </button>
             </div>
 

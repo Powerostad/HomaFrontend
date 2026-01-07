@@ -8,6 +8,7 @@ import { AuthModal } from '../../components/AuthModal';
 import { processVisualization } from '../../services/visualizationService';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
+import { getStoredTokens, setStoredTokens } from '../../utils/apiClient';
 import { toast } from 'sonner';
 import type { User } from '../../context/AuthContext';
 
@@ -212,23 +213,43 @@ export function TryOnProgressPage() {
 
   /**
    * Handle successful authentication
+   * Ensures tokens are stored before starting processing to avoid race conditions
    */
   const handleAuthSuccess = (
     userData: User,
     tokens: { access: string; refresh: string }
   ) => {
+    // Store tokens directly FIRST to ensure they're available for API calls
+    // This is a safeguard against race conditions with the login() context function
+    setStoredTokens(tokens);
+    console.log('[Progress] Tokens stored directly, verifying...', !!getStoredTokens()?.access);
+
+    // Then update React state via context
     login(userData, tokens);
     setShowAuth(false);
 
-    // Start processing after auth using productId from URL
-    const file = getSelectedFile();
-    if (productId && file && !hasStartedRef.current) {
-      hasStartedRef.current = true;
-      startProcessing(productId);
-    } else if (!file) {
-      toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
-      navigate(`/try-on/${productId}/upload`);
-    }
+    // Use queueMicrotask to ensure all synchronous operations complete
+    // before starting processing (belt-and-suspenders approach)
+    queueMicrotask(() => {
+      const storedTokens = getStoredTokens();
+      console.log('[Progress] After microtask, tokens available:', !!storedTokens?.access);
+
+      if (!storedTokens?.access) {
+        console.error('[Progress] CRITICAL: Tokens not found after login!');
+        toast.error('خطا در احراز هویت. لطفا دوباره تلاش کنید.');
+        return;
+      }
+
+      // Start processing after auth using productId from URL
+      const file = getSelectedFile();
+      if (productId && file && !hasStartedRef.current) {
+        hasStartedRef.current = true;
+        startProcessing(productId);
+      } else if (!file) {
+        toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+        navigate(`/try-on/${productId}/upload`);
+      }
+    });
   };
 
   /**

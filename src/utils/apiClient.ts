@@ -620,6 +620,7 @@ export async function apiUpload<T>(
 
     // Get auth token for XMLHttpRequest
     const tokens = getStoredTokens();
+    console.log('[API Upload] Auth tokens available:', !!tokens?.access, 'skipAuth:', skipAuth);
 
     // استفاده از XMLHttpRequest برای tracking progress
     return new Promise((resolve) => {
