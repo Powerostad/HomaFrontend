@@ -23,12 +23,6 @@ services:
       - "dokploy.app.name=homav-frontend"
       - "dokploy.app.description=HomaV React Frontend Application"
       - "dokploy.app.version=0.1.0"
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 networks:
   homav-network:
