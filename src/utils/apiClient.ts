@@ -915,7 +915,7 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
  */
 export async function apiHealthCheck(): Promise<boolean> {
   try {
-    const response = await apiGet('/health', undefined, { skipAuth: true });
+    const response = await apiGet('/health/', undefined, { skipAuth: true });
     return response.success;
   } catch {
     console.error('[API Health Check Failed]');
