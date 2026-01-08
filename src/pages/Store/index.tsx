@@ -115,6 +115,7 @@ export function StorePage() {
       if (abortController.signal.aborted) {
         // Reset the ref so next mount can fetch
         productsFetchedForShop.current = null;
+        setIsLoadingProducts(false);  // Must reset loading state on abort
         return;
       }
 
