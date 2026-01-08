@@ -107,6 +107,7 @@ export function TryOnProgressPage() {
   }, [processingStatus]);
 
   // Start processing when component mounts
+  // IMPORTANT: Check file BEFORE auth to detect file loss early
   useEffect(() => {
     // Prevent double execution in strict mode
     if (hasStartedRef.current) return;
@@ -118,16 +119,11 @@ export function TryOnProgressPage() {
       return;
     }
 
-    // Check if user is logged in first
-    if (!isLoggedIn) {
-      setShowAuth(true);
-      return;
-    }
-
     // Get file synchronously from ref (handles race condition with navigation)
+    // Check file FIRST before showing auth modal
     const file = getSelectedFile();
 
-    // Need file to process (product comes from URL productId)
+    // Need file to process - redirect if missing
     if (!file) {
       console.warn('[Progress] Missing file, redirecting to upload');
       toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
@@ -135,10 +131,19 @@ export function TryOnProgressPage() {
       return;
     }
 
+    // Check if user is logged in AFTER confirming file exists
+    // This ensures we don't lose the file check when user authenticates
+    if (!isLoggedIn) {
+      setShowAuth(true);
+      return;  // handleAuthSuccess will start processing after login
+    }
+
     hasStartedRef.current = true;
     // Use productId from URL directly (no need for context product)
     startProcessing(productId);
-  }, [selectedFile, productId, isLoggedIn, getSelectedFile, navigate]);
+    // Note: isLoggedIn removed from dependencies to prevent re-runs on login
+    // handleAuthSuccess handles starting processing after authentication
+  }, [selectedFile, productId, getSelectedFile, navigate]);
 
   /**
    * Start the AI visualization processing
@@ -146,7 +151,13 @@ export function TryOnProgressPage() {
    */
   const startProcessing = async (productUniqueLink: string) => {
     const file = getSelectedFile();
-    if (!file) return;
+    if (!file) {
+      // User feedback instead of silent return
+      console.error('[Progress] File not found when starting processing');
+      toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+      navigate(`/try-on/${productUniqueLink}/upload`);
+      return;
+    }
 
     // Get size synchronously from ref (handles navigation race condition)
     const currentSize = getSelectedSize();

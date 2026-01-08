@@ -111,6 +111,15 @@ export async function processVisualization(
   onProgress?: (progress: number) => void,
   selectedSize?: string
 ): Promise<ProcessingResult> {
+  // Null check first - ensure file exists before accessing properties
+  if (!customerImage) {
+    console.error('[Visualization] No customer image provided');
+    return {
+      success: false,
+      error: 'فایل تصویر انتخاب نشده است.',
+    };
+  }
+
   // Validate file before upload
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!validTypes.includes(customerImage.type)) {

@@ -601,6 +601,16 @@ export async function apiUpload<T>(
 ): Promise<APIResponse<T>> {
   const { skipAuth = false, skipRetryOn401 = false } = options || {};
 
+  // Defensive null check - file must be a valid File object
+  if (!file || !(file instanceof File)) {
+    console.error('[API Upload] Invalid file provided:', file);
+    return {
+      success: false,
+      error: 'فایل انتخاب نشده است',
+      statusCode: 400,
+    };
+  }
+
   try {
     const url = buildURL(endpoint);
     console.log('[API Upload]', url.toString(), {
