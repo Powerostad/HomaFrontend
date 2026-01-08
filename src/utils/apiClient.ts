@@ -15,9 +15,13 @@ import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
 // Environment Configuration
 // =============================================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_PREFIX = '/api';
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000; // 30 seconds
 const UPLOAD_TIMEOUT = Number(import.meta.env.VITE_UPLOAD_TIMEOUT) || 180000; // 3 minutes for uploads
+
+// Build full API base URL: host + prefix (e.g., http://localhost:8000/api)
+const API_BASE_URL = `${API_HOST.replace(/\/$/, '')}${API_PREFIX}`;
 
 /**
  * تنظیمات API
