@@ -79,6 +79,21 @@ export interface OTPVerifyResponse {
 }
 
 /**
+ * Response data from POST /api/users/login/
+ */
+export interface LoginResponse {
+  user: BackendUser;
+  tokens: AuthTokens;
+}
+
+/**
+ * Response data from POST /api/users/password/reset/
+ */
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+/**
  * Request body for POST /api/users/otp/resend/
  */
 export interface OTPResendRequest {
@@ -212,6 +227,21 @@ export interface OTPVerifyResult extends ServiceResult {
  */
 export interface ProfileResult extends ServiceResult {
   user?: User;
+}
+
+/**
+ * Login with password service result
+ */
+export interface LoginResult extends ServiceResult {
+  user?: User;
+  tokens?: AuthTokens;
+}
+
+/**
+ * Password reset service result
+ */
+export interface ResetPasswordResult extends ServiceResult {
+  // No additional data needed on success
 }
 
 // =============================================================================

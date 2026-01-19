@@ -13,9 +13,13 @@ import {
   type StoredAuthState,
   type OTPSendResponse,
   type OTPVerifyResponse,
+  type LoginResponse,
+  type ResetPasswordResponse,
   type OTPSendResult,
   type OTPVerifyResult,
   type ProfileResult,
+  type LoginResult,
+  type ResetPasswordResult,
 } from '@/types/auth';
 
 // =============================================================================
@@ -259,6 +263,138 @@ export async function resendOTP(phone: string): Promise<OTPSendResult> {
 }
 
 // =============================================================================
+// Password Authentication
+// =============================================================================
+
+/**
+ * Login with phone number and password
+ */
+export async function loginWithPassword(phone: string, password: string): Promise<LoginResult> {
+  const normalizedPhone = formatPhoneForAPI(phone);
+
+  const response = await apiPost<LoginResponse>(
+    '/users/login/',
+    {
+      phone_number: normalizedPhone,
+      password: password,
+    },
+    { skipAuth: true }
+  );
+
+  if (response.success && response.data) {
+    const user = transformBackendUser(response.data.user);
+    const tokens = response.data.tokens;
+
+    // Store auth state
+    storeAuthState(user, tokens);
+
+    return {
+      success: true,
+      user,
+      tokens,
+    };
+  }
+
+  // Parse specific error messages - use generic message for security
+  let errorMessage = 'شماره موبایل یا رمز عبور اشتباه است';
+
+  // Rate limiting / account locked
+  if (response.statusCode === 429) {
+    errorMessage = 'حساب شما موقتاً مسدود شده. لطفاً بعداً تلاش کنید';
+  }
+
+  // Network error
+  if (response.statusCode === 0) {
+    errorMessage = 'خطا در برقراری ارتباط با سرور';
+  }
+
+  return {
+    success: false,
+    error: errorMessage,
+  };
+}
+
+/**
+ * Send OTP for password reset
+ */
+export async function sendOTPForReset(phone: string): Promise<OTPSendResult> {
+  const normalizedPhone = formatPhoneForAPI(phone);
+
+  const response = await apiPost<OTPSendResponse>(
+    '/users/otp/send/',
+    {
+      phone_number: normalizedPhone,
+      purpose: 'reset_password',
+    },
+    { skipAuth: true }
+  );
+
+  if (response.success && response.data) {
+    return {
+      success: true,
+      expiresIn: response.data.expires_in_seconds,
+    };
+  }
+
+  let errorMessage = response.error || 'خطا در ارسال کد تایید';
+
+  if (response.statusCode === 429) {
+    errorMessage = 'تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید';
+  }
+
+  return {
+    success: false,
+    error: errorMessage,
+  };
+}
+
+/**
+ * Reset password with OTP verification
+ */
+export async function resetPassword(
+  phone: string,
+  otpCode: string,
+  newPassword: string
+): Promise<ResetPasswordResult> {
+  const normalizedPhone = formatPhoneForAPI(phone);
+
+  const response = await apiPost<ResetPasswordResponse>(
+    '/users/password/reset/',
+    {
+      phone_number: normalizedPhone,
+      otp_code: otpCode,
+      new_password: newPassword,
+      confirm_password: newPassword,
+    },
+    { skipAuth: true }
+  );
+
+  if (response.success) {
+    return {
+      success: true,
+    };
+  }
+
+  // Parse specific error messages
+  let errorMessage = response.error || 'خطا در تغییر رمز عبور';
+
+  // Invalid OTP
+  if (response.statusCode === 400 && response.error?.includes('کد')) {
+    errorMessage = 'کد تایید نامعتبر است';
+  }
+
+  // OTP expired
+  if (response.statusCode === 410) {
+    errorMessage = 'کد تایید منقضی شده است. لطفا کد جدید درخواست کنید';
+  }
+
+  return {
+    success: false,
+    error: errorMessage,
+  };
+}
+
+// =============================================================================
 // Token Management
 // =============================================================================
 
@@ -391,6 +527,11 @@ export const authService = {
   sendOTP,
   verifyOTP,
   resendOTP,
+
+  // Password authentication
+  loginWithPassword,
+  sendOTPForReset,
+  resetPassword,
 
   // Token management
   refreshToken,
