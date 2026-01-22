@@ -1,4 +1,6 @@
 import type { Product, UTMParams, EntryContext } from "../types/product";
+import { fetchProduct as fetchProductFromAPI } from '@/services/productService';
+import { apiProductToProduct } from '@/types/apiProduct';
 const rugImage1 = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
 const rugImage2 = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
 
@@ -384,20 +386,16 @@ export async function getProductById(productId: string): Promise<Product | null>
     return mockProducts[productId];
   }
 
-  // TODO: Add API call to fetch product by unique_link from backend
-  // For now, try to find in mock products by unique_link-like IDs
-  // In production, this should call: GET /products/{unique_link}/
-
-  // Try fetching from API if it looks like a backend ID (UUID format or unique_link)
-  try {
-    // Check if this might be a backend unique_link (not a prod_* ID)
-    if (!productId.startsWith('prod_')) {
-      // Try API call - this would need to be implemented based on your API
-      // For now, return null and let the caller handle it
-      console.log('[productLoader] Unknown product ID format:', productId);
+  // Try API for backend IDs (UUIDs - unique_link format)
+  if (!productId.startsWith('prod_')) {
+    try {
+      const result = await fetchProductFromAPI(productId);
+      if (result.success && result.data) {
+        return apiProductToProduct(result.data);
+      }
+    } catch (error) {
+      console.error('[productLoader] Failed to fetch product:', error);
     }
-  } catch (error) {
-    console.error('[productLoader] Failed to fetch product:', error);
   }
 
   return null;

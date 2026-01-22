@@ -8,6 +8,7 @@
  */
 
 import { apiConfig } from '@/utils/apiClient';
+import type { Product } from './product';
 
 // =============================================================================
 // Backend Response Types
@@ -185,3 +186,32 @@ export function transformBackendProduct(backendProduct: BackendProduct): APIProd
 
 // Note: Use formatPriceFromRial() from '@/utils/formatters' for price formatting
 // It handles Rial→Toman conversion and Persian digit formatting
+
+/**
+ * Convert APIProduct to frontend Product type
+ * Used when loading products from API into contexts that expect the Product type
+ *
+ * Key conversion: imageUrl (string) → images (string[])
+ */
+export function apiProductToProduct(apiProduct: APIProduct): Product {
+  return {
+    id: apiProduct.uniqueLink,
+    name: apiProduct.name,
+    price: apiProduct.price,
+    category: apiProduct.categoryDisplay,
+    images: [apiProduct.imageUrl],  // Convert single imageUrl to images array
+    thumbnail: apiProduct.imageUrl,
+    brand: apiProduct.shopName,
+    description: apiProduct.description,
+    currency: 'تومان',
+    status: 'active',
+    seller: {
+      name: apiProduct.shopName,
+      verified: true,
+    },
+    shopSlug: apiProduct.shopSlug,
+    extraDetails: apiProduct.extraDetails,
+    availableSizes: apiProduct.availableSizes,
+    availableSizesDisplay: apiProduct.availableSizesDisplay,
+  };
+}
