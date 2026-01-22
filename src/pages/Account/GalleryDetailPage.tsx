@@ -12,12 +12,13 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { SidebarMenu } from '@/components/SidebarMenu';
 import { toast } from 'sonner';
-import { fetchGalleryItem, getFullImageUrl } from '@/services/galleryService';
+import { fetchGalleryItem } from '@/services/galleryService';
+import { fetchAuthenticatedImage } from '@/utils/apiClient';
 import { type GalleryItem } from '@/types/gallery';
 import { formatRelativeTime } from '@/utils/formatters';
 
@@ -150,17 +151,16 @@ export default function GalleryDetailPage() {
     toast.success('در حال آماده‌سازی فایل دانلود...');
 
     try {
-      const imageUrl = getFullImageUrl(item.resultImageUrl);
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      // Use fetchAuthenticatedImage to get blob URL with JWT auth
+      const blobUrl = await fetchAuthenticatedImage(item.resultImageUrl);
 
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      link.href = blobUrl;
       link.download = `homa-tryon-${item.id}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      URL.revokeObjectURL(blobUrl);
 
       toast.success('دانلود شروع شد');
     } catch {
@@ -227,7 +227,7 @@ export default function GalleryDetailPage() {
         </div>
         <div className="flex gap-4 items-center">
           <div className="relative w-[84px] h-[84px] rounded-[14px] overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
-            <ImageWithFallback
+            <AuthenticatedImage
               src={item.resultImageUrl}
               alt={item.productName}
               className="w-full h-full object-cover"
@@ -353,12 +353,12 @@ export default function GalleryDetailPage() {
 
         {/* Right Side: Hero Image */}
         <div className="flex-1 h-full bg-secondary relative overflow-hidden group">
-          <ImageWithFallback
+          <AuthenticatedImage
             src={item.resultImageUrl}
             alt="Result"
             className={`w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
           />
-          <img
+          <AuthenticatedImage
             src={item.customerImageUrl}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
             alt="Before"
@@ -424,11 +424,11 @@ export default function GalleryDetailPage() {
               <X size={24} />
             </button>
             <div className="relative max-w-full max-h-[80vh] aspect-[4/5] rounded-[24px] overflow-hidden border border-white/10 shadow-2xl">
-              <ImageWithFallback
+              <AuthenticatedImage
                 src={item.resultImageUrl}
                 className={`w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
               />
-              <img
+              <AuthenticatedImage
                 src={item.customerImageUrl}
                 className={`absolute inset-0 w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
                 alt="Before"

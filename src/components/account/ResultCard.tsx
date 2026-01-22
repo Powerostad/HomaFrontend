@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { AuthenticatedImage } from '../figma/AuthenticatedImage';
 import { MoreVertical, Share2, Trash2, Pin, PinOff } from 'lucide-react';
 
 interface ResultCardProps {
@@ -31,10 +31,10 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
     >
       {/* Cover Image */}
       <div className="relative aspect-[4/5] bg-secondary rounded-[var(--radius-card)] overflow-hidden border border-border transition-all duration-500 hover:shadow-xl hover:shadow-black/5">
-        <ImageWithFallback 
-          src={result.coverImage} 
-          alt={result.productName} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+        <AuthenticatedImage
+          src={result.coverImage}
+          alt={result.productName}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
         {/* Badge */}
