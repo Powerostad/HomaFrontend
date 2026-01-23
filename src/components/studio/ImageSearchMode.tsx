@@ -11,7 +11,7 @@
  * />
  */
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Loader2 } from 'lucide-react';
 import { useImageSelection } from '@/hooks/useImageSelection';
@@ -45,93 +45,108 @@ export function ImageSearchMode({
   const {
     isDrawing,
     normalizedSelection,
-    clearSelection,
+    startSelectionMode,
+    cancelSelectionMode,
     handlers,
   } = useImageSelection({
     containerRef,
     minSize: 50,
   });
 
+  // Sync selection mode with component active state
+  useEffect(() => {
+    if (isActive) {
+      startSelectionMode();
+    } else {
+      cancelSelectionMode();
+    }
+  }, [isActive, startSelectionMode, cancelSelectionMode]);
+
   // Handle search button click
   const handleSearch = useCallback(async () => {
-    if (!normalizedSelection || !imageRef.current) {
-      toast.error('لطفاً ناحیه‌ای را انتخاب کنید');
-      return;
-    }
-
-    setIsUploading(true);
-
-    // Step 1: Crop the image
-    const cropResult = await cropImageRegionAsync(imageRef.current, normalizedSelection);
-
-    if (!cropResult.success) {
-      toast.error(cropResult.error);
-      setIsUploading(false);
-      return;
-    }
-
-    // Step 2: Create a File from the blob
-    const file = new File([cropResult.blob], `lens-search-${Date.now()}.jpg`, {
-      type: 'image/jpeg',
-    });
-
-    // Step 3: Upload to backend for temporary public URL
-    const uploadResult = await apiUpload<{ url: string }>(
-      '/v1/utils/temp-image/',
-      file,
-      'image'
-    );
-
-    setIsUploading(false);
-
-    if (!uploadResult.success) {
-      // Handle rate limit
-      if (uploadResult.statusCode === 429) {
-        toast.error('تعداد درخواست‌ها بیش از حد مجاز. کمی صبر کنید');
-      } else {
-        toast.error(uploadResult.error || 'خطا در آپلود تصویر');
+    try {
+      if (!normalizedSelection || !imageRef.current) {
+        toast.error('لطفاً ناحیه‌ای را انتخاب کنید');
+        return;
       }
-      return;
-    }
 
-    if (!uploadResult.data?.url) {
-      toast.error('خطا در دریافت آدرس تصویر');
-      return;
-    }
+      setIsUploading(true);
 
-    // Step 4: Open Google Lens
-    const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(uploadResult.data.url)}`;
+      // Step 1: Crop the image
+      const cropResult = await cropImageRegionAsync(imageRef.current, normalizedSelection);
 
-    const newWindow = window.open(lensUrl, '_blank');
+      if (!cropResult.success) {
+        toast.error(cropResult.error);
+        setIsUploading(false);
+        return;
+      }
 
-    if (!newWindow) {
-      // Popup was blocked - show a clickable link
-      toast.error(
-        <div className="flex flex-col gap-2">
-          <span>لطفاً پاپ‌آپ را مجاز کنید</span>
-          <a
-            href={lensUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 underline"
-          >
-            باز کردن گوگل لنز
-          </a>
-        </div>,
-        { duration: 10000 }
+      // Step 2: Create a File from the blob
+      const file = new File([cropResult.blob], `lens-search-${Date.now()}.jpg`, {
+        type: 'image/jpeg',
+      });
+
+      // Step 3: Upload to backend for temporary public URL
+      const uploadResult = await apiUpload<{ url: string }>(
+        '/v1/utils/temp-image/',
+        file,
+        'image'
       );
-    } else {
-      toast.success('گوگل لنز در تب جدید باز شد');
-    }
 
-    onSearchComplete(uploadResult.data.url);
+      setIsUploading(false);
+
+      if (!uploadResult.success) {
+        // Handle rate limit
+        if (uploadResult.statusCode === 429) {
+          toast.error('تعداد درخواست‌ها بیش از حد مجاز. کمی صبر کنید');
+        } else {
+          toast.error(uploadResult.error || 'خطا در آپلود تصویر');
+        }
+        return;
+      }
+
+      if (!uploadResult.data?.url) {
+        toast.error('خطا در دریافت آدرس تصویر');
+        return;
+      }
+
+      // Step 4: Open Google Lens
+      const lensUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(uploadResult.data.url)}`;
+
+      const newWindow = window.open(lensUrl, '_blank');
+
+      if (!newWindow) {
+        // Popup was blocked - show a clickable link
+        toast.error(
+          <div className="flex flex-col gap-2">
+            <span>لطفاً پاپ‌آپ را مجاز کنید</span>
+            <a
+              href={lensUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 underline"
+            >
+              باز کردن گوگل لنز
+            </a>
+          </div>,
+          { duration: 10000 }
+        );
+      } else {
+        toast.success('گوگل لنز در تب جدید باز شد');
+      }
+
+      onSearchComplete(uploadResult.data.url);
+    } catch (error) {
+      console.error('[ImageSearchMode] Search failed:', error);
+      toast.error('خطای ناشناخته در جستجو');
+      setIsUploading(false);
+    }
   }, [normalizedSelection, imageRef, onSearchComplete]);
 
   // Handle cancel
   const handleCancel = useCallback(() => {
-    clearSelection();
     onCancel();
-  }, [clearSelection, onCancel]);
+  }, [onCancel]);
 
   if (!isActive) return null;
 
