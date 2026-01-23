@@ -114,6 +114,8 @@ export function StudioResultPage() {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const mobileImageRef = useRef<HTMLImageElement>(null);
+  const mobileImageContainerRef = useRef<HTMLDivElement>(null);
 
   // TODO: Enable gallery submission when try-on flow is fixed
   // Check if any item has a completed try-on (required for gallery submission)
@@ -588,8 +590,9 @@ export function StudioResultPage() {
         <div className="md:hidden absolute inset-0 bg-background flex flex-col z-0">
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             {/* Hero Image */}
-            <div className="relative w-full h-[65vh]">
+            <div ref={mobileImageContainerRef} className="relative w-full h-[65vh]">
               <AuthenticatedImage
+                ref={mobileImageRef}
                 src={resultImage}
                 alt="Studio Result"
                 imageWidth={800}
@@ -644,6 +647,13 @@ export function StudioResultPage() {
                     <Heart size={18} className={isSaved ? 'fill-current' : ''} />
                   </button>
                   <button
+                    onClick={handleStartSearch}
+                    className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90"
+                    title="جستجو در گوگل لنز"
+                  >
+                    <Search size={18} />
+                  </button>
+                  <button
                     onClick={handleDownload}
                     disabled={isDownloading}
                     className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90 ${isDownloading ? 'opacity-50' : ''}`}
@@ -654,11 +664,11 @@ export function StudioResultPage() {
               </div>
 
               {/* View Fullscreen button - minimal style */}
-              <button 
+              <button
                 onClick={() => setIsFullScreen(true)}
                 className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 active:scale-95 transition-all"
               >
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-2 px-5 py-2.5 bg-black/40 backdrop-blur-2xl rounded-full border border-white/10 shadow-2xl"
@@ -669,6 +679,15 @@ export function StudioResultPage() {
                   </span>
                 </motion.div>
               </button>
+
+              {/* Mobile Google Lens Search Mode */}
+              <ImageSearchMode
+                isActive={isSearchMode}
+                onCancel={handleCancelSearch}
+                onSearchComplete={handleSearchComplete}
+                imageRef={mobileImageRef}
+                containerRef={mobileImageContainerRef}
+              />
             </div>
 
             {/* Scrolling Card Content */}
