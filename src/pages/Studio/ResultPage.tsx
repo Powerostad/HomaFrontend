@@ -16,7 +16,6 @@ import {
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudio } from '../../context/StudioContext';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
 import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
@@ -331,14 +330,16 @@ export function StudioResultPage() {
                 className="group flex flex-row gap-6 py-8 first:pt-4 border-b border-black/[0.04] last:border-0"
               >
                 {/* Product Frame - Editorial Compact Look */}
-                <div 
+                <div
                   className="relative w-[130px] aspect-[3/4] bg-black/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
                   onClick={() => setSelectedProduct(item)}
                 >
-                  <ImageWithFallback 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105" 
+                  <AuthenticatedImage
+                    src={item.image}
+                    alt={item.name}
+                    imageWidth={300}
+                    imageQuality={80}
+                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
                   />
                   
                   {isTopPick && (

@@ -161,6 +161,11 @@ export interface MatchedProduct {
 
 /**
  * Get full URL for session images (room or redesigned)
+ *
+ * Handles both relative paths and full URLs from backend:
+ * - Relative paths: Constructs URL using frontend's apiConfig.baseURL
+ * - Full URLs with /api/products/images/: Extracts path and uses frontend's apiConfig.baseURL
+ *   (fixes port mismatch between backend CDN_BASE_URL and actual API server)
  */
 export function getSessionImageUrl(
   imagePath: string | null | undefined,
@@ -172,9 +177,20 @@ export function getSessionImageUrl(
 ): string | null {
   if (!imagePath) return null;
 
-  // If it's already a full URL (e.g., from MinIO presigned URL), return as-is
+  let path = imagePath;
+
+  // If it's a full URL, extract the path portion after /api/products/images/
+  // This fixes port mismatch when backend CDN_BASE_URL differs from actual API port
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
+    const imagePathMarker = '/api/products/images/';
+    const markerIndex = imagePath.indexOf(imagePathMarker);
+    if (markerIndex !== -1) {
+      // Extract path after the marker (e.g., "products/20/uuid.jpg" or "sessions/redesign/uuid.jpg")
+      path = imagePath.substring(markerIndex + imagePathMarker.length);
+    } else {
+      // Not an image serving URL - return as-is (e.g., external URLs)
+      return imagePath;
+    }
   }
 
   const params = new URLSearchParams();
@@ -182,7 +198,7 @@ export function getSessionImageUrl(
   if (options?.height) params.set('h', String(options.height));
   if (options?.quality) params.set('q', String(options.quality));
 
-  const base = `${apiConfig.baseURL}/products/images/${imagePath}`;
+  const base = `${apiConfig.baseURL}/products/images/${path}`;
   const queryString = params.toString();
 
   return queryString ? `${base}?${queryString}` : base;

@@ -18,6 +18,7 @@ import {
   DialogDescription
 } from '../../../components/ui/dialog';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { AuthenticatedImage } from '../../../components/figma/AuthenticatedImage';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { formatPriceFromRial } from '../../../utils/formatters';
@@ -248,13 +249,15 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
                 style={{ paddingInline: 'var(--spacing-md)' }}
             >
                 {/* Image - Minimal Luxury Style */}
-                <div 
+                <div
                     className="relative aspect-square w-full bg-white overflow-hidden border border-black/[0.03] mb-8 group"
                 >
-                    <ImageWithFallback 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-full h-full object-contain p-8 mix-blend-multiply transition-transform duration-700 group-hover:scale-105" 
+                    <AuthenticatedImage
+                        src={product.image}
+                        alt={product.name}
+                        imageWidth={600}
+                        imageQuality={85}
+                        className="w-full h-full object-contain p-8 mix-blend-multiply transition-transform duration-700 group-hover:scale-105"
                     />
                 </div>
 
