@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { fetchAuthenticatedImage } from '../../utils/apiClient';
 
 const ERROR_IMG_SRC =
@@ -65,8 +65,9 @@ interface AuthenticatedImageProps extends Omit<React.ImgHTMLAttributes<HTMLImage
  * - Module-level caching to prevent duplicate fetches
  * - Size parameters for backend image optimization
  * - Automatic cleanup of blob URLs
+ * - Supports ref forwarding for direct image element access
  */
-export function AuthenticatedImage({
+export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImageProps>(function AuthenticatedImage({
   src,
   fallbackSrc,
   skipAuth = false,
@@ -77,7 +78,7 @@ export function AuthenticatedImage({
   style,
   className,
   ...rest
-}: AuthenticatedImageProps) {
+}, ref) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [didError, setDidError] = useState(false);
@@ -177,6 +178,7 @@ export function AuthenticatedImage({
   // Success state
   return (
     <img
+      ref={ref}
       src={blobUrl || undefined}
       alt={alt}
       className={className}
@@ -185,4 +187,4 @@ export function AuthenticatedImage({
       onError={() => setDidError(true)}
     />
   );
-}
+});

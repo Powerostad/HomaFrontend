@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -10,6 +10,7 @@ import {
   Bookmark,
   Maximize2,
   Loader2,
+  Search,
   // Users, CheckCircle2 - TODO: Uncomment when gallery submission is enabled
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -22,6 +23,7 @@ import { ContextBar } from '../../components/ContextBar';
 import { ProductDetailSheet, Product } from './components/ProductDetailSheet';
 import { AuthModal } from '../../components/AuthModal';
 import { HomaLoader } from '../../components/HomaLoader';
+import { ImageSearchMode } from '@/components/studio/ImageSearchMode';
 import { toast } from 'sonner';
 // import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
@@ -109,6 +111,9 @@ export function StudioResultPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [preparedDownloadData, setPreparedDownloadData] = useState<PreparedDownload | null>(null);
   const [showDownloadReady, setShowDownloadReady] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // TODO: Enable gallery submission when try-on flow is fixed
   // Check if any item has a completed try-on (required for gallery submission)
@@ -194,6 +199,19 @@ export function StudioResultPage() {
 
     setPreparedDownloadData(null);
     setShowDownloadReady(false);
+  };
+
+  // --- Google Lens Search ---
+  const handleStartSearch = () => {
+    setIsSearchMode(true);
+  };
+
+  const handleSearchComplete = (_url: string) => {
+    setIsSearchMode(false);
+  };
+
+  const handleCancelSearch = () => {
+    setIsSearchMode(false);
   };
 
   // Cancel download
@@ -459,8 +477,12 @@ export function StudioResultPage() {
         </div>
 
         {/* LEFT PANEL (Main Hero Area) */}
-        <div className="hidden md:block flex-1 h-full bg-zinc-900 relative overflow-hidden group">
+        <div
+          ref={imageContainerRef}
+          className="hidden md:block flex-1 h-full bg-zinc-900 relative overflow-hidden group"
+        >
           <AuthenticatedImage
+            ref={imageRef}
             src={resultImage}
             alt="Studio Result"
             imageWidth={1200}
@@ -495,6 +517,13 @@ export function StudioResultPage() {
               </button>
               
               <div className="flex gap-3">
+                <button
+                  onClick={handleStartSearch}
+                  className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90"
+                  title="جستجو در گوگل لنز"
+                >
+                  <Search size={20} />
+                </button>
 {/* TODO: Enable after try-on flow is fixed
                 <button
                   onClick={handleSubmitToGallery}
@@ -535,7 +564,7 @@ export function StudioResultPage() {
                 </button>
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsFullScreen(true)}
                 className="flex items-center gap-3 px-8 h-[56px] bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl transition-all active:scale-95 group/btn"
               >
@@ -544,6 +573,15 @@ export function StudioResultPage() {
               </button>
             </div>
           </div>
+
+          {/* Google Lens Search Mode Overlay */}
+          <ImageSearchMode
+            isActive={isSearchMode}
+            onCancel={handleCancelSearch}
+            onSearchComplete={handleSearchComplete}
+            imageRef={imageRef}
+            containerRef={imageContainerRef}
+          />
         </div>
 
         {/* MOBILE LAYOUT (Unified Scroll) */}
