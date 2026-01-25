@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   ArrowRight,
@@ -10,7 +11,7 @@ import {
   Bookmark,
   Maximize2,
   Loader2,
-  Search,
+  // Search, - Google Lens feature disabled
   // Users, CheckCircle2 - TODO: Uncomment when gallery submission is enabled
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -22,11 +23,12 @@ import { ContextBar } from '../../components/ContextBar';
 import { ProductDetailSheet, Product } from './components/ProductDetailSheet';
 import { AuthModal } from '../../components/AuthModal';
 import { HomaLoader } from '../../components/HomaLoader';
-import { ImageSearchMode } from '@/components/studio/ImageSearchMode';
+// Google Lens search disabled - import removed
+// import { ImageSearchMode } from '@/components/studio/ImageSearchMode';
 import { toast } from 'sonner';
 // import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
-import { formatPriceFromRial, toPersianDigits } from '@/utils/formatters';
+import { formatPriceFromRial } from '@/utils/formatters';
 import type { MatchedProduct } from '@/services/studioService';
 
 // --- Fallback Mock Data (only used when API data not available) ---
@@ -68,20 +70,31 @@ const FALLBACK_PRODUCTS: (Product & { store?: string; style?: string })[] = [
 /**
  * Convert API matched product to UI Product format
  */
-function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string; isPromoted?: boolean } {
+function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string; isPromoted?: boolean; matchScore?: number } {
   return {
     id: String(product.id),
     name: product.name,
     price: product.price,
-    category: product.category || 'محصول',
+    category: product.categoryDisplay || product.category || 'محصول',
     store: product.shopName || 'فروشگاه هوما',
     image: product.imageUrl,
     hotspot: { x: 50, y: 50 + index * 10 }, // Default hotspots
     isPromoted: product.isPromoted,
+    // Smart Redesign: Pass through new fields for ProductDetailSheet
+    persianReason: product.persianReason,
+    matchHighlights: product.matchHighlights,
+    description: product.description,
+    extraDetails: product.extraDetails,
+    link: product.link,
+    uniqueLink: product.uniqueLink,
+    availableSizes: product.availableSizes,
+    availableSizesDisplay: product.availableSizesDisplay,
+    matchScore: product.matchScore,
   };
 }
 
 export function StudioResultPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   // Note: Route param is named "jobId" in App.tsx, but we use "sessionId" internally
   const { jobId: sessionId } = useParams<{ jobId: string }>();
@@ -110,11 +123,12 @@ export function StudioResultPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [preparedDownloadData, setPreparedDownloadData] = useState<PreparedDownload | null>(null);
   const [showDownloadReady, setShowDownloadReady] = useState(false);
-  const [isSearchMode, setIsSearchMode] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-  const mobileImageRef = useRef<HTMLImageElement>(null);
-  const mobileImageContainerRef = useRef<HTMLDivElement>(null);
+  // Google Lens search disabled
+  // const [isSearchMode, setIsSearchMode] = useState(false);
+  // const imageRef = useRef<HTMLImageElement>(null);
+  // const imageContainerRef = useRef<HTMLDivElement>(null);
+  // const mobileImageRef = useRef<HTMLImageElement>(null);
+  // const mobileImageContainerRef = useRef<HTMLDivElement>(null);
 
   // TODO: Enable gallery submission when try-on flow is fixed
   // Check if any item has a completed try-on (required for gallery submission)
@@ -162,7 +176,7 @@ export function StudioResultPage() {
   const handleDownload = async () => {
     const imageUrl = activeSession?.redesignedImageUrl;
     if (!imageUrl) {
-      toast.error('تصویری برای دانلود موجود نیست');
+      toast.error(t('studio.result.noImageDownload', 'تصویری برای دانلود موجود نیست'));
       return;
     }
 
@@ -191,29 +205,29 @@ export function StudioResultPage() {
     // Try share first on mobile
     const shared = await triggerShare(preparedDownloadData);
     if (shared) {
-      toast.success('تصویر آماده اشتراک‌گذاری شد');
+      toast.success(t('studio.result.shareReady', 'تصویر آماده اشتراک‌گذاری شد'));
     } else {
       // Fallback to download
       triggerDownload(preparedDownloadData);
-      toast.success('تصویر دانلود شد');
+      toast.success(t('studio.result.downloaded', 'تصویر دانلود شد'));
     }
 
     setPreparedDownloadData(null);
     setShowDownloadReady(false);
   };
 
-  // --- Google Lens Search ---
-  const handleStartSearch = () => {
-    setIsSearchMode(true);
-  };
+  // --- Google Lens Search (disabled) ---
+  // const handleStartSearch = () => {
+  //   setIsSearchMode(true);
+  // };
 
-  const handleSearchComplete = (_url: string) => {
-    setIsSearchMode(false);
-  };
+  // const handleSearchComplete = (_url: string) => {
+  //   setIsSearchMode(false);
+  // };
 
-  const handleCancelSearch = () => {
-    setIsSearchMode(false);
-  };
+  // const handleCancelSearch = () => {
+  //   setIsSearchMode(false);
+  // };
 
   // Cancel download
   const handleCancelDownload = () => {
@@ -249,6 +263,14 @@ export function StudioResultPage() {
 
   const totalPrice = displayProducts.reduce((acc, curr) => acc + curr.price, 0);
 
+  // Compute alternatives for the selected product (other products from the list)
+  const productAlternatives = useMemo(() => {
+    if (!selectedProduct) return [];
+    return displayProducts
+      .filter(p => p.id !== selectedProduct.id)
+      .slice(0, 3); // Top 3 alternatives
+  }, [selectedProduct, displayProducts]);
+
   // Load session data if not already in context
   // IMPORTANT: Wait for auth initialization AND login before making API calls
   useEffect(() => {
@@ -270,7 +292,7 @@ export function StudioResultPage() {
         setIsLoading(false);
 
         if (!result.success) {
-          toast.error(result.error || 'خطا در دریافت نتیجه طراحی');
+          toast.error(result.error || t('errors.resultFailed', 'خطا در دریافت نتیجه طراحی'));
         }
       }
     };
@@ -314,10 +336,10 @@ export function StudioResultPage() {
       <div className="space-y-2 pt-0"> {/* Reduced space and padding */}
         <div className="flex items-baseline justify-between border-b border-black/[0.05] pb-2"> {/* Reduced pb */}
           <h2 className="text-[20px] font-medium text-black tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-            محصولات پیشنهادی
+            {t('studio.result.suggestedProducts', 'محصولات پیشنهادی')}
           </h2>
           <span className="text-[10px] text-black/30 font-medium tracking-wide uppercase" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-            Curated
+            {t('studio.result.curated', 'Curated')}
           </span>
         </div>
         
@@ -346,7 +368,7 @@ export function StudioResultPage() {
                     <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-1.5 py-0.5 flex items-center gap-1.5">
                        <div className="w-1 h-1 rounded-full bg-accent" />
                        <span className="text-[7px] font-bold text-black uppercase tracking-[0.2em]" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                          انتخاب هُما
+                          {t('studio.result.homaPick', 'انتخاب هُما')}
                        </span>
                     </div>
                   )}
@@ -380,17 +402,17 @@ export function StudioResultPage() {
                         {formatPriceFromRial(item.price, false)}
                       </span>
                       <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                        تومان
+                        {t('common.toman', 'تومان')}
                       </span>
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     onClick={() => setSelectedProduct(item)}
                     className="w-full h-10 border border-black/10 text-black text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-black hover:text-white active:scale-[0.98]"
                     style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                   >
-                    جزییات محصول
+                    {t('studio.result.productDetails', 'جزییات محصول')}
                   </button>
                 </div>
               </div>
@@ -402,9 +424,9 @@ export function StudioResultPage() {
       <div className="flex flex-col gap-8 pt-10 border-t border-black/[0.06]">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-            <span className="block text-[9px] text-black/30 font-bold uppercase tracking-[0.3em]">Collection Summary</span>
+            <span className="block text-[9px] text-black/30 font-bold uppercase tracking-[0.3em]">{t('studio.result.collectionSummary', 'Collection Summary')}</span>
             <span className="block text-[11px] text-black/60 font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              {toPersianDigits(displayProducts.length)} محصول در لیست نهایی
+              {t('studio.result.productsInList', '{{count}} محصول در لیست نهایی', { count: displayProducts.length })}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -412,21 +434,21 @@ export function StudioResultPage() {
               {formatPriceFromRial(totalPrice, false)}
             </span>
             <span className="text-[10px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              تومان
+              {t('common.toman', 'تومان')}
             </span>
           </div>
         </div>
 
         <div className="space-y-4">
-          <button 
+          <button
             className="w-full h-12 bg-black text-white text-[11px] font-bold rounded-none uppercase tracking-[0.3em] hover:bg-black/90 transition-all active:scale-[0.99]"
             style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
           >
-            نهایی‌سازی لیست
+            {t('studio.result.finalizeList', 'نهایی‌سازی لیست')}
           </button>
-          
+
           <div className="text-center pt-2">
-            <p className="text-[9px] font-medium text-black/20 uppercase tracking-[0.5em]">Studio Homa • Editorial Selection</p>
+            <p className="text-[9px] font-medium text-black/20 uppercase tracking-[0.5em]">{t('studio.result.editorialSelection', 'Studio Homa • Editorial Selection')}</p>
           </div>
         </div>
       </div>
@@ -454,10 +476,10 @@ export function StudioResultPage() {
       {!isFullScreen && (
         <div className="md:hidden">
           <Header />
-          <ContextBar 
+          <ContextBar
             items={[
-              { label: 'استودیو', href: '/studio' },
-              { label: 'نتیجه طراحی' }
+              { label: t('nav.studio', 'استودیو'), href: '/studio' },
+              { label: t('studio.result.title', 'نتیجه طراحی') }
             ]}
             price={totalPrice}
           />
@@ -471,8 +493,8 @@ export function StudioResultPage() {
         <div className="hidden md:flex flex-col w-[450px] h-full bg-card z-50 overflow-y-auto border-l border-border relative scrollbar-hide">
           <div className="p-8 pb-2 flex flex-col gap-2"> {/* Reduced padding and gap */}
             <div className="flex flex-col gap-0"> {/* Removed gap between subtitle and title */}
-              <span className="text-muted-foreground uppercase tracking-widest leading-none mb-1" style={{ fontSize: '10px', fontWeight: 'var(--font-weight-bold)' }}>Studio Result</span>
-              <h1 className="text-foreground leading-[1.1] m-0" style={{ fontSize: 'var(--text-h3-size)', fontWeight: 'var(--font-weight-bold)', fontFamily: 'var(--font-family-vazirmatn)' }}>تحلیل هوشمند فضا</h1>
+              <span className="text-muted-foreground uppercase tracking-widest leading-none mb-1" style={{ fontSize: '10px', fontWeight: 'var(--font-weight-bold)' }}>{t('studio.result.studioResult', 'Studio Result')}</span>
+              <h1 className="text-foreground leading-[1.1] m-0" style={{ fontSize: 'var(--text-h3-size)', fontWeight: 'var(--font-weight-bold)', fontFamily: 'var(--font-family-vazirmatn)' }}>{t('studio.result.smartAnalysis', 'تحلیل هوشمند فضا')}</h1>
             </div>
           </div>
           
@@ -481,11 +503,9 @@ export function StudioResultPage() {
 
         {/* LEFT PANEL (Main Hero Area) */}
         <div
-          ref={imageContainerRef}
           className="hidden md:block flex-1 h-full bg-zinc-900 relative overflow-hidden group"
         >
           <AuthenticatedImage
-            ref={imageRef}
             src={resultImage}
             alt="Studio Result"
             imageWidth={1200}
@@ -520,13 +540,15 @@ export function StudioResultPage() {
               </button>
               
               <div className="flex gap-3">
+                {/* Google Lens search button disabled
                 <button
                   onClick={handleStartSearch}
                   className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90"
-                  title="جستجو در گوگل لنز"
+                  title={t('studio.result.googleLensSearch', 'جستجو در گوگل لنز')}
                 >
                   <Search size={20} />
                 </button>
+                */}
 {/* TODO: Enable after try-on flow is fixed
                 <button
                   onClick={handleSubmitToGallery}
@@ -553,17 +575,17 @@ export function StudioResultPage() {
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto flex flex-col items-center gap-6">
               {/* Toggle Before/After */}
               <div className="flex items-center gap-0.5 p-1 bg-black/25 backdrop-blur-3xl rounded-full border border-white/5 shadow-xl">
-                <button 
+                <button
                   onClick={() => setShowOriginal(true)}
                   className={`px-5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-500 ${showOriginal ? 'bg-white/95 text-black' : 'text-white/40 hover:text-white'}`}
                 >
-                  قبل
+                  {t('studio.result.before', 'قبل')}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowOriginal(false)}
                   className={`px-5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-500 ${!showOriginal ? 'bg-white/95 text-black' : 'text-white/40 hover:text-white'}`}
                 >
-                  بعد
+                  {t('studio.result.after', 'بعد')}
                 </button>
               </div>
 
@@ -572,12 +594,12 @@ export function StudioResultPage() {
                 className="flex items-center gap-3 px-8 h-[56px] bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl transition-all active:scale-95 group/btn"
               >
                 <Maximize2 size={18} />
-                <span className="text-[13px] font-bold tracking-wide">مشاهده تمام صفحه</span>
+                <span className="text-[13px] font-bold tracking-wide">{t('studio.result.viewFullscreen', 'مشاهده تمام صفحه')}</span>
               </button>
             </div>
           </div>
 
-          {/* Google Lens Search Mode Overlay */}
+          {/* Google Lens Search Mode Overlay (disabled)
           <ImageSearchMode
             isActive={isSearchMode}
             onCancel={handleCancelSearch}
@@ -585,15 +607,15 @@ export function StudioResultPage() {
             imageRef={imageRef}
             containerRef={imageContainerRef}
           />
+          */}
         </div>
 
         {/* MOBILE LAYOUT (Unified Scroll) */}
         <div className="md:hidden absolute inset-0 bg-background flex flex-col z-0">
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             {/* Hero Image */}
-            <div ref={mobileImageContainerRef} className="relative w-full h-[65vh]">
+            <div className="relative w-full h-[65vh]">
               <AuthenticatedImage
-                ref={mobileImageRef}
                 src={resultImage}
                 alt="Studio Result"
                 imageWidth={800}
@@ -647,13 +669,15 @@ export function StudioResultPage() {
                   >
                     <Heart size={18} className={isSaved ? 'fill-current' : ''} />
                   </button>
+                  {/* Google Lens search button disabled
                   <button
                     onClick={handleStartSearch}
                     className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90"
-                    title="جستجو در گوگل لنز"
+                    title={t('studio.result.googleLensSearch', 'جستجو در گوگل لنز')}
                   >
                     <Search size={18} />
                   </button>
+                  */}
                   <button
                     onClick={handleDownload}
                     disabled={isDownloading}
@@ -676,12 +700,12 @@ export function StudioResultPage() {
                 >
                   <Maximize2 size={13} className="text-white/80" />
                   <span className="text-[10px] text-white tracking-[0.05em] uppercase font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                    نمای تمام‌صفحه
+                    {t('studio.result.fullscreenView', 'نمای تمام‌صفحه')}
                   </span>
                 </motion.div>
               </button>
 
-              {/* Mobile Google Lens Search Mode */}
+              {/* Mobile Google Lens Search Mode (disabled)
               <ImageSearchMode
                 isActive={isSearchMode}
                 onCancel={handleCancelSearch}
@@ -689,6 +713,7 @@ export function StudioResultPage() {
                 imageRef={mobileImageRef}
                 containerRef={mobileImageContainerRef}
               />
+              */}
             </div>
 
             {/* Scrolling Card Content */}
@@ -780,24 +805,24 @@ export function StudioResultPage() {
               {/* Floating Comparison Toggle - Editorial Style */}
               <div className="absolute bottom-12 left-0 right-0 flex flex-col items-center gap-4 z-50">
                 <div className="p-1 bg-black/30 backdrop-blur-3xl rounded-full border border-white/10 shadow-2xl flex items-center gap-1">
-                  <button 
+                  <button
                     onClick={() => setShowOriginal(true)}
                     className={`px-8 h-10 rounded-full text-[12px] font-bold transition-all duration-500 ${showOriginal ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
                     style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                   >
-                    قبل
+                    {t('studio.result.before', 'قبل')}
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowOriginal(false)}
                     className={`px-8 h-10 rounded-full text-[12px] font-bold transition-all duration-500 ${!showOriginal ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
                     style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                   >
-                    بعد
+                    {t('studio.result.after', 'بعد')}
                   </button>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[9px] text-white/40 font-bold uppercase tracking-[0.3em]" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                    نگه‌دار برای مقایسه
+                    {t('studio.result.holdToCompare', 'نگه‌دار برای مقایسه')}
                   </span>
                   <div className="w-1 h-1 rounded-full bg-white/20 animate-pulse" />
                 </div>
@@ -812,11 +837,12 @@ export function StudioResultPage() {
 
       {/* Product Detail Modal */}
       {selectedProduct && (
-         <ProductDetailSheet 
-            product={selectedProduct} 
-            isOpen={!!selectedProduct} 
+         <ProductDetailSheet
+            product={selectedProduct}
+            isOpen={!!selectedProduct}
             onClose={() => setSelectedProduct(null)}
-            onReplace={() => {}} 
+            onReplace={() => {}}
+            alternatives={productAlternatives}
          />
       )}
 
@@ -829,16 +855,16 @@ export function StudioResultPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 1.05, opacity: 0 }}
               className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[32px] p-8 max-w-[340px] w-full shadow-[0_24px_80px_rgba(0,0,0,0.15)] flex flex-col items-center text-center gap-8"
             >
               <div className="flex flex-col gap-2">
-                <h3 className="text-[18px] font-bold text-black" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>ذخیره و خروج</h3>
+                <h3 className="text-[18px] font-bold text-black" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{t('studio.result.saveAndExit', 'ذخیره و خروج')}</h3>
                 <p className="text-[14px] text-black/70 leading-relaxed font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                  طراحی شما ذخیره شده و به استودیو باز می‌گردید.
+                  {t('studio.result.exitDescription', 'طراحی شما ذخیره شده و به استودیو باز می‌گردید.')}
                 </p>
               </div>
 
@@ -853,14 +879,14 @@ export function StudioResultPage() {
                   className="w-full h-[56px] bg-black text-white rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  تایید و بازگشت
+                  {t('studio.result.confirmAndReturn', 'تایید و بازگشت')}
                 </button>
-                <button 
+                <button
                   onClick={() => setShowExitDecision(false)}
                   className="w-full h-[56px] bg-white/20 text-black border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  انصراف
+                  {t('common.cancel', 'انصراف')}
                 </button>
               </div>
             </motion.div>
@@ -879,7 +905,7 @@ export function StudioResultPage() {
           >
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-black/40" />
-              <span className="text-[14px] font-medium text-black/60">در حال بارگذاری...</span>
+              <span className="text-[14px] font-medium text-black/60">{t('common.loading', 'در حال بارگذاری...')}</span>
             </div>
           </motion.div>
         )}
@@ -905,9 +931,9 @@ export function StudioResultPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <h3 className="text-[18px] font-bold text-foreground" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>تصویر آماده است</h3>
+                <h3 className="text-[18px] font-bold text-foreground" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{t('studio.result.imageReady', 'تصویر آماده است')}</h3>
                 <p className="text-[14px] text-foreground/70 leading-relaxed font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                  برای ذخیره تصویر روی دکمه زیر کلیک کنید
+                  {t('studio.result.clickToSave', 'برای ذخیره تصویر روی دکمه زیر کلیک کنید')}
                 </p>
               </div>
 
@@ -918,14 +944,14 @@ export function StudioResultPage() {
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
                   <Download size={18} />
-                  ذخیره تصویر
+                  {t('studio.result.saveImage', 'ذخیره تصویر')}
                 </button>
                 <button
                   onClick={handleCancelDownload}
                   className="w-full h-[56px] bg-white/20 text-foreground border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  انصراف
+                  {t('common.cancel', 'انصراف')}
                 </button>
               </div>
             </motion.div>

@@ -17,7 +17,6 @@ import {
   DialogTitle,
   DialogDescription
 } from '../../../components/ui/dialog';
-import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 import { AuthenticatedImage } from '../../../components/figma/AuthenticatedImage';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
@@ -33,6 +32,17 @@ export interface Product {
   store?: string;
   style?: string;
   hotspot?: { x: number; y: number };
+  // Smart Redesign: New fields for real data
+  persianReason?: string;
+  matchHighlights?: string[];
+  description?: string;
+  extraDetails?: Record<string, unknown>;
+  link?: string;
+  uniqueLink?: string;
+  availableSizes?: string[];
+  availableSizesDisplay?: string[];
+  matchScore?: number;
+  isPromoted?: boolean;
 }
 
 interface ProductAlternative extends Omit<Product, 'hotspot'> {
@@ -44,32 +54,8 @@ interface ProductDetailSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onReplace: (originalId: string, newProduct: Product) => void;
+  alternatives?: Product[];  // Smart Redesign: Real alternatives from session
 }
-
-// --- Mock Alternatives ---
-const MOCK_ALTERNATIVES = [
-  {
-    id: 'alt-1',
-    name: 'فرش وینتیج طوسی',
-    price: 11800000,
-    category: 'فرش دستباف',
-    image: 'https://images.unsplash.com/photo-1600166898405-da9535204843?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'alt-2',
-    name: 'مدرن پشمی',
-    price: 13500000,
-    category: 'فرش ماشینی',
-    image: 'https://images.unsplash.com/photo-1575414003591-ece8d0416c7a?q=80&w=300&auto=format&fit=crop'
-  },
-  {
-    id: 'alt-3',
-    name: 'گلیم دستباف',
-    price: 9800000,
-    category: 'گلیم',
-    image: 'https://images.unsplash.com/photo-1596280687729-c725593c6628?q=80&w=300&auto=format&fit=crop'
-  }
-];
 
 // Tabs Configuration
 const TABS = [
@@ -78,7 +64,7 @@ const TABS = [
   { id: 'alternatives', label: 'جایگزین‌ها' },
 ];
 
-export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: ProductDetailSheetProps) {
+export function ProductDetailSheet({ product, isOpen, onClose, onReplace, alternatives: propAlternatives }: ProductDetailSheetProps) {
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
@@ -98,12 +84,10 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
 
   if (!product) return null;
 
-  // Generate "smart" alternatives
-  const alternatives = MOCK_ALTERNATIVES.map((alt, index) => ({
+  // Use passed alternatives or empty array, add labels
+  const alternatives: ProductAlternative[] = (propAlternatives || []).map((alt, index) => ({
     ...alt,
-    id: `alt-${product.id}-${alt.id}`, 
-    category: product.category,
-    label: index === 0 ? 'نزدیک‌ترین' : index === 1 ? 'اقتصادی‌تر' : 'جسورانه‌تر'
+    label: index === 0 ? 'نزدیک‌ترین' : index === 1 ? 'اقتصادی‌تر' : 'پیشنهاد دیگر'
   }));
 
   const handleReplace = async (alt: ProductAlternative) => {
@@ -286,41 +270,68 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
 
                     {/* Editorial Specs List - Zara Home Style */}
                     <div className="border-y border-black/5 py-5 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">ترکیبات</span>
-                            <span className="text-[12px] text-black font-medium">۱۰۰٪ کتان ارگانیک، چوب راش طبیعی</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">ابعاد نهایی</span>
-                            <span className="text-[12px] text-black font-medium tabular-nums">۱۲۰ × ۸۰ × ۴۵ سانتی‌متر</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">وزن تقریبی</span>
-                            <span className="text-[12px] text-black font-medium tabular-nums">۴.۲ کیلوگرم</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-1">
-                            <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">شناسه کالا</span>
-                            <span className="text-[11px] text-black/50 tabular-nums tracking-tighter">REF. 7241/405/800</span>
-                        </div>
+                        {(product.extraDetails as Record<string, string> | undefined)?.composition && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">ترکیبات</span>
+                                <span className="text-[12px] text-black font-medium">{(product.extraDetails as Record<string, string>).composition}</span>
+                            </div>
+                        )}
+                        {(product.extraDetails as Record<string, string> | undefined)?.dimensions && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">ابعاد نهایی</span>
+                                <span className="text-[12px] text-black font-medium tabular-nums">{(product.extraDetails as Record<string, string>).dimensions}</span>
+                            </div>
+                        )}
+                        {product.availableSizesDisplay && product.availableSizesDisplay.length > 0 && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">سایزهای موجود</span>
+                                <span className="text-[12px] text-black font-medium">{product.availableSizesDisplay.join('، ')}</span>
+                            </div>
+                        )}
+                        {(product.extraDetails as Record<string, string> | undefined)?.weight && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">وزن تقریبی</span>
+                                <span className="text-[12px] text-black font-medium tabular-nums">{(product.extraDetails as Record<string, string>).weight}</span>
+                            </div>
+                        )}
+                        {product.uniqueLink && (
+                            <div className="flex justify-between items-center pt-1">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">شناسه کالا</span>
+                                <span className="text-[11px] text-black/50 tabular-nums tracking-tighter">REF. {product.uniqueLink}</span>
+                            </div>
+                        )}
+                        {/* Show category if no other specs available */}
+                        {!product.extraDetails && !product.availableSizesDisplay?.length && !product.uniqueLink && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">دسته‌بندی</span>
+                                <span className="text-[12px] text-black font-medium">{product.category}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Bulleted Info - Editorial Style */}
                     <div className="space-y-4 pt-2">
                         <h4 className="text-[13px] font-bold text-black uppercase tracking-widest border-b border-black/5 pb-2">درباره محصول</h4>
-                        <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
-                                <p className="text-[13px] text-black/70 leading-relaxed">طراحی مینیمال متناسب با فضاهای مدرن و آپارتمانی</p>
+                        {product.description ? (
+                            <p className="text-[13px] text-black/70 leading-relaxed text-justify">
+                                {product.description}
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
+                                    <p className="text-[13px] text-black/70 leading-relaxed">طراحی مینیمال متناسب با فضاهای مدرن و آپارتمانی</p>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
+                                    <p className="text-[13px] text-black/70 leading-relaxed">استفاده از متریال ارگانیک با دوام بالا و ضد حساسیت</p>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
+                                    <p className="text-[13px] text-black/70 leading-relaxed">تولید شده توسط برند هُما با تضمین اصالت کالا</p>
+                                </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
-                                <p className="text-[13px] text-black/70 leading-relaxed">استفاده از متریال ارگانیک با دوام بالا و ضد حساسیت</p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="mt-1.5 w-1 h-1 rounded-full bg-black/20 shrink-0" />
-                                <p className="text-[13px] text-black/70 leading-relaxed">تولید شده توسط برند هُما با تضمین اصالت کالا</p>
-                            </div>
-                        </div>
+                        )}
                         {!showFullDesc ? (
                             <button 
                                 onClick={() => setShowFullDesc(true)}
@@ -366,23 +377,43 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
                             تحلیل هوشمند هُما
                         </h4>
                     </div>
-                    
+
                     <div className="space-y-4">
-                        {[
-                            'هماهنگی رنگ با پالت رنگی فضای فعلی شما',
-                            'تطابق ابعاد با فضای پیشنهادی در نقشه',
-                            'بهبود نورپردازی محیطی با انعکاس ملایم نور',
-                            'تکمیل سبک دکوراسیون مینیمال/مدرن'
-                        ].map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-4 group">
+                        {/* Show real AI reason if available */}
+                        {product.persianReason ? (
+                            <div className="flex items-center gap-4 group">
                                 <div className="w-8 h-8 rounded-full bg-white border border-black/[0.05] flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                                     <Check size={14} className="text-black" strokeWidth={3} />
                                 </div>
                                 <span className="text-[13px] font-medium text-black/80">
-                                    {item}
+                                    {product.persianReason}
                                 </span>
                             </div>
-                        ))}
+                        ) : (
+                            /* Fallback generic reasons when no AI reason available */
+                            ['هماهنگی با فضای اتاق شما', 'تطابق سبک و رنگ با دکوراسیون'].map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white border border-black/[0.05] flex items-center justify-center shrink-0 shadow-sm">
+                                        <Check size={14} className="text-black" strokeWidth={3} />
+                                    </div>
+                                    <span className="text-[13px] font-medium text-black/80">{item}</span>
+                                </div>
+                            ))
+                        )}
+
+                        {/* Show match highlights as tags */}
+                        {product.matchHighlights && product.matchHighlights.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                {product.matchHighlights.map((highlight, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="px-3 py-1 text-[11px] font-bold bg-black/5 rounded-full text-black/60"
+                                    >
+                                        {highlight}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -390,7 +421,7 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
             <div className="h-px bg-black/[0.05] w-full" />
 
             {/* ================= SECTION 3: ALTERNATIVES ================= */}
-            <div 
+            <div
                 ref={(el) => (sectionRefs.current['alternatives'] = el)}
                 className="pt-6 pb-32"
                 style={{ paddingInline: 'var(--spacing-md)' }}
@@ -398,45 +429,56 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace }: Prod
                 <div className="mb-4">
                     <h3 className="text-[15px] font-[900] text-[var(--foreground)] flex items-center gap-2">
                         <LayoutGrid size={16} className="text-[var(--muted-foreground)]" />
-                        ۳ پیشنهاد جایگزین
+                        {alternatives.length > 0 ? `${alternatives.length} پیشنهاد جایگزین` : 'جایگزین‌ها'}
                     </h3>
                     <p className="text-[11px] text-[var(--muted-foreground)] mt-1">
                         برای تغییر سریع در فضای شما
                     </p>
                 </div>
-                
-                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-2 px-2">
-                    {alternatives.map((alt) => {
-                        const isReplacing = replacingId === alt.id;
-                        return (
-                            <div 
-                                key={alt.id} 
-                                className="flex-shrink-0 w-[140px] flex flex-col gap-2 group cursor-pointer"
-                                onClick={() => !isReplacing && handleReplace(alt)}
-                            >
-                                <div className="relative aspect-square rounded-[18px] overflow-hidden border border-white/40 bg-white/60 shadow-sm transition-transform active:scale-95">
-                                    <ImageWithFallback 
-                                        src={alt.image} 
-                                        alt={alt.name} 
-                                        className="w-full h-full object-cover mix-blend-multiply" 
-                                    />
-                                    {isReplacing && (
-                                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-                                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-                                                <RotateCw size={24} className="text-[var(--accent)]" />
-                                            </motion.div>
-                                        </div>
-                                    )}
+
+                {alternatives.length > 0 ? (
+                    <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-2 px-2">
+                        {alternatives.map((alt) => {
+                            const isReplacing = replacingId === alt.id;
+                            return (
+                                <div
+                                    key={alt.id}
+                                    className="flex-shrink-0 w-[140px] flex flex-col gap-2 group cursor-pointer"
+                                    onClick={() => !isReplacing && handleReplace(alt)}
+                                >
+                                    <div className="relative aspect-square rounded-[18px] overflow-hidden border border-white/40 bg-white/60 shadow-sm transition-transform active:scale-95">
+                                        <AuthenticatedImage
+                                            src={alt.image}
+                                            alt={alt.name}
+                                            imageWidth={300}
+                                            imageQuality={80}
+                                            className="w-full h-full object-cover mix-blend-multiply"
+                                        />
+                                        {isReplacing && (
+                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                                                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                                                    <RotateCw size={24} className="text-[var(--accent)]" />
+                                                </motion.div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1 px-1 text-center">
+                                        <h4 className="truncate text-[12px] font-bold text-[var(--foreground)]">
+                                            {alt.name}
+                                        </h4>
+                                        {alt.label && (
+                                            <span className="text-[10px] text-black/40">{alt.label}</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="space-y-1 px-1 text-center">
-                                    <h4 className="truncate text-[12px] font-bold text-[var(--foreground)]">
-                                        {alt.name}
-                                    </h4>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-[12px] text-black/40 text-center py-4">
+                        جایگزین‌های مشابه یافت نشد
+                    </p>
+                )}
             </div>
         </div>
 

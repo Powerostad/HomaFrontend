@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Camera,
@@ -20,6 +21,7 @@ import { fetchImageAsFile } from '../../utils/imageUtils';
 
 export function StudioUploadPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { setSelectedFile, trackKPI } = useApp();
   const { startSession, isCreatingSession, clearActiveSession } = useStudio();
   const { isLoggedIn, login } = useAuth();
@@ -34,15 +36,15 @@ export function StudioUploadPage() {
 
   const EXAMPLES = {
     good: {
-      label: 'نمونه مطلوب',
+      label: t('tryOn.upload.goodExample'),
       image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=800',
-      caption: 'نور کافی، قاب کامل، زاویه صاف'
+      caption: t('tryOn.upload.goodCaption')
     },
     bad: {
-      label: 'نمونه نامناسب',
-      reason: 'نور کم و کادر ناقص',
+      label: t('tryOn.upload.badExample'),
+      reason: t('tryOn.upload.badReason'),
       image: 'https://images.unsplash.com/photo-1715366843673-f21a95ec11cc?q=80&w=800',
-      caption: 'تار، کج، نیمه‌کادر یا شلوغ'
+      caption: t('tryOn.upload.badCaption')
     }
   };
 
@@ -115,7 +117,7 @@ export function StudioUploadPage() {
    */
   const handleProceed = async (skipAuthCheck = false) => {
     if (!selectedFile) {
-      toast.error('لطفا یک تصویر انتخاب کنید');
+      toast.error(t('tryOn.errors.noImage'));
       return;
     }
 
@@ -146,7 +148,7 @@ export function StudioUploadPage() {
       navigate(`/studio/progress?sessionId=${result.sessionId}`);
     } else {
       // Show error toast
-      toast.error(result.error || 'خطا در ایجاد جلسه طراحی');
+      toast.error(result.error || t('errors.resultFailed'));
     }
   };
 
@@ -157,11 +159,11 @@ export function StudioUploadPage() {
       <div className="relative z-[110] shrink-0 bg-[#FDFDFB]">
         <Header />
         <div className="block"> {/* Removed hidden md:block to show on mobile */}
-          <ContextBar 
+          <ContextBar
             items={[
-              { label: 'خانه', href: '/' },
-              { label: 'استودیو', href: '/studio' },
-              { label: 'آپلود تصویر' }
+              { label: t('nav.home'), href: '/' },
+              { label: t('nav.studio'), href: '/studio' },
+              { label: t('tryOn.upload.title') }
             ]}
           />
         </div>

@@ -37,9 +37,19 @@ export interface APIMatchedProduct {
   match_score: number;
   price: number;
   category?: string;
+  category_display?: string;
   shop_name?: string;
   unique_link?: string;
   is_promoted?: boolean;
+  // Smart Redesign: Persian explanations for product recommendation
+  persian_reason?: string;
+  match_highlights?: string[];
+  // Additional product details
+  description?: string;
+  extra_details?: Record<string, unknown>;
+  link?: string;
+  available_sizes?: string[];
+  available_sizes_display?: string[];
 }
 
 /**
@@ -150,9 +160,19 @@ export interface MatchedProduct {
   matchScore: number;
   price: number;
   category?: string;
+  categoryDisplay?: string;
   shopName?: string;
   uniqueLink?: string;
   isPromoted?: boolean;
+  // Smart Redesign: Persian explanations for product recommendation
+  persianReason?: string;
+  matchHighlights?: string[];
+  // Additional product details
+  description?: string;
+  extraDetails?: Record<string, unknown>;
+  link?: string;
+  availableSizes?: string[];
+  availableSizesDisplay?: string[];
 }
 
 // =============================================================================
@@ -243,9 +263,19 @@ function transformMatchedProduct(apiProduct: APIMatchedProduct): MatchedProduct 
     matchScore: apiProduct.match_score,
     price: apiProduct.price,
     category: apiProduct.category,
+    categoryDisplay: apiProduct.category_display,
     shopName: apiProduct.shop_name,
     uniqueLink: apiProduct.unique_link,
     isPromoted: apiProduct.is_promoted ?? false,
+    // Smart Redesign: Persian explanations
+    persianReason: apiProduct.persian_reason || '',
+    matchHighlights: apiProduct.match_highlights || [],
+    // Additional product details
+    description: apiProduct.description || '',
+    extraDetails: apiProduct.extra_details || {},
+    link: apiProduct.link || '',
+    availableSizes: apiProduct.available_sizes || [],
+    availableSizesDisplay: apiProduct.available_sizes_display || [],
   };
 }
 

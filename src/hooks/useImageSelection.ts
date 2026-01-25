@@ -62,6 +62,8 @@ export function useImageSelection(
   const [selection, setSelection] = useState<SelectionRect | null>(null);
 
   const drawingRef = useRef(false);
+  // Track current selection in a ref to avoid stale closures in event handlers
+  const selectionRef = useRef<SelectionRect | null>(null);
 
   // Get coordinates relative to container
   const getRelativeCoords = useCallback(
@@ -78,15 +80,19 @@ export function useImageSelection(
     [containerRef]
   );
 
+  // Helper to normalize any selection rect
+  const normalizeRect = useCallback((sel: SelectionRect | null): NormalizedRect | null => {
+    if (!sel) return null;
+    return {
+      x: Math.min(sel.startX, sel.endX),
+      y: Math.min(sel.startY, sel.endY),
+      width: Math.abs(sel.endX - sel.startX),
+      height: Math.abs(sel.endY - sel.startY),
+    };
+  }, []);
+
   // Normalize selection to always have positive width/height
-  const normalizedSelection: NormalizedRect | null = selection
-    ? {
-        x: Math.min(selection.startX, selection.endX),
-        y: Math.min(selection.startY, selection.endY),
-        width: Math.abs(selection.endX - selection.startX),
-        height: Math.abs(selection.endY - selection.startY),
-      }
-    : null;
+  const normalizedSelection: NormalizedRect | null = normalizeRect(selection);
 
   const startSelectionMode = useCallback(() => {
     setIsSelecting(true);
@@ -98,12 +104,14 @@ export function useImageSelection(
     setIsDrawing(false);
     setSelection(null);
     drawingRef.current = false;
+    selectionRef.current = null;
   }, []);
 
   const clearSelection = useCallback(() => {
     setSelection(null);
     setIsDrawing(false);
     drawingRef.current = false;
+    selectionRef.current = null;
   }, []);
 
   // Mouse handlers
@@ -115,31 +123,38 @@ export function useImageSelection(
       const coords = getRelativeCoords(e.clientX, e.clientY);
       if (!coords) return;
 
-      drawingRef.current = true;
-      setIsDrawing(true);
-      setSelection({
+      const newSelection = {
         startX: coords.x,
         startY: coords.y,
         endX: coords.x,
         endY: coords.y,
-      });
+      };
+
+      drawingRef.current = true;
+      selectionRef.current = newSelection;
+      setIsDrawing(true);
+      setSelection(newSelection);
     },
     [isSelecting, getRelativeCoords]
   );
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!drawingRef.current || !selection) return;
+      if (!drawingRef.current || !selectionRef.current) return;
       e.preventDefault();
 
       const coords = getRelativeCoords(e.clientX, e.clientY);
       if (!coords) return;
 
-      setSelection((prev) =>
-        prev ? { ...prev, endX: coords.x, endY: coords.y } : null
-      );
+      const updatedSelection = {
+        ...selectionRef.current,
+        endX: coords.x,
+        endY: coords.y,
+      };
+      selectionRef.current = updatedSelection;
+      setSelection(updatedSelection);
     },
-    [selection, getRelativeCoords]
+    [getRelativeCoords]
   );
 
   const onMouseUp = useCallback(
@@ -150,18 +165,20 @@ export function useImageSelection(
       drawingRef.current = false;
       setIsDrawing(false);
 
-      // Check minimum size
-      if (normalizedSelection) {
+      // Check minimum size using the ref (avoids stale closure)
+      const currentNormalized = normalizeRect(selectionRef.current);
+      if (currentNormalized) {
         if (
-          normalizedSelection.width < minSize ||
-          normalizedSelection.height < minSize
+          currentNormalized.width < minSize ||
+          currentNormalized.height < minSize
         ) {
           // Selection too small - clear it
+          selectionRef.current = null;
           setSelection(null);
         }
       }
     },
-    [normalizedSelection, minSize]
+    [normalizeRect, minSize]
   );
 
   // Touch handlers
@@ -174,32 +191,39 @@ export function useImageSelection(
       const coords = getRelativeCoords(touch.clientX, touch.clientY);
       if (!coords) return;
 
-      drawingRef.current = true;
-      setIsDrawing(true);
-      setSelection({
+      const newSelection = {
         startX: coords.x,
         startY: coords.y,
         endX: coords.x,
         endY: coords.y,
-      });
+      };
+
+      drawingRef.current = true;
+      selectionRef.current = newSelection;
+      setIsDrawing(true);
+      setSelection(newSelection);
     },
     [isSelecting, getRelativeCoords]
   );
 
   const onTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (!drawingRef.current || !selection || e.touches.length !== 1) return;
+      if (!drawingRef.current || !selectionRef.current || e.touches.length !== 1) return;
       e.preventDefault();
 
       const touch = e.touches[0];
       const coords = getRelativeCoords(touch.clientX, touch.clientY);
       if (!coords) return;
 
-      setSelection((prev) =>
-        prev ? { ...prev, endX: coords.x, endY: coords.y } : null
-      );
+      const updatedSelection = {
+        ...selectionRef.current,
+        endX: coords.x,
+        endY: coords.y,
+      };
+      selectionRef.current = updatedSelection;
+      setSelection(updatedSelection);
     },
-    [selection, getRelativeCoords]
+    [getRelativeCoords]
   );
 
   const onTouchEnd = useCallback(
@@ -210,17 +234,19 @@ export function useImageSelection(
       drawingRef.current = false;
       setIsDrawing(false);
 
-      // Check minimum size
-      if (normalizedSelection) {
+      // Check minimum size using the ref (avoids stale closure)
+      const currentNormalized = normalizeRect(selectionRef.current);
+      if (currentNormalized) {
         if (
-          normalizedSelection.width < minSize ||
-          normalizedSelection.height < minSize
+          currentNormalized.width < minSize ||
+          currentNormalized.height < minSize
         ) {
+          selectionRef.current = null;
           setSelection(null);
         }
       }
     },
-    [normalizedSelection, minSize]
+    [normalizeRect, minSize]
   );
 
   return {

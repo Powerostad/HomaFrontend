@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useUpload } from '../../context/AppProviders';
 import { useStudio } from '../../context/StudioContext';
 import { Header } from '../../components/Header';
@@ -9,24 +10,6 @@ import { toast } from 'sonner';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchSessionStatus, type SessionStatus } from '@/services/studioService';
-
-const PHASES = [
-  {
-    h1: "داریم فضای خونه‌ت رو می‌فهمیم…",
-    body: "نور، مقیاس و حال‌وهوای فضا",
-    micro: "درک فضا"
-  },
-  {
-    h1: "داریم بررسی می‌کنیم این فضا می‌تونه چی بشه…",
-    body: "با انتخاب‌هایی که به سبکِ فضا می‌خوره",
-    micro: "هماهنگی سبک"
-  },
-  {
-    h1: "داریم بهترین چیدمان رو برات می‌سازیم…",
-    body: "تا انتخاب و خرید، ساده‌تر بشه",
-    micro: "ساخت نتیجه"
-  }
-];
 
 /**
  * Map session status from API to UI phase index
@@ -49,6 +32,7 @@ function statusToPhase(status: SessionStatus | null): number {
 export function StudioProgressPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { selectedFile, getSelectedFile } = useUpload();
   const {
     activeSessionId,
@@ -59,6 +43,28 @@ export function StudioProgressPage() {
     clearActiveSession,
     startSession
   } = useStudio();
+
+  /**
+   * Progress phases shown during AI processing
+   * Each phase represents a stage of the studio pipeline
+   */
+  const PHASES = [
+    {
+      h1: t('studio.progress.phase1Title', "داریم فضای خونه‌ت رو می‌فهمیم…"),
+      body: t('studio.progress.phase1Body', "نور، مقیاس و حال‌وهوای فضا"),
+      micro: t('studio.progress.phase1Micro', "درک فضا")
+    },
+    {
+      h1: t('studio.progress.phase2Title', "داریم بررسی می‌کنیم این فضا می‌تونه چی بشه…"),
+      body: t('studio.progress.phase2Body', "با انتخاب‌هایی که به سبکِ فضا می‌خوره"),
+      micro: t('studio.progress.phase2Micro', "هماهنگی سبک")
+    },
+    {
+      h1: t('studio.progress.phase3Title', "داریم بهترین چیدمان رو برات می‌سازیم…"),
+      body: t('studio.progress.phase3Body', "تا انتخاب و خرید، ساده‌تر بشه"),
+      micro: t('studio.progress.phase3Micro', "ساخت نتیجه")
+    }
+  ];
 
   // URL params for recovery
   const urlSessionId = searchParams.get('sessionId');
@@ -104,7 +110,7 @@ export function StudioProgressPage() {
 
       if (!sessionIdToRecover) {
         // No session to recover - redirect to upload
-        toast.error('جلسه‌ای یافت نشد. لطفا دوباره تصویر آپلود کنید.');
+        toast.error(t('errors.sessionNotFound'));
         navigate('/studio/upload');
         return;
       }
@@ -120,7 +126,7 @@ export function StudioProgressPage() {
 
       if (!result.success) {
         // Session not found or error
-        setError(result.error || 'جلسه یافت نشد');
+        setError(result.error || t('errors.sessionNotFound'));
         return;
       }
 
@@ -135,7 +141,7 @@ export function StudioProgressPage() {
 
       if (session.status === 'failed') {
         // Session failed - show error
-        setError(session.errorMessage || 'پردازش قبلی با خطا مواجه شد');
+        setError(session.errorMessage || t('tryOn.errors.processingFailed'));
         return;
       }
 
@@ -178,12 +184,12 @@ export function StudioProgressPage() {
         navigate(`/studio/result/${activeSessionId}`);
       } else {
         // Error - show retry option
-        setError(result.error || 'خطا در پردازش تصویر');
+        setError(result.error || t('tryOn.errors.processingFailed'));
       }
     };
 
     startPolling();
-  }, [activeSessionId, pollSession, navigate, isRecovering]);
+  }, [activeSessionId, pollSession, navigate, isRecovering, t]);
 
   // Handle retry - create a NEW session with the same image
   const handleRetry = async () => {
@@ -192,7 +198,7 @@ export function StudioProgressPage() {
 
     if (!file) {
       // No file available - redirect to upload
-      toast.error('تصویر یافت نشد. لطفا دوباره آپلود کنید.');
+      toast.error(t('errors.imageNotFound'));
       navigate('/studio/upload');
       return;
     }
@@ -207,7 +213,7 @@ export function StudioProgressPage() {
 
     if (!createResult.success || !createResult.sessionId) {
       setIsPolling(false);
-      setError(createResult.error || 'خطا در ایجاد جلسه جدید');
+      setError(createResult.error || t('errors.resultFailed'));
       return;
     }
 
@@ -221,7 +227,7 @@ export function StudioProgressPage() {
     if (pollResult.success && pollResult.session) {
       navigate(`/studio/result/${createResult.sessionId}`);
     } else {
-      setError(pollResult.error || 'خطا در پردازش تصویر');
+      setError(pollResult.error || t('tryOn.errors.processingFailed'));
     }
   };
 
@@ -238,7 +244,7 @@ export function StudioProgressPage() {
         <Header theme="light" disableNavigation={true} />
         <div className="flex flex-col items-center gap-4 z-10">
           <Loader2 size={40} className="animate-spin text-black/30" />
-          <p className="text-[14px] text-black/50">در حال بازیابی جلسه...</p>
+          <p className="text-[14px] text-black/50">{t('studio.progress.recovering', "در حال بازیابی جلسه...")}</p>
         </div>
       </div>
     );

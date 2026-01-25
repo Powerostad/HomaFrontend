@@ -7,13 +7,16 @@ import {
   Image as ImageIcon,
   Settings,
   Palette,
-  LayoutGrid
+  LayoutGrid,
+  Globe
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AppProviders";
 import { AuthModal } from "./AuthModal";
 import { createPortal } from "react-dom";
 import type { User } from "../context/AuthContext";
+import { languages, updateDocumentLanguage, type LanguageCode } from "@/i18n/config";
 
 interface UnifiedMenuProps {
   isOpen: boolean;
@@ -25,22 +28,32 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user, logout, login } = useAuth();
+  const { t, i18n } = useTranslation();
   const [isAuthOpen, setIsAuthOpen] = React.useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = React.useState(false);
+
+  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+
+  const handleLanguageChange = (langCode: LanguageCode) => {
+    i18n.changeLanguage(langCode);
+    updateDocumentLanguage(langCode);
+    setIsLanguageOpen(false);
+  };
 
   const navItems = [
-    { label: "خانه", href: "/", icon: Home },
-    { label: "فروشگاه‌ها", href: "/explore", icon: ShoppingBag },
-    { label: "استودیو هُما", href: "/studio/upload", icon: Palette },
+    { label: t('nav.home'), href: "/", icon: Home },
+    { label: t('nav.stores'), href: "/explore", icon: ShoppingBag },
+    { label: t('nav.studio'), href: "/studio/upload", icon: Palette },
   ];
 
   const accountItems = [
-    { label: "پروژه‌های استودیو", desc: "مدیریت طراحی‌های من", href: "/studio/projects", icon: LayoutGrid },
-    { label: "گالری من", desc: "نتایج Try-On", href: "/account/gallery", icon: ImageIcon },
-    { label: "تنظیمات", desc: "حساب کاربری", href: "/account/settings", icon: Settings },
+    { label: t('nav.myProjects'), desc: t('studio.myProjects'), href: "/studio/projects", icon: LayoutGrid },
+    { label: t('nav.myGallery'), desc: t('tryOn.result'), href: "/account/gallery", icon: ImageIcon },
+    { label: t('nav.settings'), desc: t('account.title'), href: "/account/settings", icon: Settings },
   ];
 
   const handleLogout = () => {
-    if (window.confirm('آیا از خروج از حساب خود مطمئن هستید؟')) {
+    if (window.confirm(t('auth.logoutConfirm'))) {
       logout();
       onClose();
       navigate('/');
@@ -93,16 +106,16 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
               {isLoggedIn ? (
                 <div className="space-y-2">
                    <div className="text-[28px] font-light tracking-tight text-[var(--jet-black)]">
-                      سلام، <span className="font-bold">{user?.name?.split(' ')[0] || 'کاربر'}</span>
+                      {t('auth.greeting', { name: user?.name?.split(' ')[0] || t('common.user') })}
                    </div>
                    <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
                       <span>{user?.phone}</span>
                       <div className="w-4 h-[1px] bg-[var(--border-subtle)]" />
-                      <button onClick={handleLogout} className="hover:text-accent transition-colors">خروج</button>
+                      <button onClick={handleLogout} className="hover:text-accent transition-colors">{t('auth.logout')}</button>
                    </div>
                 </div>
               ) : (
-                <button 
+                <button
                   onClick={() => {
                     if (onLoginClick) {
                       onClose();
@@ -113,8 +126,8 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                   }}
                   className="text-start group"
                 >
-                  <span className="text-[28px] font-light tracking-tight text-[var(--jet-black)] block group-hover:translate-x-[-10px] transition-transform duration-500">ورود به حساب</span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent mt-2 block">Login / Register</span>
+                  <span className="text-[28px] font-light tracking-tight text-[var(--jet-black)] block group-hover:translate-x-[-10px] transition-transform duration-500">{t('auth.loginToAccount')}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent mt-2 block">{t('auth.login')} / {t('auth.register')}</span>
                 </button>
               )}
             </div>
@@ -188,8 +201,39 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
               </div>
             </div>
 
-            {/* 3. Footer Area */}
-            <div className="flex-shrink-0 p-8 border-t border-[var(--border-subtle)] bg-surface-default">
+            {/* 3. Footer Area with Language Switcher */}
+            <div className="flex-shrink-0 p-8 border-t border-[var(--border-subtle)] bg-surface-default space-y-4">
+               {/* Language Switcher */}
+               <div className="relative">
+                  <button
+                    onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                    className="flex items-center gap-2 text-[12px] font-medium text-[var(--jet-black)] hover:text-accent transition-colors w-full"
+                  >
+                    <Globe size={16} strokeWidth={1.5} />
+                    <span>{currentLanguage.name}</span>
+                  </button>
+                  {isLanguageOpen && (
+                    <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-elevated border border-[var(--border-subtle)] rounded-lg shadow-lg overflow-hidden">
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => handleLanguageChange(lang.code)}
+                          className={`w-full px-4 py-3 text-start text-[13px] hover:bg-surface-muted transition-colors flex justify-between items-center ${
+                            lang.code === i18n.language ? 'bg-surface-muted text-accent' : 'text-[var(--jet-black)]'
+                          }`}
+                          style={{
+                            fontFamily: lang.dir === 'rtl' ? 'Vazirmatn, sans-serif' : 'Inter, sans-serif',
+                          }}
+                        >
+                          <span>{lang.name}</span>
+                          {lang.code === i18n.language && <span className="text-accent">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+               </div>
+
+               {/* Version Info */}
                <div className="flex justify-between items-center opacity-40">
                   <span className="text-[9px] font-bold uppercase tracking-[0.4em]">Homa Edition 2026</span>
                   <span className="text-[9px] font-bold uppercase tracking-[0.4em]">v4.0</span>
