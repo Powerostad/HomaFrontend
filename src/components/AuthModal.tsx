@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   Phone,
   ShieldCheck,
@@ -31,6 +32,8 @@ import {
   loginWithPassword,
   sendOTPForReset,
   resetPassword,
+  checkUser,
+  setPassword as setUserPassword,
   normalizePhoneNumber,
   isValidPhoneNumber,
 } from "@/services/authService";
@@ -40,7 +43,7 @@ import type { User, AuthTokens } from "@/types/auth";
 // Types
 // =============================================================================
 
-type AuthStep = "phone" | "otp" | "password" | "reset-otp" | "reset-password";
+type AuthStep = "phone" | "otp" | "password" | "login" | "set-password" | "register" | "reset-otp" | "reset-password";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -53,6 +56,11 @@ interface AuthModalProps {
 // =============================================================================
 
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+  const { t } = useTranslation();
+
+  // Auth mode from environment variable
+  const authMode = import.meta.env.VITE_AUTH_MODE || 'password';
+
   // Form state
   const [step, setStep] = useState<AuthStep>("phone");
   const [phone, setPhone] = useState("");
@@ -60,6 +68,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -121,6 +130,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       setPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setName("");
       setShowPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
@@ -192,7 +202,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
     const normalizedPhone = normalizePhoneNumber(phone);
     if (!isValidPhoneNumber(normalizedPhone)) {
-      setError("لطفاً یک شماره موبایل معتبر وارد کنید");
+      setError(t('auth.validation.phoneInvalid'));
       return;
     }
 
@@ -200,19 +210,40 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     setIsLoading(true);
 
     try {
-      const result = await sendOTP(normalizedPhone);
+      // Password mode: check user existence first
+      if (authMode === 'password') {
+        const result = await checkUser(normalizedPhone);
 
-      if (result.success) {
-        setStep("otp");
-        setCountdown(result.expiresIn || 180);
-        setRemainingAttempts(5);
-        setOtp("");
+        if (result.success) {
+          if (!result.exists) {
+            // New user - go to registration
+            setStep("register");
+          } else if (!result.hasPassword) {
+            // Existing OTP user without password - go to set password
+            setStep("set-password");
+          } else {
+            // Existing user with password - go to login
+            setStep("login");
+          }
+        } else {
+          setError(result.error || t('auth.errors.networkError'));
+        }
       } else {
-        setError(result.error || "خطا در ارسال کد تایید");
+        // OTP mode: send OTP as before
+        const result = await sendOTP(normalizedPhone);
+
+        if (result.success) {
+          setStep("otp");
+          setCountdown(result.expiresIn || 180);
+          setRemainingAttempts(5);
+          setOtp("");
+        } else {
+          setError(result.error || t('auth.errors.networkError'));
+        }
       }
     } catch (err) {
-      console.error("[AuthModal] Send OTP error:", err);
-      setError("خطا در اتصال به سرور. لطفا دوباره تلاش کنید.");
+      console.error("[AuthModal] Phone submit error:", err);
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -220,7 +251,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
   const verifyOtpCore = async () => {
     if (otp.length !== 6) {
-      setError("کد تایید باید ۶ رقم باشد");
+      setError(t('auth.validation.otpInvalid'));
       return;
     }
 
@@ -234,7 +265,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       if (result.success && result.user && result.tokens) {
         onSuccess(result.user, result.tokens);
       } else {
-        setError(result.error || "کد تایید نامعتبر است");
+        setError(result.error || t('auth.errors.otpInvalid'));
 
         if (result.remainingAttempts !== undefined) {
           setRemainingAttempts(result.remainingAttempts);
@@ -249,7 +280,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       }
     } catch (err) {
       console.error("[AuthModal] Verify OTP error:", err);
-      setError("خطا در اتصال به سرور. لطفا دوباره تلاش کنید.");
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -276,11 +307,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setRemainingAttempts(5);
         setError(null);
       } else {
-        setError(result.error || "خطا در ارسال مجدد کد");
+        setError(result.error || t('errors.general'));
       }
     } catch (err) {
       console.error("[AuthModal] Resend OTP error:", err);
-      setError("خطا در اتصال به سرور");
+      setError(t('errors.networkError'));
     } finally {
       setIsLoading(false);
     }
@@ -295,12 +326,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
     const normalizedPhone = normalizePhoneNumber(phone);
     if (!isValidPhoneNumber(normalizedPhone)) {
-      setError("لطفاً یک شماره موبایل معتبر وارد کنید");
+      setError(t('auth.validation.phoneInvalid'));
       return;
     }
 
     if (password.length < 6) {
-      setError("رمز عبور باید حداقل ۶ کاراکتر باشد");
+      setError(t('auth.validation.passwordTooShort'));
       return;
     }
 
@@ -313,11 +344,109 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       if (result.success && result.user && result.tokens) {
         onSuccess(result.user, result.tokens);
       } else {
-        setError(result.error || "شماره موبایل یا رمز عبور اشتباه است");
+        setError(result.error || t('auth.errors.invalidCredentials'));
       }
     } catch (err) {
       console.error("[AuthModal] Password login error:", err);
-      setError("خطا در اتصال به سرور. لطفا دوباره تلاش کنید.");
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ==========================================================================
+  // Handlers - Set Password for OTP Users
+  // ==========================================================================
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newPassword.length < 8) {
+      setError(t('auth.validation.passwordMin8', { defaultValue: 'رمز عبور باید حداقل ۸ کاراکتر باشد' }));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError(t('auth.validation.passwordMismatch'));
+      return;
+    }
+
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const normalizedPhone = normalizePhoneNumber(phone);
+      const result = await setUserPassword(normalizedPhone, newPassword, confirmPassword);
+
+      if (result.success && result.user && result.tokens) {
+        onSuccess(result.user, result.tokens);
+      } else {
+        setError(result.error || t('errors.general'));
+      }
+    } catch (err) {
+      console.error("[AuthModal] Set password error:", err);
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ==========================================================================
+  // Handlers - Registration (New User)
+  // ==========================================================================
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      setError(t('auth.validation.nameRequired', { defaultValue: 'نام و نام خانوادگی الزامی است' }));
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError(t('auth.validation.passwordMin8', { defaultValue: 'رمز عبور باید حداقل ۸ کاراکتر باشد' }));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError(t('auth.validation.passwordMismatch'));
+      return;
+    }
+
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const normalizedPhone = normalizePhoneNumber(phone);
+
+      // Use the existing register endpoint via apiPost
+      const { apiPost } = await import('@/utils/apiClient');
+      const response = await apiPost<{user: any; tokens: any}>(
+        '/users/register/',
+        {
+          phone_number: normalizedPhone,
+          password: newPassword,
+          name: name.trim(),
+        },
+        { skipAuth: true }
+      );
+
+      if (response.success && response.data) {
+        const { transformBackendUser } = await import('@/types/auth');
+        const user = transformBackendUser(response.data.user);
+        const tokens = response.data.tokens;
+
+        // Store auth state
+        const { storeAuthState } = await import('@/services/authService');
+        storeAuthState(user, tokens);
+
+        onSuccess(user, tokens);
+      } else {
+        setError(response.error || t('errors.general'));
+      }
+    } catch (err) {
+      console.error("[AuthModal] Register error:", err);
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -332,7 +461,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
     const normalizedPhone = normalizePhoneNumber(phone);
     if (!isValidPhoneNumber(normalizedPhone)) {
-      setError("لطفاً یک شماره موبایل معتبر وارد کنید");
+      setError(t('auth.validation.phoneInvalid'));
       return;
     }
 
@@ -350,11 +479,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setError(result.error || "خطا در ارسال کد تایید");
+        setError(result.error || t('errors.general'));
       }
     } catch (err) {
       console.error("[AuthModal] Send reset OTP error:", err);
-      setError("خطا در اتصال به سرور. لطفا دوباره تلاش کنید.");
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -364,17 +493,17 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     e.preventDefault();
 
     if (otp.length !== 6) {
-      setError("کد تایید باید ۶ رقم باشد");
+      setError(t('auth.validation.otpInvalid'));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("رمز عبور باید حداقل ۶ کاراکتر باشد");
+      setError(t('auth.validation.passwordTooShort'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("رمز عبور و تکرار آن یکسان نیستند");
+      setError(t('auth.validation.passwordMismatch'));
       return;
     }
 
@@ -387,18 +516,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
       if (result.success) {
         // Show success message and go to password login
-        setSuccessMessage("رمز عبور با موفقیت تغییر کرد");
+        setSuccessMessage(t('auth.success.passwordChanged'));
         setPassword("");
         setTimeout(() => {
           setSuccessMessage(null);
           setStep("password");
         }, 1500);
       } else {
-        setError(result.error || "خطا در تغییر رمز عبور");
+        setError(result.error || t('errors.general'));
       }
     } catch (err) {
       console.error("[AuthModal] Reset password error:", err);
-      setError("خطا در اتصال به سرور. لطفا دوباره تلاش کنید.");
+      setError(t('errors.networkError') + '. ' + t('errors.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -420,11 +549,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setRemainingAttempts(5);
         setError(null);
       } else {
-        setError(result.error || "خطا در ارسال مجدد کد");
+        setError(result.error || t('errors.general'));
       }
     } catch (err) {
       console.error("[AuthModal] Resend reset OTP error:", err);
-      setError("خطا در اتصال به سرور");
+      setError(t('errors.networkError'));
     } finally {
       setIsLoading(false);
     }
@@ -462,17 +591,19 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   };
 
   const handleGoToForgotPassword = () => {
-    setStep("reset-otp");
-    setOtp("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setError(null);
-  };
-
-  const handleBackFromPassword = () => {
-    setStep("phone");
-    setPassword("");
-    setError(null);
+    if (authMode === 'password') {
+      // In password mode, show support contact message
+      setError(t('auth.errors.contactSupportForReset', {
+        defaultValue: 'برای بازیابی رمز عبور با پشتیبانی تماس بگیرید'
+      }));
+    } else {
+      // OTP mode: go to reset flow
+      setStep("reset-otp");
+      setOtp("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setError(null);
+    }
   };
 
   const handleBackFromResetOtp = () => {
@@ -494,15 +625,21 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const getStepTitle = (): string => {
     switch (step) {
       case "phone":
-        return "شماره موبایل";
+        return t('auth.phoneNumber');
       case "otp":
-        return "تایید شماره موبایل";
+        return t('auth.otp');
       case "password":
-        return "ورود با رمز عبور";
+        return t('auth.loginWithPassword');
+      case "login":
+        return t('auth.login');
+      case "set-password":
+        return t('auth.setPasswordTitle', { defaultValue: 'تنظیم رمز عبور' });
+      case "register":
+        return t('auth.register', { defaultValue: 'ثبت‌نام' });
       case "reset-otp":
-        return "بازیابی رمز عبور";
+        return t('auth.resetPassword');
       case "reset-password":
-        return "تنظیم رمز عبور جدید";
+        return t('auth.setPassword');
       default:
         return "";
     }
@@ -511,12 +648,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   // ==========================================================================
   // Check if back button should be shown
   // ==========================================================================
-  const showBackButton = step === "password" || step === "reset-otp" || step === "reset-password";
+  const showBackButton = step === "password" || step === "login" || step === "set-password" || step === "register" || step === "reset-otp" || step === "reset-password";
 
   const handleBack = () => {
     switch (step) {
       case "password":
-        handleBackFromPassword();
+      case "login":
+      case "set-password":
+      case "register":
+        handleChangePhone();
         break;
       case "reset-otp":
         handleBackFromResetOtp();
@@ -604,7 +744,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <form onSubmit={handleSendOtp} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      شماره موبایل
+                      {t('auth.phoneNumber')}
                     </label>
                     <div className="relative">
                       <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -645,7 +785,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>دریافت کد تایید</span>
+                        <span>{t('auth.getOtp')}</span>
                         <ArrowLeft size={18} />
                       </>
                     )}
@@ -659,7 +799,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       disabled={isLoading}
                       className="text-[12px] font-medium text-black/50 hover:text-black transition-colors disabled:opacity-50"
                     >
-                      ورود با رمز عبور
+                      {t('auth.loginWithPassword')}
                     </button>
                   </div>
                 </form>
@@ -672,7 +812,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      کد تایید
+                      {t('auth.otp')}
                     </label>
                     <div className="relative">
                       <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -704,7 +844,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         disabled={isLoading}
                         className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
                       >
-                        تغییر شماره
+                        {t('common.edit')}
                       </button>
                       <span className="text-[11px] font-bold text-black/40">
                         {countdown > 0 ? (
@@ -718,7 +858,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                             disabled={isLoading}
                             className="text-black hover:underline disabled:opacity-50"
                           >
-                            ارسال مجدد
+                            {t('auth.resendOtp')}
                           </button>
                         )}
                       </span>
@@ -732,7 +872,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       animate={{ opacity: 1 }}
                       className="text-[11px] font-medium text-amber-600 text-center py-2 px-4 bg-amber-50 rounded-[var(--radius-sm)]"
                     >
-                      {remainingAttempts} تلاش باقی مانده
+                      {remainingAttempts} {t('common.retry')}
                     </motion.div>
                   )}
 
@@ -757,7 +897,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>تایید و ادامه</span>
+                        <span>{t('common.confirm')}</span>
                         <CheckCircle2 size={18} />
                       </>
                     )}
@@ -773,7 +913,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Phone Input */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      شماره موبایل
+                      {t('auth.phoneNumber')}
                     </label>
                     <div className="relative">
                       <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -796,7 +936,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Password Input */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      رمز عبور
+                      {t('auth.password')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -831,7 +971,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         disabled={isLoading}
                         className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
                       >
-                        تغییر شماره
+                        {t('common.edit')}
                       </button>
                       <button
                         type="button"
@@ -839,7 +979,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         disabled={isLoading}
                         className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
                       >
-                        فراموشی رمز عبور
+                        {t('auth.forgotPassword')}
                       </button>
                     </div>
                   </div>
@@ -865,7 +1005,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>ورود</span>
+                        <span>{t('auth.login')}</span>
                         <ArrowLeft size={18} />
                       </>
                     )}
@@ -874,7 +1014,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Divider & OTP Login Link */}
                   <div className="flex items-center gap-4 pt-2">
                     <div className="flex-1 h-[1px] bg-black/10" />
-                    <span className="text-[11px] font-bold text-black/30">یا</span>
+                    <span className="text-[11px] font-bold text-black/30">—</span>
                     <div className="flex-1 h-[1px] bg-black/10" />
                   </div>
 
@@ -885,36 +1025,70 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       disabled={isLoading}
                       className="text-[12px] font-medium text-black/50 hover:text-black transition-colors disabled:opacity-50"
                     >
-                      ورود با کد تایید
+                      {t('auth.loginWithOtp')}
                     </button>
                   </div>
                 </form>
               )}
 
               {/* ============================================================ */}
-              {/* STEP: Reset Password - Request OTP */}
+              {/* STEP: Login (Password Mode - Existing User) */}
               {/* ============================================================ */}
-              {step === "reset-otp" && (
-                <form onSubmit={handleSendResetOtp} className="space-y-5">
+              {step === "login" && (
+                <form onSubmit={handlePasswordLogin} className="space-y-5">
+                  {/* Phone Display (read-only) */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      شماره موبایل
+                      {t('auth.phoneNumber')}
                     </label>
                     <div className="relative">
                       <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
+                        {phone}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Password Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.password')}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
                       <input
-                        type="tel"
-                        placeholder="09123456789"
-                        value={phone}
+                        ref={passwordInputRef}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
                         onChange={(e) => {
-                          setPhone(e.target.value);
+                          setPassword(e.target.value);
                           setError(null);
                         }}
                         required
                         disabled={isLoading}
-                        className="w-full h-14 pr-12 pl-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        className="w-full h-14 pr-12 pl-12 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
                         dir="ltr"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+
+                    {/* Forgot password link */}
+                    <div className="flex justify-end px-1">
+                      <button
+                        type="button"
+                        onClick={handleGoToForgotPassword}
+                        disabled={isLoading}
+                        className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
+                      >
+                        {t('auth.forgotPassword')}
+                      </button>
                     </div>
                   </div>
 
@@ -939,7 +1113,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>دریافت کد تایید</span>
+                        <span>{t('auth.login')}</span>
                         <ArrowLeft size={18} />
                       </>
                     )}
@@ -948,69 +1122,41 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               )}
 
               {/* ============================================================ */}
-              {/* STEP: Reset Password - Enter OTP & New Password */}
+              {/* STEP: Set Password (OTP User without password) */}
               {/* ============================================================ */}
-              {step === "reset-password" && (
-                <form onSubmit={handleResetPassword} className="space-y-5">
-                  {/* OTP Input */}
+              {step === "set-password" && (
+                <form onSubmit={handleSetPassword} className="space-y-5">
+                  {/* Info Message */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-3 text-[12px] font-medium text-amber-700 py-4 px-4 bg-amber-50 rounded-[var(--radius-sm)] border border-amber-200"
+                  >
+                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                    <span>
+                      {t('auth.setPasswordExplanation', {
+                        defaultValue: 'به دلیل محدودیت‌های ارسال پیامک، لطفاً یک رمز عبور برای حساب خود تنظیم کنید.'
+                      })}
+                    </span>
+                  </motion.div>
+
+                  {/* Phone Display (read-only) */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      کد تایید
+                      {t('auth.phoneNumber')}
                     </label>
                     <div className="relative">
-                      <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        placeholder="• • • • • •"
-                        value={otp}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9۰-۹٠-٩]/g, "");
-                          const normalized = normalizePhoneNumber(value);
-                          setOtp(normalized.slice(0, 6));
-                          setError(null);
-                        }}
-                        required
-                        disabled={isLoading}
-                        className="w-full h-14 pr-12 pl-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[24px] font-bold tracking-[0.5em] text-center"
-                        dir="ltr"
-                      />
-                    </div>
-
-                    {/* Countdown/Resend */}
-                    <div className="flex justify-between px-1">
-                      <button
-                        type="button"
-                        onClick={handleChangePhone}
-                        disabled={isLoading}
-                        className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
-                      >
-                        تغییر شماره
-                      </button>
-                      <span className="text-[11px] font-bold text-black/40">
-                        {countdown > 0 ? (
-                          `${Math.floor(countdown / 60)}:${(countdown % 60)
-                            .toString()
-                            .padStart(2, "0")}`
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleResendResetOtp}
-                            disabled={isLoading}
-                            className="text-black hover:underline disabled:opacity-50"
-                          >
-                            ارسال مجدد
-                          </button>
-                        )}
-                      </span>
+                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
+                        {phone}
+                      </div>
                     </div>
                   </div>
 
                   {/* New Password Input */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      رمز عبور جدید
+                      {t('auth.password')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -1040,7 +1186,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Confirm Password Input */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      تکرار رمز عبور
+                      {t('auth.confirmPassword')}
                     </label>
                     <div className="relative">
                       <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
@@ -1088,7 +1234,341 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>تغییر رمز عبور</span>
+                        <span>{t('auth.setPasswordButton', { defaultValue: 'تنظیم رمز عبور و ورود' })}</span>
+                        <CheckCircle2 size={18} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ============================================================ */}
+              {/* STEP: Register (New User) */}
+              {/* ============================================================ */}
+              {step === "register" && (
+                <form onSubmit={handleRegister} className="space-y-5">
+                  {/* Phone Display (read-only) */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.phoneNumber')}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
+                        {phone}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Name Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.name', { defaultValue: 'نام و نام خانوادگی' })}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder={t('auth.namePlaceholder', { defaultValue: 'نام خود را وارد کنید' })}
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 px-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[16px] font-medium text-center"
+                        dir="rtl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.password')}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-12 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.confirmPassword')}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-12 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
+                    >
+                      <AlertCircle size={14} />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>{t('auth.registerButton', { defaultValue: 'ثبت‌نام' })}</span>
+                        <CheckCircle2 size={18} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ============================================================ */}
+              {/* STEP: Reset Password - Request OTP */}
+              {/* ============================================================ */}
+              {step === "reset-otp" && (
+                <form onSubmit={handleSendResetOtp} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.phoneNumber')}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type="tel"
+                        placeholder="09123456789"
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
+                    >
+                      <AlertCircle size={14} />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>{t('auth.getOtp')}</span>
+                        <ArrowLeft size={18} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ============================================================ */}
+              {/* STEP: Reset Password - Enter OTP & New Password */}
+              {/* ============================================================ */}
+              {step === "reset-password" && (
+                <form onSubmit={handleResetPassword} className="space-y-5">
+                  {/* OTP Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.otp')}
+                    </label>
+                    <div className="relative">
+                      <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder="• • • • • •"
+                        value={otp}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9۰-۹٠-٩]/g, "");
+                          const normalized = normalizePhoneNumber(value);
+                          setOtp(normalized.slice(0, 6));
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[24px] font-bold tracking-[0.5em] text-center"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    {/* Countdown/Resend */}
+                    <div className="flex justify-between px-1">
+                      <button
+                        type="button"
+                        onClick={handleChangePhone}
+                        disabled={isLoading}
+                        className="text-[11px] font-bold text-black/40 hover:text-black transition-colors disabled:opacity-50"
+                      >
+                        {t('common.edit')}
+                      </button>
+                      <span className="text-[11px] font-bold text-black/40">
+                        {countdown > 0 ? (
+                          `${Math.floor(countdown / 60)}:${(countdown % 60)
+                            .toString()
+                            .padStart(2, "0")}`
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleResendResetOtp}
+                            disabled={isLoading}
+                            className="text-black hover:underline disabled:opacity-50"
+                          >
+                            {t('auth.resendOtp')}
+                          </button>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* New Password Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.newPassword')}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-12 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password Input */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
+                      {t('auth.confirmPassword')}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          setError(null);
+                        }}
+                        required
+                        disabled={isLoading}
+                        className="w-full h-14 pr-12 pl-12 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[18px] font-bold tracking-widest text-center"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
+                    >
+                      <AlertCircle size={14} />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>{t('auth.changePassword')}</span>
                         <CheckCircle2 size={18} />
                       </>
                     )}
@@ -1097,17 +1577,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               )}
             </div>
 
-            {/* Footer Note */}
+            {/* Footer Note - kept simple, could be translated later */}
             <p className="mt-10 text-[11px] text-center text-black/30 font-medium leading-relaxed">
-              با ورود به هُما، شما با تمامی{" "}
-              <span className="text-black/50 underline underline-offset-4 cursor-pointer">
-                قوانین حریم خصوصی
-              </span>{" "}
-              و{" "}
-              <span className="text-black/50 underline underline-offset-4 cursor-pointer">
-                شرایط استفاده
-              </span>{" "}
-              موافقت می‌کنید.
+              {t('auth.termsNotice', {
+                defaultValue: 'با ورود به هُما، شما با تمامی قوانین حریم خصوصی و شرایط استفاده موافقت می‌کنید.'
+              })}
             </p>
           </div>
         </motion.div>

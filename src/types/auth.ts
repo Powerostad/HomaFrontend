@@ -94,6 +94,24 @@ export interface ResetPasswordResponse {
 }
 
 /**
+ * Response data from POST /api/users/otp/send/ with check_only=true
+ */
+export interface CheckUserResponse {
+  phone_number: string;
+  user_exists: boolean;
+  has_password: boolean;
+}
+
+/**
+ * Response data from POST /api/users/password/set/
+ * Same structure as LoginResponse
+ */
+export interface SetPasswordResponse {
+  user: BackendUser;
+  tokens: AuthTokens;
+}
+
+/**
  * Request body for POST /api/users/otp/resend/
  */
 export interface OTPResendRequest {
@@ -242,6 +260,23 @@ export interface LoginResult extends ServiceResult {
  */
 export interface ResetPasswordResult extends ServiceResult {
   // No additional data needed on success
+}
+
+/**
+ * Check user service result
+ */
+export interface CheckUserResult extends ServiceResult {
+  exists?: boolean;
+  hasPassword?: boolean;
+  phoneNumber?: string;
+}
+
+/**
+ * Set password service result (same as LoginResult)
+ */
+export interface SetPasswordResult extends ServiceResult {
+  user?: User;
+  tokens?: AuthTokens;
 }
 
 // =============================================================================

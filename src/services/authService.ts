@@ -15,11 +15,15 @@ import {
   type OTPVerifyResponse,
   type LoginResponse,
   type ResetPasswordResponse,
+  type CheckUserResponse,
+  type SetPasswordResponse,
   type OTPSendResult,
   type OTPVerifyResult,
   type ProfileResult,
   type LoginResult,
   type ResetPasswordResult,
+  type CheckUserResult,
+  type SetPasswordResult,
 } from '@/types/auth';
 
 // =============================================================================
@@ -254,6 +258,94 @@ export async function resendOTP(phone: string): Promise<OTPSendResult> {
 
   if (response.statusCode === 429) {
     errorMessage = 'تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید';
+  }
+
+  return {
+    success: false,
+    error: errorMessage,
+  };
+}
+
+/**
+ * Check if user exists and has password (for password auth mode)
+ */
+export async function checkUser(phone: string): Promise<CheckUserResult> {
+  const normalizedPhone = formatPhoneForAPI(phone);
+
+  const response = await apiPost<CheckUserResponse>(
+    '/users/otp/send/',
+    {
+      phone_number: normalizedPhone,
+      check_only: true,
+    },
+    { skipAuth: true }
+  );
+
+  if (response.success && response.data) {
+    return {
+      success: true,
+      exists: response.data.user_exists,
+      hasPassword: response.data.has_password,
+      phoneNumber: response.data.phone_number,
+    };
+  }
+
+  return {
+    success: false,
+    error: response.error || 'خطا در بررسی کاربر',
+  };
+}
+
+/**
+ * Set password for existing OTP user (who has no password)
+ */
+export async function setPassword(
+  phone: string,
+  password: string,
+  confirmPassword: string
+): Promise<SetPasswordResult> {
+  const normalizedPhone = formatPhoneForAPI(phone);
+
+  const response = await apiPost<SetPasswordResponse>(
+    '/users/password/set/',
+    {
+      phone_number: normalizedPhone,
+      password: password,
+      confirm_password: confirmPassword,
+    },
+    { skipAuth: true }
+  );
+
+  if (response.success && response.data) {
+    const user = transformBackendUser(response.data.user);
+    const tokens = response.data.tokens;
+
+    // Store auth state
+    storeAuthState(user, tokens);
+
+    return {
+      success: true,
+      user,
+      tokens,
+    };
+  }
+
+  // Parse specific error messages
+  let errorMessage = response.error || 'خطا در تنظیم رمز عبور';
+
+  // User already has password
+  if (response.error?.includes('قبلاً رمز عبور')) {
+    errorMessage = 'این کاربر قبلاً رمز عبور دارد. از صفحه ورود استفاده کنید';
+  }
+
+  // User not found
+  if (response.statusCode === 404) {
+    errorMessage = 'کاربری با این شماره تلفن یافت نشد';
+  }
+
+  // Password validation errors
+  if (response.error?.includes('رمزهای عبور')) {
+    errorMessage = 'رمز عبور و تکرار آن یکسان نیست';
   }
 
   return {
@@ -532,6 +624,8 @@ export const authService = {
   loginWithPassword,
   sendOTPForReset,
   resetPassword,
+  checkUser,
+  setPassword,
 
   // Token management
   refreshToken,

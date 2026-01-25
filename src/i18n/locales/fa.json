@@ -53,7 +53,13 @@
     "resetPassword": "بازنشانی رمز عبور",
     "newPassword": "رمز عبور جدید",
     "setPassword": "تنظیم رمز عبور",
+    "setPasswordTitle": "تنظیم رمز عبور",
+    "setPasswordExplanation": "به دلیل محدودیت‌های ارسال پیامک، لطفاً یک رمز عبور برای حساب خود تنظیم کنید.",
+    "setPasswordButton": "تنظیم رمز عبور و ورود",
     "changePassword": "تغییر رمز عبور",
+    "name": "نام و نام خانوادگی",
+    "namePlaceholder": "نام خود را وارد کنید",
+    "registerButton": "ثبت‌نام",
     "rememberMe": "مرا به خاطر بسپار",
     "welcomeBack": "خوش آمدید",
     "greeting": "سلام، {{name}}",
@@ -69,7 +75,9 @@
       "otpInvalid": "کد تایید باید ۶ رقم باشد",
       "passwordRequired": "رمز عبور الزامی است",
       "passwordTooShort": "رمز عبور باید حداقل ۶ کاراکتر باشد",
-      "passwordMismatch": "رمزهای عبور مطابقت ندارند"
+      "passwordMin8": "رمز عبور باید حداقل ۸ کاراکتر باشد",
+      "passwordMismatch": "رمزهای عبور مطابقت ندارند",
+      "nameRequired": "نام و نام خانوادگی الزامی است"
     },
     "errors": {
       "invalidCredentials": "اطلاعات ورود نادرست است",
@@ -77,7 +85,8 @@
       "otpExpired": "کد تایید منقضی شده است",
       "otpInvalid": "کد تایید نادرست است",
       "tooManyAttempts": "تعداد درخواست‌های شما از حد مجاز گذشته است",
-      "networkError": "خطا در ارتباط با سرور"
+      "networkError": "خطا در ارتباط با سرور",
+      "contactSupportForReset": "برای بازیابی رمز عبور با پشتیبانی تماس بگیرید"
     },
     "success": {
       "otpSent": "کد تایید ارسال شد",

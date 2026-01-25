@@ -53,7 +53,13 @@
     "resetPassword": "Şifreyi sıfırla",
     "newPassword": "Yeni şifre",
     "setPassword": "Şifre belirle",
+    "setPasswordTitle": "Şifre Belirle",
+    "setPasswordExplanation": "SMS gönderim kısıtlamaları nedeniyle, lütfen hesabınız için bir şifre belirleyin.",
+    "setPasswordButton": "Şifre Belirle ve Giriş Yap",
     "changePassword": "Şifre değiştir",
+    "name": "Ad ve Soyad",
+    "namePlaceholder": "Adınızı girin",
+    "registerButton": "Kayıt Ol",
     "rememberMe": "Beni hatırla",
     "welcomeBack": "Tekrar hoş geldiniz",
     "greeting": "Merhaba, {{name}}",
@@ -69,7 +75,9 @@
       "otpInvalid": "Doğrulama kodu 6 haneli olmalı",
       "passwordRequired": "Şifre gerekli",
       "passwordTooShort": "Şifre en az 6 karakter olmalı",
-      "passwordMismatch": "Şifreler eşleşmiyor"
+      "passwordMin8": "Şifre en az 8 karakter olmalı",
+      "passwordMismatch": "Şifreler eşleşmiyor",
+      "nameRequired": "Ad ve soyad gerekli"
     },
     "errors": {
       "invalidCredentials": "Geçersiz giriş bilgileri",
@@ -77,7 +85,8 @@
       "otpExpired": "Doğrulama kodunun süresi doldu",
       "otpInvalid": "Geçersiz doğrulama kodu",
       "tooManyAttempts": "Çok fazla deneme. Lütfen daha sonra tekrar deneyin",
-      "networkError": "Bağlantı hatası"
+      "networkError": "Bağlantı hatası",
+      "contactSupportForReset": "Şifrenizi sıfırlamak için destek ile iletişime geçin"
     },
     "success": {
       "otpSent": "Doğrulama kodu gönderildi",

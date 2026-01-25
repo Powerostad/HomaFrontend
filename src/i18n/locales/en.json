@@ -53,7 +53,13 @@
     "resetPassword": "Reset password",
     "newPassword": "New password",
     "setPassword": "Set password",
+    "setPasswordTitle": "Set Password",
+    "setPasswordExplanation": "Due to SMS delivery limitations, please set a password for your account.",
+    "setPasswordButton": "Set Password & Login",
     "changePassword": "Change password",
+    "name": "Full Name",
+    "namePlaceholder": "Enter your name",
+    "registerButton": "Register",
     "rememberMe": "Remember me",
     "welcomeBack": "Welcome back",
     "greeting": "Hello, {{name}}",
@@ -69,7 +75,9 @@
       "otpInvalid": "Verification code must be 6 digits",
       "passwordRequired": "Password is required",
       "passwordTooShort": "Password must be at least 6 characters",
-      "passwordMismatch": "Passwords do not match"
+      "passwordMin8": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match",
+      "nameRequired": "Full name is required"
     },
     "errors": {
       "invalidCredentials": "Invalid login credentials",
@@ -77,7 +85,8 @@
       "otpExpired": "Verification code has expired",
       "otpInvalid": "Invalid verification code",
       "tooManyAttempts": "Too many attempts. Please try again later",
-      "networkError": "Connection error"
+      "networkError": "Connection error",
+      "contactSupportForReset": "Please contact support to reset your password"
     },
     "success": {
       "otpSent": "Verification code sent",
