@@ -10,6 +10,7 @@
  */
 
 import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
+import i18n from '@/i18n/config';
 
 // =============================================================================
 // Environment Configuration
@@ -257,6 +258,7 @@ function buildHeaders(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'Accept-Language': i18n.language || 'fa',
     ...customHeaders,
   };
 
@@ -276,59 +278,60 @@ function buildHeaders(
 // =============================================================================
 
 /**
- * ترجمه خطاهای رایج مرورگر به فارسی
- * این تابع خطاهای انگلیسی مرورگر را به پیام‌های فارسی تبدیل می‌کند
+ * Translate common browser errors to the current language
+ * Uses i18n for localized error messages
  */
 function translateErrorMessage(error: Error | string): string {
   const message = typeof error === 'string' ? error : error.message;
+  const t = i18n.t.bind(i18n);
 
-  // Common browser/network error patterns
-  const errorTranslations: Record<string, string> = {
-    'Failed to fetch': 'خطا در برقراری ارتباط با سرور',
-    'Network request failed': 'خطا در برقراری ارتباط با سرور',
-    'NetworkError': 'خطا در اتصال به شبکه',
-    'Network Error': 'خطا در اتصال به شبکه',
-    'TypeError: Failed to fetch': 'خطا در برقراری ارتباط با سرور',
-    'Load failed': 'خطا در بارگذاری اطلاعات',
-    'net::ERR_FAILED': 'خطا در برقراری ارتباط',
-    'net::ERR_CONNECTION_REFUSED': 'سرور در دسترس نیست',
-    'net::ERR_CONNECTION_RESET': 'اتصال قطع شد',
-    'net::ERR_CONNECTION_TIMED_OUT': 'زمان اتصال به پایان رسید',
-    'net::ERR_INTERNET_DISCONNECTED': 'اتصال اینترنت قطع است',
-    'net::ERR_NAME_NOT_RESOLVED': 'آدرس سرور یافت نشد',
-    'AbortError': 'درخواست لغو شد',
-    'TimeoutError': 'زمان درخواست به پایان رسید',
-    'Request timeout': 'زمان درخواست به پایان رسید',
-    'CORS error': 'خطا در دسترسی به سرور',
-    'Unauthorized': 'دسترسی غیرمجاز',
-    'Forbidden': 'دسترسی ممنوع',
-    'Not Found': 'صفحه یافت نشد',
-    'Internal Server Error': 'خطای داخلی سرور',
-    'Bad Gateway': 'خطا در ارتباط با سرور',
-    'Service Unavailable': 'سرویس در دسترس نیست',
-    'Gateway Timeout': 'زمان پاسخ سرور به پایان رسید',
+  // Map browser error patterns to i18n keys
+  const errorMappings: Record<string, string> = {
+    'Failed to fetch': 'errors.failedToFetch',
+    'Network request failed': 'errors.networkError',
+    'NetworkError': 'errors.networkError',
+    'Network Error': 'errors.networkError',
+    'TypeError: Failed to fetch': 'errors.failedToFetch',
+    'Load failed': 'errors.networkError',
+    'net::ERR_FAILED': 'errors.networkError',
+    'net::ERR_CONNECTION_REFUSED': 'errors.connectionRefused',
+    'net::ERR_CONNECTION_RESET': 'errors.networkError',
+    'net::ERR_CONNECTION_TIMED_OUT': 'errors.timeout',
+    'net::ERR_INTERNET_DISCONNECTED': 'errors.networkError',
+    'net::ERR_NAME_NOT_RESOLVED': 'errors.networkError',
+    'AbortError': 'errors.timeout',
+    'TimeoutError': 'errors.timeout',
+    'Request timeout': 'errors.timeout',
+    'CORS error': 'errors.corsError',
+    'Unauthorized': 'errors.unauthorized',
+    'Forbidden': 'errors.forbidden',
+    'Not Found': 'errors.notFound',
+    'Internal Server Error': 'errors.serverError',
+    'Bad Gateway': 'errors.serverError',
+    'Service Unavailable': 'errors.serverError',
+    'Gateway Timeout': 'errors.timeout',
   };
 
   // Check for exact matches first
-  if (errorTranslations[message]) {
-    return errorTranslations[message];
+  if (errorMappings[message]) {
+    return t(errorMappings[message]);
   }
 
   // Check for partial matches (case-insensitive)
   const lowerMessage = message.toLowerCase();
-  for (const [key, translation] of Object.entries(errorTranslations)) {
+  for (const [key, i18nKey] of Object.entries(errorMappings)) {
     if (lowerMessage.includes(key.toLowerCase())) {
-      return translation;
+      return t(i18nKey);
     }
   }
 
-  // If the message is already in Persian (contains Persian characters), return as-is
-  if (/[\u0600-\u06FF]/.test(message)) {
+  // If the message is already in Persian/Arabic (contains RTL characters), return as-is
+  if (/[\u0600-\u06FF\u0750-\u077F]/.test(message)) {
     return message;
   }
 
-  // Default fallback for unknown English errors
-  return 'خطای ناشناخته رخ داد';
+  // Default fallback for unknown errors
+  return t('errors.unknown');
 }
 
 // =============================================================================

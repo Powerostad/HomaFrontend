@@ -5,54 +5,105 @@
  * across multiple components.
  */
 
+import i18n from '../i18n/config';
+
 /**
- * Persian/Farsi digit mapping
+ * Digit mappings for different locales
  */
-const FARSI_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+const DIGIT_MAPS: Record<string, string[]> = {
+  fa: ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'],
+  ar: ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'],
+  en: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+  tr: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+};
+
+/**
+ * Locale to BCP 47 language tag mapping
+ */
+const LOCALE_MAP: Record<string, string> = {
+  fa: 'fa-IR',
+  ar: 'ar-SA',
+  en: 'en-US',
+  tr: 'tr-TR',
+};
+
+/**
+ * Get current locale from i18n
+ */
+function getCurrentLocale(): string {
+  return i18n.language || 'fa';
+}
+
+/**
+ * Convert English digits to locale-specific digits
+ *
+ * @example
+ * toLocalizedDigits(1234) // '۱۲۳۴' (fa) or '١٢٣٤' (ar) or '1234' (en/tr)
+ * toLocalizedDigits('1,234') // '۱,۲۳۴' (fa)
+ */
+export function toLocalizedDigits(value: number | string, locale?: string): string {
+  const currentLocale = locale || getCurrentLocale();
+  const digits = DIGIT_MAPS[currentLocale] || DIGIT_MAPS['en'];
+  return value.toString().replace(/\d/g, (x) => digits[parseInt(x)]);
+}
 
 /**
  * Convert English digits to Persian/Farsi digits
+ * @deprecated Use toLocalizedDigits() for locale-aware digit conversion
  *
  * @example
  * toPersianDigits(1234) // '۱۲۳۴'
  * toPersianDigits('1,234') // '۱,۲۳۴'
  */
 export function toPersianDigits(value: number | string): string {
-  return value.toString().replace(/\d/g, (x) => FARSI_DIGITS[parseInt(x)]);
+  return toLocalizedDigits(value, 'fa');
 }
 
 /**
  * Format price from Rial (backend) to Toman (display)
  *
  * IMPORTANT: All backend prices are stored in Rial. This function converts
- * to Toman (1 Toman = 10 Rial) and formats with Persian digits.
+ * to Toman (1 Toman = 10 Rial) and formats with locale-specific digits.
  *
  * @param priceInRials - Price in Rials from backend API
- * @param showCurrency - Whether to append "تومان" suffix (default: true)
- * @returns Formatted price string with Persian digits
+ * @param showCurrency - Whether to append currency suffix (default: true)
+ * @returns Formatted price string with locale-specific digits
  *
  * @example
- * formatPriceFromRial(15000000) // '۱,۵۰۰,۰۰۰ تومان'
- * formatPriceFromRial(15000000, false) // '۱,۵۰۰,۰۰۰'
- * formatPriceFromRial(0) // '۰ تومان'
+ * formatPriceFromRial(15000000) // '۱,۵۰۰,۰۰۰ تومان' (fa) or '1,500,000 Toman' (en)
+ * formatPriceFromRial(15000000, false) // '۱,۵۰۰,۰۰۰' (fa)
+ * formatPriceFromRial(0) // '۰ تومان' (fa)
  */
 export function formatPriceFromRial(priceInRials: number, showCurrency = true): string {
+  const locale = getCurrentLocale();
+  const bcp47Locale = LOCALE_MAP[locale] || 'fa-IR';
+
   // Convert Rial to Toman (1 Toman = 10 Rial)
   const priceInToman = Math.round(priceInRials / 10);
-  // Format with Persian digits and thousand separators
-  const formatted = toPersianDigits(priceInToman.toLocaleString('fa-IR'));
-  return showCurrency ? `${formatted} تومان` : formatted;
+
+  // Format with thousand separators
+  const formatted = toLocalizedDigits(priceInToman.toLocaleString(bcp47Locale), locale);
+
+  if (!showCurrency) {
+    return formatted;
+  }
+
+  // Get currency label from i18n
+  const currency = i18n.t('common.toman', 'تومان');
+  return `${formatted} ${currency}`;
 }
 
 /**
- * Format price with Persian digits and thousands separator
+ * Format price with locale-specific digits and thousands separator
  *
  * @deprecated Use formatPriceFromRial() for backend prices (which are in Rial)
  * @example
- * formatPrice(3450000) // '۳,۴۵۰,۰۰۰'
+ * formatPrice(3450000) // '۳,۴۵۰,۰۰۰' (fa) or '3,450,000' (en)
  */
 export function formatPrice(price: number): string {
-  return toPersianDigits(price.toLocaleString('fa-IR'));
+  const locale = getCurrentLocale();
+  const bcp47Locale = LOCALE_MAP[locale] || 'fa-IR';
+  return toLocalizedDigits(price.toLocaleString(bcp47Locale), locale);
 }
 
 /**
@@ -60,43 +111,49 @@ export function formatPrice(price: number): string {
  *
  * @deprecated Use formatPriceFromRial() for backend prices (which are in Rial)
  * @example
- * formatPriceWithCurrency(3450000) // '۳,۴۵۰,۰۰۰ تومان'
+ * formatPriceWithCurrency(3450000) // '۳,۴۵۰,۰۰۰ تومان' (fa)
  */
-export function formatPriceWithCurrency(price: number, currency = 'تومان'): string {
-  return `${formatPrice(price)} ${currency}`;
+export function formatPriceWithCurrency(price: number, currency?: string): string {
+  const currencyLabel = currency || i18n.t('common.toman', 'تومان');
+  return `${formatPrice(price)} ${currencyLabel}`;
 }
 
 /**
- * Format date to Persian locale
+ * Format date to current locale
  *
  * @example
- * formatDate(new Date()) // '۱۴۰۲/۱۲/۰۵'
+ * formatDate(new Date()) // '۱۴۰۲/۱۲/۰۵' (fa) or '12/05/2024' (en)
  */
 export function formatDate(date: Date): string {
-  return toPersianDigits(
-    date.toLocaleDateString('fa-IR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-  );
+  const locale = getCurrentLocale();
+  const bcp47Locale = LOCALE_MAP[locale] || 'fa-IR';
+
+  const formatted = date.toLocaleDateString(bcp47Locale, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  return toLocalizedDigits(formatted, locale);
 }
 
 /**
- * Format relative time in Persian
+ * Format relative time using current locale
  * Accepts either a timestamp (number) or an ISO date string
  *
  * @example
- * formatRelativeTime(Date.now() - 3600000) // 'یک ساعت پیش'
- * formatRelativeTime('2024-01-15T10:30:00Z') // '۲ روز پیش'
+ * formatRelativeTime(Date.now() - 3600000) // 'یک ساعت پیش' (fa) or '1 hour ago' (en)
+ * formatRelativeTime('2024-01-15T10:30:00Z') // '۲ روز پیش' (fa) or '2 days ago' (en)
  */
 export function formatRelativeTime(input: number | string): string {
+  const t = i18n.t.bind(i18n);
+
   // Convert to timestamp if string (ISO date)
   const timestamp = typeof input === 'string' ? new Date(input).getTime() : input;
 
   // Handle invalid dates
   if (isNaN(timestamp)) {
-    return 'نامشخص';
+    return t('time.unknown', 'نامشخص');
   }
 
   const now = Date.now();
@@ -104,7 +161,7 @@ export function formatRelativeTime(input: number | string): string {
 
   // Handle future dates
   if (diff < 0) {
-    return 'به‌زودی';
+    return t('common.comingSoon', 'به‌زودی');
   }
 
   const seconds = Math.floor(diff / 1000);
@@ -113,21 +170,28 @@ export function formatRelativeTime(input: number | string): string {
   const days = Math.floor(hours / 24);
   const weeks = Math.floor(days / 7);
   const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
 
+  if (years > 0) {
+    return t('time.yearsAgo', '{{count}} سال پیش', { count: years });
+  }
   if (months > 0) {
-    return months === 1 ? 'یک ماه پیش' : `${toPersianDigits(months)} ماه پیش`;
+    return t('time.monthsAgo', '{{count}} ماه پیش', { count: months });
   }
   if (weeks > 0) {
-    return weeks === 1 ? 'یک هفته پیش' : `${toPersianDigits(weeks)} هفته پیش`;
+    return t('time.weeksAgo', '{{count}} هفته پیش', { count: weeks });
   }
   if (days > 0) {
-    return days === 1 ? 'دیروز' : `${toPersianDigits(days)} روز پیش`;
+    if (days === 1) {
+      return t('time.yesterday', 'دیروز');
+    }
+    return t('time.daysAgo', '{{count}} روز پیش', { count: days });
   }
   if (hours > 0) {
-    return hours === 1 ? 'یک ساعت پیش' : `${toPersianDigits(hours)} ساعت پیش`;
+    return t('time.hoursAgo', '{{count}} ساعت پیش', { count: hours });
   }
   if (minutes > 0) {
-    return minutes === 1 ? 'یک دقیقه پیش' : `${toPersianDigits(minutes)} دقیقه پیش`;
+    return t('time.minutesAgo', '{{count}} دقیقه پیش', { count: minutes });
   }
-  return 'همین الان';
+  return t('time.justNow', 'همین الان');
 }

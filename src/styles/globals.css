@@ -1,8 +1,20 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+/* ========================================
+   MULTILINGUAL FONT IMPORTS
+   - Persian/Arabic: Vazirmatn (RTL)
+   - Arabic: Noto Sans Arabic (RTL)
+   - English/Turkish: Inter (LTR)
+   ======================================== */
 /* Import Vazirmatn font for Persian/Farsi text */
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+/* Import Noto Sans Arabic for Arabic text */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+/* Import Inter for English and Turkish text */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -111,6 +123,12 @@
     @apply border-border outline-ring/50;
   }
 
+  /* ========================================
+     LANGUAGE-SPECIFIC STYLES
+     Direction and fonts based on lang attribute
+     ======================================== */
+
+  /* Default: Persian (RTL) */
   html {
     direction: rtl;
     font-size: var(--text-base);
@@ -120,6 +138,51 @@
     @apply bg-surface-page text-content-primary;
     font-family: var(--font-family-primary);
     direction: rtl;
+  }
+
+  /* Persian language (default) */
+  html[lang="fa"] {
+    direction: rtl;
+  }
+  html[lang="fa"] body {
+    font-family: 'Vazirmatn', var(--font-family-primary);
+    direction: rtl;
+  }
+
+  /* Arabic language */
+  html[lang="ar"] {
+    direction: rtl;
+  }
+  html[lang="ar"] body {
+    font-family: 'Noto Sans Arabic', 'Vazirmatn', var(--font-family-primary);
+    direction: rtl;
+  }
+
+  /* English language */
+  html[lang="en"] {
+    direction: ltr;
+  }
+  html[lang="en"] body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    direction: ltr;
+  }
+
+  /* Turkish language */
+  html[lang="tr"] {
+    direction: ltr;
+  }
+  html[lang="tr"] body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    direction: ltr;
+  }
+
+  /* Phone/OTP inputs should always be LTR regardless of page direction */
+  input[type="tel"],
+  input[inputmode="numeric"],
+  .otp-input,
+  .phone-input {
+    direction: ltr;
+    text-align: left;
   }
 }
 
