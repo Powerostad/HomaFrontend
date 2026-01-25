@@ -9,6 +9,7 @@
  */
 
 import { fetchAuthenticatedImage } from './apiClient';
+import i18n from '../i18n/config';
 
 // =============================================================================
 // Platform Detection
@@ -212,7 +213,7 @@ export async function triggerShare(prepared: PreparedDownload): Promise<boolean>
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
-        title: 'تصویر هُما',
+        title: i18n.t('common.homaImage'),
       });
       prepared.cleanup();
       return true;
@@ -276,7 +277,7 @@ export async function downloadImage(
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'تصویر هُما',
+            title: i18n.t('common.homaImage'),
           });
           downloadInProgress = false;
           return { success: true, method: 'share' };
@@ -350,23 +351,24 @@ export async function downloadImage(
 }
 
 // =============================================================================
-// Persian Error Messages
+// Localized Error Messages
 // =============================================================================
 
 /**
- * Get Persian error message for download failures
+ * Get localized error message for download failures
  */
 export function getDownloadErrorMessage(error: string | undefined): string {
-  if (!error) return 'خطا در دانلود تصویر';
+  const t = (key: string) => i18n.t(key);
+  if (!error) return t('errors.downloadError');
 
   const errorMap: Record<string, string> = {
-    'Failed to load image for conversion': 'خطا در بارگذاری تصویر',
-    'Failed to convert image to PNG': 'خطا در تبدیل فرمت تصویر',
-    'Failed to get canvas context': 'خطای داخلی در پردازش تصویر',
-    'HTTP 401': 'دسترسی غیرمجاز. لطفا دوباره وارد شوید.',
-    'HTTP 404': 'تصویر یافت نشد',
-    'HTTP 403': 'دسترسی غیرمجاز',
-    'HTTP 500': 'خطای سرور',
+    'Failed to load image for conversion': t('errors.imageLoadError'),
+    'Failed to convert image to PNG': t('errors.imageConvertError'),
+    'Failed to get canvas context': t('errors.canvasError'),
+    'HTTP 401': t('errors.sessionExpired'),
+    'HTTP 404': t('errors.imageNotFound'),
+    'HTTP 403': t('errors.forbidden'),
+    'HTTP 500': t('errors.serverError'),
   };
 
   for (const [key, message] of Object.entries(errorMap)) {
@@ -375,5 +377,5 @@ export function getDownloadErrorMessage(error: string | undefined): string {
     }
   }
 
-  return 'خطا در دانلود تصویر';
+  return t('errors.downloadError');
 }

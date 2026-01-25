@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react';
 import { Header } from '../../components/Header';
 import { SidebarMenu } from '../../components/SidebarMenu';
@@ -38,9 +39,10 @@ function GallerySkeleton() {
 interface ErrorStateProps {
   onRetry: () => void;
   isRetrying: boolean;
+  t: (key: string) => string;
 }
 
-function ErrorState({ onRetry, isRetrying }: ErrorStateProps) {
+function ErrorState({ onRetry, isRetrying, t }: ErrorStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-6">
       <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center text-destructive">
@@ -48,9 +50,9 @@ function ErrorState({ onRetry, isRetrying }: ErrorStateProps) {
       </div>
 
       <div className="flex flex-col gap-2 max-w-[280px]">
-        <h3 className="text-[18px] font-bold text-foreground">خطا در دریافت گالری</h3>
+        <h3 className="text-[18px] font-bold text-foreground">{t('gallery.errorTitle')}</h3>
         <p className="text-[14px] text-muted-foreground leading-relaxed">
-          متأسفانه در بارگذاری گالری شما مشکلی پیش آمده است. لطفاً دوباره تلاش کنید.
+          {t('gallery.errorDescription')}
         </p>
       </div>
 
@@ -59,7 +61,7 @@ function ErrorState({ onRetry, isRetrying }: ErrorStateProps) {
         disabled={isRetrying}
         className="h-[56px] px-10 bg-foreground text-background rounded-full font-bold text-[14px] active:scale-95 transition-all shadow-lg"
       >
-        {isRetrying ? 'در حال تلاش...' : 'تلاش مجدد'}
+        {isRetrying ? t('common.wait') : t('common.retry')}
       </Button>
     </div>
   );
@@ -71,6 +73,7 @@ function ErrorState({ onRetry, isRetrying }: ErrorStateProps) {
 
 export default function GalleryPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'all' | 'pinned'>('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -92,14 +95,14 @@ export default function GalleryPage() {
       if (result.success && result.data) {
         setItems(result.data);
       } else {
-        setError(result.error || 'خطا در دریافت گالری');
+        setError(result.error || t('gallery.errorTitle'));
       }
     } catch {
-      setError('خطا در برقراری ارتباط با سرور');
+      setError(t('errors.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Load on mount
   useEffect(() => {
@@ -124,7 +127,7 @@ export default function GalleryPage() {
   const handleDelete = (id: string) => {
     // Remove from local state (optimistic update)
     setItems(items.filter((item) => item.id !== id));
-    toast.success('طرح با موفقیت حذف شد');
+    toast.success(t('gallery.success.deleted'));
     // TODO: Call backend delete endpoint when available
   };
 
@@ -132,9 +135,9 @@ export default function GalleryPage() {
     // Copy link to clipboard
     const shareUrl = `${window.location.origin}/account/gallery/${id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
-      toast.success('لینک طرح کپی شد');
+      toast.success(t('tryOn.result.copyLinkSuccess'));
     }).catch(() => {
-      toast.error('خطا در کپی کردن لینک');
+      toast.error(t('tryOn.result.copyLinkFailed'));
     });
   };
 
@@ -146,7 +149,7 @@ export default function GalleryPage() {
       item.id === id ? { ...item, isPinned: isNowPinned } : item
     ));
 
-    toast.success(isNowPinned ? 'به پین‌شده‌ها اضافه شد' : 'از پین‌شده‌ها حذف شد');
+    toast.success(isNowPinned ? t('gallery.pinned') : t('gallery.unpinned'));
   };
 
   const handleCardClick = (id: string) => {
@@ -165,8 +168,8 @@ export default function GalleryPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-[34px] font-bold text-foreground">گالری من</h1>
-            <p className="text-[15px] text-muted-foreground">تمامی نتایج Try-On شما در یک نگاه</p>
+            <h1 className="text-[34px] font-bold text-foreground">{t('gallery.myGallery')}</h1>
+            <p className="text-[15px] text-muted-foreground">{t('gallery.subtitle', 'تمامی نتایج Try-On شما در یک نگاه')}</p>
           </div>
 
           {/* Tabs - Only show if we have items */}
@@ -176,13 +179,13 @@ export default function GalleryPage() {
                 onClick={() => setActiveTab('all')}
                 className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === 'all' ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                همه
+                {t('common.all')}
               </button>
               <button
                 onClick={() => setActiveTab('pinned')}
                 className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === 'pinned' ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                پین‌شده
+                {t('gallery.pinnedTab')}
               </button>
             </div>
           )}
@@ -193,7 +196,7 @@ export default function GalleryPage() {
           {isLoading ? (
             <GallerySkeleton />
           ) : error ? (
-            <ErrorState onRetry={loadGallery} isRetrying={isLoading} />
+            <ErrorState onRetry={loadGallery} isRetrying={isLoading} t={t} />
           ) : displayItems.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
               {displayItems.map((result) => (
@@ -211,14 +214,14 @@ export default function GalleryPage() {
             // Show message when no pinned items but items exist
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-4">
               <p className="text-[16px] text-muted-foreground">
-                هنوز طرحی پین نکرده‌اید
+                {t('gallery.noPinnedItems')}
               </p>
               <Button
                 onClick={() => setActiveTab('all')}
                 variant="outline"
                 className="rounded-full"
               >
-                مشاهده همه طرح‌ها
+                {t('gallery.viewAllDesigns')}
               </Button>
             </div>
           ) : (

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   Share2,
@@ -59,26 +60,27 @@ interface ErrorStateProps {
   onRetry: () => void;
   isRetrying: boolean;
   onBack: () => void;
+  t: (key: string) => string;
 }
 
-function ErrorState({ onRetry, isRetrying, onBack }: ErrorStateProps) {
+function ErrorState({ onRetry, isRetrying, onBack, t }: ErrorStateProps) {
   return (
     <div className="h-screen w-full bg-background flex flex-col items-center justify-center gap-6 p-8">
       <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center text-destructive">
         <RefreshCw size={48} strokeWidth={1} />
       </div>
       <div className="flex flex-col gap-2 text-center max-w-[280px]">
-        <h3 className="text-[18px] font-bold text-foreground">خطا در بارگذاری</h3>
+        <h3 className="text-[18px] font-bold text-foreground">{t('gallery.detail.loadError')}</h3>
         <p className="text-[14px] text-muted-foreground leading-relaxed">
-          متأسفانه در بارگذاری این طرح مشکلی پیش آمده است.
+          {t('gallery.detail.loadErrorDescription')}
         </p>
       </div>
       <div className="flex gap-3">
         <Button onClick={onBack} variant="outline" className="rounded-full">
-          بازگشت به گالری
+          {t('gallery.detail.backToGallery')}
         </Button>
         <Button onClick={onRetry} disabled={isRetrying} className="rounded-full">
-          {isRetrying ? 'در حال تلاش...' : 'تلاش مجدد'}
+          {isRetrying ? t('common.wait') : t('common.retry')}
         </Button>
       </div>
     </div>
@@ -92,6 +94,7 @@ function ErrorState({ onRetry, isRetrying, onBack }: ErrorStateProps) {
 export default function GalleryDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // UI State
   const [showOriginal, setShowOriginal] = useState(false);
@@ -119,14 +122,14 @@ export default function GalleryDetailPage() {
       if (result.success && result.data) {
         setItem(result.data);
       } else {
-        setError(result.error || 'خطا در دریافت اطلاعات');
+        setError(result.error || t('gallery.detail.loadError'));
       }
     } catch {
-      setError('خطا در برقراری ارتباط با سرور');
+      setError(t('errors.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadItem();
@@ -138,9 +141,9 @@ export default function GalleryDetailPage() {
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/account/gallery/${id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
-      toast.success('لینک طرح برای اشتراک‌گذاری کپی شد');
+      toast.success(t('gallery.detail.linkCopied'));
     }).catch(() => {
-      toast.error('خطا در کپی کردن لینک');
+      toast.error(t('tryOn.result.copyLinkFailed'));
     });
   };
 
@@ -148,7 +151,7 @@ export default function GalleryDetailPage() {
     if (!item) return;
 
     setIsDownloading(true);
-    toast.success('در حال آماده‌سازی فایل دانلود...');
+    toast.success(t('gallery.detail.preparingDownload'));
 
     try {
       // Use fetchAuthenticatedImage to get blob URL with JWT auth
@@ -162,21 +165,21 @@ export default function GalleryDetailPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
 
-      toast.success('دانلود شروع شد');
+      toast.success(t('gallery.detail.downloadStarted'));
     } catch {
-      toast.error('خطا در دانلود تصویر');
+      toast.error(t('errors.downloadError'));
     } finally {
       setIsDownloading(false);
     }
   };
 
   const handleDelete = () => {
-    toast.error('آیا از حذف این طرح اطمینان دارید؟', {
+    toast.error(t('gallery.detail.deleteConfirm'), {
       action: {
-        label: 'حذف',
+        label: t('common.delete'),
         onClick: () => {
           // TODO: Call backend delete endpoint when available
-          toast.success('طرح با موفقیت از گالری حذف شد');
+          toast.success(t('gallery.detail.deleteSuccess'));
           navigate('/account/gallery');
         },
       },
@@ -198,6 +201,7 @@ export default function GalleryDetailPage() {
         onRetry={loadItem}
         isRetrying={isLoading}
         onBack={handleBack}
+        t={t}
       />
     );
   }
@@ -210,7 +214,7 @@ export default function GalleryDetailPage() {
       {/* Gallery Context Label */}
       <div className="flex items-center gap-2">
         <div className="px-3 py-1 bg-secondary rounded-full">
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">از گالری من</span>
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{t('gallery.detail.fromMyGallery')}</span>
         </div>
         <span className="text-[11px] font-medium text-muted-foreground">
           {formatRelativeTime(item.createdAt)}
@@ -220,9 +224,9 @@ export default function GalleryDetailPage() {
       {/* Used Product Section */}
       <div className="flex flex-col gap-4 pb-6 border-b border-border">
         <div className="flex justify-between items-center">
-          <h4 className="text-[16px] font-bold text-foreground">محصول استفاده‌شده</h4>
+          <h4 className="text-[16px] font-bold text-foreground">{t('gallery.detail.usedProduct')}</h4>
           <span className="px-2 py-0.5 bg-[#dfff00]/20 text-foreground text-[10px] font-bold rounded-sm">
-            استفاده‌شده در Try-On
+            {t('gallery.detail.usedInTryOn')}
           </span>
         </div>
         <div className="flex gap-4 items-center">
@@ -253,7 +257,7 @@ export default function GalleryDetailPage() {
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:bg-foreground group-hover:text-background transition-colors">
             <Share2 size={18} />
           </div>
-          <span className="text-[11px] font-bold">اشتراک</span>
+          <span className="text-[11px] font-bold">{t('common.share')}</span>
         </button>
         <button
           onClick={handleDownload}
@@ -263,7 +267,7 @@ export default function GalleryDetailPage() {
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:bg-foreground group-hover:text-background transition-colors">
             {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
           </div>
-          <span className="text-[11px] font-bold">دانلود</span>
+          <span className="text-[11px] font-bold">{t('common.download')}</span>
         </button>
         <button
           onClick={handleDelete}
@@ -272,7 +276,7 @@ export default function GalleryDetailPage() {
           <div className="w-10 h-10 rounded-full bg-destructive/5 flex items-center justify-center text-destructive group-hover:bg-destructive group-hover:text-white transition-colors">
             <Trash2 size={18} />
           </div>
-          <span className="text-[11px] font-bold text-destructive">حذف</span>
+          <span className="text-[11px] font-bold text-destructive">{t('common.delete')}</span>
         </button>
       </div>
 
@@ -280,11 +284,11 @@ export default function GalleryDetailPage() {
       {item.score && (
         <div className="flex flex-col gap-3 pb-6 border-b border-border">
           <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[1.5px]">
-            امتیاز شما
+            {t('gallery.detail.yourScore')}
           </h3>
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-bold text-foreground">
-              {item.score === 1 ? '👍 خوب بود' : item.score === 2 ? '😐 معمولی' : '👎 بد بود'}
+              {item.score === 1 ? `👍 ${t('feedback.ratings.good')}` : item.score === 2 ? `😐 ${t('feedback.ratings.average')}` : `👎 ${t('feedback.ratings.poor')}`}
             </span>
           </div>
         </div>
@@ -333,7 +337,7 @@ export default function GalleryDetailPage() {
                   size={18}
                   className="rotate-0 group-hover:translate-x-1 transition-transform"
                 />
-                <span className="text-[14px] font-bold">بازگشت به گالری</span>
+                <span className="text-[14px] font-bold">{t('gallery.detail.backToGallery')}</span>
               </Link>
               <div className="w-10" />
             </div>
@@ -380,7 +384,7 @@ export default function GalleryDetailPage() {
                 className="flex items-center gap-3 px-8 h-[56px] bg-black/40 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl active:scale-95 group/btn"
               >
                 <Maximize2 size={18} />
-                <span className="text-[13px] font-bold tracking-wide">نمای بزرگ</span>
+                <span className="text-[13px] font-bold tracking-wide">{t('gallery.detail.fullView')}</span>
               </button>
             </div>
           </div>
@@ -439,13 +443,13 @@ export default function GalleryDetailPage() {
                 onClick={() => setShowOriginal(false)}
                 className={`px-10 h-12 rounded-full text-[14px] font-bold ${!showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
               >
-                بُعد
+                {t('tryOn.result.after')}
               </button>
               <button
                 onClick={() => setShowOriginal(true)}
                 className={`px-10 h-12 rounded-full text-[14px] font-bold ${showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
               >
-                قبل
+                {t('tryOn.result.before')}
               </button>
             </div>
           </motion.div>

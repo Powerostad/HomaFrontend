@@ -8,6 +8,7 @@ import {
   fetchUserSessions,
   deleteSession,
 } from "@/services/studioService";
+import i18n from "@/i18n/config";
 
 /**
  * StudioContext - manages studio mode, session state, and legacy project state
@@ -131,7 +132,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       return { success: true, sessionId: result.data.sessionId };
     }
 
-    setSessionError(result.error || 'خطا در ایجاد جلسه');
+    setSessionError(result.error || i18n.t('studio.errors.createSession'));
     setIsCreatingSession(false);
     return { success: false, error: result.error };
   }, []);
@@ -153,7 +154,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    setSessionError(result.error || 'خطا در دریافت جلسه');
+    setSessionError(result.error || i18n.t('studio.errors.fetchSession'));
     return { success: false, error: result.error };
   }, []);
 
@@ -185,7 +186,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setActiveSession(result.data);
     }
 
-    setSessionError(result.error || 'خطا در پردازش');
+    setSessionError(result.error || i18n.t('studio.errors.processing'));
     return { success: false, error: result.error };
   }, []);
 

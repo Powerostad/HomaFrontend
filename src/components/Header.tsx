@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { UnifiedMenu } from "./SidebarMenu";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "../context/AppProviders";
@@ -20,6 +21,7 @@ export function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { isLoggedIn, login } = useAuth();
+  const { t } = useTranslation();
 
   const handleAuthSuccess = (
     userData: { id: string; name: string; phone?: string },
@@ -54,7 +56,7 @@ export function Header({
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   className={`p-2 transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}
-                  aria-label="منو"
+                  aria-label={t('nav.menu')}
                 >
                   <Menu size={18} strokeWidth={1} />
                 </button>

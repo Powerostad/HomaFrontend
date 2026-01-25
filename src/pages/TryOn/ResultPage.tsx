@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, Link, useSearchParams, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
    ArrowRight,
    Share2,
@@ -34,7 +35,8 @@ import type { Product } from '../../types/product';
 // --- Helper to build specifications from product data ---
 function buildSpecifications(
    product: Product | null,
-   selectedSize: string | null
+   selectedSize: string | null,
+   t: (key: string) => string
 ): Array<{ label: string; value: string }> {
    const specs: Array<{ label: string; value: string }> = [];
 
@@ -49,7 +51,7 @@ function buildSpecifications(
       const displaySize = sizeIndex >= 0 && product?.availableSizesDisplay?.[sizeIndex]
          ? product.availableSizesDisplay[sizeIndex]
          : selectedSize;
-      specs.push({ label: 'ابعاد', value: displaySize });
+      specs.push({ label: t('product.dimensions'), value: displaySize });
    }
 
    // For all products: show extra_details entries
@@ -63,21 +65,21 @@ function buildSpecifications(
    return specs;
 }
 
-function copyToClipboard(text: string) {
+function copyToClipboard(text: string, t: (key: string) => string) {
    try {
       if (navigator.clipboard && window.isSecureContext) {
          navigator.clipboard.writeText(text)
-            .then(() => toast.success('لینک صفحه کپی شد'))
-            .catch(() => fallbackCopy(text));
+            .then(() => toast.success(t('tryOn.result.copyLinkSuccess')))
+            .catch(() => fallbackCopy(text, t));
       } else {
-         fallbackCopy(text);
+         fallbackCopy(text, t);
       }
    } catch (err) {
-      fallbackCopy(text);
+      fallbackCopy(text, t);
    }
 }
 
-function fallbackCopy(text: string) {
+function fallbackCopy(text: string, t: (key: string) => string) {
    try {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -90,12 +92,12 @@ function fallbackCopy(text: string) {
       const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
       if (successful) {
-         toast.success('لینک صفحه کپی شد');
+         toast.success(t('tryOn.result.copyLinkSuccess'));
       } else {
-         toast.error('کپی انجام نشد. لطفا آدرس را دستی کپی کنید');
+         toast.error(t('tryOn.result.copyLinkFailed'));
       }
    } catch (err) {
-      toast.error('خطا در دسترسی به حافظه موقت');
+      toast.error(t('tryOn.result.clipboardError'));
    }
 }
 
@@ -103,6 +105,7 @@ export function TryOnResultPage() {
    const navigate = useNavigate();
    const [searchParams] = useSearchParams();
    const { productId } = useParams<{ productId: string }>();
+   const { t } = useTranslation();
    const { isLoggedIn, login } = useAuth();
    const {
       selectedFile,
@@ -240,9 +243,9 @@ export function TryOnResultPage() {
             executeStoreNavigation();
 
             // Show the non-blocking toast after navigation (or just before)
-            toast("نتیجه‌ات ذخیره شد. هر وقت خواستی از گالری می‌تونی دوباره ببینیش.", {
+            toast(t('tryOn.result.saved'), {
                action: {
-                  label: "مشاهده",
+                  label: t('common.seeMore'),
                   onClick: () => navigate("/account/gallery")
                },
                duration: 5000,
@@ -285,7 +288,7 @@ export function TryOnResultPage() {
    // Phase 1: Prepare download (async, no user gesture needed)
    const handleDownload = async () => {
       if (!resultImageUrl) {
-         toast.error('تصویری برای دانلود موجود نیست');
+         toast.error(t('tryOn.result.noImage'));
          return;
       }
 
@@ -316,11 +319,11 @@ export function TryOnResultPage() {
       // Try share first on mobile
       const shared = await triggerShare(preparedDownloadData);
       if (shared) {
-         toast.success('تصویر آماده اشتراک‌گذاری شد');
+         toast.success(t('tryOn.result.downloadReady'));
       } else {
          // Fallback to download
          triggerDownload(preparedDownloadData);
-         toast.success('تصویر دانلود شد');
+         toast.success(t('tryOn.result.downloadComplete'));
       }
 
       setPreparedDownloadData(null);
@@ -346,7 +349,7 @@ export function TryOnResultPage() {
 
       // Need image_id to submit
       if (!resultImageId) {
-         toast.error('تصویری برای ارسال به گالری موجود نیست');
+         toast.error(t('tryOn.result.noImageGallery'));
          return;
       }
 
@@ -356,9 +359,9 @@ export function TryOnResultPage() {
 
       if (result.success) {
          setIsSubmittedToGallery(true);
-         toast.success('تصویر شما برای نمایش در گالری ارسال شد');
+         toast.success(t('tryOn.result.submittedToGallery'));
       } else {
-         toast.error(result.error || 'خطا در ارسال به گالری');
+         toast.error(result.error || t('gallery.success.deleted'));
       }
    };
 
@@ -380,6 +383,7 @@ export function TryOnResultPage() {
       navigate: ReturnType<typeof useNavigate>;
       isDesktop: boolean;
       selectedSize: string | null;
+      t: (key: string) => string;
    }
 
    const ProductContent = ({
@@ -387,16 +391,17 @@ export function TryOnResultPage() {
       setShowExitConfirm,
       navigate,
       isDesktop,
-      selectedSize
+      selectedSize,
+      t
    }: ProductContentProps) => {
       // Build specifications from real data
-      const specifications = buildSpecifications(product, selectedSize);
+      const specifications = buildSpecifications(product, selectedSize, t);
       return (
          <div className={`flex flex-col gap-12 ${isDesktop ? 'px-12' : 'px-8'} pb-[96px] bg-[#FDFDFB]`}>
             {/* Product Header Section - Editorial Style */}
             {product && (
                <div className="flex flex-col gap-6 pb-8 border-b border-black/[0.08]">
-                  <span className="text-[15px] font-bold uppercase tracking-[0.3em] text-black/40 text-[rgba(7,7,7,0.73)]">محصول تست شده</span>
+                  <span className="text-[15px] font-bold uppercase tracking-[0.3em] text-black/40 text-[rgba(7,7,7,0.73)]">{t('tryOn.result.testedProduct')}</span>
                   <div className="flex gap-6 items-start">
                      <div className="relative w-[100px] h-[100px] overflow-hidden flex-shrink-0 border border-black/[0.05] bg-black/[0.02]">
                         <ImageWithFallback
@@ -412,7 +417,7 @@ export function TryOnResultPage() {
                               <span className="text-[17px] font-regular text-black">
                                  {formatPriceFromRial(product.price, false)}
                               </span>
-                              <span className="text-[11px] font-light text-black/60">تومان</span>
+                              <span className="text-[11px] font-light text-black/60">{t('common.toman')}</span>
                            </div>
                         )}
                         {(product.seller?.name || product.brand) && (
@@ -433,7 +438,7 @@ export function TryOnResultPage() {
                >
                   <div className="flex items-center gap-4">
                      <ShoppingBag size={16} strokeWidth={1} className="text-black/60 group-hover:text-black transition-colors" />
-                     <span className="text-[14px] font-light text-black/80 group-hover:text-black transition-colors tracking-tight">مشاهده محصولات فروشگاه</span>
+                     <span className="text-[14px] font-light text-black/80 group-hover:text-black transition-colors tracking-tight">{t('tryOn.result.viewStoreProducts')}</span>
                   </div>
                   <ArrowRight size={18} className="rotate-180 opacity-20 group-hover:opacity-100 group-hover:-translate-x-1 transition-all text-black" />
                </button>
@@ -442,7 +447,7 @@ export function TryOnResultPage() {
             {/* Technical Details - Structured & Precise */}
             <div className="flex flex-col gap-6">
                <h3 className="text-[13px] font-bold text-black uppercase tracking-[0.3em]">
-                  مشخصات فنی
+                  {t('tryOn.result.technicalSpecs')}
                </h3>
 
                <div className="flex flex-col">
@@ -450,12 +455,12 @@ export function TryOnResultPage() {
                      specifications.map((detail, idx) => (
                         <div key={idx} className="flex justify-between items-center py-4 border-b border-black/[0.05]">
                            <span className="text-[13px] text-black/40 font-light">{detail.label}</span>
-                           <span className="text-[13px] font-regular text-black" dir={detail.label === 'ابعاد' ? 'ltr' : 'rtl'}>{detail.value}</span>
+                           <span className="text-[13px] font-regular text-black" dir={detail.label === t('product.dimensions') ? 'ltr' : 'rtl'}>{detail.value}</span>
                         </div>
                      ))
                   ) : (
                      <div className="py-4 text-center">
-                        <span className="text-[13px] text-black/40 font-light">مشخصات موجود نیست</span>
+                        <span className="text-[13px] text-black/40 font-light">{t('tryOn.result.noSpecs')}</span>
                      </div>
                   )}
                </div>
@@ -478,7 +483,7 @@ export function TryOnResultPage() {
                   <div className="flex justify-between items-start">
                      <div className="flex flex-col gap-1">
                         <span className="text-[34px] font-black leading-none tracking-tighter" style={{ fontFamily: 'var(--font-family-sf-pro)' }}>HOMA</span>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">جریانِ طراحیِ هوشمند</span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">{t('tryOn.result.smartDesignFlow')}</span>
                      </div>
                      <div className="flex flex-col items-end leading-none">
                         <span className="text-[18px] font-black" style={{ fontFamily: 'var(--font-family-sf-pro)' }}>V.4.0</span>
@@ -493,10 +498,10 @@ export function TryOnResultPage() {
                         <span className="text-[12px] font-bold uppercase tracking-[0.4em]">EXPERIENCE</span>
                      </div>
                      <h4 className="text-[54px] font-black leading-[1.1] tracking-tight">
-                        استودیو <br /> طراحی هُما
+                        {t('tryOn.result.homaStudioTitle')}
                      </h4>
                      <p className="text-[16px] font-medium leading-relaxed max-w-[320px] opacity-90 mt-2">
-                        فضایِ خود را با قدرتِ هوشِ مصنوعی و دقتِ استودیویی بازطراحی کنید.
+                        {t('tryOn.result.homaStudioDescription')}
                      </p>
                   </div>
 
@@ -512,7 +517,7 @@ export function TryOnResultPage() {
 
                      <div className="flex items-center gap-6 group/cta">
                         <div className="flex flex-col items-end">
-                           <span className="text-[15px] font-black uppercase tracking-wider group-hover/cta:translate-x-1 transition-transform">شروعِ تجربه</span>
+                           <span className="text-[15px] font-black uppercase tracking-wider group-hover/cta:translate-x-1 transition-transform">{t('tryOn.result.startExperience')}</span>
                            <span className="text-[10px] font-bold opacity-60 uppercase">Start Now</span>
                         </div>
                         <div className="w-16 h-16 bg-[#FF4500] text-[#CCFF00] flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:rotate-12">
@@ -524,7 +529,7 @@ export function TryOnResultPage() {
             </div>
 
             <div className="text-center opacity-20 pt-8 pb-4">
-               <p className="text-[9px] font-bold uppercase tracking-[0.6em] text-black">انتخاب بدون محدودیت توسط هُما</p>
+               <p className="text-[9px] font-bold uppercase tracking-[0.6em] text-black">{t('tryOn.result.unlimitedByHoma')}</p>
             </div>
          </div>
       );
@@ -537,7 +542,7 @@ export function TryOnResultPage() {
             <Header />
             <div className="flex flex-col items-center gap-4">
                <Loader2 size={40} className="animate-spin text-black/30" />
-               <p className="text-[14px] text-black/50">در حال بازیابی نتیجه...</p>
+               <p className="text-[14px] text-black/50">{t('tryOn.result.recoveringResult')}</p>
             </div>
          </div>
       );
@@ -553,10 +558,10 @@ export function TryOnResultPage() {
                   <AlertCircle size={40} className="text-black/30" />
                </div>
                <h1 className="text-[24px] font-bold text-black mb-3 text-center">
-                  نتیجه یافت نشد
+                  {t('tryOn.result.notFoundTitle')}
                </h1>
                <p className="text-[14px] text-black/50 mb-8 text-center max-w-[300px] leading-relaxed">
-                  امکان بازیابی نتیجه وجود ندارد. ممکن است نتیجه در گالری شما ذخیره شده باشد.
+                  {t('tryOn.result.notFoundDescription')}
                </p>
                <div className="flex flex-col gap-3 w-full max-w-[280px]">
                   {isLoggedIn && (
@@ -564,14 +569,14 @@ export function TryOnResultPage() {
                         onClick={() => navigate('/account/gallery')}
                         className="h-14 bg-black text-white text-[14px] font-bold uppercase tracking-[0.1em] hover:bg-black/90 transition-all flex items-center justify-center"
                      >
-                        مشاهده گالری
+                        {t('tryOn.result.viewGallery')}
                      </button>
                   )}
                   <button
                      onClick={() => navigate(`/try-on/${productId}/upload`)}
                      className="h-14 bg-white border border-black/10 text-black text-[14px] font-medium hover:bg-black/[0.02] transition-all"
                   >
-                     امتحان دوباره
+                     {t('tryOn.result.tryAgain')}
                   </button>
                </div>
             </div>
@@ -624,6 +629,7 @@ export function TryOnResultPage() {
                   navigate={navigate}
                   isDesktop={true}
                   selectedSize={selectedSize}
+                  t={t}
                />
             </div>
 
@@ -638,7 +644,7 @@ export function TryOnResultPage() {
                   />
                ) : (
                   <div className="w-full h-full flex items-center justify-center bg-black/5">
-                     <span className="text-black/30 text-sm">تصویر نتیجه موجود نیست</span>
+                     <span className="text-black/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
                   </div>
                )}
                {originalImage && (
@@ -695,7 +701,7 @@ export function TryOnResultPage() {
                         className="flex items-center gap-3 px-8 h-[56px] bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl transition-all active:scale-95 group/btn"
                      >
                         <Maximize2 size={18} className="transition-transform group-hover/btn:scale-110" />
-                        <span className="text-[13px] font-bold tracking-wide">مشاهده تمام صفحه</span>
+                        <span className="text-[13px] font-bold tracking-wide">{t('tryOn.result.viewFullscreen')}</span>
                      </button>
                   </div>
                </div>
@@ -718,7 +724,7 @@ export function TryOnResultPage() {
                         />
                      ) : (
                         <div className="w-full h-full flex items-center justify-center bg-black/5">
-                           <span className="text-black/30 text-sm">تصویر نتیجه موجود نیست</span>
+                           <span className="text-black/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
                         </div>
                      )}
 
@@ -778,7 +784,7 @@ export function TryOnResultPage() {
                            className="flex items-center gap-2 px-6 h-[40px] bg-black/40 backdrop-blur-2xl rounded-full border border-white/10 text-white shadow-lg active:scale-95 transition-all pointer-events-auto"
                         >
                            <Maximize2 size={14} />
-                           <span className="text-[11px] font-bold">تمام صفحه</span>
+                           <span className="text-[11px] font-bold">{t('tryOn.result.fullscreen')}</span>
                         </button>
                      </div>
                   </div>
@@ -791,6 +797,7 @@ export function TryOnResultPage() {
                         navigate={navigate}
                         isDesktop={false}
                         selectedSize={selectedSize}
+                        t={t}
                      />
                   </div>
                </div>
@@ -812,7 +819,7 @@ export function TryOnResultPage() {
                         <Heart size={18} strokeWidth={1.2} className={isSaved ? 'fill-black' : ''} />
                      </button>
                      <button
-                        onClick={() => copyToClipboard(window.location.href)}
+                        onClick={() => copyToClipboard(window.location.href, t)}
                         className="w-14 h-14 flex items-center justify-center bg-white hover:bg-black/[0.02] transition-colors"
                      >
                         <Share2 size={18} strokeWidth={1.2} />
@@ -850,7 +857,7 @@ export function TryOnResultPage() {
                         />
                      ) : (
                         <div className="w-full h-full flex items-center justify-center bg-white/5">
-                           <span className="text-white/30 text-sm">تصویر نتیجه موجود نیست</span>
+                           <span className="text-white/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
                         </div>
                      )}
                      {originalImage && (
@@ -869,21 +876,21 @@ export function TryOnResultPage() {
                            onClick={() => setShowOriginal(false)}
                            className={`px-10 h-[48px] rounded-full text-[14px] font-bold transition-all ${!showOriginal ? 'bg-white text-black shadow-xl' : 'text-white/70 hover:text-white'}`}
                         >
-                           بُعد
+                           {t('tryOn.result.after')}
                         </button>
                         <button
                            onClick={() => setShowOriginal(true)}
                            className={`px-10 h-[48px] rounded-full text-[14px] font-bold transition-all ${showOriginal ? 'bg-white text-black shadow-xl' : 'text-white/70 hover:text-white'}`}
                         >
-                           قبل
+                           {t('tryOn.result.before')}
                         </button>
                      </div>
                   </div>
 
                   {/* Quick Info Overlay (Bottom Left) */}
                   <div className="absolute bottom-12 left-12 hidden md:flex flex-col gap-1 text-white/40">
-                     <span className="text-[10px] font-bold uppercase tracking-widest">پیش‌نمایش لحظه‌ای هُما</span>
-                     <span className="text-[10px]">موتور رندر نسخه ۴.۰</span>
+                     <span className="text-[10px] font-bold uppercase tracking-widest">{t('tryOn.result.instantPreview')}</span>
+                     <span className="text-[10px]">{t('tryOn.result.renderEngine')}</span>
                   </div>
                </motion.div>
             )}
@@ -915,15 +922,15 @@ export function TryOnResultPage() {
                      </div>
 
                      <div className="flex flex-col gap-2">
-                        <h3 className="text-[18px] font-bold text-foreground">نتیجه ذخیره شد</h3>
+                        <h3 className="text-[18px] font-bold text-foreground">{t('tryOn.result.resultSavedTitle')}</h3>
                         <p className="text-[14px] text-foreground/70 leading-relaxed font-medium">
-                           نتیجه‌ات ذخیره شد. هر وقت خواستی از گالری می‌تونی دوباره ببینیش.
+                           {t('tryOn.result.saved')}
                         </p>
                      </div>
 
                      <div className="flex items-center gap-2 text-[11px] font-bold text-foreground/40 uppercase tracking-widest mt-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-foreground/20 animate-pulse" />
-                        در حال انتقال به فروشگاه
+                        {t('tryOn.result.transferringToStore')}
                      </div>
                   </motion.div>
                </motion.div>
@@ -946,9 +953,9 @@ export function TryOnResultPage() {
                      className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[32px] p-8 max-w-[340px] w-full shadow-[0_24px_80px_rgba(0,0,0,0.15)] flex flex-col items-center text-center gap-8"
                   >
                      <div className="flex flex-col gap-2">
-                        <h3 className="text-[18px] font-bold text-foreground">ذخیره و خروج</h3>
+                        <h3 className="text-[18px] font-bold text-foreground">{t('tryOn.result.saveAndExit')}</h3>
                         <p className="text-[14px] text-foreground/70 leading-relaxed font-medium">
-                           طرح شما به صورت خودکار ذخیره شده و به فروشگاه منتقل خواهید شد.
+                           {t('tryOn.result.exitDescription')}
                         </p>
                      </div>
 
@@ -957,13 +964,13 @@ export function TryOnResultPage() {
                            onClick={proceedWithExit}
                            className="w-full h-[56px] bg-foreground text-background rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg"
                         >
-                           تایید و انتقال
+                           {t('tryOn.result.confirmAndTransfer')}
                         </button>
                         <button
                            onClick={() => setShowExitConfirm(false)}
                            className="w-full h-[56px] bg-white/20 text-foreground border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
                         >
-                           انصراف
+                           {t('common.cancel')}
                         </button>
                      </div>
                   </motion.div>
@@ -991,9 +998,9 @@ export function TryOnResultPage() {
                      </div>
 
                      <div className="flex flex-col gap-2">
-                        <h3 className="text-[18px] font-bold text-foreground">تصویر آماده است</h3>
+                        <h3 className="text-[18px] font-bold text-foreground">{t('tryOn.result.imageReady')}</h3>
                         <p className="text-[14px] text-foreground/70 leading-relaxed font-medium">
-                           برای ذخیره تصویر روی دکمه زیر کلیک کنید
+                           {t('tryOn.result.clickToSave')}
                         </p>
                      </div>
 
@@ -1003,13 +1010,13 @@ export function TryOnResultPage() {
                            className="w-full h-[56px] bg-foreground text-background rounded-full font-bold text-[14px] hover:opacity-90 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2"
                         >
                            <Download size={18} />
-                           ذخیره تصویر
+                           {t('tryOn.result.saveImage')}
                         </button>
                         <button
                            onClick={handleCancelDownload}
                            className="w-full h-[56px] bg-white/20 text-foreground border border-white/20 rounded-full font-bold text-[14px] hover:bg-white/30 transition-all active:scale-95"
                         >
-                           انصراف
+                           {t('common.cancel')}
                         </button>
                      </div>
                   </motion.div>
