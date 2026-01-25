@@ -1036,17 +1036,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               {/* ============================================================ */}
               {step === "login" && (
                 <form onSubmit={handlePasswordLogin} className="space-y-5">
-                  {/* Phone Display (read-only) */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      {t('auth.phoneNumber')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
-                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
-                        {phone}
-                      </div>
-                    </div>
+                  {/* Phone Display (subtle) */}
+                  <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
+                    <Phone size={14} />
+                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <button
+                      type="button"
+                      onClick={handleChangePhone}
+                      disabled={isLoading}
+                      className="text-black/40 hover:text-black underline disabled:opacity-50"
+                    >
+                      {t('common.edit')}
+                    </button>
                   </div>
 
                   {/* Password Input */}
@@ -1140,17 +1141,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     </span>
                   </motion.div>
 
-                  {/* Phone Display (read-only) */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      {t('auth.phoneNumber')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
-                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
-                        {phone}
-                      </div>
-                    </div>
+                  {/* Phone Display (subtle) */}
+                  <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
+                    <Phone size={14} />
+                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <button
+                      type="button"
+                      onClick={handleChangePhone}
+                      disabled={isLoading}
+                      className="text-black/40 hover:text-black underline disabled:opacity-50"
+                    >
+                      {t('common.edit')}
+                    </button>
                   </div>
 
                   {/* New Password Input */}
@@ -1247,17 +1249,18 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               {/* ============================================================ */}
               {step === "register" && (
                 <form onSubmit={handleRegister} className="space-y-5">
-                  {/* Phone Display (read-only) */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      {t('auth.phoneNumber')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
-                      <div className="w-full h-14 pr-12 pl-4 bg-white/10 border border-white/30 rounded-[var(--radius-sm)] flex items-center justify-center text-[18px] font-bold tracking-widest text-black/60" dir="ltr">
-                        {phone}
-                      </div>
-                    </div>
+                  {/* Phone Display (subtle) */}
+                  <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
+                    <Phone size={14} />
+                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <button
+                      type="button"
+                      onClick={handleChangePhone}
+                      disabled={isLoading}
+                      className="text-black/40 hover:text-black underline disabled:opacity-50"
+                    >
+                      {t('common.edit')}
+                    </button>
                   </div>
 
                   {/* Name Input */}
