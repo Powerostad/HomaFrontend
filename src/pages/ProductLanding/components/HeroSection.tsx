@@ -2,6 +2,7 @@ import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
 import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 const imgEmpty = "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200";
 const imgWithRug = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
 
@@ -12,6 +13,7 @@ export interface HeroSectionProps {
 export function HeroSection({
     onGetStarted: _onGetStarted
 }: HeroSectionProps) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const handleStudioStart = () => {
@@ -37,12 +39,11 @@ export function HeroSection({
                 <div className="relative z-20 px-spacing-md pb-spacing-2xl text-center">
                     <div className="flex flex-col gap-2 mb-6 items-center mt-2"> {/* Reduced gap from 6 to 2 and mb from 12 to 6 */}
                         <h1 className="text-[42px] font-light leading-[1.1] tracking-tight text-foreground">
-                            هُما؛ <span className="opacity-60 font-light italic text-[38px]">نسخه‌یِ بهترِ</span> <br />
-                            خونه‌ت.
+                            {t('landing.hero.title', 'هُما؛')} <span className="opacity-60 font-light italic text-[38px]">{t('landing.hero.titleAccent', 'نسخه‌یِ بهترِ')}</span> <br />
+                            {t('landing.hero.titleEnd', 'خونه‌ت.')}
                         </h1>
                         <p className="text-foreground/80 font-light leading-relaxed max-w-[280px] text-p text-[20px]">
-                            هُما کمکت می‌کنه <br />
-                            دکور مناسب خونه‌ت رو پیدا کنی.
+                            {t('landing.hero.description', 'هُما کمکت می‌کنه دکور مناسب خونه‌ت رو پیدا کنی.')}
                         </p>
                     </div>
 
@@ -51,7 +52,7 @@ export function HeroSection({
                             onClick={handleStudioStart}
                             className="bg-black text-white w-full max-w-[280px] h-[64px] flex items-center justify-center gap-4 text-[16px] font-light hover:bg-black/90 transition-all duration-500 rounded-[2px] mt-2"
                         >
-                            <span>نسخهٔ جدیدِ خونه‌تو ببین</span>
+                            <span>{t('landing.hero.cta', 'نسخهٔ جدیدِ خونه‌تو ببین')}</span>
                             <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
                                 <ArrowLeft size={16} />
                             </div>
@@ -84,19 +85,18 @@ export function HeroSection({
                         {/* Label/Tag */}
                         <div className="flex items-center gap-6 opacity-60 mb-6">
                             <div className="w-16 h-[0.5px] bg-foreground" />
-                            <span className="text-[10px] tracking-[0.6em] uppercase font-light text-start">Homa Editorial</span>
+                            <span className="text-[10px] tracking-[0.6em] uppercase font-light text-start">{t('landing.hero.editorial', 'Homa Editorial')}</span>
                         </div>
 
                         {/* Heading */}
                         <h1 className="font-light leading-[1.05] tracking-tighter md:text-[60px] lg:text-[72px] xl:text-[84px] text-foreground mb-3 text-start w-full">
-                            هُما؛ <span className="italic opacity-60 font-light">نسخه‌یِ بهترِ</span> <br />
-                            خونه‌ت.
+                            {t('landing.hero.title', 'هُما؛')} <span className="italic opacity-60 font-light">{t('landing.hero.titleAccent', 'نسخه‌یِ بهترِ')}</span> <br />
+                            {t('landing.hero.titleEnd', 'خونه‌ت.')}
                         </h1>
 
                         {/* Paragraph */}
                         <p className="font-light leading-relaxed max-w-[480px] opacity-70 text-foreground mb-6 text-start text-[20px]">
-                            هُما کمکت می‌کنه <br />
-                            دکور مناسب خونه‌ت رو پیدا کنی.
+                            {t('landing.hero.description', 'هُما کمکت می‌کنه دکور مناسب خونه‌ت رو پیدا کنی.')}
                         </p>
 
                         {/* CTA Button */}
@@ -104,7 +104,7 @@ export function HeroSection({
                             onClick={handleStudioStart}
                             className="group bg-black text-white px-8 h-[52px] flex items-center gap-4 hover:bg-black/90 transition-all duration-500 rounded-[2px]"
                         >
-                            <span className="text-[13px] font-medium tracking-[0.2em] uppercase whitespace-nowrap">نسخهٔ جدیدِ خونه‌تو ببین</span>
+                            <span className="text-[13px] font-medium tracking-[0.2em] uppercase whitespace-nowrap">{t('landing.hero.cta', 'نسخهٔ جدیدِ خونه‌تو ببین')}</span>
                             <div className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-700">
                                 <ArrowLeft size={14} />
                             </div>

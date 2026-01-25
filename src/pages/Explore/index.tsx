@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   // SlidersHorizontal, // TODO: Uncomment when filter UI is implemented
   // Search, // TODO: Uncomment when search UI is implemented
@@ -16,14 +17,7 @@ import { fetchShops } from '../../services/shopService';
 import { type Shop } from '../../types/shop';
 
 // --- Categories ---
-const CATEGORIES = [
-  { id: 'all', label: 'همه' },
-  // TODO: Uncomment when category filtering is implemented
-  // { id: 'furniture', label: 'مبلمان' },
-  // { id: 'rugs', label: 'فرش' },
-  // { id: 'lighting', label: 'نورپردازی' },
-  // { id: 'decor', label: 'دکوراتیو' },
-];
+// Note: Labels are set dynamically using t() in the component
 
 // =============================================================================
 // Loading Skeleton Components
@@ -76,23 +70,24 @@ function ExploreSkeleton() {
 // =============================================================================
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
         <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
       </div>
       <h3 className="text-[16px] font-medium text-black/80 mb-2">
-        خطا در دریافت فروشگاه‌ها
+        {t('explore.errorLoadingStores', 'خطا در دریافت فروشگاه‌ها')}
       </h3>
       <p className="text-[13px] text-black/40 mb-6 max-w-xs">
-        متأسفانه در برقراری ارتباط با سرور مشکلی پیش آمده است.
+        {t('explore.connectionError', 'متأسفانه در برقراری ارتباط با سرور مشکلی پیش آمده است.')}
       </p>
       <button
         onClick={onRetry}
         className="flex items-center gap-2 px-6 py-3 bg-black text-white text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-black/90 transition-all"
       >
         <RefreshCw size={14} strokeWidth={2} />
-        <span>تلاش مجدد</span>
+        <span>{t('common.retry', 'تلاش مجدد')}</span>
       </button>
     </div>
   );
@@ -103,18 +98,19 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 // =============================================================================
 
 function EmptyState({ searchTerm }: { searchTerm?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
         <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
       </div>
       <h3 className="text-[16px] font-medium text-black/80 mb-2">
-        {searchTerm ? 'فروشگاهی یافت نشد' : 'هنوز فروشگاهی ثبت نشده'}
+        {searchTerm ? t('explore.noStoreFound', 'فروشگاهی یافت نشد') : t('explore.noStoresYet', 'هنوز فروشگاهی ثبت نشده')}
       </h3>
       <p className="text-[13px] text-black/40 max-w-xs">
         {searchTerm
-          ? `نتیجه‌ای برای "${searchTerm}" پیدا نشد. عبارت دیگری را امتحان کنید.`
-          : 'به زودی فروشگاه‌های منتخب به این بخش اضافه می‌شوند.'}
+          ? t('explore.noResultsFor', 'نتیجه‌ای برای "{{term}}" پیدا نشد. عبارت دیگری را امتحان کنید.', { term: searchTerm })
+          : t('explore.storesComingSoon', 'به زودی فروشگاه‌های منتخب به این بخش اضافه می‌شوند.')}
       </p>
     </div>
   );
@@ -125,10 +121,21 @@ function EmptyState({ searchTerm }: { searchTerm?: string }) {
 // =============================================================================
 
 export function ExplorePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, _setSearchTerm] = useState(''); // TODO: Implement search UI
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Categories with translated labels
+  const CATEGORIES = [
+    { id: 'all', label: t('common.all', 'همه') },
+    // TODO: Uncomment when category filtering is implemented
+    // { id: 'furniture', label: t('product.categories.furniture', 'مبلمان') },
+    // { id: 'rugs', label: t('product.categories.rug', 'فرش') },
+    // { id: 'lighting', label: t('explore.categories.lighting', 'نورپردازی') },
+    // { id: 'decor', label: t('product.categories.decorative', 'دکوراتیو') },
+  ];
 
   // API State
   const [shops, setShops] = useState<Shop[]>([]);
@@ -156,7 +163,7 @@ export function ExplorePage() {
     if (result.success && result.data) {
       setShops(result.data.shops);
     } else {
-      setError(result.error || 'خطا در دریافت فروشگاه‌ها');
+      setError(result.error || t('explore.errorLoadingStores', 'خطا در دریافت فروشگاه‌ها'));
     }
 
     setIsLoading(false);
@@ -181,8 +188,8 @@ export function ExplorePage() {
       {/* 2. CONTEXT BAR (Breadcrumbs) awareness */}
       <ContextBar
         items={[
-          { label: 'خانه', href: '/' },
-          { label: 'فروشگاه‌ها' }
+          { label: t('nav.home', 'خانه'), href: '/' },
+          { label: t('nav.stores', 'فروشگاه‌ها') }
         ]}
       />
 
@@ -192,18 +199,18 @@ export function ExplorePage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-1">
               <h1 className="text-[28px] md:text-[34px] font-medium text-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                فروشگاه‌های منتخب
+                {t('explore.title', 'فروشگاه‌های منتخب')}
               </h1>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] md:text-[11px] font-bold text-black/20 tracking-[0.2em] uppercase">
-                  Curated by HOMA Editorial
+                  {t('explore.curatedBy', 'Curated by HOMA Editorial')}
                 </span>
               </div>
             </div>
 
             <div className="hidden md:block max-w-xs">
               <p className="text-[13px] text-black/40 font-medium leading-relaxed text-start">
-                مجموعه‌ای دست‌چین شده از برترین برندهای دکوراسیون داخلی، متناسب با استانداردهای زیبایی‌شناسی هُما.
+                {t('explore.description', 'مجموعه‌ای دست‌چین شده از برترین برندهای دکوراسیون داخلی، متناسب با استانداردهای زیبایی‌شناسی هُما.')}
               </p>
             </div>
           </div>
@@ -310,7 +317,7 @@ export function ExplorePage() {
                     {/* Subtle Label on Image */}
                     <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
                       <div className="px-4 py-2 bg-white/90 backdrop-blur-md border border-black/5">
-                        <span className="text-[9px] font-bold text-black uppercase tracking-[0.2em]">مشاهده گالری</span>
+                        <span className="text-[9px] font-bold text-black uppercase tracking-[0.2em]">{t('explore.viewGallery', 'مشاهده گالری')}</span>
                       </div>
                     </div>
                   </div>
@@ -322,7 +329,7 @@ export function ExplorePage() {
                     </h3>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.1em]">
-                        {toPersianDigits(shop.productCount)} محصول
+                        {t('explore.productCount', '{{count}} محصول', { count: shop.productCount })}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-black/10" />
                       <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.1em]">
@@ -341,7 +348,7 @@ export function ExplorePage() {
           <div className="mt-24 mb-12 flex flex-col items-center text-center">
             <div className="w-8 h-[1px] bg-black/5 mb-6" />
             <p className="text-[11px] font-bold text-black/15 max-w-[280px] leading-relaxed">
-              این لیست بر اساس سلیقه و فضاهای انتخابی شما به صورت هوشمند گردآوری شده است.
+              {t('explore.smartCurated', 'این لیست بر اساس سلیقه و فضاهای انتخابی شما به صورت هوشمند گردآوری شده است.')}
             </p>
           </div>
         )}
@@ -357,6 +364,7 @@ export function ExplorePage() {
 // =============================================================================
 
 function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void }) {
+  const { t } = useTranslation();
   return (
     <div
       className="relative w-full aspect-[1.6/1] rounded-none overflow-hidden group cursor-pointer bg-[var(--accent-light)] border border-black/[0.03] flex flex-col md:flex-row"
@@ -367,7 +375,7 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
         <div className="space-y-3 md:space-y-6">
           <div className="inline-flex items-center gap-2 border-b border-[var(--accent)] text-[var(--accent)] pb-1 w-fit">
             <Sparkles size={12} strokeWidth={2} />
-            <span className="md:text-[10px] font-bold uppercase tracking-[0.2em] text-[9px]">پیشنهاد ادیتوریال هُما</span>
+            <span className="md:text-[10px] font-bold uppercase tracking-[0.2em] text-[9px]">{t('explore.homaEditorialPick', 'پیشنهاد ادیتوریال هُما')}</span>
           </div>
 
           <div className="space-y-1 md:space-y-3">
@@ -375,7 +383,7 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
               {shop.name}
             </h2>
             <p className="text-[11px] md:text-[15px] text-black/60 md:text-black/40 font-medium leading-relaxed max-w-[180px] md:max-w-xs line-clamp-2 md:line-clamp-none">
-              {toPersianDigits(shop.productCount)} محصول • @{shop.username}
+              {t('explore.productCount', '{{count}} محصول', { count: shop.productCount })} • @{shop.username}
             </p>
           </div>
         </div>
@@ -384,7 +392,7 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
           <button
             className="h-9 md:h-12 px-5 md:px-8 bg-black text-white md:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black/90 transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-[10px]"
           >
-            <span className="text-[12px]">مشاهده ویترین</span>
+            <span className="text-[12px]">{t('explore.viewShowcase', 'مشاهده ویترین')}</span>
             <ArrowLeft size={14} strokeWidth={2} />
           </button>
         </div>
@@ -409,13 +417,3 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
   );
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-const toPersianDigits = (num: number | string) => {
-  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return num
-    .toString()
-    .replace(/\d/g, (x) => farsiDigits[parseInt(x)]);
-};

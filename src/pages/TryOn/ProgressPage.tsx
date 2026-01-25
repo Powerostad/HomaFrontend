@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth, useUpload } from '../../context/AppProviders';
 import { Header } from '../../components/Header';
@@ -12,32 +13,33 @@ import { getStoredTokens, setStoredTokens } from '../../utils/apiClient';
 import { toast } from 'sonner';
 import type { User } from '../../context/AuthContext';
 
-/**
- * Progress phases shown during AI processing
- * Each phase represents a stage of the visualization pipeline
- */
-const PHASES = [
-  {
-    h1: "داریم فضای خونه‌ت رو می‌فهمیم…",
-    body: "نور، مقیاس و حال‌وهوای فضا",
-    micro: "درک فضا"
-  },
-  {
-    h1: "داریم محصول رو تو فضا می‌چینیم…",
-    body: "با رعایت ابعاد و سایه‌زنی دقیق",
-    micro: "تطبیق محصول"
-  },
-  {
-    h1: "داریم بهترین تصویر رو برات می‌سازیم…",
-    body: "تا ببینی چقدر به خونت میاد",
-    micro: "ساخت نتیجه"
-  }
-];
-
 export function TryOnProgressPage() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
+  const { t } = useTranslation();
   const { isLoggedIn, login } = useAuth();
+
+  /**
+   * Progress phases shown during AI processing
+   * Each phase represents a stage of the visualization pipeline
+   */
+  const PHASES = [
+    {
+      h1: t('tryOn.progress.phase1Title', "داریم فضای خونه‌ت رو می‌فهمیم…"),
+      body: t('tryOn.progress.phase1Body', "نور، مقیاس و حال‌وهوای فضا"),
+      micro: t('tryOn.progress.phase1Micro', "درک فضا")
+    },
+    {
+      h1: t('tryOn.progress.phase2Title', "داریم محصول رو تو فضا می‌چینیم…"),
+      body: t('tryOn.progress.phase2Body', "با رعایت ابعاد و سایه‌زنی دقیق"),
+      micro: t('tryOn.progress.phase2Micro', "تطبیق محصول")
+    },
+    {
+      h1: t('tryOn.progress.phase3Title', "داریم بهترین تصویر رو برات می‌سازیم…"),
+      body: t('tryOn.progress.phase3Body', "تا ببینی چقدر به خونت میاد"),
+      micro: t('tryOn.progress.phase3Micro', "ساخت نتیجه")
+    }
+  ];
   const {
     selectedFile,
     getSelectedFile,
@@ -114,7 +116,7 @@ export function TryOnProgressPage() {
 
     // Validate productId from URL
     if (!productId) {
-      toast.error('شناسه محصول یافت نشد');
+      toast.error(t('errors.productNotFound'));
       navigate('/explore');
       return;
     }
@@ -126,7 +128,7 @@ export function TryOnProgressPage() {
     // Need file to process - redirect if missing
     if (!file) {
       console.warn('[Progress] Missing file, redirecting to upload');
-      toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+      toast.error(t('tryOn.progress.fileNotSelected'));
       navigate(`/try-on/${productId}/upload`);
       return;
     }
@@ -154,7 +156,7 @@ export function TryOnProgressPage() {
     if (!file) {
       // User feedback instead of silent return
       console.error('[Progress] File not found when starting processing');
-      toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+      toast.error(t('tryOn.progress.fileNotSelected'));
       navigate(`/try-on/${productUniqueLink}/upload`);
       return;
     }
@@ -195,12 +197,12 @@ export function TryOnProgressPage() {
         navigate(`/try-on/${productUniqueLink}/result?${params.toString()}`);
       } else {
         setProcessingStatus('error');
-        setProcessingError(result.error || 'خطا در پردازش تصویر');
+        setProcessingError(result.error || t('tryOn.errors.processingFailed'));
       }
     } catch (error) {
       console.error('[Progress] Processing error:', error);
       setProcessingStatus('error');
-      setProcessingError('خطای غیرمنتظره در پردازش تصویر');
+      setProcessingError(t('errors.unknown'));
     }
   };
 
@@ -217,7 +219,7 @@ export function TryOnProgressPage() {
       hasStartedRef.current = true;
       startProcessing(productId);
     } else if (!file) {
-      toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+      toast.error(t('tryOn.progress.fileNotSelected'));
       navigate(`/try-on/${productId}/upload`);
     }
   };
@@ -247,7 +249,7 @@ export function TryOnProgressPage() {
 
       if (!storedTokens?.access) {
         console.error('[Progress] CRITICAL: Tokens not found after login!');
-        toast.error('خطا در احراز هویت. لطفا دوباره تلاش کنید.');
+        toast.error(t('tryOn.progress.authError'));
         return;
       }
 
@@ -257,7 +259,7 @@ export function TryOnProgressPage() {
         hasStartedRef.current = true;
         startProcessing(productId);
       } else if (!file) {
-        toast.error('فایل انتخاب نشده است. لطفا دوباره تصویر انتخاب کنید.');
+        toast.error(t('tryOn.progress.fileNotSelected'));
         navigate(`/try-on/${productId}/upload`);
       }
     });
@@ -301,11 +303,11 @@ export function TryOnProgressPage() {
           </div>
 
           <h1 className="text-[24px] font-bold text-black mb-3">
-            خطا در پردازش
+            {t('tryOn.errors.processingFailed')}
           </h1>
 
           <p className="text-[15px] text-black/60 mb-8 leading-relaxed">
-            {processingError || 'متأسفانه در پردازش تصویر مشکلی پیش آمد.'}
+            {processingError || t('errors.tryAgain')}
           </p>
 
           <div className="flex flex-col gap-3 w-full max-w-[280px]">
@@ -314,14 +316,14 @@ export function TryOnProgressPage() {
               className="h-14 bg-black text-white text-[14px] font-bold uppercase tracking-[0.1em] hover:bg-black/90 transition-all flex items-center justify-center gap-3"
             >
               <RefreshCw size={18} />
-              <span>تلاش مجدد</span>
+              <span>{t('common.retry')}</span>
             </button>
 
             <button
               onClick={() => navigate(`/try-on/${productId}/upload`)}
               className="h-14 bg-white border border-black/10 text-black text-[14px] font-medium hover:bg-black/[0.02] transition-all"
             >
-              انتخاب تصویر دیگر
+              {t('tryOn.tryAnother')}
             </button>
           </div>
         </div>
@@ -450,14 +452,14 @@ export function TryOnProgressPage() {
               />
             </div>
             <p className="text-[11px] text-black/40 mt-2">
-              آپلود: {Math.round(processingProgress)}%
+              {t('tryOn.progress.uploadPercent', { percent: Math.round(processingProgress) })}
             </p>
           </div>
         )}
 
         {/* ETA */}
         <div className="text-[12px] font-medium text-black/50 dark:text-white/50">
-          معمولاً کمتر از ۳۰ ثانیه
+          {t('tryOn.progress.eta', "معمولاً کمتر از ۳۰ ثانیه")}
         </div>
 
       </div>

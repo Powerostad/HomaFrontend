@@ -1,6 +1,8 @@
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 export function FinalCTA({ onGetStarted }: { onGetStarted: () => void }) {
+  const { t } = useTranslation();
   return (
     <section className="w-full bg-surface-default py-16 md:py-48 px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto relative group cursor-pointer" onClick={onGetStarted}>
@@ -20,20 +22,20 @@ export function FinalCTA({ onGetStarted }: { onGetStarted: () => void }) {
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-10"
             >
-              <h2 
+              <h2
                 className="text-[32px] md:text-[64px] font-light text-white leading-tight tracking-tight max-w-4xl"
                 style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
               >
-                فضایِ متمایزِ خود را <br />
-                <span className="italic opacity-80">همین امروز خلق کنید.</span>
+                {t('landing.finalCta.title', 'فضایِ متمایزِ خود را')} <br />
+                <span className="italic opacity-80">{t('landing.finalCta.titleAccent', 'همین امروز خلق کنید.')}</span>
               </h2>
-              
+
               <div className="flex justify-center">
                 <button
                   className="bg-white text-content-primary px-12 py-5 text-[15px] font-medium tracking-[0.2em] uppercase hover:bg-content-primary hover:text-content-inverse transition-all duration-700"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  شروع تجربه هوشمند
+                  {t('landing.finalCta.button', 'شروع تجربه هوشمند')}
                 </button>
               </div>
             </motion.div>

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 const imgEmpty = "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200";
 const imgWithCurtains = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
 import { ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react";
 
 export function ShoppingPropSection() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sliderPosition, setSliderPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,13 +44,13 @@ export function ShoppingPropSection() {
           {/* Text Side */}
           <div className="flex-1 space-y-10 text-center md:text-right order-2 md:order-1">
             <div className="space-y-8">
-              <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase">B2B Solutions</p>
+              <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase">{t('landing.b2b.label', 'B2B Solutions')}</p>
               <h2 className="font-light leading-[1.15] tracking-tight text-[32px] md:text-[52px] text-foreground">
-                همکاری با هما؛ <br />
-                <span className="italic font-light opacity-60 text-[28px] md:text-[46px]">فروشِ بیشتر با نمایشِ بهتر.</span>
+                {t('landing.b2b.title', 'همکاری با هما؛')} <br />
+                <span className="italic font-light opacity-60 text-[28px] md:text-[46px]">{t('landing.b2b.titleAccent', 'فروشِ بیشتر با نمایشِ بهتر.')}</span>
               </h2>
               <p className="text-foreground/70 font-light leading-relaxed max-w-xl opacity-80 text-p mx-auto md:mr-0">
-                محصولات خود را در خانه‌ی هزاران مشتری نمایش دهید. هما به‌سادگی با زیرساخت فروشگاه شما یکپارچه شده و تجربه‌ای متمایز از خرید را رقم می‌زند.
+                {t('landing.b2b.description', 'محصولات خود را در خانه‌ی هزاران مشتری نمایش دهید. هما به‌سادگی با زیرساخت فروشگاه شما یکپارچه شده و تجربه‌ای متمایز از خرید را رقم می‌زند.')}
               </p>
             </div>
 
@@ -57,7 +59,7 @@ export function ShoppingPropSection() {
                 onClick={() => navigate("/collaboration")}
                 className="group bg-black text-white px-10 h-[64px] flex items-center justify-between gap-10 hover:bg-black/90 transition-all duration-500 rounded-[2px] mx-auto md:mr-0"
               >
-                <span className="text-[12px] font-medium tracking-[0.3em] uppercase">درخواستِ پنلِ همکاری</span>
+                <span className="text-[12px] font-medium tracking-[0.3em] uppercase">{t('landing.b2b.ctaButton', 'درخواستِ پنلِ همکاری')}</span>
                 <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-700">
                   <ArrowLeft size={16} />
                 </div>
@@ -116,10 +118,10 @@ export function ShoppingPropSection() {
 
               {/* Labels */}
               <div className="absolute top-8 right-8 z-20 pointer-events-none">
-                <span className="text-white text-[9px] uppercase tracking-[0.6em] font-medium opacity-80">Final Setting</span>
+                <span className="text-white text-[9px] uppercase tracking-[0.6em] font-medium opacity-80">{t('landing.b2b.finalSetting', 'Final Setting')}</span>
               </div>
               <div className="absolute top-8 left-8 z-20 pointer-events-none">
-                <span className="text-white/40 text-[9px] uppercase tracking-[0.6em] font-light">Raw Space</span>
+                <span className="text-white/40 text-[9px] uppercase tracking-[0.6em] font-light">{t('landing.b2b.rawSpace', 'Raw Space')}</span>
               </div>
             </div>
           </div>

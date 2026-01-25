@@ -5,6 +5,7 @@ import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export interface OutputShowcaseProps {
     onGetStarted?: () => void;
@@ -37,6 +38,7 @@ const PRODUCTS = [
 export function OutputShowcase({
     onGetStarted: _onGetStarted
 }: OutputShowcaseProps) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const handleStudioStart = () => {
@@ -55,10 +57,10 @@ export function OutputShowcase({
                         viewport={{ once: true }}
                         transition={{ duration: 1.2, ease: [0.19, 1, 0.22, 1] }}
                     >
-                        <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase mb-8">Interior visualization</p>
+                        <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase mb-8">{t('landing.showcase.label', 'Interior visualization')}</p>
                         <h2 className="font-light leading-[1.2] mb-10 text-[28px] md:text-[42px] text-foreground">
                             <br />
-                            <span className="italic opacity-60 font-light text-[24px] md:text-[38px]">عکس خونه‌ت</span> رو به ما نشون بده، ما مبلمانی رو میاریم که باهاش ست میشه.
+                            <span className="italic opacity-60 font-light text-[24px] md:text-[38px]">{t('landing.showcase.titleAccent', 'عکس خونه‌ت')}</span> {t('landing.showcase.titleRest', 'رو به ما نشون بده، ما مبلمانی رو میاریم که باهاش ست میشه.')}
                         </h2>
                         <div className="w-16 h-[0.5px] bg-black/10 mx-auto" />
                     </motion.div>
@@ -86,12 +88,12 @@ export function OutputShowcase({
                             {/* Labels - Desktop */}
                             <div className="absolute top-10 right-10 z-20 pointer-events-none">
                                 <span className="text-white/40 text-[10px] uppercase tracking-[0.4em] font-light">
-                                    Original Space
+                                    {t('landing.showcase.originalSpace', 'Original Space')}
                                 </span>
                             </div>
                             <div className="absolute top-10 left-10 z-20 pointer-events-none">
                                 <span className="text-white text-[10px] uppercase tracking-[0.4em] font-medium">
-                                    Enhanced Room
+                                    {t('landing.showcase.enhancedRoom', 'Enhanced Room')}
                                 </span>
                             </div>
                         </motion.div>
@@ -107,8 +109,8 @@ export function OutputShowcase({
                         >
                             <div>
                                 <div className="mb-14 text-right">
-                                    <h3 className="text-[16px] font-medium tracking-[0.3em] uppercase mb-2 opacity-80">محصولات پیشنهادی هما</h3>
-                                    <span className="text-[12px] font-light opacity-50 tracking-widest">۳ موردِ انتخاب شده</span>
+                                    <h3 className="text-[16px] font-medium tracking-[0.3em] uppercase mb-2 opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
+                                    <span className="text-[12px] font-light opacity-50 tracking-widest">{t('landing.showcase.selectedItems', '۳ موردِ انتخاب شده')}</span>
                                 </div>
 
                                 <div className="space-y-12">
@@ -125,7 +127,7 @@ export function OutputShowcase({
                                                 <p className="text-[12px] font-light opacity-60 tracking-widest mb-3 uppercase">{product.category}</p>
                                                 <div className="flex items-baseline justify-end gap-1.5">
                                                     <span className="text-[18px] font-medium tracking-tighter">{product.price}</span>
-                                                    <span className="text-[11px] font-light opacity-50">تومان</span>
+                                                    <span className="text-[11px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -135,7 +137,7 @@ export function OutputShowcase({
 
                             <div className="mt-16 text-right">
                                 <button className="flex items-center gap-6 group mr-auto">
-                                    <span className="text-[12px] font-medium tracking-[0.4em] uppercase border-b border-black/10 pb-1.5 group-hover:border-black transition-all duration-500">خرید کل چیدمان</span>
+                                    <span className="text-[12px] font-medium tracking-[0.4em] uppercase border-b border-black/10 pb-1.5 group-hover:border-black transition-all duration-500">{t('landing.showcase.buyLayout', 'خرید کل چیدمان')}</span>
                                     <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-500">
                                         <ShoppingBag size={14} />
                                     </div>
@@ -157,7 +159,7 @@ export function OutputShowcase({
                             onClick={handleStudioStart}
                             className="bg-black text-white px-10 h-[64px] flex items-center justify-center gap-6 text-[13px] tracking-[0.3em] uppercase hover:bg-black/90 transition-all duration-500 rounded-[2px]"
                         >
-                            <span>خونه‌تو همین الان تغییر بده</span>
+                            <span>{t('landing.showcase.ctaButton', 'خونه‌تو همین الان تغییر بده')}</span>
                             <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
                                 <ArrowLeft size={16} />
                             </div>
@@ -170,9 +172,9 @@ export function OutputShowcase({
             <div className="md:hidden flex flex-col px-6 space-y-10 pb-10">
                 {/* Title */}
                 <div className="pt-4 text-center space-y-6">
-                    <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase">Interior visualization</p>
+                    <p className="text-[10px] font-light tracking-[0.4em] opacity-60 uppercase">{t('landing.showcase.label', 'Interior visualization')}</p>
                     <h2 className="font-light leading-[1.3] px-2 text-[26px] text-foreground">
-                        <span className="italic opacity-60 font-light">عکس خونه‌ت</span> رو به ما نشون بده، ما مبلمانی رو میاریم که باهاش ست میشه.
+                        <span className="italic opacity-60 font-light">{t('landing.showcase.titleAccent', 'عکس خونه‌ت')}</span> {t('landing.showcase.titleRest', 'رو به ما نشون بده، ما مبلمانی رو میاریم که باهاش ست میشه.')}
                     </h2>
                     <div className="w-10 h-[0.5px] bg-black/10 mx-auto" />
                 </div>
@@ -188,12 +190,12 @@ export function OutputShowcase({
                     {/* Labels - Subtle Editorial */}
                     <div className="absolute top-8 right-8 z-20 pointer-events-none">
                         <span className="text-white/40 text-[9px] uppercase tracking-[0.4em] font-light">
-                            Original Space
+                            {t('landing.showcase.originalSpace', 'Original Space')}
                         </span>
                     </div>
                     <div className="absolute top-8 left-8 z-20 pointer-events-none">
                         <span className="text-white text-[9px] uppercase tracking-[0.4em] font-medium">
-                            Enhanced Room
+                            {t('landing.showcase.enhancedRoom', 'Enhanced Room')}
                         </span>
                     </div>
                 </div>
@@ -201,8 +203,8 @@ export function OutputShowcase({
                 {/* Product List */}
                 <div className="space-y-12 bg-surface-page p-8 border rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
                     <div className="flex items-center justify-between border-b pb-6" style={{ borderColor: 'var(--color-border-default)' }}>
-                        <h3 className="text-[14px] font-medium uppercase tracking-[0.2em] opacity-80">محصولات پیشنهادی هما</h3>
-                        <span className="text-[10px] font-light opacity-50">۳ مورد</span>
+                        <h3 className="text-[14px] font-medium uppercase tracking-[0.2em] opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
+                        <span className="text-[10px] font-light opacity-50">{t('landing.showcase.itemCount', '۳ مورد')}</span>
                     </div>
 
                     <div className="space-y-10">
@@ -216,7 +218,7 @@ export function OutputShowcase({
                                     <p className="text-[10px] font-light opacity-60 tracking-widest uppercase mb-2">{product.category}</p>
                                     <div className="flex items-baseline justify-end gap-1.5">
                                         <span className="text-[15px] font-medium tracking-tighter">{product.price}</span>
-                                        <span className="text-[10px] font-light opacity-50">تومان</span>
+                                        <span className="text-[10px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -230,12 +232,12 @@ export function OutputShowcase({
                         onClick={handleStudioStart}
                         className="bg-black text-white w-full max-w-[260px] mx-auto h-[64px] text-[13px] font-medium tracking-[0.3em] uppercase rounded-[2px] flex items-center justify-center gap-6"
                     >
-                        <span>خونه‌تو همین الان تغییر بده</span>
+                        <span>{t('landing.showcase.ctaButton', 'خونه‌تو همین الان تغییر بده')}</span>
                         <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
                             <ArrowLeft size={16} />
                         </div>
                     </button>
-                    <p className="text-[9px] opacity-20 tracking-[0.5em] uppercase">Interior visualization</p>
+                    <p className="text-[9px] opacity-20 tracking-[0.5em] uppercase">{t('landing.showcase.label', 'Interior visualization')}</p>
                 </div>
             </div>
         </section>

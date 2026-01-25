@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Star, Sparkles, RefreshCw, Store as StoreIcon } from 'lucide-react';
 // SlidersHorizontal - TODO: Uncomment when filter UI is implemented
 import { useProduct, useShop } from '../../context/AppProviders';
@@ -13,7 +14,7 @@ import { ContextBar } from '../../components/ContextBar';
 import { Header } from '../../components/Header';
 import { HomaLoader } from '../../components/HomaLoader';
 import { fetchProductsByShop } from '../../services/productService';
-import { formatPriceFromRial, toPersianDigits } from '../../utils/formatters';
+import { formatPriceFromRial } from '../../utils/formatters';
 import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
@@ -45,6 +46,7 @@ function apiProductToProduct(apiProduct: APIProduct): Product {
 // =============================================================================
 
 export function StorePage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { setProduct } = useProduct();
@@ -184,7 +186,7 @@ export function StorePage() {
   // 2. Actively loading from context
   // This prevents flash of "not found" before loading state kicks in
   if (!initialLoadDone.current && !shop && !shopError) {
-    return <HomaLoader message="در حال دریافت اطلاعات فروشگاه..." />;
+    return <HomaLoader message={t('store.loadingStore', 'در حال دریافت اطلاعات فروشگاه...')} />;
   }
 
   // Error state
@@ -202,10 +204,10 @@ export function StorePage() {
             className="flex items-center gap-2"
           >
             <RefreshCw size={16} />
-            تلاش مجدد
+            {t('common.retry', 'تلاش مجدد')}
           </Button>
           <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
-            بازگشت
+            {t('common.back', 'بازگشت')}
           </Button>
         </div>
       </div>
@@ -216,9 +218,9 @@ export function StorePage() {
   if (!shop) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
-        <h2 className="text-xl font-bold mb-2 font-vazirmatn">فروشگاه پیدا نشد</h2>
+        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{t('store.notFound', 'فروشگاه پیدا نشد')}</h2>
         <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
-          بازگشت
+          {t('common.back', 'بازگشت')}
         </Button>
       </div>
     );
@@ -233,8 +235,8 @@ export function StorePage() {
       {/* 2. CONTEXT BAR (Breadcrumbs) awareness */}
       <ContextBar
         items={[
-          { label: 'خانه', href: '/' },
-          { label: 'فروشگاه‌ها', href: '/explore' },
+          { label: t('nav.home', 'خانه'), href: '/' },
+          { label: t('nav.stores', 'فروشگاه‌ها'), href: '/explore' },
           { label: shop.name }
         ]}
       />
@@ -260,14 +262,14 @@ export function StorePage() {
                     <Star size={10} className="fill-black text-black opacity-30" />
                     <span className="text-[10px] font-bold text-black/40">@{shop.username}</span>
                   </div>
-                  <span className="text-[11px] text-black/30 font-medium uppercase tracking-widest">{toPersianDigits(shop.productCount)} محصول</span>
+                  <span className="text-[11px] text-black/30 font-medium uppercase tracking-widest">{t('explore.productCount', '{{count}} محصول', { count: shop.productCount })}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <p className="hidden md:block text-[13px] text-black/40 font-medium leading-relaxed max-w-xs text-start">
-                مجموعه‌ای از بهترین کالاهای {shop.name} که توسط تیم طراحی هُما برای چیدمان‌های مدرن دست‌چین شده‌اند.
+                {t('store.curatedDescription', 'مجموعه‌ای از بهترین کالاهای {{name}} که توسط تیم طراحی هُما برای چیدمان‌های مدرن دست‌چین شده‌اند.', { name: shop.name })}
               </p>
             </div>
           </div>
@@ -279,12 +281,12 @@ export function StorePage() {
       {/* 4. FILTER ROW (Zara Home Editorial) */}
       <div className="px-6 md:px-16 max-w-[1440px] mx-auto w-full mb-12 flex items-center justify-between mt-6">
         <div className="flex items-center gap-1.5">
-          {/* Only show "همه" tab for now */}
+          {/* Only show "All" tab for now */}
           <button
             className="h-9 px-6 rounded-none text-[10px] font-bold uppercase tracking-[0.2em] transition-all border bg-black text-white border-black"
             style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
           >
-            همه
+            {t('common.all', 'همه')}
           </button>
           {/* TODO: Uncomment when tab filtering is implemented
           {(['all', 'popular', 'new'] as const).map((tab) => (
@@ -331,10 +333,10 @@ export function StorePage() {
                 <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
               </div>
               <h3 className="text-[16px] font-medium text-black/80 mb-2">
-                هنوز محصولی اضافه نشده
+                {t('store.noProductsYet', 'هنوز محصولی اضافه نشده')}
               </h3>
               <p className="text-[13px] text-black/40 max-w-xs">
-                این فروشگاه هنوز محصولی برای نمایش ندارد.
+                {t('store.emptyStoreDescription', 'این فروشگاه هنوز محصولی برای نمایش ندارد.')}
               </p>
             </div>
           ) : (
@@ -393,10 +395,10 @@ export function StorePage() {
               {isLoadingMore ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-black/20 border-t-black/60 rounded-full animate-spin" />
-                  در حال بارگذاری...
+                  {t('common.loading', 'در حال بارگذاری...')}
                 </span>
               ) : (
-                'مشاهده بیشتر'
+                t('store.loadMore', 'مشاهده بیشتر')
               )}
             </Button>
           </div>
@@ -421,6 +423,7 @@ function HomaSpecialCard({
   apiProduct: APIProduct;
   onTryOn: () => void;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { slug } = useParams();
 
@@ -434,7 +437,7 @@ function HomaSpecialCard({
         <div className="space-y-3 md:space-y-6">
           <div className="inline-flex items-center gap-2 border-b border-[var(--accent)] text-[var(--accent)] pb-1 w-fit">
             <Sparkles size={12} strokeWidth={2} />
-            <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em]">پیشنهاد ادیتوریال هُما</span>
+            <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em]">{t('explore.homaEditorialPick', 'پیشنهاد ادیتوریال هُما')}</span>
           </div>
 
           <div className="space-y-1 md:space-y-2">
@@ -442,7 +445,7 @@ function HomaSpecialCard({
               {product.name}
             </h2>
             <p className="text-[11px] md:text-[14px] text-black/60 md:text-black/40 font-medium leading-relaxed max-w-[180px] md:max-w-xs line-clamp-2 md:line-clamp-none">
-              انتخابی هوشمند بر اساس پالت رنگی فضای شما.
+              {t('store.smartColorPick', 'انتخابی هوشمند بر اساس پالت رنگی فضای شما.')}
             </p>
           </div>
         </div>
@@ -455,7 +458,7 @@ function HomaSpecialCard({
             }}
             className="h-9 md:h-12 w-fit px-4 md:px-6 bg-black text-white text-[9px] md:text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black/90 transition-all active:scale-95 flex items-center justify-center"
           >
-            امتحان در فضای من
+            {t('store.tryInMySpace', 'امتحان در فضای من')}
           </button>
           <span className="text-[14px] md:text-[18px] font-bold text-[var(--accent)]">
             {formatPriceFromRial(product.price ?? 0)}

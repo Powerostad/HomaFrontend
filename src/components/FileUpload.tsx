@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Upload, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SimpleButton } from "./SimpleButton";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -9,11 +10,12 @@ interface FileUploadProps {
   maxSizeMB?: number;
 }
 
-export function FileUpload({ 
-  onFileSelect, 
-  accept = "image/png, image/jpeg, image/jpg, image/webp", 
-  maxSizeMB = 10 
+export function FileUpload({
+  onFileSelect,
+  accept = "image/png, image/jpeg, image/jpg, image/webp",
+  maxSizeMB = 10
 }: FileUploadProps) {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +32,7 @@ export function FileUpload({
 
   const validateFile = (file: File): boolean => {
     // Check type
-    const validTypes = accept.split(",").map(t => t.trim());
+    const validTypes = accept.split(",").map(type => type.trim());
     const fileType = file.type;
     // Simple check - in production might need more robust checking
     const isValidType = validTypes.some(type => {
@@ -41,13 +43,13 @@ export function FileUpload({
     });
 
     if (!isValidType) {
-      setError("فرمت فایل پشتیبانی نمی‌شود. لطفا تصویر (JPG, PNG, WebP) آپلود کنید.");
+      setError(t('tryOn.errors.invalidFormat', 'فرمت فایل پشتیبانی نمی‌شود. لطفا تصویر (JPG, PNG, WebP) آپلود کنید.'));
       return false;
     }
 
     // Check size
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`حجم فایل باید کمتر از ${maxSizeMB} مگابایت باشد.`);
+      setError(t('tryOn.errors.fileTooLarge', 'حجم فایل باید کمتر از {{size}} مگابایت باشد.', { size: maxSizeMB }));
       return false;
     }
 
@@ -117,23 +119,23 @@ export function FileUpload({
           </div>
 
           <h3 className="mb-2 text-[var(--foreground)]">
-            {isDragging ? "فایل را رها کنید" : "بارگذاری تصویر"}
+            {isDragging ? t('fileUpload.dropFile', 'فایل را رها کنید') : t('fileUpload.uploadImage', 'بارگذاری تصویر')}
           </h3>
-          
+
           <p className="text-[var(--muted-foreground)] mb-[var(--spacing-lg)] max-w-xs mx-auto text-[length:14px] leading-relaxed">
-            تصویر محصول خود را بکشید و رها کنید یا برای انتخاب کلیک کنید
+            {t('fileUpload.dragDropDescription', 'تصویر محصول خود را بکشید و رها کنید یا برای انتخاب کلیک کنید')}
           </p>
 
-          <SimpleButton 
-            onClick={triggerFileInput} 
+          <SimpleButton
+            onClick={triggerFileInput}
             className="min-w-[160px]"
             variant={error ? "destructive" : "default"}
           >
-            انتخاب فایل
+            {t('fileUpload.selectFile', 'انتخاب فایل')}
           </SimpleButton>
 
           <p className="mt-[var(--spacing-md)] text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]/60 font-mono">
-            JPG, PNG, WebP — Max {maxSizeMB}MB
+            {t('fileUpload.formatInfo', 'JPG, PNG, WebP — Max {{size}}MB', { size: maxSizeMB })}
           </p>
         </div>
 

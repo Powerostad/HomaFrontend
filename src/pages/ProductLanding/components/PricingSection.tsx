@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 const Chip = () => (
   <div className="w-9 h-7 bg-yellow-600/20 rounded md:rounded-md border border-yellow-500/40 flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-sm scale-95 opacity-90">
@@ -13,6 +14,7 @@ const Chip = () => (
 );
 
 export function PricingSection() {
+  const { t } = useTranslation();
   const [cycle, setCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const cards = [
@@ -21,8 +23,12 @@ export function PricingSection() {
       name: 'BASIC',
       tier: 'Starter Tier',
       price: '0',
-      sub: 'رایگان',
-      features: ['۵ پروژه', 'فضای محدود', 'پشتیبانی ایمیلی'],
+      sub: t('landing.pricing.free', 'رایگان'),
+      features: [
+        t('landing.pricing.freeFeature1', '۵ پروژه'),
+        t('landing.pricing.freeFeature2', 'فضای محدود'),
+        t('landing.pricing.freeFeature3', 'پشتیبانی ایمیلی')
+      ],
       code: '0000 0000 0000',
       stickerColor: 'bg-[#E5E5E5]',
       stickerText: 'text-black',
@@ -34,8 +40,13 @@ export function PricingSection() {
       name: 'GOLD',
       tier: 'Pro Tier',
       price: cycle === 'monthly' ? '990' : '9,900',
-      sub: 'حرفه‌ای',
-      features: ['پروژه نامحدود', 'دسترسی API', 'پشتیبانی ۲۴/۷', 'حذف تبلیغات'],
+      sub: t('landing.pricing.pro', 'حرفه‌ای'),
+      features: [
+        t('landing.pricing.proFeature1', 'پروژه نامحدود'),
+        t('landing.pricing.proFeature2', 'دسترسی API'),
+        t('landing.pricing.proFeature3', 'پشتیبانی ۲۴/۷'),
+        t('landing.pricing.proFeature4', 'حذف تبلیغات')
+      ],
       code: '5495 7381 3759',
       stickerColor: 'bg-[#DFFF00]',
       stickerText: 'text-black',
@@ -47,17 +58,22 @@ export function PricingSection() {
       id: 'ENT',
       name: 'BLACK',
       tier: 'Enterprise Tier',
-      price: 'توافقی',
-      sub: 'سازمانی',
-      features: ['سرور اختصاصی', 'مدیر اکانت', 'قرارداد SLA', 'بک‌آپ ساعتی'],
+      price: t('landing.pricing.negotiable', 'توافقی'),
+      sub: t('landing.pricing.enterprise', 'سازمانی'),
+      features: [
+        t('landing.pricing.entFeature1', 'سرور اختصاصی'),
+        t('landing.pricing.entFeature2', 'مدیر اکانت'),
+        t('landing.pricing.entFeature3', 'قرارداد SLA'),
+        t('landing.pricing.entFeature4', 'بک‌آپ ساعتی')
+      ],
       code: '9988 7766 5544',
       stickerColor: 'bg-[#03302A]',
       stickerText: 'text-white',
       ctaVariant: 'glass',
       bestValue: false,
-      stickerStyle: { 
-        background: 'linear-gradient(135deg, #0f5851 0%, #04302c 60%, #011816 100%)', 
-        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)' 
+      stickerStyle: {
+        background: 'linear-gradient(135deg, #0f5851 0%, #04302c 60%, #011816 100%)',
+        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)'
       }
     }
   ];
@@ -73,17 +89,17 @@ export function PricingSection() {
         
         {/* Toggle Switch */}
         <div className="inline-flex bg-black/5 p-1 rounded-2xl border border-black/10 backdrop-blur-md">
-            <button 
+            <button
                 onClick={() => setCycle('monthly')}
                 className={`px-6 py-2 text-sm font-medium rounded-xl transition-all duration-300 font-vazirmatn ${cycle === 'monthly' ? 'bg-white text-black shadow-md' : 'text-neutral-500 hover:text-black'}`}
             >
-                ماهانه
+                {t('landing.pricing.monthly', 'ماهانه')}
             </button>
-            <button 
+            <button
                 onClick={() => setCycle('yearly')}
                 className={`px-6 py-2 text-sm font-medium rounded-xl transition-all duration-300 font-vazirmatn ${cycle === 'yearly' ? 'bg-white text-black shadow-md' : 'text-neutral-500 hover:text-black'}`}
             >
-                سالانه
+                {t('landing.pricing.yearly', 'سالانه')}
             </button>
         </div>
       </div>
@@ -131,7 +147,7 @@ export function PricingSection() {
                             <div className="text-[10px] uppercase tracking-widest opacity-60 mb-2 font-mono">Total Balance</div>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-[42px] font-black tracking-tighter font-mono">{card.price}</span>
-                                {card.price !== "توافقی" && <span className="text-sm font-bold opacity-60">تومان</span>}
+                                {card.id !== 'ENT' && <span className="text-sm font-bold opacity-60">{t('common.toman', 'تومان')}</span>}
                             </div>
                          </div>
                     </div>
@@ -171,19 +187,19 @@ export function PricingSection() {
                         </div>
 
                         {/* Row D: CTA */}
-                        <button 
+                        <button
                             className={`
                                 w-full h-[52px] rounded-[22px] text-[15px] font-semibold tracking-tight transition-all
                                 flex items-center justify-center mt-2 font-vazirmatn
-                                ${card.ctaVariant === 'solid' 
-                                    ? 'bg-[#DFFF00] text-black hover:scale-[1.02] shadow-lg' 
+                                ${card.ctaVariant === 'solid'
+                                    ? 'bg-[#DFFF00] text-black hover:scale-[1.02] shadow-lg'
                                     : card.ctaVariant === 'glass'
                                         ? 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
                                         : 'border border-white/10 text-white/60 hover:text-white hover:border-white/30'
                                 }
                             `}
                         >
-                            انتخاب {card.sub}
+                            {t('landing.pricing.select', 'انتخاب')} {card.sub}
                         </button>
                     </div>
                 </div>

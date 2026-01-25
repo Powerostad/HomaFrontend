@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSession } from '../../context/AppProviders';
 import { useUpload, useProduct } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
@@ -59,6 +60,7 @@ function getAvailableSizes(product: Product | APIProduct | null): SizeOption[] {
 export function TryOnUploadPage() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
+  const { t } = useTranslation();
   const { trackKPI } = useSession();
   const { setSelectedFile, setSelectedSize } = useUpload();
   const { product, setProduct } = useProduct();
@@ -80,7 +82,7 @@ export function TryOnUploadPage() {
     const loadProduct = async () => {
       // Validate productId from URL
       if (!productId) {
-        toast.error('شناسه محصول یافت نشد');
+        toast.error(t('errors.productNotFound'));
         setIsProductLoading(false);
         navigate('/explore');
         return;
@@ -115,12 +117,12 @@ export function TryOnUploadPage() {
           setProduct(result.data as unknown as Product);
           saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
         } else {
-          toast.error(result.error || 'محصول یافت نشد');
+          toast.error(result.error || t('errors.productNotFound'));
           navigate('/explore');
         }
       } catch (error) {
         console.error('[TryOnUpload] Failed to load product:', error);
-        toast.error('خطا در بارگذاری محصول');
+        toast.error(t('errors.loadProductFailed'));
         navigate('/explore');
       } finally {
         setIsProductLoading(false);
@@ -132,15 +134,15 @@ export function TryOnUploadPage() {
 
   const EXAMPLES = {
     good: {
-      label: 'نمونه مطلوب',
+      label: t('tryOn.upload.goodExample'),
       image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=800',
-      caption: 'نور کافی، قاب کامل، زاویه صاف'
+      caption: t('tryOn.upload.goodCaption')
     },
     bad: {
-      label: 'نمونه نامناسب',
-      reason: 'نور کم و کادر ناقص',
+      label: t('tryOn.upload.badExample'),
+      reason: t('tryOn.upload.badReason'),
       image: 'https://images.unsplash.com/photo-1715366843673-f21a95ec11cc?q=80&w=800',
-      caption: 'تار، کج، نیمه‌کادر یا شلوغ'
+      caption: t('tryOn.upload.badCaption')
     }
   };
 
@@ -153,7 +155,7 @@ export function TryOnUploadPage() {
   const handleFile = (file: File) => {
     // Guard: Ensure product is loaded before processing file
     if (!product) {
-      toast.error('لطفا صبر کنید تا اطلاعات محصول بارگذاری شود');
+      toast.error(t('tryOn.upload.waitForProduct'));
       console.warn('[Upload] handleFile called with null product');
       return;
     }
@@ -217,7 +219,7 @@ export function TryOnUploadPage() {
       fileInputRef.current.value = '';
     }
     // Inform user they need to re-select
-    toast.info('برای ادامه، لطفا مجددا عکس انتخاب کنید');
+    toast.info(t('tryOn.upload.reselectImage'));
   };
 
   return (
@@ -226,11 +228,11 @@ export function TryOnUploadPage() {
       {/* 1. HEADER & BREADCRUMBS */}
       <div className="relative z-[110] shrink-0 bg-[#FDFDFB] border-b border-black/[0.03]">
         <Header />
-        <ContextBar 
+        <ContextBar
           items={[
-            { label: 'خانه', href: '/' },
-            { label: 'امتحان در فضای تو', href: '/try-on' },
-            { label: 'آپلود عکس فضا' }
+            { label: t('nav.home'), href: '/' },
+            { label: t('tryOn.title'), href: '/try-on' },
+            { label: t('tryOn.upload.title') }
           ]}
         />
       </div>
@@ -241,11 +243,11 @@ export function TryOnUploadPage() {
         <div className="px-6 md:px-16 pt-6 pb-2">
           <div className="space-y-2">
             <h1 className="text-h2 md:text-h1 font-medium text-foreground tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              آپلود تصویر فضا
+              {t('tryOn.upload.title')}
             </h1>
             {product && (
               <p className="text-p text-muted-foreground">
-                برای امتحان <span className="text-foreground font-bold">{product.name}</span> تصویری از فضای خود انتخاب کنید.
+                {t('tryOn.upload.selectImageFor', { productName: product.name })}
               </p>
             )}
             <div className="h-px w-full bg-foreground/[0.05]" />
@@ -260,10 +262,10 @@ export function TryOnUploadPage() {
               <div className="relative aspect-[3/2] bg-white overflow-hidden border border-black/[0.03]">
                 <ImageWithFallback src={EXAMPLES.good.image} className="w-full h-full object-cover" />
                 <div className="absolute top-3 right-3 bg-[#E1FF00] px-2 py-1 flex items-center z-20">
-                  <span className="text-[10px] font-bold text-black" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>مطلوب</span>
+                  <span className="text-[10px] font-bold text-black" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{t('tryOn.upload.good')}</span>
                 </div>
               </div>
-              <p className="text-[13px] text-black/80 font-medium leading-tight">مطلوب: {EXAMPLES.good.caption}</p>
+              <p className="text-[13px] text-black/80 font-medium leading-tight">{t('tryOn.upload.good')}: {EXAMPLES.good.caption}</p>
             </div>
 
             {/* BAD EXAMPLE */}
@@ -271,10 +273,10 @@ export function TryOnUploadPage() {
               <div className="relative aspect-[3/2] bg-white overflow-hidden border border-black/[0.03]">
                 <ImageWithFallback src={EXAMPLES.bad.image} className="w-full h-full object-cover grayscale-[0.3]" />
                 <div className="absolute top-3 right-3 bg-[#FF4F11] px-2 py-1 flex items-center z-20">
-                  <span className="text-[10px] font-bold text-white" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>نامناسب</span>
+                  <span className="text-[10px] font-bold text-white" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{t('tryOn.upload.bad')}</span>
                 </div>
               </div>
-              <p className="text-[13px] text-black/80 font-medium leading-tight">نامناسب: {EXAMPLES.bad.caption}</p>
+              <p className="text-[13px] text-black/80 font-medium leading-tight">{t('tryOn.upload.bad')}: {EXAMPLES.bad.caption}</p>
             </div>
           </div>
         </div>
@@ -299,7 +301,7 @@ export function TryOnUploadPage() {
                       : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
                   }`}
               >
-                  <span>{isProductLoading ? 'در حال بارگذاری...' : 'گرفتن عکس'}</span>
+                  <span>{isProductLoading ? t('common.loading') : t('tryOn.upload.takePhoto')}</span>
               </button>
 
               <button
@@ -311,7 +313,7 @@ export function TryOnUploadPage() {
                       : 'bg-white border-black/10 text-black hover:bg-black/[0.02] active:scale-[0.98]'
                   }`}
               >
-                  <span>{isProductLoading ? 'صبر کنید...' : 'گالری'}</span>
+                  <span>{isProductLoading ? t('common.wait') : t('tryOn.upload.gallery')}</span>
               </button>
             </div>
 
