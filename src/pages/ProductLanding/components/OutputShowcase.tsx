@@ -1,45 +1,65 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { ShoppingBag, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { apiGet } from "@/utils/apiClient";
+import { formatPriceFromRial } from "@/utils/formatters";
+import { toLocalizedDigits } from "@/utils/formatters";
+import type { BackendProduct, PaginatedProductResponse } from "@/types/apiProduct";
+import { getProductImageUrl } from "@/types/apiProduct";
 
 export interface OutputShowcaseProps {
     onGetStarted?: () => void;
 }
 
-const PRODUCTS = [
-    {
-        id: "1",
-        name: "فرش دستباف افشان",
-        category: "فرش",
-        price: "۴۵,۰۰۰,۰۰۰",
-        image: "https://images.unsplash.com/photo-1594125675036-153d1b064762?q=80&w=300"
-    },
-    {
-        id: "2",
-        name: "مبل راحتی مینیمال",
-        category: "مبل",
-        price: "۲۸,۰۰۰,۰۰۰",
-        image: "https://images.unsplash.com/photo-1759722665629-29df6ee4f9a5?q=80&w=300"
-    },
-    {
-        id: "3",
-        name: "آباژور مدرن برنزی",
-        category: "نورپردازی",
-        price: "۴,۵۰۰,۰۰۰",
-        image: "https://images.unsplash.com/photo-1756474215831-4e5f8309c6bc?q=80&w=300"
-    }
-];
+interface DisplayProduct {
+    id: string;
+    name: string;
+    category: string;
+    price: string;
+    image: string;
+}
 
 export function OutputShowcase({
     onGetStarted: _onGetStarted
 }: OutputShowcaseProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [products, setProducts] = useState<DisplayProduct[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            const response = await apiGet<PaginatedProductResponse>('/products/', { page_size: 3 }, { skipAuth: true });
+
+            if (response.success && response.data) {
+                const backendProducts = response.data.results || [];
+                const displayProducts: DisplayProduct[] = backendProducts.map((p: BackendProduct) => ({
+                    id: String(p.id),
+                    name: p.name,
+                    category: p.category_display,
+                    price: formatPriceFromRial(p.price, false),
+                    image: getProductImageUrl(p.image_path, { width: 300 }),
+                }));
+                setProducts(displayProducts);
+            } else {
+                setError(response.error || 'خطا در دریافت محصولات');
+            }
+
+            setIsLoading(false);
+        };
+
+        fetchProducts();
+    }, []);
 
     const handleStudioStart = () => {
         navigate("/studio/upload");
@@ -110,11 +130,26 @@ export function OutputShowcase({
                             <div>
                                 <div className="mb-14 text-right">
                                     <h3 className="text-[16px] font-medium tracking-[0.3em] uppercase mb-2 opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
-                                    <span className="text-[12px] font-light opacity-50 tracking-widest">{t('landing.showcase.selectedItems', '۳ موردِ انتخاب شده')}</span>
+                                    <span className="text-[12px] font-light opacity-50 tracking-widest">
+                                        {isLoading ? t('common.loading', 'در حال بارگذاری...') :
+                                         products.length > 0 ? `${toLocalizedDigits(products.length)} ${t('landing.showcase.selectedItemsSuffix', 'موردِ انتخاب شده')}` : ''}
+                                    </span>
                                 </div>
 
                                 <div className="space-y-12">
-                                    {PRODUCTS.map((product) => (
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center py-16">
+                                            <Loader2 className="w-8 h-8 animate-spin opacity-40" />
+                                        </div>
+                                    ) : error ? (
+                                        <div className="text-center py-16 opacity-60">
+                                            <p className="text-sm">{error}</p>
+                                        </div>
+                                    ) : products.length === 0 ? (
+                                        <div className="text-center py-16 opacity-60">
+                                            <p className="text-sm">{t('landing.showcase.noProducts', 'محصولی یافت نشد')}</p>
+                                        </div>
+                                    ) : products.map((product) => (
                                         <div key={product.id} className="group flex items-center justify-between gap-8">
                                             {/* Image on the Right */}
                                             <div className="w-28 h-28 bg-surface-default flex items-center justify-center overflow-hidden border transition-all duration-700 rounded-[1px] shrink-0" style={{ borderColor: 'var(--color-border-default)' }}>
@@ -133,15 +168,6 @@ export function OutputShowcase({
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-
-                            <div className="mt-16 text-right">
-                                <button className="flex items-center gap-6 group mr-auto">
-                                    <span className="text-[12px] font-medium tracking-[0.4em] uppercase border-b border-black/10 pb-1.5 group-hover:border-black transition-all duration-500">{t('landing.showcase.buyLayout', 'خرید کل چیدمان')}</span>
-                                    <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-500">
-                                        <ShoppingBag size={14} />
-                                    </div>
-                                </button>
                             </div>
                         </motion.div>
                     </div>
@@ -204,11 +230,25 @@ export function OutputShowcase({
                 <div className="space-y-12 bg-surface-page p-8 border rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
                     <div className="flex items-center justify-between border-b pb-6" style={{ borderColor: 'var(--color-border-default)' }}>
                         <h3 className="text-[14px] font-medium uppercase tracking-[0.2em] opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
-                        <span className="text-[10px] font-light opacity-50">{t('landing.showcase.itemCount', '۳ مورد')}</span>
+                        <span className="text-[10px] font-light opacity-50">
+                            {isLoading ? '' : products.length > 0 ? `${toLocalizedDigits(products.length)} ${t('landing.showcase.itemSuffix', 'مورد')}` : ''}
+                        </span>
                     </div>
 
                     <div className="space-y-10">
-                        {PRODUCTS.map((product) => (
+                        {isLoading ? (
+                            <div className="flex items-center justify-center py-10">
+                                <Loader2 className="w-6 h-6 animate-spin opacity-40" />
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-10 opacity-60">
+                                <p className="text-sm">{error}</p>
+                            </div>
+                        ) : products.length === 0 ? (
+                            <div className="text-center py-10 opacity-60">
+                                <p className="text-sm">{t('landing.showcase.noProducts', 'محصولی یافت نشد')}</p>
+                            </div>
+                        ) : products.map((product) => (
                             <div key={product.id} className="flex items-center gap-8">
                                 <div className="w-20 h-20 bg-surface-page overflow-hidden border flex items-center justify-center shrink-0 rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
                                     <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover grayscale-[0.2]" />

@@ -25,6 +25,8 @@ import { ExplorePage } from "./pages/Explore";
 import { StorePage } from "./pages/Store";
 import { ProductDetailsPage } from "./pages/ProductDetails";
 import { ContactPage } from "./pages/Contact/Page";
+import { FAQPage } from "./pages/FAQ/Page";
+import { TermsPage } from "./pages/Terms/Page";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { HomaLoader } from "./components/HomaLoader";
 
@@ -67,7 +69,9 @@ export default function App() {
               <RouterRoute path="store/:slug" element={<StorePage />} />
               <RouterRoute path="store/:slug/product/:productId" element={<ProductDetailsPage />} />
               <RouterRoute path="contact" element={<ContactPage />} />
-              
+              <RouterRoute path="faq" element={<FAQPage />} />
+              <RouterRoute path="terms" element={<TermsPage />} />
+
               {/* Studio Flow (Complex/Dark) */}
               <RouterRoute path="studio/start" element={<Navigate to="/studio/upload" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />

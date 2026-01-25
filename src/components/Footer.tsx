@@ -1,4 +1,5 @@
-import { Instagram, Send, Phone, Mail } from "lucide-react";
+// Social icons commented out until links are configured
+// import { Instagram, Send, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function Footer() {
@@ -69,8 +70,8 @@ export function Footer() {
                 پشتیبانی
               </h3>
               <ul className="flex flex-col gap-5 text-start md:text-end text-content-secondary">
-                <li><a href="#" className="hover:text-content-primary transition-colors text-p font-light">سوالات متداول</a></li>
-                <li><a href="#" className="hover:text-content-primary transition-colors text-p font-light">قوانین و مقررات</a></li>
+                <li><Link to="/faq" className="hover:text-content-primary transition-colors text-p font-light">سوالات متداول</Link></li>
+                <li><Link to="/terms" className="hover:text-content-primary transition-colors text-p font-light">قوانین و مقررات</Link></li>
                 <li><Link to="/contact" className="hover:text-content-primary transition-colors text-p font-light">تماس با ما</Link></li>
               </ul>
             </div>
@@ -78,13 +79,14 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-12 relative">
-          {/* Social Media & Contact Icons */}
+          {/* Social Media & Contact Icons - Hidden until social links are configured
           <div className="flex items-center gap-10 text-content-tertiary">
             <a href="#" aria-label="Instagram" className="hover:scale-110 hover:text-content-primary transition-all duration-500"><Instagram size={20} strokeWidth={1} /></a>
             <a href="#" aria-label="Telegram" className="hover:scale-110 hover:text-content-primary transition-all duration-500"><Send size={20} strokeWidth={1} /></a>
             <a href="#" aria-label="Phone" className="hover:scale-110 hover:text-content-primary transition-all duration-500"><Phone size={20} strokeWidth={1} /></a>
             <a href="#" aria-label="Email" className="hover:scale-110 hover:text-content-primary transition-all duration-500"><Mail size={20} strokeWidth={1} /></a>
           </div>
+          */}
 
           {/* Copyright */}
           <div className="text-center md:text-end">
