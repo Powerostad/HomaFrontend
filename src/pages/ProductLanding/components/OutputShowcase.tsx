@@ -100,8 +100,8 @@ export function OutputShowcase({
                             style={{ borderColor: 'var(--color-border-default)' }}
                         >
                             <BeforeAfterSlider
-                                beforeImage="https://images.unsplash.com/photo-1722858812150-2ff7011007cd?q=80&w=1600"
-                                afterImage="https://images.unsplash.com/photo-1644057501622-dfa7dd26dbfb?q=80&w=1600"
+                                beforeImage="/images/showcase/original.jpg"
+                                afterImage="/images/showcase/enhanced.png"
                                 className="w-full h-full object-cover"
                             />
 
@@ -208,8 +208,8 @@ export function OutputShowcase({
                 {/* Hero Result */}
                 <div className="relative w-full aspect-[4/5] bg-surface-page overflow-hidden border rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
                     <BeforeAfterSlider
-                        beforeImage="https://images.unsplash.com/photo-1722858812150-2ff7011007cd?q=80&w=1600"
-                        afterImage="https://images.unsplash.com/photo-1644057501622-dfa7dd26dbfb?q=80&w=1600"
+                        beforeImage="/images/showcase/original.jpg"
+                        afterImage="/images/showcase/enhanced.png"
                         className="w-full h-full object-cover grayscale-[0.1]"
                     />
 

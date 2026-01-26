@@ -3,8 +3,8 @@ import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-const imgEmpty = "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200";
-const imgWithRug = "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200";
+const imgEmpty = "/images/hero/before.png";
+const imgWithRug = "/images/hero/after.png";
 
 export interface HeroSectionProps {
     onGetStarted: () => void;
