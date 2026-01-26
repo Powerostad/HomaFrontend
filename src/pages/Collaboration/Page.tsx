@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronDown, ArrowLeft, LayoutTemplate } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { apiPost } from '../../utils/apiClient';
 
 export function CollaborationPage() {
   const navigate = useNavigate();
@@ -26,13 +27,30 @@ export function CollaborationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Collaboration Request:', formData);
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+
+    try {
+      const response = await apiPost('/partnerships/requests/', {
+        name: formData.name,
+        shop_name: formData.shopName,
+        phone: formData.phone,
+        product_type: formData.productType,
+        instagram_id: formData.instagramId,
+        website: formData.website,
+        description: formData.description,
+      }, { skipAuth: true });
+
+      if (response.success) {
+        setIsSubmitted(true);
+      } else {
+        console.error('Submission failed:', response.error);
+        alert(response.error || 'خطا در ثبت درخواست');
+      }
+    } catch (error) {
+      console.error('Collaboration Request Error:', error);
+      alert('خطا در برقراری ارتباط با سرور');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
