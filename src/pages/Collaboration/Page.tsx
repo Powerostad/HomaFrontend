@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { apiPost } from '../../utils/apiClient';
+import { toast } from 'sonner';
 
 export function CollaborationPage() {
   const navigate = useNavigate();
@@ -43,11 +44,11 @@ export function CollaborationPage() {
         setIsSubmitted(true);
       } else {
         console.error('Submission failed:', response.error);
-        alert(response.error || 'خطا در ثبت درخواست');
+        toast.error(response.error || 'خطا در ثبت درخواست');
       }
     } catch (error) {
       console.error('Collaboration Request Error:', error);
-      alert('خطا در برقراری ارتباط با سرور');
+      toast.error('خطا در برقراری ارتباط با سرور');
     } finally {
       setIsSubmitting(false);
     }
