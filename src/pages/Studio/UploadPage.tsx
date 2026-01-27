@@ -147,8 +147,18 @@ export function StudioUploadPage() {
       // Navigate to progress page with sessionId in URL for recovery
       navigate(`/studio/progress?sessionId=${result.sessionId}`);
     } else {
-      // Show error toast
-      toast.error(result.error || t('errors.resultFailed'));
+      // Check if error is auth-related (401 or session expired message)
+      const isAuthError = result.error?.includes('منقضی شده') ||
+                          result.error?.includes('وارد شوید');
+
+      if (isAuthError) {
+        // Show auth modal for re-authentication
+        setShowDecision(false);
+        setShowAuthModal(true);
+      } else {
+        // Show error toast for other errors
+        toast.error(result.error || t('errors.resultFailed'));
+      }
     }
   };
 
