@@ -62,7 +62,7 @@ export function TryOnUploadPage() {
   const { productId } = useParams<{ productId: string }>();
   const { t } = useTranslation();
   const { trackKPI } = useSession();
-  const { setSelectedFile, setSelectedSize } = useUpload();
+  const { setSelectedFile, setSelectedSize, clearUpload } = useUpload();
   const { product, setProduct } = useProduct();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +73,17 @@ export function TryOnUploadPage() {
 
   // Product loading state - prevents file selection before product is loaded
   const [isProductLoading, setIsProductLoading] = useState(true);
+
+  /**
+   * Clear all upload state when starting a new try-on session.
+   * This fixes the bug where the old visualization result persists
+   * when switching between products (e.g., completing try-on for product A,
+   * going back to shop, then starting try-on for product B would show
+   * product A's result during processing).
+   */
+  useEffect(() => {
+    clearUpload();
+  }, [clearUpload]);
 
   /**
    * Load product from URL param on mount
