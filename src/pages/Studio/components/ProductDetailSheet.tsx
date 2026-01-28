@@ -18,6 +18,7 @@ import {
   DialogDescription
 } from '../../../components/ui/dialog';
 import { AuthenticatedImage } from '../../../components/figma/AuthenticatedImage';
+import { BuyButton } from '../../../components/BuyButton';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { formatPriceFromRial } from '../../../utils/formatters';
@@ -55,6 +56,7 @@ interface ProductDetailSheetProps {
   onClose: () => void;
   onReplace: (originalId: string, newProduct: Product) => void;
   alternatives?: Product[];  // Smart Redesign: Real alternatives from session
+  redesignSessionId?: string;  // For click tracking
 }
 
 // Tabs Configuration
@@ -64,7 +66,7 @@ const TABS = [
   { id: 'alternatives', label: 'جایگزین‌ها' },
 ];
 
-export function ProductDetailSheet({ product, isOpen, onClose, onReplace, alternatives: propAlternatives }: ProductDetailSheetProps) {
+export function ProductDetailSheet({ product, isOpen, onClose, onReplace, alternatives: propAlternatives, redesignSessionId }: ProductDetailSheetProps) {
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
@@ -517,20 +519,23 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
               </div>
 
               <div className="flex gap-2">
-                <button 
+                <button
                     className="flex-[2] h-[44px] bg-black text-white rounded-full flex items-center justify-center gap-2 text-[12px] font-bold tracking-tight hover:bg-black/90 transition-all active:scale-[0.98]"
                     style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
                     <Plus size={16} strokeWidth={3} />
                     افزودن به لیست خرید
                 </button>
-                
-                <button 
+
+                {product.uniqueLink && (
+                  <BuyButton
+                    productId={product.uniqueLink}
+                    sourceContext="studio"
+                    redesignSessionId={redesignSessionId}
+                    shopName={product.store}
                     className="flex-1 h-[44px] bg-white border border-black/10 text-black rounded-full flex items-center justify-center gap-2 text-[11px] font-bold hover:border-black transition-all active:scale-[0.98]"
-                    style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
-                >
-                    مشاهده در فروشگاه
-                </button>
+                  />
+                )}
               </div>
            </div>
         </div>

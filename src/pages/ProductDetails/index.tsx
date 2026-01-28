@@ -15,6 +15,7 @@ import { trackEvent } from '../../utils/analytics';
 import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
 import { ContextBar } from '../../components/ContextBar';
+import { BuyButton } from '../../components/BuyButton';
 import { formatPriceFromRial } from '../../utils/formatters';
 // TODO: Re-enable when backend /api/recommendations/gallery/product is ready
 // import { ProductSocialGallery } from '../../components/ProductSocialGallery';
@@ -293,6 +294,17 @@ export function ProductDetailsPage() {
                       ذخیره برای بعد
                     </button>
                   </div>
+                  {/* Buy Button - Opens retailer in new tab */}
+                  {apiProduct && (
+                    <BuyButton
+                      productId={apiProduct.uniqueLink}
+                      sourceContext="product_page"
+                      shopName={apiProduct.shopName}
+                      variant="outline"
+                      size="lg"
+                      className="w-full h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest mt-3"
+                    />
+                  )}
                 </div>
 
                 {/* Product Details Toggle */}

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { BuyButton } from "./BuyButton";
 import type { Product } from "../types/product";
 import { Header } from "./Header";
 import { formatPriceFromRial } from "../utils/formatters";
@@ -125,6 +126,21 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                      <span className="text-[8px] font-bold tracking-[0.4em] uppercase bg-white/40 backdrop-blur-md px-2 py-1">
                         Select
                      </span>
+                  </div>
+
+                  {/* Buy Button - appears on hover */}
+                  <div
+                    className="absolute bottom-0 left-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <BuyButton
+                      productId={product.id}
+                      sourceContext="gallery"
+                      shopName={product.seller?.name || product.brand}
+                      variant="ghost"
+                      size="sm"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-white text-[10px] font-bold tracking-wider"
+                    />
                   </div>
 
                   {/* Aesthetic Overlay */}

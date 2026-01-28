@@ -843,6 +843,7 @@ export function StudioResultPage() {
             onClose={() => setSelectedProduct(null)}
             onReplace={() => {}}
             alternatives={productAlternatives}
+            redesignSessionId={activeSessionId || sessionId}
          />
       )}
 

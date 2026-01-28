@@ -112,6 +112,8 @@
   "product": {
     "addToCart": "Add to cart",
     "buyNow": "Buy now",
+    "buyFrom": "Buy from {{shop}}",
+    "viewInStore": "View in store",
     "tryOn": "Try on",
     "viewInRoom": "View in room",
     "price": "Price",

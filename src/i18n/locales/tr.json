@@ -112,6 +112,8 @@
   "product": {
     "addToCart": "Sepete ekle",
     "buyNow": "Şimdi al",
+    "buyFrom": "{{shop}} mağazasından satın al",
+    "viewInStore": "Mağazada görüntüle",
     "tryOn": "Dene",
     "viewInRoom": "Odada görüntüle",
     "price": "Fiyat",

@@ -29,6 +29,7 @@ import { getResultImageUrl } from '../../services/visualizationService';
 import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 import { getProductById } from '../../utils/productLoader';
 import { formatPriceFromRial } from '../../utils/formatters';
+import { BuyButton } from '../../components/BuyButton';
 import type { User } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
 
@@ -383,6 +384,7 @@ export function TryOnResultPage() {
       navigate: ReturnType<typeof useNavigate>;
       isDesktop: boolean;
       selectedSize: string | null;
+      resultImageId: number | null;
       t: (key: string) => string;
    }
 
@@ -392,6 +394,7 @@ export function TryOnResultPage() {
       navigate,
       isDesktop,
       selectedSize,
+      resultImageId,
       t
    }: ProductContentProps) => {
       // Build specifications from real data
@@ -431,16 +434,16 @@ export function TryOnResultPage() {
             )}
 
             {/* Buy Button - Primary CTA */}
-            {product && (product.externalLink || product.shopSlug) && (
-               <a
-                  href={product.externalLink || `/store/${product.shopSlug}`}
-                  target={product.externalLink ? "_blank" : undefined}
-                  rel={product.externalLink ? "noopener noreferrer" : undefined}
-                  className="w-full py-5 flex items-center justify-center gap-3 bg-black text-white font-bold uppercase tracking-wider text-[13px] hover:bg-black/90 transition-colors"
-               >
-                  <ShoppingBag size={18} />
-                  {t('tryOn.result.buyProduct')}
-               </a>
+            {product && (
+               <BuyButton
+                  productId={product.id}
+                  sourceContext="try_on_result"
+                  processedImageId={resultImageId || undefined}
+                  shopName={product.seller?.name || product.brand}
+                  variant="default"
+                  size="lg"
+                  className="w-full py-5 bg-black text-white font-bold uppercase tracking-wider text-[13px] hover:bg-black/90 transition-colors"
+               />
             )}
 
             {/* Navigation Links - Clean & Minimal */}
@@ -642,6 +645,7 @@ export function TryOnResultPage() {
                   navigate={navigate}
                   isDesktop={true}
                   selectedSize={selectedSize}
+                  resultImageId={resultImageId}
                   t={t}
                />
             </div>
@@ -810,6 +814,7 @@ export function TryOnResultPage() {
                         navigate={navigate}
                         isDesktop={false}
                         selectedSize={selectedSize}
+                        resultImageId={resultImageId}
                         t={t}
                      />
                   </div>

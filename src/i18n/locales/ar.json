@@ -112,6 +112,8 @@
   "product": {
     "addToCart": "إضافة للسلة",
     "buyNow": "شراء الآن",
+    "buyFrom": "شراء من {{shop}}",
+    "viewInStore": "عرض في المتجر",
     "tryOn": "تجربة",
     "viewInRoom": "عرض في الغرفة",
     "price": "السعر",

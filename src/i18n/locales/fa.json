@@ -112,6 +112,8 @@
   "product": {
     "addToCart": "افزودن به سبد",
     "buyNow": "خرید",
+    "buyFrom": "خرید از {{shop}}",
+    "viewInStore": "مشاهده در فروشگاه",
     "tryOn": "امتحان کردن",
     "viewInRoom": "مشاهده در اتاق",
     "price": "قیمت",
