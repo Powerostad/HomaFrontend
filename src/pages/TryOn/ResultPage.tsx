@@ -430,6 +430,19 @@ export function TryOnResultPage() {
                </div>
             )}
 
+            {/* Buy Button - Primary CTA */}
+            {product && (product.externalLink || product.shopSlug) && (
+               <a
+                  href={product.externalLink || `/store/${product.shopSlug}`}
+                  target={product.externalLink ? "_blank" : undefined}
+                  rel={product.externalLink ? "noopener noreferrer" : undefined}
+                  className="w-full py-5 flex items-center justify-center gap-3 bg-black text-white font-bold uppercase tracking-wider text-[13px] hover:bg-black/90 transition-colors"
+               >
+                  <ShoppingBag size={18} />
+                  {t('tryOn.result.buyProduct')}
+               </a>
+            )}
+
             {/* Navigation Links - Clean & Minimal */}
             <div className="flex flex-col border-b border-black/[0.08]">
                <button

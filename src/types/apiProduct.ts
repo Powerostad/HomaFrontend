@@ -147,6 +147,12 @@ export function getProductImageUrl(
     quality?: number;
   }
 ): string {
+  // Return empty string for missing image paths to allow fallback handling
+  if (!imagePath || imagePath.trim() === '') {
+    console.warn('[getProductImageUrl] Empty image_path provided');
+    return '';
+  }
+
   const params = new URLSearchParams();
 
   if (options?.width) params.set('w', String(options.width));
@@ -213,5 +219,6 @@ export function apiProductToProduct(apiProduct: APIProduct): Product {
     extraDetails: apiProduct.extraDetails,
     availableSizes: apiProduct.availableSizes,
     availableSizesDisplay: apiProduct.availableSizesDisplay,
+    externalLink: apiProduct.externalLink,
   };
 }

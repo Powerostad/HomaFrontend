@@ -45,6 +45,7 @@ export interface Product {
   extraDetails?: Record<string, string | string[]> | null;
   availableSizes?: string[];
   availableSizesDisplay?: string[];
+  externalLink?: string;  // External product purchase URL from backend
 }
 
 export interface UTMParams {
