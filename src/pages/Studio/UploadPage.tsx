@@ -18,6 +18,7 @@ import { AuthModal } from '../../components/AuthModal';
 import { toast } from 'sonner';
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchImageAsFile } from '../../utils/imageUtils';
+import { getStoredTokens } from '../../utils/apiClient';
 
 export function StudioUploadPage() {
   const navigate = useNavigate();
@@ -121,12 +122,17 @@ export function StudioUploadPage() {
       return;
     }
 
-    // Check if user is logged in before proceeding
+    // Check if user is logged in AND has valid tokens before proceeding
     // Skip this check if we just came from successful authentication
-    if (!skipAuthCheck && !isLoggedIn) {
-      setShowDecision(false); // Close decision overlay first
-      setShowAuthModal(true);
-      return;
+    if (!skipAuthCheck) {
+      const tokens = getStoredTokens();
+      const hasValidAuth = isLoggedIn && tokens?.access;
+
+      if (!hasValidAuth) {
+        setShowDecision(false); // Close decision overlay first
+        setShowAuthModal(true);
+        return;
+      }
     }
 
     trackKPI('upload_confirmed');
