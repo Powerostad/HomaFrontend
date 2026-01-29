@@ -9,6 +9,7 @@
  */
 
 import { apiUpload, apiConfig } from '@/utils/apiClient';
+import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
 // Types
@@ -120,9 +121,12 @@ export async function processVisualization(
     };
   }
 
-  // Validate file before upload
+  // Convert HEIC to JPEG if needed (iPhone default format)
+  const convertedImage = await convertHeicToJpeg(customerImage);
+
+  // Validate file type after conversion
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!validTypes.includes(customerImage.type)) {
+  if (!validTypes.includes(convertedImage.type)) {
     return {
       success: false,
       error: 'فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید.',
@@ -131,7 +135,7 @@ export async function processVisualization(
 
   // Max 10MB
   const maxSize = 10 * 1024 * 1024;
-  if (customerImage.size > maxSize) {
+  if (convertedImage.size > maxSize) {
     return {
       success: false,
       error: 'حجم تصویر بیش از ۱۰ مگابایت است.',
@@ -145,8 +149,8 @@ export async function processVisualization(
 
   const response = await apiUpload<VisualizationResponse>(
     `/products/${productUniqueLink}/process/`,
-    customerImage,
-    'customer_image', // Backend expects this field name
+    convertedImage,  // Use converted image
+    'customer_image',
     additionalData,
     onProgress
   );

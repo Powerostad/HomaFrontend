@@ -10,6 +10,7 @@
  */
 
 import { apiGet, apiPost, apiUpload, apiDelete, apiConfig } from '@/utils/apiClient';
+import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
 // Types - Backend Response Formats
@@ -333,9 +334,12 @@ export async function createRedesignSession(
   data?: { sessionId: string; status: SessionStatus };
   error?: string;
 }> {
-  // Validate file before upload
+  // Convert HEIC to JPEG if needed (iPhone default format)
+  const convertedImage = await convertHeicToJpeg(roomImage);
+
+  // Validate file type after conversion
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!validTypes.includes(roomImage.type)) {
+  if (!validTypes.includes(convertedImage.type)) {
     return {
       success: false,
       error: 'فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید.',
@@ -344,7 +348,7 @@ export async function createRedesignSession(
 
   // Max 10MB
   const maxSize = 10 * 1024 * 1024;
-  if (roomImage.size > maxSize) {
+  if (convertedImage.size > maxSize) {
     return {
       success: false,
       error: 'حجم تصویر بیش از ۱۰ مگابایت است.',
@@ -360,8 +364,8 @@ export async function createRedesignSession(
 
   const response = await apiUpload<CreateSessionResponse>(
     '/recommendations/sessions/',
-    roomImage,
-    'room_image', // Backend expects this field name
+    convertedImage,  // Use converted image
+    'room_image',
     additionalData,
     onProgress
   );
