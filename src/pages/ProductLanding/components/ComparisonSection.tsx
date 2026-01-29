@@ -4,7 +4,7 @@ import {useEffect, useRef, useState} from "react";
 import {motion} from "motion/react";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
-import {ImageWithFallback} from "../../../components/figma/ImageWithFallback";
+import {OptimizedImage} from "../../../components/OptimizedImage";
 import {ChevronLeft, ChevronRight} from "lucide-react";
 
 const rugBefore = "/images/comparison/rug/before.jpg";
@@ -134,24 +134,26 @@ export function ComparisonSection() {
                         onMouseDown={handleStart}
                         onTouchStart={handleStart}
                     >
-                        {/* After Image */}
+                        {/* After Image (below-fold, lazy loaded) */}
                         <div className="absolute inset-0 w-full h-full">
-                            <ImageWithFallback
+                            <OptimizedImage
                                 src={activeTab.afterImg}
                                 alt="After"
                                 className="w-full h-full object-cover grayscale-[0.1]"
+                                lazy
                             />
                         </div>
 
-                        {/* Before Image */}
+                        {/* Before Image (below-fold, lazy loaded) */}
                         <div
                             className="absolute inset-0 w-full h-full overflow-hidden z-10"
                             style={{clipPath: `inset(0 0 0 ${sliderPosition}%)`}}
                         >
-                            <ImageWithFallback
+                            <OptimizedImage
                                 src={activeTab.beforeImg}
                                 alt="Before"
                                 className="w-full h-full object-cover grayscale-[0.1]"
+                                lazy
                             />
                         </div>
 

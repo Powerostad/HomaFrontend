@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import {
@@ -10,13 +10,17 @@ import {
 // Shared Components
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
+import { LazySection } from "../../components/LazySection";
 
-// Page Specific Components
+// Above-the-fold Components (loaded immediately)
 import { HeroSection } from "./components/HeroSection";
 import { TrustBar } from "./components/TrustBar";
 import { OutputShowcase } from "./components/OutputShowcase";
-import { ComparisonSection } from "./components/ComparisonSection";
-import { ShoppingPropSection } from "./components/ShoppingPropSection";
+
+// Below-the-fold Components (lazy loaded for better performance)
+const ComparisonSection = lazy(() => import("./components/ComparisonSection").then(m => ({ default: m.ComparisonSection })));
+const ShoppingPropSection = lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
+
 import { HomaLoader } from "../../components/HomaLoader";
 
 export function ProductLandingPage() {
@@ -78,11 +82,23 @@ export function ProductLandingPage() {
       />
       
       <main className="flex-grow">
+        {/* Above-the-fold content (loaded immediately) */}
         <HeroSection onGetStarted={handleGetStarted} />
         <OutputShowcase onGetStarted={handleGetStarted} />
         <TrustBar />
-        <ComparisonSection />
-        <ShoppingPropSection />
+
+        {/* Below-the-fold content (lazy loaded for better performance) */}
+        <LazySection minHeight="600px">
+          <Suspense fallback={<div className="h-96 bg-surface-muted/30 animate-pulse" />}>
+            <ComparisonSection />
+          </Suspense>
+        </LazySection>
+
+        <LazySection minHeight="400px">
+          <Suspense fallback={<div className="h-64 bg-surface-muted/30 animate-pulse" />}>
+            <ShoppingPropSection />
+          </Suspense>
+        </LazySection>
       </main>
       <Footer />
     </div>

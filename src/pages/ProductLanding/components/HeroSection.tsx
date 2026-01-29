@@ -30,6 +30,7 @@ export function HeroSection({
                         beforeImage={imgEmpty}
                         afterImage={imgWithRug}
                         className="w-full h-full object-cover"
+                        priority
                     />
                     {/* Subtle Editorial Fade to Page Background */}
                     <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-surface-default via-surface-default/60 to-transparent z-10" />
@@ -69,6 +70,7 @@ export function HeroSection({
                         beforeImage={imgEmpty}
                         afterImage={imgWithRug}
                         className="w-full h-full object-cover grayscale-[0.02]"
+                        priority
                     />
                     {/* Seamless Editorial Blend to Copy Area */}
                     <div className="absolute inset-y-0 right-0 w-64 bg-gradient-to-l from-surface-default via-surface-default/80 to-transparent z-10" />

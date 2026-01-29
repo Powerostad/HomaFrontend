@@ -32,20 +32,32 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Disable sourcemaps in production to reduce bundle size and improve load times
+    sourcemap: false,
     // Clear outDir on build
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['motion'],
-          'radix-vendor': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tooltip',
-          ],
+        // Use a function for better control over chunk splitting
+        manualChunks: (id) => {
+          // Core React - loaded immediately, keep small
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor';
+          }
+          // React Router - separate chunk for lazy routes
+          if (id.includes('node_modules/react-router')) {
+            return 'router-vendor';
+          }
+          // Motion animations - can be deferred
+          if (id.includes('node_modules/motion/')) {
+            return 'ui-vendor';
+          }
+          // Radix UI - only load when dialogs/dropdowns are used
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'radix-vendor';
+          }
+          // Note: i18n is not chunked separately as it depends on react-vendor
+          // causing circular dependencies
         },
       },
     },
