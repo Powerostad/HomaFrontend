@@ -37,22 +37,22 @@ export function StudioUploadPage() {
   const EXAMPLES = {
     good: {
       label: t('tryOn.upload.goodExample'),
-      image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=800',
+      image: '/images/studio/example-good.webp',
       caption: t('tryOn.upload.goodCaption')
     },
     bad: {
       label: t('tryOn.upload.badExample'),
       reason: t('tryOn.upload.badReason'),
-      image: 'https://images.unsplash.com/photo-1715366843673-f21a95ec11cc?q=80&w=800',
+      image: '/images/studio/example-bad.webp',
       caption: t('tryOn.upload.badCaption')
     }
   };
 
   const PRESETS = [
-    { id: 1, name: 'پذیرایی مدرن', image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=400' },
-    { id: 2, name: 'اتاق خواب روشن', image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=400' },
-    { id: 3, name: 'نشیمن گرم', image: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=400' },
-    { id: 4, name: 'فضای ناهارخوری', image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?q=80&w=400' },
+    { id: 1, name: 'پذیرایی مدرن', image: '/images/studio/preset-modern-living.webp' },
+    { id: 2, name: 'اتاق خواب روشن', image: '/images/studio/preset-bright-bedroom.webp' },
+    { id: 3, name: 'نشیمن گرم', image: '/images/studio/preset-warm-living.webp' },
+    { id: 4, name: 'فضای ناهارخوری', image: '/images/studio/preset-dining.webp' },
   ];
 
   const handleFile = (file: File) => {
