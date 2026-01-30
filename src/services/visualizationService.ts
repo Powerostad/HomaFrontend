@@ -8,7 +8,7 @@
  * 3. Return the result image URL
  */
 
-import { apiUpload, apiConfig } from '@/utils/apiClient';
+import { apiUpload, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
@@ -118,6 +118,16 @@ export async function processVisualization(
     return {
       success: false,
       error: 'فایل تصویر انتخاب نشده است.',
+    };
+  }
+
+  // Pre-flight auth check - ensure tokens exist before making API call
+  const tokens = getStoredTokens();
+  if (!tokens?.access) {
+    console.error('[Visualization] No auth tokens available for processVisualization');
+    return {
+      success: false,
+      error: 'لطفا ابتدا وارد حساب کاربری خود شوید.',
     };
   }
 

@@ -9,7 +9,7 @@
  * 4. Try individual products on detected items
  */
 
-import { apiGet, apiPost, apiUpload, apiDelete, apiConfig } from '@/utils/apiClient';
+import { apiGet, apiPost, apiUpload, apiDelete, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
@@ -334,6 +334,16 @@ export async function createRedesignSession(
   data?: { sessionId: string; status: SessionStatus };
   error?: string;
 }> {
+  // Pre-flight auth check - ensure tokens exist before making API call
+  const tokens = getStoredTokens();
+  if (!tokens?.access) {
+    console.error('[StudioService] No auth tokens available for createRedesignSession');
+    return {
+      success: false,
+      error: 'لطفا ابتدا وارد حساب کاربری خود شوید.',
+    };
+  }
+
   // Convert HEIC to JPEG if needed (iPhone default format)
   const convertedImage = await convertHeicToJpeg(roomImage);
 
