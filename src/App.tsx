@@ -73,6 +73,7 @@ export default function App() {
               <RouterRoute path="terms" element={<TermsPage />} />
 
               {/* Studio Flow (Complex/Dark) */}
+              <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />
               <RouterRoute path="studio/start" element={<Navigate to="/studio/upload" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />
               <RouterRoute path="studio/progress" element={<StudioProgressPage />} />
