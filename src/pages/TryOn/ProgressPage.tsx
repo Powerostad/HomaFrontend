@@ -6,7 +6,12 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth, useUpload } from '../../context/AppProviders';
 import { Header } from '../../components/Header';
 import { AuthModal } from '../../components/AuthModal';
-import { processVisualization } from '../../services/visualizationService';
+import {
+  submitVisualizationTask,
+  pollTaskStatus,
+  fetchTaskStatus,
+  type TaskStatus,
+} from '../../services/visualizationService';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 import { getStoredTokens, setStoredTokens } from '../../utils/apiClient';
@@ -53,6 +58,8 @@ export function TryOnProgressPage() {
     setVisualizedImageUrl,
     setResultImageId,
     setResultImagePath,
+    currentTaskId,
+    setCurrentTaskId,
     resetProcessing,
   } = useUpload();
 
@@ -84,6 +91,48 @@ export function TryOnProgressPage() {
       }
     }
   }, [processingStatus, productId, navigate]);
+
+  /**
+   * Task recovery - resume polling for existing task on page reload
+   * This handles the case where user refreshes page during processing
+   */
+  useEffect(() => {
+    if (currentTaskId && processingStatus === 'idle' && !hasStartedRef.current) {
+      console.log('[Progress] Resuming polling for task:', currentTaskId);
+      hasStartedRef.current = true;
+      resumePolling(currentTaskId);
+    }
+  }, [currentTaskId, processingStatus]);
+
+  /**
+   * Resume polling for an existing task
+   */
+  const resumePolling = async (taskId: string) => {
+    setProcessingStatus('processing');
+
+    const result = await pollTaskStatus(taskId, (status: TaskStatus) => {
+      if (status === 'processing') {
+        setProcessingStatus('processing');
+      }
+    });
+
+    if (result.success && result.data) {
+      setProcessingStatus('completed');
+      setVisualizedImageUrl(result.data.imageUrl);
+      setResultImageId(result.data.imageId);
+      setResultImagePath(result.data.imagePath);
+      setCurrentTaskId(null);  // Clear task after completion
+
+      const params = new URLSearchParams();
+      params.set('resultId', String(result.data.imageId));
+      params.set('path', result.data.imagePath);
+      navigate(`/try-on/${productId}/result?${params.toString()}`);
+    } else {
+      setProcessingStatus('error');
+      setProcessingError(result.error || t('tryOn.errors.processingFailed'));
+      setCurrentTaskId(null);
+    }
+  };
 
   // Load background image from selected file
   useEffect(() => {
@@ -148,13 +197,13 @@ export function TryOnProgressPage() {
   }, [selectedFile, productId, getSelectedFile, navigate]);
 
   /**
-   * Start the AI visualization processing
-   * Passes selected size to API for rug products
+   * Start the AI visualization processing (two-phase async flow)
+   * Phase 1: Submit task and get task_id
+   * Phase 2: Poll for completion
    */
   const startProcessing = async (productUniqueLink: string) => {
     const file = getSelectedFile();
     if (!file) {
-      // User feedback instead of silent return
       console.error('[Progress] File not found when starting processing');
       toast.error(t('tryOn.progress.fileNotSelected'));
       navigate(`/try-on/${productUniqueLink}/upload`);
@@ -170,7 +219,8 @@ export function TryOnProgressPage() {
     setProcessingError(null);
 
     try {
-      const result = await processVisualization(
+      // Phase 1: Submit task
+      const submitResult = await submitVisualizationTask(
         productUniqueLink,
         file,
         (progress) => {
@@ -180,14 +230,30 @@ export function TryOnProgressPage() {
             setProcessingStatus('processing');
           }
         },
-        currentSize || undefined // Pass size for rug products
+        currentSize || undefined
       );
+
+      if (!submitResult.success || !submitResult.taskId) {
+        setProcessingStatus('error');
+        setProcessingError(submitResult.error || t('tryOn.errors.processingFailed'));
+        return;
+      }
+
+      // Store task ID for recovery
+      setCurrentTaskId(submitResult.taskId);
+      setProcessingStatus('processing');
+
+      // Phase 2: Poll for completion
+      const result = await pollTaskStatus(submitResult.taskId, (status: TaskStatus) => {
+        console.log('[Progress] Task status:', status);
+      });
 
       if (result.success && result.data) {
         setProcessingStatus('completed');
         setVisualizedImageUrl(result.data.imageUrl);
         setResultImageId(result.data.imageId);
         setResultImagePath(result.data.imagePath);
+        setCurrentTaskId(null);  // Clear task after completion
 
         // Navigate to result page with productId in URL path
         const params = new URLSearchParams();
@@ -198,11 +264,13 @@ export function TryOnProgressPage() {
       } else {
         setProcessingStatus('error');
         setProcessingError(result.error || t('tryOn.errors.processingFailed'));
+        setCurrentTaskId(null);
       }
     } catch (error) {
       console.error('[Progress] Processing error:', error);
       setProcessingStatus('error');
       setProcessingError(t('errors.unknown'));
+      setCurrentTaskId(null);
     }
   };
 
@@ -212,6 +280,7 @@ export function TryOnProgressPage() {
   const handleRetry = () => {
     hasStartedRef.current = false;
     resetProcessing();
+    setCurrentTaskId(null);  // Clear any stale task ID
 
     // Re-trigger processing using productId from URL
     const file = getSelectedFile();

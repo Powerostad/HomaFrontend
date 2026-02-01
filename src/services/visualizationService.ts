@@ -6,9 +6,13 @@
  * 1. Upload customer's room photo
  * 2. AI processes and generates visualization with product in space
  * 3. Return the result image URL
+ *
+ * Two-phase async flow:
+ * 1. submitVisualizationTask() - Upload image, get task_id
+ * 2. pollTaskStatus() - Poll until completed/failed
  */
 
-import { apiUpload, apiConfig, getStoredTokens } from '@/utils/apiClient';
+import { apiUpload, apiGet, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
@@ -16,12 +20,38 @@ import { convertHeicToJpeg } from '@/utils/imageConversion';
 // =============================================================================
 
 /**
- * Backend response for visualization processing
+ * Task status from backend
+ */
+export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+/**
+ * Backend response for task submission
  * POST /products/{unique_link}/process/
- *
- * Note: The backend uses standard APIResponse format:
- * { success: true, message: "...", data: { image_path, image_id, ... } }
- * The apiUpload() function extracts data.data, so we receive the inner object directly.
+ */
+export interface SubmitTaskResponse {
+  task_id: string;
+  status: TaskStatus;
+}
+
+/**
+ * Backend response for task status polling
+ * GET /products/tasks/{task_id}/status/
+ */
+export interface TaskStatusResponse {
+  task_id: string;
+  status: TaskStatus;
+  created_at: string;
+  started_at?: string;
+  image_path?: string;
+  image_id?: number;
+  processing_time_ms?: number;
+  error_code?: string;
+  error_message?: string;
+}
+
+/**
+ * Legacy: Backend response for synchronous processing
+ * @deprecated Use SubmitTaskResponse instead
  */
 export interface VisualizationResponse {
   image_path: string;
@@ -83,35 +113,24 @@ export function getResultImageUrl(
 // =============================================================================
 
 /**
- * Process customer image with AI visualization
- *
- * Uploads the customer's room photo and generates a visualization
- * showing the product in their space.
+ * Submit a visualization task for async processing
  *
  * @param productUniqueLink - The product's unique identifier (UUID)
  * @param customerImage - The customer's room photo file
  * @param onProgress - Optional callback for upload progress (0-100)
- * @param selectedSize - Optional size code for rug products (e.g., "200x300")
- * @returns Processing result with image URL on success
- *
- * @example
- * const result = await processVisualization(
- *   'abc123-def456',
- *   roomPhotoFile,
- *   (progress) => setUploadProgress(progress),
- *   '200x300' // optional size for rugs
- * );
- *
- * if (result.success) {
- *   setResultImage(result.data.imageUrl);
- * }
+ * @param selectedSize - Optional size code for rug products
+ * @returns task_id for polling
  */
-export async function processVisualization(
+export async function submitVisualizationTask(
   productUniqueLink: string,
   customerImage: File,
   onProgress?: (progress: number) => void,
   selectedSize?: string
-): Promise<ProcessingResult> {
+): Promise<{
+  success: boolean;
+  taskId?: string;
+  error?: string;
+}> {
   // Null check first - ensure file exists before accessing properties
   if (!customerImage) {
     console.error('[Visualization] No customer image provided');
@@ -124,7 +143,7 @@ export async function processVisualization(
   // Pre-flight auth check - ensure tokens exist before making API call
   const tokens = getStoredTokens();
   if (!tokens?.access) {
-    console.error('[Visualization] No auth tokens available for processVisualization');
+    console.error('[Visualization] No auth tokens available');
     return {
       success: false,
       error: 'لطفا ابتدا وارد حساب کاربری خود شوید.',
@@ -155,55 +174,178 @@ export async function processVisualization(
   // Build additional form data with selected size (for rug products)
   const additionalData = selectedSize ? { selected_size: selectedSize } : undefined;
 
-  console.log('[Visualization] Processing with size:', { selectedSize, additionalData });
+  console.log('[Visualization] Submitting task with size:', { selectedSize, additionalData });
 
-  const response = await apiUpload<VisualizationResponse>(
+  const response = await apiUpload<SubmitTaskResponse>(
     `/products/${productUniqueLink}/process/`,
-    convertedImage,  // Use converted image
+    convertedImage,
     'customer_image',
     additionalData,
     onProgress
   );
 
-  if (response.success && response.data) {
-    const data = response.data;
+  if (response.success && response.data?.task_id) {
+    console.log('[Visualization] Task submitted:', response.data.task_id);
+    return {
+      success: true,
+      taskId: response.data.task_id,
+    };
+  }
 
-    // Check for successful processing - image_path presence indicates success
-    if (data.image_path) {
+  // Handle errors with Persian messages
+  let errorMessage = response.error || 'خطا در ارسال درخواست پردازش';
+
+  if (response.statusCode === 429) {
+    errorMessage = 'محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.';
+  }
+  if (response.statusCode === 402) {
+    errorMessage = 'اعتبار کافی برای پردازش وجود ندارد.';
+  }
+  if (response.statusCode === 404) {
+    errorMessage = 'محصول یافت نشد.';
+  }
+
+  return { success: false, error: errorMessage };
+}
+
+/**
+ * Fetch current status of a processing task
+ */
+export async function fetchTaskStatus(taskId: string): Promise<{
+  success: boolean;
+  data?: TaskStatusResponse;
+  error?: string;
+}> {
+  const response = await apiGet<TaskStatusResponse>(
+    `/products/tasks/${taskId}/status/`
+  );
+
+  if (response.success && response.data) {
+    return { success: true, data: response.data };
+  }
+
+  return { success: false, error: response.error || 'خطا در دریافت وضعیت' };
+}
+
+/**
+ * Poll task status until completed or failed
+ *
+ * @param taskId - Task UUID
+ * @param onStatusChange - Callback when status changes
+ * @param maxAttempts - Max polling attempts (default: 150 = 5 minutes at 2s intervals)
+ */
+export async function pollTaskStatus(
+  taskId: string,
+  onStatusChange?: (status: TaskStatus) => void,
+  maxAttempts: number = 150
+): Promise<ProcessingResult> {
+  let attempts = 0;
+  let lastStatus: TaskStatus | null = null;
+  let consecutiveErrors = 0;
+  const maxConsecutiveErrors = 3;
+
+  const poll = async (): Promise<ProcessingResult> => {
+    attempts++;
+
+    if (attempts > maxAttempts) {
+      console.error('[Visualization] Polling timeout');
+      return {
+        success: false,
+        error: 'زمان انتظار برای پردازش به پایان رسید. لطفا دوباره امتحان کنید.',
+      };
+    }
+
+    const result = await fetchTaskStatus(taskId);
+
+    if (!result.success) {
+      consecutiveErrors++;
+      console.warn(`[Visualization] Poll error (${consecutiveErrors}/${maxConsecutiveErrors}):`, result.error);
+
+      if (consecutiveErrors >= maxConsecutiveErrors) {
+        return { success: false, error: result.error };
+      }
+
+      // Continue polling despite errors
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return poll();
+    }
+
+    // Reset error counter on success
+    consecutiveErrors = 0;
+
+    const task = result.data!;
+
+    // Notify status change
+    if (task.status !== lastStatus) {
+      lastStatus = task.status;
+      console.log('[Visualization] Task status:', task.status);
+      onStatusChange?.(task.status);
+    }
+
+    // Terminal states
+    if (task.status === 'completed') {
       return {
         success: true,
         data: {
-          imageUrl: getResultImageUrl(data.image_path),
-          imageId: data.image_id,
-          imagePath: data.image_path,
+          imageUrl: getResultImageUrl(task.image_path!),
+          imageId: task.image_id!,
+          imagePath: task.image_path!,
         },
       };
     }
 
-    // API returned but missing expected data
-    return {
-      success: false,
-      error: 'خطا در پردازش تصویر - پاسخ نامعتبر از سرور',
-    };
-  }
+    if (task.status === 'failed') {
+      return {
+        success: false,
+        error: task.error_message || 'خطا در پردازش تصویر',
+      };
+    }
 
-  // Handle common errors with Persian messages
-  let errorMessage = response.error || 'خطا در پردازش تصویر';
-
-  // Check for rate limiting (429)
-  if (response.statusCode === 429) {
-    errorMessage = 'محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.';
-  }
-
-  // Check for insufficient credits
-  if (response.statusCode === 402) {
-    errorMessage = 'اعتبار کافی برای پردازش وجود ندارد.';
-  }
-
-  return {
-    success: false,
-    error: errorMessage,
+    // Continue polling - wait 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return poll();
   };
+
+  return poll();
+}
+
+/**
+ * Process customer image with AI visualization (combined submit + poll)
+ *
+ * Uploads the customer's room photo and generates a visualization
+ * showing the product in their space.
+ *
+ * @param productUniqueLink - The product's unique identifier (UUID)
+ * @param customerImage - The customer's room photo file
+ * @param onProgress - Optional callback for upload progress (0-100)
+ * @param selectedSize - Optional size code for rug products (e.g., "200x300")
+ * @param onStatusChange - Optional callback for task status changes
+ * @returns Processing result with image URL on success
+ */
+export async function processVisualization(
+  productUniqueLink: string,
+  customerImage: File,
+  onProgress?: (progress: number) => void,
+  selectedSize?: string,
+  onStatusChange?: (status: TaskStatus) => void
+): Promise<ProcessingResult> {
+  // Phase 1: Submit task
+  const submitResult = await submitVisualizationTask(
+    productUniqueLink,
+    customerImage,
+    onProgress,
+    selectedSize
+  );
+
+  if (!submitResult.success || !submitResult.taskId) {
+    return { success: false, error: submitResult.error };
+  }
+
+  // Trigger status change for 'pending' -> 'processing' transition
+  onStatusChange?.('pending');
+
+  // Phase 2: Poll for completion
+  return pollTaskStatus(submitResult.taskId, onStatusChange);
 }
 
 // =============================================================================
@@ -211,6 +353,9 @@ export async function processVisualization(
 // =============================================================================
 
 export const visualizationService = {
+  submitVisualizationTask,
+  fetchTaskStatus,
+  pollTaskStatus,
   processVisualization,
   getResultImageUrl,
 };

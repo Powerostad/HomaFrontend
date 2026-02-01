@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
   TRYON_PRODUCT_ID: 'homa_tryon_product_id',
   TRYON_SIZE: 'homa_tryon_size',
   TRYON_RESULT: 'homa_tryon_result',
+  TRYON_TASK_ID: 'homa_tryon_task_id',  // For async processing recovery
 
   // Studio flow
   STUDIO_SESSION_ID: 'homa_studio_session_id',

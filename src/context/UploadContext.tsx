@@ -59,6 +59,10 @@ interface UploadContextType {
   resultImagePath: string | null;
   setResultImagePath: (path: string | null) => void;
 
+  // Task tracking for async processing
+  currentTaskId: string | null;
+  setCurrentTaskId: (taskId: string | null) => void;
+
   // Timing
   uploadStartTime: number;
   setUploadStartTime: (time: number) => void;
@@ -144,6 +148,20 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   const resultImageId = resultImageIdState;
   const resultImagePath = resultImagePathState;
 
+  // Task ID tracking for async processing recovery
+  const [currentTaskId, setCurrentTaskIdState] = useState<string | null>(null);
+
+  // Wrapped setter that persists to storage
+  const setCurrentTaskId = useCallback((taskId: string | null) => {
+    setCurrentTaskIdState(taskId);
+    if (taskId) {
+      saveToStorage(STORAGE_KEYS.TRYON_TASK_ID, taskId);
+    } else {
+      // Clear from storage when null
+      sessionStorage.removeItem(STORAGE_KEYS.TRYON_TASK_ID);
+    }
+  }, []);
+
   // Timing
   const [uploadStartTime, setUploadStartTime] = useState<number>(0);
 
@@ -189,6 +207,15 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           console.log('[UploadContext] Restored result from storage:', storedResult);
         }
       }
+
+      // Restore task ID if not already set (for processing recovery)
+      if (!currentTaskId) {
+        const storedTaskId = loadFromStorage<string>(STORAGE_KEYS.TRYON_TASK_ID);
+        if (storedTaskId) {
+          setCurrentTaskIdState(storedTaskId);
+          console.log('[UploadContext] Restored task ID from storage:', storedTaskId);
+        }
+      }
     };
 
     restoreFromStorage();
@@ -209,6 +236,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     setVisualizedImageUrl("");
     setResultImageIdState(null);  // Use direct state setter to avoid storage save
     setResultImagePathState(null);
+    setCurrentTaskIdState(null);  // Clear task ID
     setUploadStartTime(0);
 
     // Clear sessionStorage
@@ -256,6 +284,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         setResultImageId,
         resultImagePath,
         setResultImagePath,
+
+        // Task tracking
+        currentTaskId,
+        setCurrentTaskId,
 
         // Timing
         uploadStartTime,
