@@ -9,7 +9,6 @@ import { AuthModal } from '../../components/AuthModal';
 import {
   submitVisualizationTask,
   pollTaskStatus,
-  fetchTaskStatus,
   type TaskStatus,
 } from '../../services/visualizationService';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
