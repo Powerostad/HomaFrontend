@@ -1,5 +1,5 @@
 # Multi-stage build for React application
-FROM node:18-alpine AS builder
+FROM docker.arvancloud.ir/node:18-alpine AS builder
 
 # Accept build argument for API URL
 ARG VITE_API_BASE_URL
@@ -56,7 +56,7 @@ RUN echo "=== Build output ===" && \
     test -f dist/index.html || (echo "ERROR: dist/index.html not found!" && exit 1)
 
 # Production stage with Nginx
-FROM nginx:alpine AS production
+FROM docker.arvancloud.ir/nginx:alpine AS production
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
