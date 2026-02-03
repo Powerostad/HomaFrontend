@@ -9,6 +9,7 @@ import { ContextBar } from '../../components/ContextBar';
 import { SizeSelectionModal, type SizeOption } from '../../components/SizeSelectionModal';
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchProduct } from '../../services/productService';
+import { apiProductToProduct } from '../../types/apiProduct';
 import { toast } from 'sonner';
 import type { Product } from '../../types/product';
 import type { APIProduct } from '../../types/apiProduct';
@@ -124,8 +125,9 @@ export function TryOnUploadPage() {
       try {
         const result = await fetchProduct(productId);
         if (result.success && result.data) {
-          // Store the APIProduct in context (cast as Product for compatibility)
-          setProduct(result.data as unknown as Product);
+          // Transform APIProduct to Product format (sets id = uniqueLink/UUID)
+          const productData = apiProductToProduct(result.data);
+          setProduct(productData);
           saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
         } else {
           toast.error(result.error || t('errors.productNotFound'));

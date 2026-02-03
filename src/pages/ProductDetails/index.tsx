@@ -20,31 +20,10 @@ import { formatPriceFromRial } from '../../utils/formatters';
 // TODO: Re-enable when backend /api/recommendations/gallery/product is ready
 // import { ProductSocialGallery } from '../../components/ProductSocialGallery';
 import { fetchProduct } from '../../services/productService';
+import { apiProductToProduct } from '../../types/apiProduct';
 import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
-
-/**
- * Convert APIProduct to the legacy Product type for existing components
- */
-function apiProductToProduct(apiProduct: APIProduct): Product {
-  return {
-    id: apiProduct.uniqueLink,
-    name: apiProduct.name,
-    price: apiProduct.price,
-    category: apiProduct.categoryDisplay,
-    images: [apiProduct.imageUrl],
-    thumbnail: apiProduct.imageUrl,
-    brand: apiProduct.shopName,
-    description: apiProduct.description,
-    currency: 'تومان',
-    status: 'active',
-    seller: {
-      name: apiProduct.shopName,
-      verified: true,
-    },
-  };
-}
 
 export function ProductDetailsPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
@@ -125,12 +104,11 @@ export function ProductDetailsPage() {
   }, [slug, productId, getShop]);
 
   const handleTestDecor = () => {
-    // Use apiProduct (which has availableSizes) instead of stripped-down product
+    // Transform APIProduct to Product format (sets id = uniqueLink/UUID and preserves availableSizes)
     if (apiProduct) {
       trackEvent('click_test_decor_single_cta', { productId: apiProduct.uniqueLink });
-      // Store apiProduct with all fields including availableSizes
-      // Type assertion needed as context expects Product, but APIProduct is compatible
-      setProduct(apiProduct as unknown as Product);
+      const productData = apiProductToProduct(apiProduct);
+      setProduct(productData);
       // Navigate with product's uniqueLink in URL path
       navigate(`/try-on/${apiProduct.uniqueLink}/upload`);
     }
