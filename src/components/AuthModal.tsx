@@ -73,6 +73,14 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('auth-modal-open');
+    return () => {
+      document.body.classList.remove('auth-modal-open');
+    };
+  }, [isOpen]);
+
   // Refs
   const otpInputRef = React.useRef<HTMLInputElement>(null);
   const passwordInputRef = React.useRef<HTMLInputElement>(null);

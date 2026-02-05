@@ -200,6 +200,11 @@
   --shadow-button-hover: var(--shadow-button-hover);
 }
 
+body.auth-modal-open .studio-upload-action-bar {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ========================================
    BASE STYLES
    ======================================== */

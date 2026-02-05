@@ -33,6 +33,7 @@ export function StudioUploadPage() {
   const [isLoadingPreset, setIsLoadingPreset] = useState(false);
   const [loadingPresetId, setLoadingPresetId] = useState<number | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingUploadAfterAuth, setPendingUploadAfterAuth] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const EXAMPLES = {
@@ -56,8 +57,33 @@ export function StudioUploadPage() {
     { id: 4, name: 'فضای ناهارخوری', image: '/images/studio/preset-dining.webp' },
   ];
 
+  const hasValidAuth = () => {
+    const tokens = getStoredTokens();
+    return isLoggedIn && !!tokens?.access;
+  };
+
+  const ensureAuthenticated = () => {
+    if (!hasValidAuth()) {
+      setPendingUploadAfterAuth(false);
+      setShowDecision(false);
+      setShowAuthModal(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
+      if (!ensureAuthenticated()) {
+        setSelectedFile(null);
+        setLocalSelectedFile(null);
+        setPreview(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+
       trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
       setSelectedFile(file);
       setLocalSelectedFile(file);
@@ -75,6 +101,8 @@ export function StudioUploadPage() {
    * Fetches the image URL, converts to File, and triggers the same flow as file upload
    */
   const handlePresetSelect = async (preset: { id: number; name: string; image: string }) => {
+    if (!ensureAuthenticated()) return;
+
     // Prevent double-clicks
     if (isLoadingPreset) return;
 
@@ -125,15 +153,14 @@ export function StudioUploadPage() {
     // Check if user is logged in AND has valid tokens before proceeding
     // Skip this check if we just came from successful authentication
     if (!skipAuthCheck) {
-      const tokens = getStoredTokens();
-      const hasValidAuth = isLoggedIn && tokens?.access;
-
-      if (!hasValidAuth) {
-        setShowDecision(false); // Close decision overlay first
+      if (!hasValidAuth()) {
+        setPendingUploadAfterAuth(true);
+        setShowDecision(false);
         setShowAuthModal(true);
         return;
       }
     }
+    setPendingUploadAfterAuth(false);
 
     trackKPI('upload_confirmed');
 
@@ -283,43 +310,51 @@ export function StudioUploadPage() {
       </main>
 
       {/* 5. STICKY BOTTOM ACTION BAR - Zara Home Hierarchy */}
-      <div className="fixed bottom-0 left-0 right-0 py-6 px-6 md:px-16 bg-[#FDFDFB]/95 backdrop-blur-md border-t border-black/[0.03] z-[120]">
-        <div className="max-w-[1440px] mx-auto flex flex-col items-center gap-4">
-          
-          <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
-            {/* Primary Actions: Side by Side Grid */}
-            <div className="w-full grid grid-cols-2 gap-3">
-              <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-14 bg-black text-white text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                  <Camera size={16} strokeWidth={1.5} />
-                  <span>گرفتن عکس</span>
-              </button>
+      {!showAuthModal && (
+        <div className="studio-upload-action-bar fixed bottom-0 left-0 right-0 py-6 px-6 md:px-16 bg-[#FDFDFB]/95 backdrop-blur-md border-t border-black/[0.03] z-[120]">
+          <div className="max-w-[1440px] mx-auto flex flex-col items-center gap-4">
+            
+            <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
+              {/* Primary Actions: Side by Side Grid */}
+              <div className="w-full grid grid-cols-2 gap-3">
+                <button 
+                    onClick={() => {
+                      if (!ensureAuthenticated()) return;
+                      fileInputRef.current?.click();
+                    }}
+                    className="h-14 bg-black text-white text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    <Camera size={16} strokeWidth={1.5} />
+                    <span>گرفتن عکس</span>
+                </button>
 
+                <button 
+                    onClick={() => {
+                      if (!ensureAuthenticated()) return;
+                      fileInputRef.current?.click();
+                    }}
+                    className="h-14 bg-white border border-black/10 text-black text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/[0.02] transition-all active:scale-[0.98] flex items-center justify-center"
+                >
+                    <span>گالری</span>
+                </button>
+              </div>
+
+              {/* Tertiary: Minimal Text Link */}
               <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-14 bg-white border border-black/10 text-black text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/[0.02] transition-all active:scale-[0.98] flex items-center justify-center"
+                onClick={() => {
+                  const presetsSection = document.getElementById('presets-section');
+                  presetsSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-[13px] font-medium text-black/50 hover:text-black transition-all flex items-center gap-2"
+                style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
               >
-                  <span>گالری</span>
+                <span>اگر تصویر مناسبی ندارید، از نمونه‌های آماده استفاده کنید</span>
+                <ArrowLeft size={15} strokeWidth={1.5} />
               </button>
             </div>
-
-            {/* Tertiary: Minimal Text Link */}
-            <button 
-              onClick={() => {
-                const presetsSection = document.getElementById('presets-section');
-                presetsSection?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-[13px] font-medium text-black/50 hover:text-black transition-all flex items-center gap-2"
-              style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
-            >
-              <span>اگر تصویر مناسبی ندارید، از نمونه‌های آماده استفاده کنید</span>
-              <ArrowLeft size={15} strokeWidth={1.5} />
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* DECISION POINT OVERLAY */}
       <DecisionPointOverlay
@@ -370,14 +405,20 @@ export function StudioUploadPage() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          setPendingUploadAfterAuth(false);
+        }}
         onSuccess={(user, tokens) => {
           login(user, tokens);
           setShowAuthModal(false);
-          // After login, automatically proceed with the upload
-          // Pass skipAuthCheck=true because user just authenticated
-          // but React state (isLoggedIn) hasn't updated yet
-          handleProceed(true);
+          // After login, proceed only if this was triggered from confirm flow
+          if (pendingUploadAfterAuth && selectedFile) {
+            // Pass skipAuthCheck=true because user just authenticated
+            // but React state (isLoggedIn) hasn't updated yet
+            handleProceed(true);
+          }
+          setPendingUploadAfterAuth(false);
         }}
       />
     </div>
