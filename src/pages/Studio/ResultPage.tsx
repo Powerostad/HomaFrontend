@@ -184,7 +184,7 @@ export function StudioResultPage() {
 
     const result = await prepareDownload({
       imageUrl,
-      filename: `homa-studio-${Date.now()}`,
+      filename: `هما-استودیو-${Date.now()}`,
       useAuth: true,
     });
 
@@ -510,20 +510,20 @@ export function StudioResultPage() {
             alt="Studio Result"
             imageWidth={1200}
             imageQuality={85}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-0 scale-105 blur-sm' : 'opacity-100 scale-100'}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-0 scale-105 blur-sm pointer-events-none' : 'opacity-100 scale-100 pointer-events-auto'}`}
           />
           {originalImage && (
             originalImage.startsWith('data:') ? (
               <img
                 src={originalImage}
                 alt="Original"
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}
               />
             ) : (
               <AuthenticatedImage
                 src={originalImage}
                 alt="Original"
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}
               />
             )
           )}
@@ -564,6 +564,13 @@ export function StudioResultPage() {
                   className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSaved ? 'bg-white border-white text-accent' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'}`}
                 >
                   <Heart size={20} className={isSaved ? 'fill-current' : ''} />
+                </button>
+                <button
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className={`w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90 ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
                 </button>
                 <button className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90">
                   <Share2 size={20} />
@@ -620,7 +627,7 @@ export function StudioResultPage() {
                 alt="Studio Result"
                 imageWidth={800}
                 imageQuality={80}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}
               />
               {/* Original room image for before/after toggle */}
               {originalImage && (
@@ -628,7 +635,7 @@ export function StudioResultPage() {
                   <img
                     src={originalImage}
                     alt="Original"
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                   />
                 ) : (
                   <AuthenticatedImage
@@ -636,7 +643,7 @@ export function StudioResultPage() {
                     alt="Original"
                     imageWidth={800}
                     imageQuality={80}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                   />
                 )
               )}
@@ -753,20 +760,20 @@ export function StudioResultPage() {
                   alt="Studio Result"
                   imageWidth={1200}
                   imageQuality={85}
-                  className={`max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
+                  className={`max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100 pointer-events-auto'}`}
                 />
                 {originalImage && (
                   originalImage.startsWith('data:') ? (
                     <img
                       src={originalImage}
                       alt="Original"
-                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-105 pointer-events-none'}`}
                     />
                   ) : (
                     <AuthenticatedImage
                       src={originalImage}
                       alt="Original"
-                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+                      className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-opacity duration-700 ease-in-out shadow-2xl ${showOriginal ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-105 pointer-events-none'}`}
                     />
                   )
                 )}
