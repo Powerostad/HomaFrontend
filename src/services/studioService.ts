@@ -59,6 +59,9 @@ export interface APIMatchedProduct {
 export interface APISessionItem {
   item_id: number;
   item_type: string; // e.g., 'rug', 'sofa', 'lamp'
+  category?: string; // e.g., 'rug', 'furniture', 'cushion'
+  category_display?: string; // Persian display name e.g., 'فرش و قالی'
+  fit_reasoning_fa?: string; // AI reasoning in Persian for why this item fits
   description?: Record<string, unknown>;
   matched_products: APIMatchedProduct[];
   tryon_status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -146,6 +149,9 @@ export interface RedesignSession {
 export interface SessionItem {
   id: number;
   type: string;
+  category: string;
+  categoryDisplay: string;
+  fitReasoningFa: string;
   matchedProducts: MatchedProduct[];
   tryonStatus: 'pending' | 'processing' | 'completed' | 'failed';
   tryonImageUrl: string | null;
@@ -247,6 +253,9 @@ function transformSessionItem(apiItem: APISessionItem): SessionItem {
   return {
     id: apiItem.item_id,
     type: apiItem.item_type,
+    category: apiItem.category || apiItem.item_type || '',
+    categoryDisplay: apiItem.category_display || apiItem.item_type || '',
+    fitReasoningFa: apiItem.fit_reasoning_fa || '',
     matchedProducts: (apiItem.matched_products || []).map(transformMatchedProduct),
     tryonStatus: apiItem.tryon_status,
     tryonImageUrl: getSessionImageUrl(apiItem.tryon_image_url),

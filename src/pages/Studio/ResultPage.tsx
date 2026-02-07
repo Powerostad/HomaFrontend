@@ -31,41 +31,17 @@ import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage
 import { formatPriceFromRial } from '@/utils/formatters';
 import type { MatchedProduct } from '@/services/studioService';
 
+// --- Category Group type for grouped product display ---
+interface CategoryGroup {
+  category: string;
+  categoryDisplay: string;
+  itemId: number;
+  fitReasoningFa: string;
+  products: (Product & { store?: string; matchScore?: number })[];
+}
+
 // --- Fallback Mock Data (only used when API data not available) ---
 const FALLBACK_RESULT_IMAGE = "https://images.unsplash.com/photo-1597665863042-47e00964d899?q=80&w=1200&auto=format&fit=crop";
-
-const FALLBACK_PRODUCTS: (Product & { store?: string; style?: string })[] = [
-  {
-    id: '1',
-    name: 'افشان کلاسیک',
-    price: 12500000,
-    category: 'فرش',
-    style: 'دستباف',
-    store: 'فرش عظیم‌زاده',
-    image: 'https://images.unsplash.com/photo-1594125675036-153d1b064762?q=80&w=300&auto=format&fit=crop',
-    hotspot: { x: 50, y: 75 }
-  },
-  {
-    id: '2',
-    name: 'جستر راحتی',
-    price: 28000000,
-    category: 'مبل',
-    style: 'مینیمال',
-    store: 'رستوران و دکوراسیون هرندی',
-    image: 'https://images.unsplash.com/photo-1759722665629-29df6ee4f9a5?q=80&w=300&auto=format&fit=crop',
-    hotspot: { x: 45, y: 55 }
-  },
-  {
-    id: '3',
-    name: 'آباژور مدرن',
-    price: 1450000,
-    category: 'نورپردازی',
-    style: 'مدرن',
-    store: 'روشنایی مهتاب',
-    image: 'https://images.unsplash.com/photo-1756474215831-4e5f8309c6bc?q=80&w=300&auto=format&fit=crop',
-    hotspot: { x: 75, y: 45 }
-  }
-];
 
 /**
  * Convert API matched product to UI Product format
@@ -246,30 +222,40 @@ export function StudioResultPage() {
     return FALLBACK_RESULT_IMAGE;
   }, [activeSession]);
 
-  // Transform API products to UI format
-  const displayProducts = useMemo(() => {
-    if (activeSession?.items && activeSession.items.length > 0) {
-      // Flatten all matched products from all items
-      const products: (Product & { store?: string; style?: string })[] = [];
-      activeSession.items.forEach((item, itemIndex) => {
-        item.matchedProducts.forEach((product, productIndex) => {
-          products.push(matchedProductToUIProduct(product, itemIndex * 10 + productIndex));
-        });
-      });
-      return products.length > 0 ? products : FALLBACK_PRODUCTS;
-    }
-    return FALLBACK_PRODUCTS;
+  // Group products by category for display
+  const categoryGroups = useMemo<CategoryGroup[]>(() => {
+    if (!activeSession?.items?.length) return [];
+    return activeSession.items
+      .filter(item => item.matchedProducts.length > 0)
+      .map(item => ({
+        category: item.category || item.type,
+        categoryDisplay: item.categoryDisplay || item.type,
+        itemId: item.id,
+        fitReasoningFa: item.fitReasoningFa || '',
+        products: item.matchedProducts.map((p, i) => matchedProductToUIProduct(p, i)),
+      }));
   }, [activeSession]);
 
-  const totalPrice = displayProducts.reduce((acc, curr) => acc + curr.price, 0);
+  // Flat product list for backward compat (fallback data, context bar, etc.)
+  const displayProducts = useMemo(() => {
+    return categoryGroups.flatMap(g => g.products);
+  }, [categoryGroups]);
 
-  // Compute alternatives for the selected product (other products from the list)
+  // Total price = sum of top picks (first product per category)
+  const totalPrice = categoryGroups.reduce(
+    (acc, group) => acc + (group.products[0]?.price || 0), 0
+  );
+
+  // Alternatives scoped to same category group
   const productAlternatives = useMemo(() => {
-    if (!selectedProduct) return [];
-    return displayProducts
-      .filter(p => p.id !== selectedProduct.id)
-      .slice(0, 3); // Top 3 alternatives
-  }, [selectedProduct, displayProducts]);
+    if (!selectedProduct || !categoryGroups.length) return [];
+    for (const group of categoryGroups) {
+      if (group.products.find(p => p.id === selectedProduct.id)) {
+        return group.products.filter(p => p.id !== selectedProduct.id);
+      }
+    }
+    return [];
+  }, [selectedProduct, categoryGroups]);
 
   // Load session data if not already in context
   // IMPORTANT: Wait for auth initialization AND login before making API calls
@@ -328,13 +314,22 @@ export function StudioResultPage() {
     }
   }, [selectedFile, activeSession?.roomImageUrl]);
 
+  // Handle product click — enrich with category-level AI reasoning
+  const handleProductClick = (product: Product) => {
+    const group = categoryGroups.find(g => g.products.some(p => p.id === product.id));
+    setSelectedProduct({
+      ...product,
+      persianReason: product.persianReason || group?.fitReasoningFa || '',
+    });
+  };
+
   // Content shared between mobile/desktop (Zara Home Editorial Style)
   const InsightContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
-    <div className={`flex flex-col gap-6 ${isDesktop ? 'px-10' : 'px-8'} pb-10`}> {/* Reduced gap from 10 to 6 */}
-      
-      {/* 1. Suggested Products - Editorial List */}
-      <div className="space-y-2 pt-0"> {/* Reduced space and padding */}
-        <div className="flex items-baseline justify-between border-b border-black/[0.05] pb-2"> {/* Reduced pb */}
+    <div className={`flex flex-col gap-6 ${isDesktop ? 'px-10' : 'px-8'} pb-10`}>
+
+      {/* 1. Suggested Products - Grouped by Category */}
+      <div className="space-y-2 pt-0">
+        <div className="flex items-baseline justify-between border-b border-black/[0.05] pb-2">
           <h2 className="text-[20px] font-medium text-black tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
             {t('studio.result.suggestedProducts', 'محصولات پیشنهادی')}
           </h2>
@@ -342,79 +337,121 @@ export function StudioResultPage() {
             {t('studio.result.curated', 'Curated')}
           </span>
         </div>
-        
-        <div className="flex flex-col">
-          {displayProducts.map((item) => {
-            const isTopPick = (item as { isPromoted?: boolean }).isPromoted === true;
+
+        <div className="flex flex-col gap-8">
+          {categoryGroups.map((group) => {
+            const topPick = group.products[0];
+            const alternatives = group.products.slice(1);
+
             return (
-              <div 
-                key={item.id}
-                className="group flex flex-row gap-6 py-8 first:pt-4 border-b border-black/[0.04] last:border-0"
-              >
-                {/* Product Frame - Editorial Compact Look */}
-                <div
-                  className="relative w-[130px] aspect-[3/4] bg-black/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
-                  onClick={() => setSelectedProduct(item)}
-                >
-                  <AuthenticatedImage
-                    src={item.image}
-                    alt={item.name}
-                    imageWidth={300}
-                    imageQuality={80}
-                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
-                  />
-                  
-                  {isTopPick && (
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-1.5 py-0.5 flex items-center gap-1.5">
-                       <div className="w-1 h-1 rounded-full bg-accent" />
-                       <span className="text-[7px] font-bold text-black uppercase tracking-[0.2em]" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                          {t('studio.result.homaPick', 'انتخاب هُما')}
-                       </span>
-                    </div>
-                  )}
+              <div key={group.itemId} className="flex flex-col gap-4">
+                {/* Category Header */}
+                <div className="flex items-center gap-3 pt-4">
+                  <span className="text-[16px] font-bold text-black" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                    {group.categoryDisplay}
+                  </span>
+                  <div className="flex-1 h-px bg-black/[0.06]" />
                 </div>
 
-                {/* Content Section - Zara Editorial Hierarchy Compact */}
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-[13px] font-bold text-black uppercase tracking-[0.05em] leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center gap-2 opacity-30">
-                          <span className="text-[8px] text-black font-bold uppercase tracking-[0.1em]">{item.category}</span>
-                          <span className="w-0.5 h-0.5 rounded-full bg-black" />
-                          <span className="text-[8px] text-black font-bold uppercase tracking-[0.1em]">{item.store}</span>
+                {/* Top Pick - Large Editorial Card */}
+                {topPick && (
+                  <div className="group flex flex-row gap-6 py-4">
+                    {/* Product Frame */}
+                    <div
+                      className="relative w-[130px] aspect-[3/4] bg-black/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
+                      onClick={() => handleProductClick(topPick)}
+                    >
+                      <AuthenticatedImage
+                        src={topPick.image}
+                        alt={topPick.name}
+                        imageWidth={300}
+                        imageQuality={80}
+                        className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                      />
+                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-1.5 py-0.5 flex items-center gap-1.5">
+                        <div className="w-1 h-1 rounded-full bg-accent" />
+                        <span className="text-[7px] font-bold text-black uppercase tracking-[0.2em]" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                          {t('studio.result.homaPick', 'انتخاب هُما')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="flex-1 flex flex-col justify-between py-1">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex flex-col gap-1">
+                            <h3 className="text-[13px] font-bold text-black uppercase tracking-[0.05em] leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                              {topPick.name}
+                            </h3>
+                            <div className="flex items-center gap-2 opacity-30">
+                              <span className="text-[8px] text-black font-bold uppercase tracking-[0.1em]">{topPick.category}</span>
+                              <span className="w-0.5 h-0.5 rounded-full bg-black" />
+                              <span className="text-[8px] text-black font-bold uppercase tracking-[0.1em]">{topPick.store}</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setIsSaved(!isSaved); }}
+                            className={`transition-all active:scale-90 ${isSaved ? 'text-accent' : 'text-black/10 hover:text-black'}`}
+                          >
+                            <Bookmark size={16} strokeWidth={1.5} className={isSaved ? 'fill-current' : ''} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-baseline gap-1.5 mt-2">
+                          <span className="text-[18px] font-bold text-black tabular-nums tracking-tighter">
+                            {formatPriceFromRial(topPick.price, false)}
+                          </span>
+                          <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                            {t('common.toman', 'تومان')}
+                          </span>
                         </div>
                       </div>
-                      
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setIsSaved(!isSaved); }}
-                        className={`transition-all active:scale-90 ${isSaved ? 'text-accent' : 'text-black/10 hover:text-black'}`}
+
+                      <button
+                        onClick={() => handleProductClick(topPick)}
+                        className="w-full h-10 border border-black/10 text-black text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-black hover:text-white active:scale-[0.98]"
+                        style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        <Bookmark size={16} strokeWidth={1.5} className={isSaved ? 'fill-current' : ''} />
+                        {t('studio.result.productDetails', 'جزییات محصول')}
                       </button>
                     </div>
-
-                    <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-[18px] font-bold text-black tabular-nums tracking-tighter">
-                        {formatPriceFromRial(item.price, false)}
-                      </span>
-                      <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                        {t('common.toman', 'تومان')}
-                      </span>
-                    </div>
                   </div>
+                )}
 
-                  <button
-                    onClick={() => setSelectedProduct(item)}
-                    className="w-full h-10 border border-black/10 text-black text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-black hover:text-white active:scale-[0.98]"
-                    style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
-                  >
-                    {t('studio.result.productDetails', 'جزییات محصول')}
-                  </button>
-                </div>
+                {/* Alternative Products - Compact Row */}
+                {alternatives.length > 0 && (
+                  <div className="flex gap-3">
+                    {alternatives.map((alt) => (
+                      <div
+                        key={alt.id}
+                        className="flex-1 min-w-0 cursor-pointer group/alt"
+                        onClick={() => handleProductClick(alt)}
+                      >
+                        <div className="relative aspect-square bg-black/[0.02] overflow-hidden mb-2">
+                          <AuthenticatedImage
+                            src={alt.image}
+                            alt={alt.name}
+                            imageWidth={200}
+                            imageQuality={75}
+                            className="w-full h-full object-cover grayscale-[0.2] group-hover/alt:grayscale-0 transition-all duration-700 group-hover/alt:scale-105"
+                          />
+                        </div>
+                        <h4 className="text-[11px] font-bold text-black truncate leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                          {alt.name}
+                        </h4>
+                        <div className="flex items-baseline gap-1 mt-0.5">
+                          <span className="text-[13px] font-bold text-black tabular-nums tracking-tighter">
+                            {formatPriceFromRial(alt.price, false)}
+                          </span>
+                          <span className="text-[8px] text-black/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                            {t('common.toman', 'تومان')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -853,6 +890,7 @@ export function StudioResultPage() {
             redesignSessionId={activeSessionId || sessionId}
          />
       )}
+
 
       {/* Exit Decision Overlay (Try-On Style) */}
       <AnimatePresence>
