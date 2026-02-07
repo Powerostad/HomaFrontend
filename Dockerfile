@@ -26,7 +26,9 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci
+# Use Runflare npm mirror for reliable access from Iran
+RUN npm config set registry https://mirror-npm.runflare.com && \
+    npm ci
 
 # Copy source code
 COPY . .
