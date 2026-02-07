@@ -1,7 +1,12 @@
 /**
  * Analytics & KPI Tracking Service
  * ردیابی و تحلیل رفتار کاربران و KPIs
+ *
+ * This service maintains an in-memory event log for the dev AdminDashboard
+ * and delegates all events to PostHog for production analytics.
  */
+
+import { posthog } from './posthog';
 
 export interface AnalyticsEvent {
   event: string;
@@ -72,14 +77,14 @@ class AnalyticsService {
 
     this.events.push(analyticsEvent);
 
+    // Send to PostHog for production analytics
+    posthog.capture(event, { session_id: this.sessionId, ...metadata });
+
     console.log('[Analytics] رویداد ثبت شد:', {
       event,
       sessionId: this.sessionId,
       metadata,
     });
-
-    // در production، ارسال به backend
-    // this.sendToBackend(analyticsEvent);
   }
 
   /**

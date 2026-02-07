@@ -10,6 +10,7 @@ import { SizeSelectionModal, type SizeOption } from '../../components/SizeSelect
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchProduct } from '../../services/productService';
 import { apiProductToProduct } from '../../types/apiProduct';
+import { trackTryOnUploadViewed, trackFileSelected, trackSizeSelected } from '../../analytics/events';
 import { toast } from 'sonner';
 import type { Product } from '../../types/product';
 import type { APIProduct } from '../../types/apiProduct';
@@ -114,6 +115,7 @@ export function TryOnUploadPage() {
 
         if (isMatch) {
           saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
+          trackTryOnUploadViewed({ product_id: productId, product_name: product?.name || '' });
           setIsProductLoading(false);
           return;
         }
@@ -129,6 +131,7 @@ export function TryOnUploadPage() {
           const productData = apiProductToProduct(result.data);
           setProduct(productData);
           saveToStorage(STORAGE_KEYS.TRYON_PRODUCT_ID, productId);
+          trackTryOnUploadViewed({ product_id: productId, product_name: productData.name });
         } else {
           toast.error(result.error || t('errors.productNotFound'));
           navigate('/explore');
@@ -175,6 +178,7 @@ export function TryOnUploadPage() {
 
     if (file && file.type.startsWith('image/')) {
       if (trackKPI) trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
+      trackFileSelected({ file_size: file.size, file_type: file.type, product_id: productId || '' });
 
       // Debug: Log product details and available sizes
       console.log('[Upload] handleFile called:', {
@@ -213,6 +217,7 @@ export function TryOnUploadPage() {
    */
   const handleSizeSelect = (sizeCode: string) => {
     if (pendingFile) {
+      trackSizeSelected({ product_id: productId || '', size_code: sizeCode });
       setSelectedSize(sizeCode);
       setSelectedFile(pendingFile);
       setShowSizeModal(false);
@@ -308,6 +313,7 @@ export function TryOnUploadPage() {
               <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isProductLoading}
+                  data-ph-capture-attribute-action="take_photo"
                   className={`h-12 text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
                     isProductLoading
                       ? 'bg-black/50 text-white/70 cursor-not-allowed'
@@ -320,6 +326,7 @@ export function TryOnUploadPage() {
               <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isProductLoading}
+                  data-ph-capture-attribute-action="select_gallery"
                   className={`h-12 border text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
                     isProductLoading
                       ? 'bg-white/50 border-black/5 text-black/50 cursor-not-allowed'

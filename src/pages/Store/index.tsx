@@ -5,6 +5,7 @@ import { Star, Sparkles, RefreshCw, Store as StoreIcon } from 'lucide-react';
 // SlidersHorizontal - TODO: Uncomment when filter UI is implemented
 import { useProduct, useShop } from '../../context/AppProviders';
 import { trackEvent } from '../../utils/analytics';
+import { trackStoreViewed, trackTryOnCtaClicked } from '../../analytics/events';
 import { motion } from 'motion/react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { GalleryProductCard } from '../../components/store/GalleryProductCard';
@@ -100,6 +101,7 @@ export function StorePage() {
 
       // Track analytics
       trackEvent('view_store', { storeId: shopData.id, storeName: shopData.name });
+      trackStoreViewed({ store_slug: slug!, store_name: shopData.name });
 
       // Step 2: Fetch products for this shop
       // Skip if we've already fetched products for this shop (prevents duplicate requests on re-renders)
@@ -142,6 +144,7 @@ export function StorePage() {
 
   const handleTryOn = (product: Product) => {
     trackEvent('click_try_on', { productId: product.id, source: 'store_page' });
+    trackTryOnCtaClicked({ product_id: product.id, source: 'store_page' });
     setProduct(product);
     // Use product's uniqueLink or id in URL path
     const productUrlId = (product as unknown as { uniqueLink?: string }).uniqueLink

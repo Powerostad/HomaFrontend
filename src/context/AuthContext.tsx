@@ -26,6 +26,7 @@ import {
   getProfile as authGetProfile,
 } from '@/services/authService';
 import { getStoredTokens, clearAuthData, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
+import { identifyUser, resetUser, trackAuthEvent } from '@/analytics/events';
 import type { User, AuthTokens, AuthContextType } from '@/types/auth';
 
 // Re-export User type for backwards compatibility
@@ -85,10 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileResult.success && profileResult.user) {
           setUser(profileResult.user);
+          identifyUser(profileResult.user);
           console.log('[Auth] Session restored with fresh profile for:', profileResult.user.name || profileResult.user.phone);
         } else {
           // Profile fetch failed but we have stored data - use that
           setUser(storedState.user);
+          identifyUser(storedState.user);
           console.log('[Auth] Profile fetch failed, using stored data for:', storedState.user.name || storedState.user.phone);
         }
       } catch (error) {
@@ -127,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Store auth state and set user immediately for fast UI response
     storeAuthState(userData, tokens);
     setUser(userData);
+    identifyUser(userData);
+    trackAuthEvent({ step: 'login_success' });
     console.log('[Auth] User logged in:', userData.name || userData.phone);
 
     // Fetch fresh profile in background to ensure we have latest data
@@ -155,6 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Auth] Logout error:', error);
     } finally {
       setUser(null);
+      resetUser();
+      trackAuthEvent({ step: 'logout' });
       setIsLoading(false);
       console.log('[Auth] User logged out');
     }

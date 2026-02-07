@@ -4,6 +4,7 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
 import { apiPost } from '../utils/apiClient';
+import { trackBuyButtonClicked } from '../analytics/events';
 
 interface BuyButtonProps {
   productId: string;
@@ -102,6 +103,9 @@ export function BuyButton({
         href={trackingUrl!}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackBuyButtonClicked({ product_id: productId, source_context: sourceContext, shop_name: shopName })}
+        data-ph-capture-attribute-product-id={productId}
+        data-ph-capture-attribute-action="buy"
       >
         <ExternalLink className="h-4 w-4 ml-2" />
         {buttonText}

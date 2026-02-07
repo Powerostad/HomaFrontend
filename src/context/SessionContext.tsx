@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo } from "react";
 import { trackEvent as trackAnalytics } from "../utils/analytics";
+import { posthog } from "@/utils/posthog";
 
 /**
  * SessionContext - manages session tracking and error state
@@ -34,6 +35,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
     console.log(`[KPI] ${event}`, eventData);
     trackAnalytics(event, eventData);
+    posthog.capture(event, { session_id: sessionId, ...metadata });
   };
 
   return (

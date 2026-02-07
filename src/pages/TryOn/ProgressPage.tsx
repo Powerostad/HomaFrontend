@@ -14,6 +14,7 @@ import {
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 import { getStoredTokens, setStoredTokens } from '../../utils/apiClient';
+import { trackProcessingStarted, trackProcessingCompleted, trackProcessingFailed } from '../../analytics/events';
 import { toast } from 'sonner';
 import type { User } from '../../context/AuthContext';
 
@@ -66,6 +67,7 @@ export function TryOnProgressPage() {
   const [bgImage, setBgImage] = useState<string | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const hasStartedRef = useRef(false);
+  const processingStartTimeRef = useRef<number>(0);
 
   // Navigation guard - warn user before leaving during processing
   const isProcessing = processingStatus === 'uploading' || processingStatus === 'processing';
@@ -216,6 +218,8 @@ export function TryOnProgressPage() {
     setProcessingStatus('uploading');
     setProcessingProgress(0);
     setProcessingError(null);
+    processingStartTimeRef.current = Date.now();
+    trackProcessingStarted({ product_id: productUniqueLink });
 
     try {
       // Phase 1: Submit task
@@ -248,6 +252,12 @@ export function TryOnProgressPage() {
       });
 
       if (result.success && result.data) {
+        const durationMs = Date.now() - processingStartTimeRef.current;
+        trackProcessingCompleted({
+          product_id: productUniqueLink,
+          task_id: submitResult.taskId,
+          duration_ms: durationMs,
+        });
         setProcessingStatus('completed');
         setVisualizedImageUrl(result.data.imageUrl);
         setResultImageId(result.data.imageId);
@@ -261,12 +271,20 @@ export function TryOnProgressPage() {
 
         navigate(`/try-on/${productUniqueLink}/result?${params.toString()}`);
       } else {
+        trackProcessingFailed({
+          product_id: productUniqueLink,
+          error_message: result.error || 'unknown',
+        });
         setProcessingStatus('error');
         setProcessingError(result.error || t('tryOn.errors.processingFailed'));
         setCurrentTaskId(null);
       }
     } catch (error) {
       console.error('[Progress] Processing error:', error);
+      trackProcessingFailed({
+        product_id: productUniqueLink,
+        error_message: error instanceof Error ? error.message : 'unknown',
+      });
       setProcessingStatus('error');
       setProcessingError(t('errors.unknown'));
       setCurrentTaskId(null);

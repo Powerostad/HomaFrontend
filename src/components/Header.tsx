@@ -57,6 +57,7 @@ export function Header({
                   onClick={() => setIsMenuOpen(true)}
                   className={`p-2 transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}
                   aria-label={t('nav.menu')}
+                  data-ph-capture-attribute-nav="menu"
                 >
                   <Menu size={18} strokeWidth={1} />
                 </button>
@@ -65,7 +66,7 @@ export function Header({
 
             {/* HOMA Wordmark */}
             <div className="flex justify-center">
-              <Link to="/" className="flex items-center">
+              <Link to="/" className="flex items-center" data-ph-capture-attribute-nav="logo">
                 <span
                   className={`text-[20px] md:text-[24px] font-light tracking-[0.4em] uppercase leading-none transition-all duration-700 ${transparent ? "text-white" : "text-black"
                     }`}
@@ -83,7 +84,7 @@ export function Header({
               {!disableNavigation && (
                 <>
                   {isLoggedIn ? (
-                    <Link to="/account/gallery" className={`transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}>
+                    <Link to="/account/gallery" data-ph-capture-attribute-nav="account" className={`transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}>
                       <User size={18} strokeWidth={1} />
                     </Link>
                   ) : (

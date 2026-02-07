@@ -41,9 +41,9 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
   };
 
   const navItems = [
-    { label: t('nav.home'), href: "/", icon: Home },
-    { label: t('nav.stores'), href: "/explore", icon: ShoppingBag },
-    { label: t('nav.studio'), href: "/studio/upload", icon: Palette },
+    { label: t('nav.home'), href: "/", icon: Home, navId: "home" },
+    { label: t('nav.stores'), href: "/explore", icon: ShoppingBag, navId: "explore" },
+    { label: t('nav.studio'), href: "/studio/upload", icon: Palette, navId: "studio" },
   ];
 
   const accountItems = [
@@ -105,11 +105,11 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
 
               {isLoggedIn ? (
                 <div className="space-y-2">
-                   <div className="text-[28px] font-light tracking-tight text-[var(--jet-black)]">
+                   <div className="text-[28px] font-light tracking-tight text-[var(--jet-black)]" data-ph-mask>
                       {t('auth.greeting', { name: user?.name?.split(' ')[0] || t('common.user') })}
                    </div>
                    <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-                      <span>{user?.phone}</span>
+                      <span data-ph-mask>{user?.phone}</span>
                       <div className="w-4 h-[1px] bg-[var(--border-subtle)]" />
                       <button onClick={handleLogout} className="hover:text-accent transition-colors">{t('auth.logout')}</button>
                    </div>
@@ -145,6 +145,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                         to={item.href}
                         onClick={onClose}
                         className="block group"
+                        data-ph-capture-attribute-nav={item.navId}
                       >
                         <div className="flex items-baseline gap-4">
                            <span className={`text-[24px] md:text-[32px] font-light tracking-tight transition-all duration-500 group-hover:translate-x-[-8px] ${

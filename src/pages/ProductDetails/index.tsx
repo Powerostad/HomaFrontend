@@ -12,6 +12,7 @@ import { useProduct, useShop } from '../../context/AppProviders';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Button } from '../../components/ui/button';
 import { trackEvent } from '../../utils/analytics';
+import { trackProductViewed, trackStoreViewed, trackTryOnCtaClicked } from '../../analytics/events';
 import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
 import { ContextBar } from '../../components/ContextBar';
@@ -67,6 +68,7 @@ export function ProductDetailsPage() {
 
       // Track analytics
       trackEvent('view_store', { storeId: shopData.id, storeName: shopData.name });
+      trackStoreViewed({ store_slug: slug!, store_name: shopData.name });
 
       // Step 2: Fetch product by unique_link (productId from URL is the UUID)
       const productResult = await fetchProduct(productId, { signal: abortController.signal });
@@ -92,6 +94,12 @@ export function ProductDetailsPage() {
 
       // Track product view
       trackEvent('view_product', { productId: productResult.data.uniqueLink, productName: productResult.data.name });
+      trackProductViewed({
+        product_id: productResult.data.uniqueLink,
+        product_name: productResult.data.name,
+        product_category: productResult.data.categoryDisplay,
+        shop_slug: slug,
+      });
 
       setIsLoadingProduct(false);
     };
@@ -107,6 +115,7 @@ export function ProductDetailsPage() {
     // Transform APIProduct to Product format (sets id = uniqueLink/UUID and preserves availableSizes)
     if (apiProduct) {
       trackEvent('click_test_decor_single_cta', { productId: apiProduct.uniqueLink });
+      trackTryOnCtaClicked({ product_id: apiProduct.uniqueLink, source: 'product_page' });
       const productData = apiProductToProduct(apiProduct);
       setProduct(productData);
       // Navigate with product's uniqueLink in URL path

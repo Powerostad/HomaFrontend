@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { trackFeedbackSubmitted } from '../analytics/events';
 
 type FeedbackState = 'good' | 'neutral' | 'bad';
 
@@ -53,7 +54,7 @@ interface FeedbackSurveyProps {
   onFeedbackSubmit: (feedback: 'satisfied' | 'neutral' | 'dissatisfied' | null) => void;
 }
 
-export function FeedbackSurvey({ onFeedbackSubmit }: FeedbackSurveyProps) {
+export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyProps) {
   const [sliderValue, setSliderValue] = useState(100);
   const [currentState, setCurrentState] = useState<FeedbackState>('good');
   const sliderRef = useRef<HTMLInputElement>(null);
@@ -190,6 +191,7 @@ export function FeedbackSurvey({ onFeedbackSubmit }: FeedbackSurveyProps) {
       feedbackType = 'dissatisfied';
     }
     
+    trackFeedbackSubmitted({ feedback_type: feedbackType, slider_value: sliderValue, product_id: productId });
     onFeedbackSubmit(feedbackType);
   };
 
