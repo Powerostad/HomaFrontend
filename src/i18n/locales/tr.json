@@ -464,6 +464,14 @@
       "average": "Orta",
       "poor": "Zayıf",
       "terrible": "Çok kötü"
+    },
+    "inline": {
+      "title": "Sonuç nasıldı?",
+      "good": "İyi",
+      "neutral": "Normal",
+      "bad": "Kötü",
+      "thankYou": "Geri bildiriminiz için teşekkürler!",
+      "submitError": "Geri bildirim gönderilemedi"
     }
   },
   "language": {

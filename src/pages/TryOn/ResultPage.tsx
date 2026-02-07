@@ -30,6 +30,8 @@ import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../uti
 import { getProductById } from '../../utils/productLoader';
 import { formatPriceFromRial } from '../../utils/formatters';
 import { BuyButton } from '../../components/BuyButton';
+import { trackResultViewed, trackResultAction, trackGalleryEvent } from '../../analytics/events';
+import { InlineFeedbackWidget } from '../../components/InlineFeedbackWidget';
 import type { User } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
 
@@ -165,6 +167,11 @@ export function TryOnResultPage() {
          }
 
          setIsRecovering(false);
+
+         // Track result viewed if we have a URL
+         if (visualizedImageUrl || recoveredPath) {
+            trackResultViewed({ product_id: productId || '', result_image_id: recoveredId });
+         }
       };
 
       recoverState();
@@ -288,6 +295,7 @@ export function TryOnResultPage() {
    // --- Download Logic (two-phase for Chrome compatibility) ---
    // Phase 1: Prepare download (async, no user gesture needed)
    const handleDownload = async () => {
+      trackResultAction({ action: 'download', product_id: productId || '' });
       if (!resultImageUrl) {
          toast.error(t('tryOn.result.noImage'));
          return;
@@ -342,6 +350,7 @@ export function TryOnResultPage() {
 
    // --- Gallery Submission ---
    const handleSubmitToGallery = async () => {
+      trackGalleryEvent({ action: 'submit_attempt', image_id: resultImageId, source: 'try_on_result' });
       // Require login to submit
       if (!isLoggedIn) {
          setIsAuthModalOpen(true);
@@ -360,6 +369,7 @@ export function TryOnResultPage() {
 
       if (result.success) {
          setIsSubmittedToGallery(true);
+         trackGalleryEvent({ action: 'submitted', image_id: resultImageId, source: 'try_on_result' });
          toast.success(t('tryOn.result.submittedToGallery'));
       } else {
          toast.error(result.error || t('gallery.success.deleted'));
@@ -481,6 +491,9 @@ export function TryOnResultPage() {
                   )}
                </div>
             </div>
+
+            {/* Inline Feedback Widget */}
+            <InlineFeedbackWidget flow="tryon" imageId={resultImageId} />
 
             {/* HOMA STUDIO Banner - Refined Editorial Style */}
             <div
@@ -714,7 +727,7 @@ export function TryOnResultPage() {
                   {/* Bottom Controls: Expand Toggle */}
                   <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto">
                      <button
-                        onClick={() => setIsFullScreen(true)}
+                        onClick={() => { trackResultAction({ action: 'fullscreen', product_id: productId || '' }); setIsFullScreen(true); }}
                         className="flex items-center gap-3 px-8 h-[56px] bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl transition-all active:scale-95 group/btn"
                      >
                         <Maximize2 size={18} className="transition-transform group-hover/btn:scale-110" />
@@ -837,7 +850,7 @@ export function TryOnResultPage() {
                         <Heart size={18} strokeWidth={1.2} className={isSaved ? 'fill-black' : ''} />
                      </button>
                      <button
-                        onClick={() => copyToClipboard(window.location.href, t)}
+                        onClick={() => { trackResultAction({ action: 'share', product_id: productId || '' }); copyToClipboard(window.location.href, t); }}
                         className="w-14 h-14 flex items-center justify-center bg-white hover:bg-black/[0.02] transition-colors"
                      >
                         <Share2 size={18} strokeWidth={1.2} />

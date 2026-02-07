@@ -464,6 +464,14 @@
       "average": "متوسط",
       "poor": "ضعیف",
       "terrible": "خیلی بد"
+    },
+    "inline": {
+      "title": "نتیجه چطور بود؟",
+      "good": "خوب",
+      "neutral": "معمولی",
+      "bad": "بد",
+      "thankYou": "ممنون از بازخوردت!",
+      "submitError": "خطا در ثبت بازخورد"
     }
   },
   "language": {

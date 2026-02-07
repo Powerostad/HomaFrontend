@@ -464,6 +464,14 @@
       "average": "Average",
       "poor": "Poor",
       "terrible": "Terrible"
+    },
+    "inline": {
+      "title": "How was the result?",
+      "good": "Good",
+      "neutral": "Okay",
+      "bad": "Bad",
+      "thankYou": "Thanks for your feedback!",
+      "submitError": "Failed to submit feedback"
     }
   },
   "language": {

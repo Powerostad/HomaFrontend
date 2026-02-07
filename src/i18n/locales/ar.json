@@ -464,6 +464,14 @@
       "average": "متوسط",
       "poor": "ضعيف",
       "terrible": "سيء جداً"
+    },
+    "inline": {
+      "title": "كيف كانت النتيجة؟",
+      "good": "جيد",
+      "neutral": "عادي",
+      "bad": "سيء",
+      "thankYou": "شكراً على تقييمك!",
+      "submitError": "فشل في إرسال التقييم"
     }
   },
   "language": {
