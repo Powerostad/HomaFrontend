@@ -30,7 +30,6 @@ if (!isDev || isDevEnabled) {
     autocapture: true,
 
     // Session recording with privacy defaults
-    enable_recording_console_log: false,
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: '[data-ph-mask]',
