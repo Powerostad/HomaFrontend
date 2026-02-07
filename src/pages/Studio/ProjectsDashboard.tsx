@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -11,6 +11,7 @@ import { Header } from '../../components/Header';
 import { useStudio } from '../../context/StudioContext';
 import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
 import type { SessionListItem } from '@/services/studioService';
+import { trackStudioProjectsViewed, trackStudioProjectOpened } from '@/analytics/events';
 
 // Fallback projects for when no API sessions exist
 const FALLBACK_PROJECTS = [
@@ -60,10 +61,19 @@ export function StudioProjectsDashboard() {
   const navigate = useNavigate();
   const { sessions, isLoadingSessions, loadSessions, studioProjects } = useStudio();
 
+  const hasTrackedView = useRef(false);
+
   // Fetch sessions from API on mount
   useEffect(() => {
     loadSessions();
   }, [loadSessions]);
+
+  // Track page view once sessions are loaded
+  useEffect(() => {
+    if (isLoadingSessions || hasTrackedView.current) return;
+    hasTrackedView.current = true;
+    trackStudioProjectsViewed({ project_count: sessions.length });
+  }, [isLoadingSessions, sessions.length]);
 
   // Combine API sessions with legacy localStorage projects
   const displayProjects = sessions.length > 0
@@ -80,6 +90,8 @@ export function StudioProjectsDashboard() {
       : FALLBACK_PROJECTS;
 
   const handleProjectClick = (projectId: string, status: string) => {
+    trackStudioProjectOpened({ session_id: projectId, session_status: status });
+
     // If ready, navigate to result page
     if (status === 'ready') {
       navigate(`/studio/result/${projectId}`);
@@ -111,6 +123,7 @@ export function StudioProjectsDashboard() {
 
           <button
             onClick={() => navigate('/studio/upload')}
+            data-ph-capture-attribute-action="studio_new_project"
             className="group flex items-center gap-4 text-[var(--jet-black)] hover:text-accent transition-all"
           >
             <span className="text-[13px] font-bold tracking-[0.2em] uppercase border-b border-[var(--jet-black)] pb-1 group-hover:border-accent">طراحی جدید</span>

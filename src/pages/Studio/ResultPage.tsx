@@ -30,6 +30,12 @@ import { toast } from 'sonner';
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
 import { formatPriceFromRial } from '@/utils/formatters';
 import type { MatchedProduct } from '@/services/studioService';
+import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
+import {
+  trackStudioResultViewed,
+  trackStudioResultAction,
+  trackStudioProductClicked,
+} from '@/analytics/events';
 
 // --- Category Group type for grouped product display ---
 interface CategoryGroup {
@@ -156,6 +162,8 @@ export function StudioResultPage() {
       return;
     }
 
+    const currentSessionId = sessionId || activeSessionId || '';
+    trackStudioResultAction({ action: 'download', session_id: currentSessionId });
     setIsDownloading(true);
 
     const result = await prepareDownload({
@@ -286,6 +294,19 @@ export function StudioResultPage() {
     loadSessionData();
   }, [sessionId, activeSession, activeSessionId, loadSession, isInitialized, isLoggedIn]);
 
+  // Track result page view once session data is available
+  useEffect(() => {
+    if (!activeSession || !sessionId) return;
+    const currentSessionId = sessionId || activeSessionId;
+    if (!currentSessionId) return;
+
+    trackStudioResultViewed({
+      session_id: currentSessionId,
+      product_count: displayProducts.length,
+      category_count: categoryGroups.length,
+    });
+  }, [activeSession?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Only check login state after auth is initialized (prevents flash on refresh)
   useEffect(() => {
     if (!isInitialized) {
@@ -317,6 +338,17 @@ export function StudioResultPage() {
   // Handle product click — enrich with category-level AI reasoning
   const handleProductClick = (product: Product) => {
     const group = categoryGroups.find(g => g.products.some(p => p.id === product.id));
+    const isTopPick = group ? group.products[0]?.id === product.id : false;
+    const currentSessionId = sessionId || activeSessionId || '';
+
+    trackStudioProductClicked({
+      session_id: currentSessionId,
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category || '',
+      is_top_pick: isTopPick,
+    });
+
     setSelectedProduct({
       ...product,
       persianReason: product.persianReason || group?.fitReasoningFa || '',
@@ -458,6 +490,9 @@ export function StudioResultPage() {
         </div>
       </div>
 
+      {/* Inline Feedback Widget */}
+      <InlineFeedbackWidget flow="studio" sessionId={activeSessionId || sessionId} />
+
       <div className="flex flex-col gap-8 pt-10 border-t border-black/[0.06]">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
@@ -597,7 +632,11 @@ export function StudioResultPage() {
                 </button>
 */}
                 <button
-                  onClick={() => setIsSaved(!isSaved)}
+                  onClick={() => {
+                    if (!isSaved) trackStudioResultAction({ action: 'save', session_id: sessionId || activeSessionId || '' });
+                    setIsSaved(!isSaved);
+                  }}
+                  data-ph-capture-attribute-action="studio_save"
                   className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSaved ? 'bg-white border-white text-accent' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'}`}
                 >
                   <Heart size={20} className={isSaved ? 'fill-current' : ''} />
@@ -605,6 +644,7 @@ export function StudioResultPage() {
                 <button
                   onClick={handleDownload}
                   disabled={isDownloading}
+                  data-ph-capture-attribute-action="studio_download"
                   className={`w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90 ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
@@ -620,13 +660,19 @@ export function StudioResultPage() {
               {/* Toggle Before/After */}
               <div className="flex items-center gap-0.5 p-1 bg-black/25 backdrop-blur-3xl rounded-full border border-white/5 shadow-xl">
                 <button
-                  onClick={() => setShowOriginal(true)}
+                  onClick={() => {
+                    trackStudioResultAction({ action: 'before_after', session_id: sessionId || activeSessionId || '' });
+                    setShowOriginal(true);
+                  }}
                   className={`px-5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-500 ${showOriginal ? 'bg-white/95 text-black' : 'text-white/40 hover:text-white'}`}
                 >
                   {t('studio.result.before', 'قبل')}
                 </button>
                 <button
-                  onClick={() => setShowOriginal(false)}
+                  onClick={() => {
+                    trackStudioResultAction({ action: 'before_after', session_id: sessionId || activeSessionId || '' });
+                    setShowOriginal(false);
+                  }}
                   className={`px-5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-500 ${!showOriginal ? 'bg-white/95 text-black' : 'text-white/40 hover:text-white'}`}
                 >
                   {t('studio.result.after', 'بعد')}
@@ -634,7 +680,11 @@ export function StudioResultPage() {
               </div>
 
               <button
-                onClick={() => setIsFullScreen(true)}
+                onClick={() => {
+                  trackStudioResultAction({ action: 'fullscreen', session_id: sessionId || activeSessionId || '' });
+                  setIsFullScreen(true);
+                }}
+                data-ph-capture-attribute-action="studio_fullscreen"
                 className="flex items-center gap-3 px-8 h-[56px] bg-black/40 hover:bg-black/60 backdrop-blur-2xl rounded-full border border-white/20 text-white shadow-2xl transition-all active:scale-95 group/btn"
               >
                 <Maximize2 size={18} />
@@ -708,7 +758,10 @@ export function StudioResultPage() {
                   </button>
 */}
                   <button
-                    onClick={() => setIsSaved(!isSaved)}
+                    onClick={() => {
+                      if (!isSaved) trackStudioResultAction({ action: 'save', session_id: sessionId || activeSessionId || '' });
+                      setIsSaved(!isSaved);
+                    }}
                     className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSaved ? 'text-accent bg-white' : 'text-white'}`}
                   >
                     <Heart size={18} className={isSaved ? 'fill-current' : ''} />

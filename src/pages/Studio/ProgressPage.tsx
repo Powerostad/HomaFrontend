@@ -10,6 +10,11 @@ import { toast } from 'sonner';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchSessionStatus, type SessionStatus } from '@/services/studioService';
+import {
+  trackStudioProcessingStarted,
+  trackStudioProcessingCompleted,
+  trackStudioProcessingFailed,
+} from '@/analytics/events';
 
 /**
  * Map session status from API to UI phase index
@@ -76,6 +81,7 @@ export function StudioProgressPage() {
   const [error, setError] = useState<string | null>(null);
   const hasStartedPolling = useRef(false);
   const hasRecoveredRef = useRef(false);
+  const startTimeRef = useRef<number>(Date.now());
 
   // Navigation guard - warn user before leaving during processing
   useNavigationGuard(isPolling || isRecovering);
@@ -170,6 +176,8 @@ export function StudioProgressPage() {
     hasStartedPolling.current = true;
     setIsPolling(true);
     setError(null);
+    startTimeRef.current = Date.now();
+    trackStudioProcessingStarted({ session_id: activeSessionId });
 
     const startPolling = async () => {
       const result = await pollSession(activeSessionId, (status) => {
@@ -180,11 +188,17 @@ export function StudioProgressPage() {
       setIsPolling(false);
 
       if (result.success && result.session) {
+        trackStudioProcessingCompleted({
+          session_id: activeSessionId,
+          duration_ms: Date.now() - startTimeRef.current,
+        });
         // Success! Navigate to result page
         navigate(`/studio/result/${activeSessionId}`);
       } else {
+        const errorMessage = result.error || t('tryOn.errors.processingFailed');
+        trackStudioProcessingFailed({ session_id: activeSessionId, error_message: errorMessage });
         // Error - show retry option
-        setError(result.error || t('tryOn.errors.processingFailed'));
+        setError(errorMessage);
       }
     };
 

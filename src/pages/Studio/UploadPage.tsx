@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,6 +9,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useStudio } from '../../context/StudioContext';
+import {
+  trackStudioUploadViewed,
+  trackStudioFileSelected,
+  trackStudioPresetSelected,
+  trackStudioUploadConfirmed,
+} from '@/analytics/events';
 import { useAuth } from '../../context/AuthContext';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Header } from '../../components/Header';
@@ -35,6 +41,11 @@ export function StudioUploadPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingUploadAfterAuth, setPendingUploadAfterAuth] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Track page view on mount
+  useEffect(() => {
+    trackStudioUploadViewed();
+  }, []);
 
   const EXAMPLES = {
     good: {
@@ -85,6 +96,7 @@ export function StudioUploadPage() {
       }
 
       trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
+      trackStudioFileSelected({ file_size: file.size, file_type: file.type });
       setSelectedFile(file);
       setLocalSelectedFile(file);
       const reader = new FileReader();
@@ -111,6 +123,7 @@ export function StudioUploadPage() {
 
     // Track KPI for preset selection (distinct from manual upload)
     trackKPI('preset_selected', { presetId: preset.id, presetName: preset.name });
+    trackStudioPresetSelected({ preset_id: preset.id, preset_name: preset.name });
 
     // Fetch and convert to File
     const result = await fetchImageAsFile(
@@ -174,6 +187,8 @@ export function StudioUploadPage() {
     });
 
     if (result.success && result.sessionId) {
+      trackStudioUploadConfirmed({ session_id: result.sessionId });
+
       // Save sessionId to storage for recovery on page reload
       saveToStorage(STORAGE_KEYS.STUDIO_SESSION_ID, result.sessionId);
 
@@ -280,6 +295,7 @@ export function StudioUploadPage() {
                 key={preset.id}
                 className={`group cursor-pointer space-y-3 ${isLoadingPreset && loadingPresetId !== preset.id ? 'pointer-events-none opacity-50' : ''}`}
                 onClick={() => !isLoadingPreset && handlePresetSelect(preset)}
+                data-ph-capture-attribute-action="studio_preset"
               >
                 <div className="relative aspect-[4/5] bg-white overflow-hidden">
                   <ImageWithFallback src={preset.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -317,22 +333,24 @@ export function StudioUploadPage() {
             <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
               {/* Primary Actions: Side by Side Grid */}
               <div className="w-full grid grid-cols-2 gap-3">
-                <button 
+                <button
                     onClick={() => {
                       if (!ensureAuthenticated()) return;
                       fileInputRef.current?.click();
                     }}
+                    data-ph-capture-attribute-action="studio_take_photo"
                     className="h-14 bg-black text-white text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                     <Camera size={16} strokeWidth={1.5} />
                     <span>گرفتن عکس</span>
                 </button>
 
-                <button 
+                <button
                     onClick={() => {
                       if (!ensureAuthenticated()) return;
                       fileInputRef.current?.click();
                     }}
+                    data-ph-capture-attribute-action="studio_gallery"
                     className="h-14 bg-white border border-black/10 text-black text-[12px] font-medium uppercase tracking-[0.1em] hover:bg-black/[0.02] transition-all active:scale-[0.98] flex items-center justify-center"
                 >
                     <span>گالری</span>
