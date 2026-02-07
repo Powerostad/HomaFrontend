@@ -129,6 +129,11 @@
     "specifications": "Specifications",
     "reviews": "Reviews",
     "relatedProducts": "Related products",
+    "selectSize": "Select size",
+    "priceStartingFrom": "From {{price}} {{currency}}",
+    "priceRange": "From {{min}} to {{max}} {{currency}}",
+    "checkPriceOnWebsite": "Check price on seller's website",
+    "priceOnSellerSite": "Price on site",
     "categories": {
       "all": "All",
       "furniture": "Furniture",

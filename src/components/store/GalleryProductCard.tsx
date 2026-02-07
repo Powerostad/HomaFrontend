@@ -1,7 +1,7 @@
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Sparkles } from "lucide-react";
 import type { Product } from "../../types/product";
-import { formatPriceFromRial } from "../../utils/formatters";
+import { formatPriceFromRial, formatPriceStartingFrom } from "../../utils/formatters";
 
 interface GalleryProductCardProps {
   product: Product;
@@ -46,10 +46,18 @@ export function GalleryProductCard({ product, onTryOn }: GalleryProductCardProps
         
         {/* Price: Minimalist, Muted Grey */}
         <div className="flex items-center gap-1.5 mt-2 text-black/30">
-          <span className="text-[11px] md:text-[12px] font-bold uppercase tracking-tight">
-            {formatPriceFromRial(product.price ?? 0, false)}
-          </span>
-          <span className="text-[10px] md:text-[11px] font-medium opacity-60">تومان</span>
+          {product.priceRange ? (
+            <span className="text-[11px] md:text-[12px] font-bold uppercase tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+              {formatPriceStartingFrom(product.priceRange.min)}
+            </span>
+          ) : (
+            <>
+              <span className="text-[11px] md:text-[12px] font-bold uppercase tracking-tight">
+                {formatPriceFromRial(product.price ?? 0, false)}
+              </span>
+              <span className="text-[10px] md:text-[11px] font-medium opacity-60">تومان</span>
+            </>
+          )}
         </div>
 
         {/* Rating removed from grid as per spec */}

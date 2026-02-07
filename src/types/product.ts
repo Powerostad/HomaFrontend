@@ -45,6 +45,13 @@ export interface Product {
   extraDetails?: Record<string, string | string[]> | null;
   availableSizes?: string[];
   availableSizesDisplay?: string[];
+  sizePrices?: Record<string, number> | null;
+  sizePricesDisplay?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    hasSpecificPrice: boolean;
+  }>;
   externalLink?: string;  // External product purchase URL from backend
 }
 

@@ -51,6 +51,14 @@ export interface APIMatchedProduct {
   link?: string;
   available_sizes?: string[];
   available_sizes_display?: string[];
+  size_prices?: Record<string, number> | null;
+  size_prices_display?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    has_specific_price: boolean;
+  }>;
+  price_range?: { min: number; max: number } | null;
 }
 
 /**
@@ -180,6 +188,14 @@ export interface MatchedProduct {
   link?: string;
   availableSizes?: string[];
   availableSizesDisplay?: string[];
+  sizePrices?: Record<string, number> | null;
+  sizePricesDisplay?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    hasSpecificPrice: boolean;
+  }>;
+  priceRange?: { min: number; max: number } | null;
 }
 
 // =============================================================================
@@ -286,6 +302,14 @@ function transformMatchedProduct(apiProduct: APIMatchedProduct): MatchedProduct 
     link: apiProduct.link || '',
     availableSizes: apiProduct.available_sizes || [],
     availableSizesDisplay: apiProduct.available_sizes_display || [],
+    sizePrices: apiProduct.size_prices,
+    sizePricesDisplay: apiProduct.size_prices_display?.map(sp => ({
+      code: sp.code,
+      display: sp.display,
+      price: sp.price,
+      hasSpecificPrice: sp.has_specific_price,
+    })),
+    priceRange: apiProduct.price_range,
   };
 }
 

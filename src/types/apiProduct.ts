@@ -36,6 +36,14 @@ export interface BackendProduct {
   extra_details?: Record<string, string | string[]> | null;
   available_sizes?: string[];
   available_sizes_display?: string[];
+  size_prices?: Record<string, number> | null;
+  size_prices_display?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    has_specific_price: boolean;
+  }>;
+  price_range?: { min: number; max: number } | null;
   is_promoted?: boolean;
   created_at?: string;
 }
@@ -73,6 +81,14 @@ export interface APIProduct {
   extraDetails?: Record<string, string | string[]> | null;
   availableSizes?: string[];
   availableSizesDisplay?: string[];
+  sizePrices?: Record<string, number> | null;
+  sizePricesDisplay?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    hasSpecificPrice: boolean;
+  }>;
+  priceRange?: { min: number; max: number } | null;
   isPromoted?: boolean;
   createdAt?: string;
 }
@@ -185,6 +201,14 @@ export function transformBackendProduct(backendProduct: BackendProduct): APIProd
     extraDetails: backendProduct.extra_details,
     availableSizes: backendProduct.available_sizes,
     availableSizesDisplay: backendProduct.available_sizes_display,
+    sizePrices: backendProduct.size_prices,
+    sizePricesDisplay: backendProduct.size_prices_display?.map(sp => ({
+      code: sp.code,
+      display: sp.display,
+      price: sp.price,
+      hasSpecificPrice: sp.has_specific_price,
+    })),
+    priceRange: backendProduct.price_range,
     isPromoted: backendProduct.is_promoted,
     createdAt: backendProduct.created_at,
   };
@@ -219,6 +243,9 @@ export function apiProductToProduct(apiProduct: APIProduct): Product {
     extraDetails: apiProduct.extraDetails,
     availableSizes: apiProduct.availableSizes,
     availableSizesDisplay: apiProduct.availableSizesDisplay,
+    sizePrices: apiProduct.sizePrices,
+    sizePricesDisplay: apiProduct.sizePricesDisplay,
+    priceRange: apiProduct.priceRange ?? undefined,
     externalLink: apiProduct.externalLink,
   };
 }

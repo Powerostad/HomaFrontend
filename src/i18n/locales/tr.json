@@ -129,6 +129,11 @@
     "specifications": "Özellikler",
     "reviews": "Değerlendirmeler",
     "relatedProducts": "İlgili ürünler",
+    "selectSize": "Boyut seçin",
+    "priceStartingFrom": "{{price}} {{currency}} den başlayan",
+    "priceRange": "{{min}} ile {{max}} {{currency}} arası",
+    "checkPriceOnWebsite": "Satıcı sitesinde fiyatı görün",
+    "priceOnSellerSite": "Sitedeki fiyat",
     "categories": {
       "all": "Tümü",
       "furniture": "Mobilya",

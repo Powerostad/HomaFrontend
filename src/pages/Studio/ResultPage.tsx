@@ -28,7 +28,7 @@ import { HomaLoader } from '../../components/HomaLoader';
 import { toast } from 'sonner';
 // import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
-import { formatPriceFromRial } from '@/utils/formatters';
+import { formatPriceFromRial, formatPriceStartingFrom } from '@/utils/formatters';
 import type { MatchedProduct } from '@/services/studioService';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import {
@@ -71,6 +71,9 @@ function matchedProductToUIProduct(product: MatchedProduct, index: number): Prod
     uniqueLink: product.uniqueLink,
     availableSizes: product.availableSizes,
     availableSizesDisplay: product.availableSizesDisplay,
+    sizePrices: product.sizePrices,
+    sizePricesDisplay: product.sizePricesDisplay,
+    priceRange: product.priceRange,
     matchScore: product.matchScore,
   };
 }
@@ -431,12 +434,20 @@ export function StudioResultPage() {
                         </div>
 
                         <div className="flex items-baseline gap-1.5 mt-2">
-                          <span className="text-[18px] font-bold text-black tabular-nums tracking-tighter">
-                            {formatPriceFromRial(topPick.price, false)}
-                          </span>
-                          <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                            {t('common.toman', 'تومان')}
-                          </span>
+                          {topPick.priceRange ? (
+                            <span className="text-[15px] font-bold text-black tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                              {formatPriceStartingFrom(topPick.priceRange.min)}
+                            </span>
+                          ) : (
+                            <>
+                              <span className="text-[18px] font-bold text-black tabular-nums tracking-tighter">
+                                {formatPriceFromRial(topPick.price, false)}
+                              </span>
+                              <span className="text-[9px] text-black/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                {t('common.toman', 'تومان')}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -473,12 +484,20 @@ export function StudioResultPage() {
                           {alt.name}
                         </h4>
                         <div className="flex items-baseline gap-1 mt-0.5">
-                          <span className="text-[13px] font-bold text-black tabular-nums tracking-tighter">
-                            {formatPriceFromRial(alt.price, false)}
-                          </span>
-                          <span className="text-[8px] text-black/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                            {t('common.toman', 'تومان')}
-                          </span>
+                          {alt.priceRange ? (
+                            <span className="text-[11px] font-bold text-black tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                              {formatPriceStartingFrom(alt.priceRange.min)}
+                            </span>
+                          ) : (
+                            <>
+                              <span className="text-[13px] font-bold text-black tabular-nums tracking-tighter">
+                                {formatPriceFromRial(alt.price, false)}
+                              </span>
+                              <span className="text-[8px] text-black/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                {t('common.toman', 'تومان')}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}

@@ -195,3 +195,40 @@ export function formatRelativeTime(input: number | string): string {
   }
   return t('time.justNow', 'همین الان');
 }
+
+/**
+ * Format price range from Rial (backend) to Toman (display)
+ *
+ * @param range - Object with min and max in Rials
+ * @returns Formatted range string like "از ۱,۵۰۰,۰۰۰ تا ۳,۰۰۰,۰۰۰ تومان"
+ */
+export function formatPriceRangeFromRial(range: { min: number; max: number }): string {
+  const t = i18n.t.bind(i18n);
+  const minFormatted = formatPriceFromRial(range.min, false);
+  const maxFormatted = formatPriceFromRial(range.max, false);
+  const currency = t('common.toman', 'تومان');
+  if (range.min === range.max) {
+    return `${minFormatted} ${currency}`;
+  }
+  return t('product.priceRange', 'از {{min}} تا {{max}} {{currency}}', {
+    min: minFormatted,
+    max: maxFormatted,
+    currency,
+  });
+}
+
+/**
+ * Format "starting from" price for product cards
+ *
+ * @param minPriceInRials - Minimum price in Rials
+ * @returns Formatted string like "از ۱,۵۰۰,۰۰۰ تومان"
+ */
+export function formatPriceStartingFrom(minPriceInRials: number): string {
+  const t = i18n.t.bind(i18n);
+  const formatted = formatPriceFromRial(minPriceInRials, false);
+  const currency = t('common.toman', 'تومان');
+  return t('product.priceStartingFrom', 'از {{price}} {{currency}}', {
+    price: formatted,
+    currency,
+  });
+}

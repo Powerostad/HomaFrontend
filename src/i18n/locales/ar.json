@@ -129,6 +129,11 @@
     "specifications": "المواصفات",
     "reviews": "التقييمات",
     "relatedProducts": "منتجات ذات صلة",
+    "selectSize": "اختر المقاس",
+    "priceStartingFrom": "من {{price}} {{currency}}",
+    "priceRange": "من {{min}} إلى {{max}} {{currency}}",
+    "checkPriceOnWebsite": "عرض السعر على موقع البائع",
+    "priceOnSellerSite": "السعر على الموقع",
     "categories": {
       "all": "الكل",
       "furniture": "أثاث",

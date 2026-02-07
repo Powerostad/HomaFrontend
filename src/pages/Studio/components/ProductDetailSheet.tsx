@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   X,
   Check,
@@ -21,6 +21,7 @@ import { AuthenticatedImage } from '../../../components/figma/AuthenticatedImage
 import { BuyButton } from '../../../components/BuyButton';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { formatPriceFromRial } from '../../../utils/formatters';
 
 // --- Types ---
@@ -42,6 +43,14 @@ export interface Product {
   uniqueLink?: string;
   availableSizes?: string[];
   availableSizesDisplay?: string[];
+  sizePrices?: Record<string, number> | null;
+  sizePricesDisplay?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    hasSpecificPrice: boolean;
+  }>;
+  priceRange?: { min: number; max: number } | null;
   matchScore?: number;
   isPromoted?: boolean;
 }
@@ -72,6 +81,8 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
   const [activeTab, setActiveTab] = useState('details');
   const [isScrolling, setIsScrolling] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Refs for ScrollSpy
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,9 +93,18 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
     setReplacingId(null);
     setIsFavorite(false);
     setActiveTab('details');
+    setSelectedSize(null);
   }, [product, isOpen]);
 
   if (!product) return null;
+
+  // Computed price based on selected size
+  const { displayPrice, selectedSizeHasPrice } = useMemo(() => {
+    if (selectedSize && product.sizePrices && product.sizePrices[selectedSize] != null) {
+      return { displayPrice: product.sizePrices[selectedSize], selectedSizeHasPrice: true };
+    }
+    return { displayPrice: product.price, selectedSizeHasPrice: !selectedSize };
+  }, [selectedSize, product.sizePrices, product.price]);
 
   // Use passed alternatives or empty array, add labels
   const alternatives: ProductAlternative[] = (propAlternatives || []).map((alt, index) => ({
@@ -255,12 +275,25 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
                                 {product.name}
                             </h2>
                             <div className="flex flex-col items-end">
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-[22px] font-bold text-black tabular-nums">
-                                        {formatPriceFromRial(product.price, false)}
-                                    </span>
-                                    <span className="text-[12px] text-black/40 font-bold">تومان</span>
-                                </div>
+                                {selectedSizeHasPrice ? (
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-[22px] font-bold text-black tabular-nums">
+                                            {formatPriceFromRial(displayPrice, false)}
+                                        </span>
+                                        <span className="text-[12px] text-black/40 font-bold">تومان</span>
+                                    </div>
+                                ) : product.link ? (
+                                    <a href={product.link} target="_blank" rel="noopener noreferrer" className="text-[13px] font-bold text-brand-primary hover:underline">
+                                        {t('product.checkPriceOnWebsite', 'مشاهده قیمت در سایت فروشنده')}
+                                    </a>
+                                ) : (
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-[22px] font-bold text-black tabular-nums">
+                                            {formatPriceFromRial(displayPrice, false)}
+                                        </span>
+                                        <span className="text-[12px] text-black/40 font-bold">تومان</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1 mt-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-feedback-good" />
                                     <span className="text-[11px] text-black/40 font-medium">موجود در انبار</span>
@@ -284,12 +317,40 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
                                 <span className="text-[12px] text-black font-medium tabular-nums">{(product.extraDetails as Record<string, string>).dimensions}</span>
                             </div>
                         )}
-                        {product.availableSizesDisplay && product.availableSizesDisplay.length > 0 && (
+                        {product.sizePricesDisplay && product.sizePricesDisplay.length > 0 ? (
+                            <div className="space-y-3">
+                                <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">{t('product.selectSize', 'انتخاب سایز')}</span>
+                                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                                    {product.sizePricesDisplay.map((sizeInfo) => (
+                                        <button
+                                            key={sizeInfo.code}
+                                            onClick={() => setSelectedSize(selectedSize === sizeInfo.code ? null : sizeInfo.code)}
+                                            className={`flex-shrink-0 px-3 py-2 rounded-lg border transition-all text-center min-w-[80px] ${
+                                                selectedSize === sizeInfo.code
+                                                    ? 'bg-black text-white border-black'
+                                                    : 'bg-white text-black border-black/10 hover:border-black/30'
+                                            }`}
+                                        >
+                                            <div className="text-[12px] font-bold">{sizeInfo.display}</div>
+                                            {sizeInfo.hasSpecificPrice && sizeInfo.price != null ? (
+                                                <div className={`text-[10px] mt-0.5 ${selectedSize === sizeInfo.code ? 'text-white/70' : 'text-black/40'}`}>
+                                                    {formatPriceFromRial(sizeInfo.price, false)}
+                                                </div>
+                                            ) : (
+                                                <div className={`text-[9px] mt-0.5 ${selectedSize === sizeInfo.code ? 'text-white/70' : 'text-black/30'}`}>
+                                                    {t('product.priceOnSellerSite', 'قیمت در سایت')}
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : product.availableSizesDisplay && product.availableSizesDisplay.length > 0 ? (
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">سایزهای موجود</span>
                                 <span className="text-[12px] text-black font-medium">{product.availableSizesDisplay.join('، ')}</span>
                             </div>
-                        )}
+                        ) : null}
                         {(product.extraDetails as Record<string, string> | undefined)?.weight && (
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-black/40 font-bold uppercase tracking-[0.15em]">وزن تقریبی</span>
@@ -499,10 +560,25 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-1.5">
                     <span className="text-[10px] text-black/30 font-bold uppercase tracking-widest">قیمت:</span>
-                    <span className="text-[18px] font-bold text-black tabular-nums">
-                       {formatPriceFromRial(product.price, false)}
-                    </span>
-                    <span className="text-[10px] text-black/40 font-bold">تومان</span>
+                    {selectedSizeHasPrice ? (
+                        <>
+                            <span className="text-[18px] font-bold text-black tabular-nums">
+                               {formatPriceFromRial(displayPrice, false)}
+                            </span>
+                            <span className="text-[10px] text-black/40 font-bold">تومان</span>
+                        </>
+                    ) : product.link ? (
+                        <a href={product.link} target="_blank" rel="noopener noreferrer" className="text-[13px] font-bold text-brand-primary hover:underline">
+                            {t('product.checkPriceOnWebsite', 'مشاهده قیمت در سایت فروشنده')}
+                        </a>
+                    ) : (
+                        <>
+                            <span className="text-[18px] font-bold text-black tabular-nums">
+                               {formatPriceFromRial(displayPrice, false)}
+                            </span>
+                            <span className="text-[10px] text-black/40 font-bold">تومان</span>
+                        </>
+                    )}
                 </div>
                 
                 <div className="flex gap-1">

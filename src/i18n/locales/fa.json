@@ -129,6 +129,11 @@
     "specifications": "مشخصات",
     "reviews": "نظرات",
     "relatedProducts": "محصولات مرتبط",
+    "selectSize": "انتخاب سایز",
+    "priceStartingFrom": "از {{price}} {{currency}}",
+    "priceRange": "از {{min}} تا {{max}} {{currency}}",
+    "checkPriceOnWebsite": "مشاهده قیمت در سایت فروشنده",
+    "priceOnSellerSite": "قیمت در سایت",
     "categories": {
       "all": "همه",
       "furniture": "مبلمان",
