@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /upload
+Disallow: /precheck
+Disallow: /processing
+Disallow: /confirmation
+Disallow: /result
+Disallow: /error
+Disallow: /product-not-found
+Disallow: /account/
+Disallow: /login
+
+Sitemap: https://myhoma.ir/sitemap.xml
