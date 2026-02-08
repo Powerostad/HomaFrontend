@@ -5,23 +5,45 @@ const ERROR_IMG_SRC =
 
 export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [didError, setDidError] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const handleError = () => {
     setDidError(true)
   }
 
+  const handleLoad = () => {
+    setIsLoaded(true)
+  }
+
   const { src, alt, style, className, ...rest } = props
 
-  return didError ? (
-    <div
-      className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
-      style={style}
-    >
-      <div className="flex items-center justify-center w-full h-full">
-        <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
+  if (didError) {
+    return (
+      <div
+        className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
+        style={style}
+      >
+        <div className="flex items-center justify-center w-full h-full">
+          <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
+        </div>
       </div>
+    )
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-black/[0.03] animate-pulse" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className ?? ''} transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        style={style}
+        {...rest}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
     </div>
-  ) : (
-    <img src={src} alt={alt} className={className} style={style} {...rest} onError={handleError} />
   )
 }

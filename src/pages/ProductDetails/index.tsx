@@ -183,13 +183,13 @@ export function ProductDetailsPage() {
         ]}
       />
 
-      <main className="relative z-10 flex-1 w-full max-w-[1440px] mx-auto px-0 md:px-16 pt-0 md:pt-10 pb-32">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-16">
-          
+      <main className="relative z-10 flex-1 w-full max-w-[1440px] mx-auto px-0 lg:px-16 pt-0 lg:pt-10 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-16">
+
           {/* IMAGE SECTION - Vertical Gallery + Main */}
-          <div className="md:col-span-8 flex flex-row-reverse gap-4">
+          <div className="lg:col-span-7 flex flex-row-reverse gap-4">
             {/* Main Image */}
-            <div className="flex-1 relative aspect-square overflow-hidden bg-black/[0.01]">
+            <div className="flex-1 relative aspect-square max-h-[70vh] overflow-hidden bg-black/[0.01]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeImageIdx}
@@ -202,7 +202,7 @@ export function ProductDetailsPage() {
                   <ImageWithFallback
                     src={product.images?.[activeImageIdx] || product.thumbnail}
                     alt={product.name}
-                    className="w-full h-full object-cover aspect-square"
+                    className="w-full h-full object-cover"
                   />
                 </motion.div>
               </AnimatePresence>
@@ -210,7 +210,7 @@ export function ProductDetailsPage() {
 
             {/* Vertical Thumbnails - only show if multiple images */}
             {product.images && product.images.length > 1 && (
-              <div className="hidden md:flex flex-col gap-2 shrink-0">
+              <div className="hidden lg:flex flex-col gap-2 shrink-0">
                 {product.images.map((imgSrc, i) => (
                   <button
                     key={i}
@@ -227,8 +227,8 @@ export function ProductDetailsPage() {
           </div>
 
           {/* EDITORIAL INFO PANEL */}
-          <div className="md:col-span-4 px-6 md:px-0 mt-8 md:mt-0">
-            <div className="flex flex-col gap-6 md:sticky md:top-32">
+          <div className="lg:col-span-5 px-6 lg:px-0 mt-8 lg:mt-0">
+            <div className="flex flex-col gap-6 lg:sticky lg:top-32">
               
               {/* Product Heading */}
               <div className="space-y-4">
@@ -239,11 +239,11 @@ export function ProductDetailsPage() {
                 )}
 
                 <div className="space-y-2">
-                  <h1 className="text-[22px] md:text-[24px] font-bold text-black leading-tight tracking-wide">
+                  <h1 className="text-[22px] lg:text-[24px] font-bold text-black leading-tight tracking-wide">
                     {product.name}
                   </h1>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[16px] md:text-[18px] font-bold text-black">
+                    <span className="text-[16px] lg:text-[18px] font-bold text-black">
                       {product.price ? formatPriceFromRial(product.price) : '۰ تومان'}
                     </span>
                   </div>
@@ -262,12 +262,12 @@ export function ProductDetailsPage() {
               {/* Action Buttons */}
               <div className="pt-8 space-y-3">
                 <div className="flex flex-col gap-3">
-                  <Button 
+                  <Button
                     onClick={handleTestDecor}
-                    className="w-full h-14 rounded-none bg-black text-white hover:bg-black/90 text-[14px] font-bold tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-2xl"
+                    className="w-full h-14 rounded-none bg-black text-white hover:bg-black/90 text-[12px] lg:text-[14px] font-bold tracking-wide lg:tracking-[0.2em] transition-all flex items-center justify-center gap-2 lg:gap-3 shadow-2xl"
                   >
-                    <Sparkles size={20} />
-                    امتحانش کن در فضای خودت (AI Try-On)
+                    <Sparkles size={18} className="shrink-0" />
+                    <span className="truncate">امتحانش کن در فضای خودت (AI Try-On)</span>
                   </Button>
                   <div className="flex gap-2 w-full">
                     <Button 
@@ -354,7 +354,7 @@ export function ProductDetailsPage() {
       </main>
 
       {/* STICKY MOBILE CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-black/[0.02] z-[120] md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-black/[0.02] z-[120] lg:hidden">
         <Button 
           onClick={handleTestDecor}
           className="w-full h-12 rounded-none bg-black text-white text-[13px] font-bold active:scale-[0.98]"

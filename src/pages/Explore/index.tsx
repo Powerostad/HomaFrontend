@@ -303,11 +303,13 @@ export function ExplorePage() {
                   {/* Image Tile - Editorial Ratio */}
                   <div className="relative aspect-[4/5] w-full rounded-none overflow-hidden bg-black/[0.02]">
                     {shop.logoUrl ? (
-                      <ImageWithFallback
-                        src={shop.logoUrl}
-                        alt={shop.name}
-                        className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-[1.02]"
-                      />
+                      <div className="w-full h-full flex items-center justify-center p-6 bg-black/[0.02]">
+                        <ImageWithFallback
+                          src={shop.logoUrl}
+                          alt={shop.name}
+                          className="max-w-full max-h-full object-contain grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-[1.02]"
+                        />
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-black/[0.03]">
                         <StoreIcon size={48} className="text-black/10" strokeWidth={1} />
@@ -401,10 +403,12 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
       {/* Image Section */}
       <div className="absolute inset-0 md:relative md:w-1/2 overflow-hidden z-10">
         {shop.logoUrl ? (
-          <ImageWithFallback
-            src={shop.logoUrl}
-            className="w-full h-full object-cover grayscale-[0.2] md:grayscale-[0.1] group-hover:grayscale-0 transition-transform duration-[2000ms] group-hover:scale-[1.05]"
-          />
+          <div className="w-full h-full flex items-center justify-center p-8 bg-black/[0.02]">
+            <ImageWithFallback
+              src={shop.logoUrl}
+              className="max-w-full max-h-full object-contain grayscale-[0.2] md:grayscale-[0.1] group-hover:grayscale-0 transition-transform duration-[2000ms] group-hover:scale-[1.05]"
+            />
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black/[0.03]">
             <StoreIcon size={64} className="text-black/10" strokeWidth={1} />

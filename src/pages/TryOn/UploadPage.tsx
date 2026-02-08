@@ -3,11 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../context/AppProviders';
 import { useUpload, useProduct } from '../../context/AppProviders';
+import { useAuth } from '../../context/AuthContext';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Header } from '../../components/Header';
 import { ContextBar } from '../../components/ContextBar';
+import { AuthModal } from '../../components/AuthModal';
 import { SizeSelectionModal, type SizeOption } from '../../components/SizeSelectionModal';
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
+import { getStoredTokens } from '../../utils/apiClient';
 import { fetchProduct } from '../../services/productService';
 import { apiProductToProduct } from '../../types/apiProduct';
 import { trackTryOnUploadViewed, trackFileSelected, trackSizeSelected } from '../../analytics/events';
@@ -66,7 +69,11 @@ export function TryOnUploadPage() {
   const { trackKPI } = useSession();
   const { setSelectedFile, setSelectedSize, clearUpload } = useUpload();
   const { product, setProduct } = useProduct();
+  const { isLoggedIn, login } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auth modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Size selection modal state
   const [showSizeModal, setShowSizeModal] = useState(false);
@@ -75,6 +82,19 @@ export function TryOnUploadPage() {
 
   // Product loading state - prevents file selection before product is loaded
   const [isProductLoading, setIsProductLoading] = useState(true);
+
+  const hasValidAuth = () => {
+    const tokens = getStoredTokens();
+    return isLoggedIn && !!tokens?.access;
+  };
+
+  const ensureAuthenticated = () => {
+    if (!hasValidAuth()) {
+      setShowAuthModal(true);
+      return false;
+    }
+    return true;
+  };
 
   /**
    * Clear all upload state when starting a new try-on session.
@@ -151,13 +171,13 @@ export function TryOnUploadPage() {
   const EXAMPLES = {
     good: {
       label: t('tryOn.upload.goodExample'),
-      image: 'https://images.unsplash.com/photo-1581209410127-8211e90da024?q=80&w=800',
+      image: '/images/studio/example-good.webp',
       caption: t('tryOn.upload.goodCaption')
     },
     bad: {
       label: t('tryOn.upload.badExample'),
       reason: t('tryOn.upload.badReason'),
-      image: 'https://images.unsplash.com/photo-1715366843673-f21a95ec11cc?q=80&w=800',
+      image: '/images/studio/example-bad.webp',
       caption: t('tryOn.upload.badCaption')
     }
   };
@@ -304,43 +324,51 @@ export function TryOnUploadPage() {
       </main>
 
       {/* 5. STICKY BOTTOM ACTION BAR - Zara Home Hierarchy */}
-      <div className="fixed bottom-0 left-0 right-0 py-6 px-6 md:px-16 bg-[#FDFDFB]/95 backdrop-blur-md border-t border-black/[0.03] z-[120]">
-        <div className="max-w-[1440px] mx-auto flex flex-col items-center gap-4">
-          
-          <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
-            {/* Primary Actions: Side by Side Grid */}
-            <div className="w-full grid grid-cols-2 gap-3">
-              <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isProductLoading}
-                  data-ph-capture-attribute-action="take_photo"
-                  className={`h-12 text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
-                    isProductLoading
-                      ? 'bg-black/50 text-white/70 cursor-not-allowed'
-                      : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
-                  }`}
-              >
-                  <span>{isProductLoading ? t('common.loading') : t('tryOn.upload.takePhoto')}</span>
-              </button>
+      {!showAuthModal && (
+        <div className="fixed bottom-0 left-0 right-0 py-6 px-6 md:px-16 bg-[#FDFDFB]/95 backdrop-blur-md border-t border-black/[0.03] z-[120]">
+          <div className="max-w-[1440px] mx-auto flex flex-col items-center gap-4">
 
-              <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isProductLoading}
-                  data-ph-capture-attribute-action="select_gallery"
-                  className={`h-12 border text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
-                    isProductLoading
-                      ? 'bg-white/50 border-black/5 text-black/50 cursor-not-allowed'
-                      : 'bg-white border-black/10 text-black hover:bg-black/[0.02] active:scale-[0.98]'
-                  }`}
-              >
-                  <span>{isProductLoading ? t('common.wait') : t('tryOn.upload.gallery')}</span>
-              </button>
+            <div className="w-full max-w-[420px] flex flex-col items-center gap-4">
+              {/* Primary Actions: Side by Side Grid */}
+              <div className="w-full grid grid-cols-2 gap-3">
+                <button
+                    onClick={() => {
+                      if (!ensureAuthenticated()) return;
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={isProductLoading}
+                    data-ph-capture-attribute-action="take_photo"
+                    className={`h-12 text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
+                      isProductLoading
+                        ? 'bg-black/50 text-white/70 cursor-not-allowed'
+                        : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
+                    }`}
+                >
+                    <span>{isProductLoading ? t('common.loading') : t('tryOn.upload.takePhoto')}</span>
+                </button>
+
+                <button
+                    onClick={() => {
+                      if (!ensureAuthenticated()) return;
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={isProductLoading}
+                    data-ph-capture-attribute-action="select_gallery"
+                    className={`h-12 border text-[12px] font-medium uppercase tracking-[0.1em] transition-all flex items-center justify-center ${
+                      isProductLoading
+                        ? 'bg-white/50 border-black/5 text-black/50 cursor-not-allowed'
+                        : 'bg-white border-black/10 text-black hover:bg-black/[0.02] active:scale-[0.98]'
+                    }`}
+                >
+                    <span>{isProductLoading ? t('common.wait') : t('tryOn.upload.gallery')}</span>
+                </button>
+              </div>
+
+              {/* Tertiary: Minimal Text Link removed as requested */}
             </div>
-
-            {/* Tertiary: Minimal Text Link removed as requested */}
           </div>
         </div>
-      </div>
+      )}
 
       <input
         type="file"
@@ -357,6 +385,16 @@ export function TryOnUploadPage() {
         productName={product?.name}
         onSelect={handleSizeSelect}
         onClose={handleSizeModalClose}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(user, tokens) => {
+          login(user, tokens);
+          setShowAuthModal(false);
+        }}
       />
     </div>
   );

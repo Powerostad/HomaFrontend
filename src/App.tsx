@@ -39,8 +39,6 @@ import { TryOnResultPage } from "./pages/TryOn/ResultPage";
 import AccountGalleryPage from "./pages/Account/GalleryPage";
 import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
 
-// Auth
-import { LoginPage } from "./pages/Auth/LoginPage";
 
 // Loading Component - Now using HOMA Loader
 const PageLoader = () => <HomaLoader />;
@@ -80,12 +78,12 @@ export default function App() {
               <RouterRoute path="studio/result/:jobId" element={<StudioResultPage />} />
               {/* Studio Projects - requires login */}
               <RouterRoute path="studio/projects" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <StudioProjectsDashboard />
                 </ProtectedRoute>
               } />
               <RouterRoute path="studio/project/:projectId" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <StudioProjectDetailsPage />
                 </ProtectedRoute>
               } />
@@ -106,25 +104,24 @@ export default function App() {
               <RouterRoute path="try-on/progress" element={<Navigate to="/explore" replace />} />
               <RouterRoute path="try-on/result" element={<Navigate to="/explore" replace />} />
 
-              {/* Account & User Space - Protected with redirect */}
-              <RouterRoute path="login" element={<LoginPage />} />
+              {/* Account & User Space - Protected with modal */}
               <RouterRoute path="account/gallery" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <AccountGalleryPage />
                 </ProtectedRoute>
               } />
               <RouterRoute path="account/gallery/:id" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <AccountGalleryDetailPage />
                 </ProtectedRoute>
               } />
               <RouterRoute path="account/orders" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <div className="p-20 text-center">صفحه سفارش‌ها (بزودی)</div>
                 </ProtectedRoute>
               } />
               <RouterRoute path="account/settings" element={
-                <ProtectedRoute fallback="redirect" redirectTo="/login">
+                <ProtectedRoute fallback="modal">
                   <div className="p-20 text-center">تنظیمات حساب (بزودی)</div>
                 </ProtectedRoute>
               } />
