@@ -339,7 +339,7 @@
     "approved": "Onaylandı",
     "viewOriginal": "Orijinal görüntüyü görüntüle",
     "deleteConfirm": "Bu görüntüyü silmek istediğinize emin misiniz?",
-    "subtitle": "Tüm Try-On sonuçlarınız bir bakışta",
+    "subtitle": "Tüm sonuçlarınız bir bakışta",
     "pinned": "Sabitlenenlere eklendi",
     "unpinned": "Sabitlenenlerden kaldırıldı",
     "sections": {
@@ -348,12 +348,41 @@
     },
     "emptyTryOn": "Henüz deneme görüntüsü yok",
     "emptyStudio": "Henüz stüdyo tasarımı yok",
+    "errorTitle": "Galeri yükleme hatası",
+    "errorDescription": "Galeri yüklenirken bir sorun oluştu. Lütfen tekrar deneyin.",
     "loadError": "Galeri yükleme hatası",
     "deleteError": "Görüntü silme hatası",
     "success": {
       "submitted": "Görüntünüz galeriye gönderildi",
       "deleted": "Görüntü silindi"
+    },
+    "detail": {
+      "backToGallery": "Galeriye dön",
+      "fromMyGallery": "Galerimden",
+      "usedProduct": "Kullanılan ürün",
+      "usedInTryOn": "Denenmiş",
+      "fullView": "Tam görünüm",
+      "yourScore": "Puanınız",
+      "loadError": "Yükleme hatası",
+      "loadErrorDescription": "Bu öğe yüklenirken bir sorun oluştu. Lütfen tekrar deneyin.",
+      "linkCopied": "Bağlantı kopyalandı",
+      "preparingDownload": "İndirme hazırlanıyor...",
+      "downloadStarted": "İndirme başladı",
+      "deleteConfirm": "Bu görüntüyü silmek istediğinize emin misiniz?",
+      "deleteSuccess": "Görüntü başarıyla silindi",
+      "shareLinkCopied": "Paylaşım bağlantısı kopyalandı"
     }
+  },
+  "shared": {
+    "tryItYourself": "Bu ürünü odanızda görün",
+    "designYourSpace": "Kendi alanınızı tasarlayın",
+    "invalidLink": "Bu bağlantı geçerli değil",
+    "invalidLinkDescription": "Bağlantı mevcut değil veya kaldırılmış",
+    "goHome": "Ana sayfaya git",
+    "sharedBy": "Paylaşan",
+    "products": "ürün",
+    "showAlternatives": "Alternatifleri göster",
+    "hideAlternatives": "Alternatifleri gizle"
   },
   "account": {
     "title": "Hesap",

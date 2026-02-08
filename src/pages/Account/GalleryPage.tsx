@@ -8,7 +8,7 @@ import { ResultCard } from '../../components/account/ResultCard';
 import { EmptyGallery } from '../../components/account/EmptyGallery';
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
-import { fetchGallery, togglePinItem } from '@/services/galleryService';
+import { fetchGallery, togglePinItem, type GalleryTab } from '@/services/galleryService';
 import { toResultCardData, type GalleryItem, type ResultCardData } from '@/types/gallery';
 import { formatRelativeTime } from '@/utils/formatters';
 
@@ -74,7 +74,7 @@ function ErrorState({ onRetry, isRetrying, t }: ErrorStateProps) {
 export default function GalleryPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'all' | 'pinned'>('all');
+  const [activeTab, setActiveTab] = useState<GalleryTab>('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // API state
@@ -82,42 +82,73 @@ export default function GalleryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   // ==========================================================================
   // Load gallery data
   // ==========================================================================
-  const loadGallery = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const loadGallery = useCallback(async (tab: GalleryTab, pageNum: number, append: boolean = false) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setError(null);
+    }
 
     try {
-      const result = await fetchGallery();
+      const result = await fetchGallery(tab, pageNum);
 
       if (result.success && result.data) {
-        setItems(result.data);
+        if (append) {
+          setItems(prev => [...prev, ...result.data!]);
+        } else {
+          setItems(result.data);
+        }
+        setHasMore(result.hasMore ?? false);
       } else {
-        setError(result.error || t('gallery.errorTitle'));
+        if (!append) {
+          setError(result.error || t('gallery.errorTitle'));
+        }
       }
     } catch {
-      setError(t('errors.networkError'));
+      if (!append) {
+        setError(t('errors.networkError'));
+      }
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   }, [t]);
 
   // Load on mount
   useEffect(() => {
-    loadGallery();
-  }, [loadGallery]);
+    loadGallery(activeTab, 1);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==========================================================================
-  // Filter items based on active tab
+  // Tab change handler
   // ==========================================================================
-  const filteredItems = activeTab === 'all'
-    ? items
-    : items.filter((item) => item.isPinned);
+  const handleTabChange = (tab: GalleryTab) => {
+    setActiveTab(tab);
+    setPage(1);
+    setItems([]);
+    loadGallery(tab, 1);
+  };
+
+  // ==========================================================================
+  // Load more handler
+  // ==========================================================================
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadGallery(activeTab, nextPage, true);
+  };
 
   // Convert to ResultCardData format for display
-  const displayItems: ResultCardData[] = filteredItems.map((item) =>
+  const displayItems: ResultCardData[] = items.map((item) =>
     toResultCardData(item, formatRelativeTime)
   );
 
@@ -157,6 +188,15 @@ export default function GalleryPage() {
   };
 
   // ==========================================================================
+  // Tab config
+  // ==========================================================================
+  const tabs: { key: GalleryTab; label: string }[] = [
+    { key: 'all', label: t('common.all') },
+    { key: 'tryon', label: 'Try-On' },
+    { key: 'studio', label: t('gallery.sections.studio') },
+  ];
+
+  // ==========================================================================
   // Render
   // ==========================================================================
   return (
@@ -169,24 +209,21 @@ export default function GalleryPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-[34px] font-bold text-foreground">{t('gallery.myGallery')}</h1>
-            <p className="text-[15px] text-muted-foreground">{t('gallery.subtitle', 'تمامی نتایج Try-On شما در یک نگاه')}</p>
+            <p className="text-[15px] text-muted-foreground">{t('gallery.subtitle')}</p>
           </div>
 
-          {/* Tabs - Only show if we have items */}
-          {!isLoading && !error && items.length > 0 && (
+          {/* Tabs */}
+          {!isLoading && !error && (
             <div className="flex items-center p-1.5 bg-secondary/50 backdrop-blur-md rounded-full border border-border">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === 'all' ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                {t('common.all')}
-              </button>
-              <button
-                onClick={() => setActiveTab('pinned')}
-                className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === 'pinned' ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                {t('gallery.pinnedTab')}
-              </button>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === tab.key ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -196,33 +233,35 @@ export default function GalleryPage() {
           {isLoading ? (
             <GallerySkeleton />
           ) : error ? (
-            <ErrorState onRetry={loadGallery} isRetrying={isLoading} t={t} />
+            <ErrorState onRetry={() => loadGallery(activeTab, 1)} isRetrying={isLoading} t={t} />
           ) : displayItems.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-              {displayItems.map((result) => (
-                <ResultCard
-                  key={result.id}
-                  result={result}
-                  onDelete={handleDelete}
-                  onShare={handleShare}
-                  onTogglePin={handleTogglePin}
-                  onClick={handleCardClick}
-                />
-              ))}
-            </div>
-          ) : activeTab === 'pinned' && items.length > 0 ? (
-            // Show message when no pinned items but items exist
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-4">
-              <p className="text-[16px] text-muted-foreground">
-                {t('gallery.noPinnedItems')}
-              </p>
-              <Button
-                onClick={() => setActiveTab('all')}
-                variant="outline"
-                className="rounded-full"
-              >
-                {t('gallery.viewAllDesigns')}
-              </Button>
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+                {displayItems.map((result) => (
+                  <ResultCard
+                    key={result.id}
+                    result={result}
+                    onDelete={handleDelete}
+                    onShare={handleShare}
+                    onTogglePin={handleTogglePin}
+                    onClick={handleCardClick}
+                  />
+                ))}
+              </div>
+
+              {/* Load More */}
+              {hasMore && (
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    variant="outline"
+                    className="h-[48px] px-10 rounded-full font-bold text-[13px]"
+                  >
+                    {isLoadingMore ? t('common.wait') : t('store.loadMore')}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <EmptyGallery />

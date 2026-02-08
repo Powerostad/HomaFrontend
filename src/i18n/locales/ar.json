@@ -339,7 +339,7 @@
     "approved": "تمت الموافقة",
     "viewOriginal": "عرض الصورة الأصلية",
     "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الصورة؟",
-    "subtitle": "جميع نتائج التجربة في لمحة واحدة",
+    "subtitle": "جميع نتائجك في لمحة واحدة",
     "pinned": "تمت الإضافة إلى المثبتة",
     "unpinned": "تمت الإزالة من المثبتة",
     "sections": {
@@ -348,12 +348,41 @@
     },
     "emptyTryOn": "لا توجد صور تجربة بعد",
     "emptyStudio": "لا توجد تصاميم استوديو بعد",
+    "errorTitle": "خطأ في تحميل المعرض",
+    "errorDescription": "حدثت مشكلة في تحميل المعرض. يرجى المحاولة مرة أخرى.",
     "loadError": "خطأ في تحميل المعرض",
     "deleteError": "خطأ في حذف الصورة",
     "success": {
       "submitted": "تم إرسال صورتك للعرض في المعرض",
       "deleted": "تم حذف الصورة"
+    },
+    "detail": {
+      "backToGallery": "العودة إلى المعرض",
+      "fromMyGallery": "من معرضي",
+      "usedProduct": "المنتج المستخدم",
+      "usedInTryOn": "تمت التجربة",
+      "fullView": "عرض كامل",
+      "yourScore": "تقييمك",
+      "loadError": "خطأ في التحميل",
+      "loadErrorDescription": "حدثت مشكلة في تحميل هذا العنصر. يرجى المحاولة مرة أخرى.",
+      "linkCopied": "تم نسخ الرابط",
+      "preparingDownload": "جارٍ تحضير التنزيل...",
+      "downloadStarted": "بدأ التنزيل",
+      "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الصورة؟",
+      "deleteSuccess": "تم حذف الصورة بنجاح",
+      "shareLinkCopied": "تم نسخ رابط المشاركة"
     }
+  },
+  "shared": {
+    "tryItYourself": "شاهد هذا المنتج في غرفتك",
+    "designYourSpace": "صمم مساحتك الخاصة",
+    "invalidLink": "هذا الرابط غير صالح",
+    "invalidLinkDescription": "الرابط غير موجود أو تم حذفه",
+    "goHome": "الذهاب إلى الصفحة الرئيسية",
+    "sharedBy": "تمت المشاركة بواسطة",
+    "products": "منتجات",
+    "showAlternatives": "عرض البدائل",
+    "hideAlternatives": "إخفاء البدائل"
   },
   "account": {
     "title": "الحساب",

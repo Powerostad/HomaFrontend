@@ -14,15 +14,28 @@ import { apiConfig } from '@/utils/apiClient';
  * GET /api/users/gallery/
  */
 export interface BackendGalleryItem {
-  id: number;
-  product_id: number;
-  product_name: string;
+  id: string;
+  type: 'tryon' | 'studio';
+  product_id: number | null;
+  product_name: string | null;
   product_category: string;
+  product_image_path: string | null;
   customer_image_path: string;
   result_image_path: string;
   score: 1 | 2 | 3 | null; // 1=Good, 2=Neutral, 3=Bad
   created_at: string;
   claimed_at: string | null;
+  share_token?: string | null;
+}
+
+/**
+ * Paginated response wrapper from backend
+ */
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
 
 /**
@@ -31,7 +44,7 @@ export interface BackendGalleryItem {
 export interface GalleryAPIResponse {
   success: boolean;
   message?: string;
-  data: BackendGalleryItem[];
+  data: PaginatedResponse<BackendGalleryItem>;
 }
 
 // =============================================================================
@@ -43,14 +56,17 @@ export interface GalleryAPIResponse {
  */
 export interface GalleryItem {
   id: string;
-  productId: string;
-  productName: string;
+  type: 'tryon' | 'studio';
+  productId: string | null;
+  productName: string | null;
   productCategory: string;
+  productImageUrl: string | null;
   customerImageUrl: string;
   resultImageUrl: string;
   score: 1 | 2 | 3 | null;
   createdAt: string;
   claimedAt: string | null;
+  shareToken: string | null;
   // Local-only state (not from API)
   isPinned: boolean;
 }
@@ -61,6 +77,7 @@ export interface GalleryItem {
  */
 export interface ResultCardData {
   id: string;
+  type: 'tryon' | 'studio';
   coverImage: string;
   productName: string;
   storeName: string;
@@ -84,7 +101,10 @@ export interface GalleryServiceResult<T = void> {
 /**
  * Gallery fetch result
  */
-export interface GalleryFetchResult extends GalleryServiceResult<GalleryItem[]> {}
+export interface GalleryFetchResult extends GalleryServiceResult<GalleryItem[]> {
+  hasMore?: boolean;
+  totalCount?: number;
+}
 
 /**
  * Single gallery item result
@@ -126,14 +146,17 @@ export function transformBackendGalleryItem(
   const id = String(backendItem.id);
   return {
     id,
-    productId: String(backendItem.product_id),
+    type: backendItem.type,
+    productId: backendItem.product_id != null ? String(backendItem.product_id) : null,
     productName: backendItem.product_name,
     productCategory: backendItem.product_category,
+    productImageUrl: backendItem.product_image_path ? getImageUrl(backendItem.product_image_path) : null,
     customerImageUrl: getImageUrl(backendItem.customer_image_path),
     resultImageUrl: getImageUrl(backendItem.result_image_path),
     score: backendItem.score,
     createdAt: backendItem.created_at,
     claimedAt: backendItem.claimed_at,
+    shareToken: backendItem.share_token ?? null,
     isPinned: pinnedIds.has(id),
   };
 }
@@ -147,8 +170,9 @@ export function toResultCardData(
 ): ResultCardData {
   return {
     id: item.id,
+    type: item.type,
     coverImage: item.resultImageUrl,
-    productName: item.productName,
+    productName: item.productName ?? (item.type === 'studio' ? 'طراحی استودیو' : ''),
     storeName: item.productCategory, // Using category as store name for now
     timestamp: formatTimestamp(item.createdAt),
     isPinned: item.isPinned,

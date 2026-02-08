@@ -39,6 +39,9 @@ import { TryOnResultPage } from "./pages/TryOn/ResultPage";
 import AccountGalleryPage from "./pages/Account/GalleryPage";
 import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
 
+// Shared (public)
+import SharedPage from "./pages/Shared/SharedPage";
+
 
 // Loading Component - Now using HOMA Loader
 const PageLoader = () => <HomaLoader />;
@@ -69,6 +72,9 @@ export default function App() {
               <RouterRoute path="contact" element={<ContactPage />} />
               <RouterRoute path="faq" element={<FAQPage />} />
               <RouterRoute path="terms" element={<TermsPage />} />
+
+              {/* Shared gallery items (public, no auth) */}
+              <RouterRoute path="s/:token" element={<SharedPage />} />
 
               {/* Studio Flow (Complex/Dark) */}
               <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />

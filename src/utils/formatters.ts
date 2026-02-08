@@ -172,26 +172,32 @@ export function formatRelativeTime(input: number | string): string {
   const months = Math.floor(days / 30);
   const years = Math.floor(days / 365);
 
+  // Helper: get translated string then replace digits with localized ones
+  const localizeTime = (key: string, fallback: string, count: number): string => {
+    const result = t(key, fallback, { count });
+    return toLocalizedDigits(result);
+  };
+
   if (years > 0) {
-    return t('time.yearsAgo', '{{count}} سال پیش', { count: years });
+    return localizeTime('time.yearsAgo', '{{count}} سال پیش', years);
   }
   if (months > 0) {
-    return t('time.monthsAgo', '{{count}} ماه پیش', { count: months });
+    return localizeTime('time.monthsAgo', '{{count}} ماه پیش', months);
   }
   if (weeks > 0) {
-    return t('time.weeksAgo', '{{count}} هفته پیش', { count: weeks });
+    return localizeTime('time.weeksAgo', '{{count}} هفته پیش', weeks);
   }
   if (days > 0) {
     if (days === 1) {
       return t('time.yesterday', 'دیروز');
     }
-    return t('time.daysAgo', '{{count}} روز پیش', { count: days });
+    return localizeTime('time.daysAgo', '{{count}} روز پیش', days);
   }
   if (hours > 0) {
-    return t('time.hoursAgo', '{{count}} ساعت پیش', { count: hours });
+    return localizeTime('time.hoursAgo', '{{count}} ساعت پیش', hours);
   }
   if (minutes > 0) {
-    return t('time.minutesAgo', '{{count}} دقیقه پیش', { count: minutes });
+    return localizeTime('time.minutesAgo', '{{count}} دقیقه پیش', minutes);
   }
   return t('time.justNow', 'همین الان');
 }

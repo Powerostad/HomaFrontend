@@ -129,6 +129,18 @@ export function trackGalleryEvent(props: { action: string; image_id?: number | n
   posthog.capture('gallery_event', props);
 }
 
+export function trackGalleryShared(props: {
+  type: 'tryon' | 'studio';
+  item_id: string;
+  method: 'native_share' | 'clipboard';
+}) {
+  posthog.capture('gallery_shared', props);
+}
+
+export function trackSharedPageViewed(props: { type: 'tryon' | 'studio'; token: string }) {
+  posthog.capture('shared_page_viewed', props);
+}
+
 // =============================================================================
 // Studio Upload Funnel
 // =============================================================================

@@ -18,10 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { SidebarMenu } from '@/components/SidebarMenu';
 import { toast } from 'sonner';
-import { fetchGalleryItem } from '@/services/galleryService';
+import { fetchGalleryItem, deleteGalleryItem } from '@/services/galleryService';
 import { fetchAuthenticatedImage } from '@/utils/apiClient';
 import { type GalleryItem } from '@/types/gallery';
 import { formatRelativeTime } from '@/utils/formatters';
+import { trackGalleryShared } from '@/analytics/events';
 
 // =============================================================================
 // Loading Skeleton
@@ -101,6 +102,8 @@ export default function GalleryDetailPage() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [hasBeforeImage, setHasBeforeImage] = useState(true);
 
   // API State
   const [item, setItem] = useState<GalleryItem | null>(null);
@@ -135,13 +138,62 @@ export default function GalleryDetailPage() {
     loadItem();
   }, [loadItem]);
 
+  // Check if before/customer image exists
+  useEffect(() => {
+    if (!item?.customerImageUrl) {
+      setHasBeforeImage(false);
+      return;
+    }
+    fetchAuthenticatedImage(item.customerImageUrl)
+      .then(() => setHasBeforeImage(true))
+      .catch(() => setHasBeforeImage(false));
+  }, [item?.customerImageUrl]);
+
   // ==========================================================================
   // Handlers
   // ==========================================================================
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/account/gallery/${id}`;
+  const handleShare = async () => {
+    if (!item?.shareToken) {
+      toast.error(t('errors.unknownError'));
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/s/${item.shareToken}`;
+
+    // Mobile: use native share sheet with image file
+    if (navigator.share && navigator.canShare) {
+      try {
+        // Try sharing with image file for Stories support
+        const response = await fetchAuthenticatedImage(item.resultImageUrl);
+        const blob = await fetch(response).then((r) => r.blob());
+        const file = new File([blob], `homa-${item.id}.jpg`, { type: 'image/jpeg' });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            url: shareUrl,
+          });
+          trackGalleryShared({ type: item.type, item_id: item.id, method: 'native_share' });
+          return;
+        }
+      } catch {
+        // Fall through to URL-only share or clipboard
+      }
+
+      // Fallback: native share with URL only
+      try {
+        await navigator.share({ url: shareUrl });
+        trackGalleryShared({ type: item.type, item_id: item.id, method: 'native_share' });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    // Desktop / fallback: copy to clipboard
     navigator.clipboard.writeText(shareUrl).then(() => {
-      toast.success(t('gallery.detail.linkCopied'));
+      toast.success(t('gallery.detail.shareLinkCopied', 'لینک اشتراک‌گذاری کپی شد'));
+      trackGalleryShared({ type: item.type, item_id: item.id, method: 'clipboard' });
     }).catch(() => {
       toast.error(t('tryOn.result.copyLinkFailed'));
     });
@@ -174,13 +226,26 @@ export default function GalleryDetailPage() {
   };
 
   const handleDelete = () => {
+    if (!item || isDeleting) return;
+
     toast.error(t('gallery.detail.deleteConfirm'), {
       action: {
         label: t('common.delete'),
-        onClick: () => {
-          // TODO: Call backend delete endpoint when available
-          toast.success(t('gallery.detail.deleteSuccess'));
-          navigate('/account/gallery');
+        onClick: async () => {
+          setIsDeleting(true);
+          try {
+            const result = await deleteGalleryItem(item.id, item.type);
+            if (result.success) {
+              toast.success(t('gallery.detail.deleteSuccess'));
+              navigate('/account/gallery');
+            } else {
+              toast.error(t('gallery.detail.deleteError'));
+            }
+          } catch {
+            toast.error(t('gallery.detail.deleteError'));
+          } finally {
+            setIsDeleting(false);
+          }
         },
       },
     });
@@ -232,8 +297,8 @@ export default function GalleryDetailPage() {
         <div className="flex gap-4 items-center">
           <div className="relative w-[84px] h-[84px] rounded-[14px] overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
             <AuthenticatedImage
-              src={item.resultImageUrl}
-              alt={item.productName}
+              src={item.productImageUrl || item.customerImageUrl}
+              alt={item.productName ?? undefined}
               className="w-full h-full object-cover"
             />
           </div>
@@ -271,7 +336,8 @@ export default function GalleryDetailPage() {
         </button>
         <button
           onClick={handleDelete}
-          className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-destructive/5 transition-colors group"
+          disabled={isDeleting}
+          className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-destructive/5 transition-colors group disabled:opacity-50"
         >
           <div className="w-10 h-10 rounded-full bg-destructive/5 flex items-center justify-center text-destructive group-hover:bg-destructive group-hover:text-white transition-colors">
             <Trash2 size={18} />
@@ -360,24 +426,18 @@ export default function GalleryDetailPage() {
           <AuthenticatedImage
             src={item.resultImageUrl}
             alt="Result"
-            className={`w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+            className={`w-full h-full object-cover transition-opacity duration-700 ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
           />
-          <AuthenticatedImage
-            src={item.customerImageUrl}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
-            alt="Before"
-          />
+          {hasBeforeImage && (
+            <AuthenticatedImage
+              src={item.customerImageUrl}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+              alt="Before"
+            />
+          )}
 
           {/* Desktop Controls */}
           <div className="hidden md:block absolute inset-0 pointer-events-none">
-            <div className="absolute top-8 left-8 pointer-events-auto">
-              <button
-                onClick={handleBack}
-                className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all shadow-lg"
-              >
-                <ArrowRight size={24} />
-              </button>
-            </div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto">
               <button
                 onClick={() => setIsFullScreen(true)}
@@ -430,28 +490,32 @@ export default function GalleryDetailPage() {
             <div className="relative max-w-full max-h-[80vh] aspect-[4/5] rounded-[24px] overflow-hidden border border-white/10 shadow-2xl">
               <AuthenticatedImage
                 src={item.resultImageUrl}
-                className={`w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+                className={`w-full h-full object-contain transition-opacity ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
               />
-              <AuthenticatedImage
-                src={item.customerImageUrl}
-                className={`absolute inset-0 w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
-                alt="Before"
-              />
+              {hasBeforeImage && (
+                <AuthenticatedImage
+                  src={item.customerImageUrl}
+                  className={`absolute inset-0 w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
+                  alt="Before"
+                />
+              )}
             </div>
-            <div className="mt-10 flex items-center p-1 bg-white/10 backdrop-blur-xl rounded-full border border-white/10">
-              <button
-                onClick={() => setShowOriginal(false)}
-                className={`px-10 h-12 rounded-full text-[14px] font-bold ${!showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
-              >
-                {t('tryOn.result.after')}
-              </button>
-              <button
-                onClick={() => setShowOriginal(true)}
-                className={`px-10 h-12 rounded-full text-[14px] font-bold ${showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
-              >
-                {t('tryOn.result.before')}
-              </button>
-            </div>
+            {hasBeforeImage && (
+              <div className="mt-10 flex items-center p-1 bg-white/10 backdrop-blur-xl rounded-full border border-white/10">
+                <button
+                  onClick={() => setShowOriginal(false)}
+                  className={`px-10 h-12 rounded-full text-[14px] font-bold ${!showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
+                >
+                  {t('tryOn.result.after')}
+                </button>
+                <button
+                  onClick={() => setShowOriginal(true)}
+                  className={`px-10 h-12 rounded-full text-[14px] font-bold ${showOriginal ? 'bg-white text-black' : 'text-white/60'}`}
+                >
+                  {t('tryOn.result.before')}
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

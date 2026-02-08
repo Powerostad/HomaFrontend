@@ -339,7 +339,7 @@
     "approved": "تایید شده",
     "viewOriginal": "مشاهده تصویر اصلی",
     "deleteConfirm": "آیا مطمئن هستید که می‌خواهید این تصویر را حذف کنید؟",
-    "subtitle": "تمامی نتایج Try-On شما در یک نگاه",
+    "subtitle": "تمامی نتایج شما در یک نگاه",
     "pinned": "به پین‌شده‌ها اضافه شد",
     "unpinned": "از پین‌شده‌ها حذف شد",
     "sections": {
@@ -348,12 +348,41 @@
     },
     "emptyTryOn": "هنوز تصویر امتحان محصولی ندارید",
     "emptyStudio": "هنوز طرح استودیویی ندارید",
+    "errorTitle": "خطا در بارگذاری گالری",
+    "errorDescription": "مشکلی در دریافت اطلاعات گالری پیش آمد. لطفا دوباره تلاش کنید.",
     "loadError": "خطا در بارگذاری گالری",
     "deleteError": "خطا در حذف تصویر",
     "success": {
       "submitted": "تصویر شما برای نمایش در گالری ارسال شد",
       "deleted": "تصویر حذف شد"
+    },
+    "detail": {
+      "backToGallery": "بازگشت به گالری",
+      "fromMyGallery": "از گالری من",
+      "usedProduct": "محصول استفاده شده",
+      "usedInTryOn": "امتحان شده",
+      "fullView": "نمای کامل",
+      "yourScore": "امتیاز شما",
+      "loadError": "خطا در بارگذاری",
+      "loadErrorDescription": "مشکلی در دریافت اطلاعات پیش آمد. لطفا دوباره تلاش کنید.",
+      "linkCopied": "لینک کپی شد",
+      "preparingDownload": "در حال آماده‌سازی دانلود...",
+      "downloadStarted": "دانلود شروع شد",
+      "deleteConfirm": "آیا از حذف این تصویر مطمئن هستید؟",
+      "deleteSuccess": "تصویر با موفقیت حذف شد",
+      "shareLinkCopied": "لینک اشتراک‌گذاری کپی شد"
     }
+  },
+  "shared": {
+    "tryItYourself": "این محصول رو توی خونت ببین",
+    "designYourSpace": "فضای خودت رو طراحی کن",
+    "invalidLink": "این لینک معتبر نیست",
+    "invalidLinkDescription": "لینک مورد نظر وجود ندارد یا حذف شده است",
+    "goHome": "رفتن به صفحه اصلی",
+    "sharedBy": "به اشتراک گذاشته شده توسط",
+    "products": "محصول",
+    "showAlternatives": "مشاهده جایگزین‌ها",
+    "hideAlternatives": "بستن جایگزین‌ها"
   },
   "account": {
     "title": "حساب کاربری",

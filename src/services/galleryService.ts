@@ -1,11 +1,12 @@
 /**
  * Gallery Service - گالری کاربر
- * مدیریت دریافت و نمایش نتایج Try-On کاربر
+ * مدیریت دریافت و نمایش نتایج Try-On و استودیو کاربر
  */
 
-import { apiGet } from '@/utils/apiClient';
+import { apiGet, apiDelete } from '@/utils/apiClient';
 import {
   type BackendGalleryItem,
+  type PaginatedResponse,
   type GalleryFetchResult,
   type GalleryItemResult,
   transformBackendGalleryItem,
@@ -15,28 +16,42 @@ import {
 } from '@/types/gallery';
 
 // =============================================================================
+// Types
+// =============================================================================
+
+export type GalleryTab = 'all' | 'tryon' | 'studio';
+
+// =============================================================================
 // Gallery API
 // =============================================================================
 
 /**
- * Fetch user's gallery (all visualization results)
- * GET /api/users/gallery/
+ * Fetch user's gallery (visualization results) with type filter and pagination
+ * GET /api/users/gallery/?type=...&page=...&page_size=...
  */
-export async function fetchGallery(): Promise<GalleryFetchResult> {
-  const response = await apiGet<BackendGalleryItem[]>('/users/gallery/');
+export async function fetchGallery(
+  type: GalleryTab = 'all',
+  page: number = 1,
+  pageSize: number = 10
+): Promise<GalleryFetchResult> {
+  const response = await apiGet<PaginatedResponse<BackendGalleryItem>>(
+    `/users/gallery/?type=${type}&page=${page}&page_size=${pageSize}`
+  );
 
   if (response.success && response.data) {
     // Get pinned items from localStorage
     const pinnedIds = getPinnedItemIds();
 
     // Transform backend items to frontend format
-    const items = response.data.map((item) =>
+    const items = response.data.results.map((item) =>
       transformBackendGalleryItem(item, pinnedIds)
     );
 
     return {
       success: true,
       data: items,
+      hasMore: response.data.next !== null,
+      totalCount: response.data.count,
     };
   }
 
@@ -48,31 +63,44 @@ export async function fetchGallery(): Promise<GalleryFetchResult> {
 
 /**
  * Get a single gallery item by ID
- * Note: We fetch from the gallery and filter client-side for now
- * A dedicated endpoint would be more efficient
+ * GET /api/users/gallery/{id}/
  */
 export async function fetchGalleryItem(id: string): Promise<GalleryItemResult> {
-  const result = await fetchGallery();
+  const response = await apiGet<BackendGalleryItem>(`/users/gallery/${id}/`);
 
-  if (result.success && result.data) {
-    const item = result.data.find((i) => i.id === id);
-
-    if (item) {
-      return {
-        success: true,
-        data: item,
-      };
-    }
+  if (response.success && response.data) {
+    const pinnedIds = getPinnedItemIds();
+    const item = transformBackendGalleryItem(response.data, pinnedIds);
 
     return {
-      success: false,
-      error: 'آیتم مورد نظر یافت نشد',
+      success: true,
+      data: item,
     };
   }
 
   return {
     success: false,
-    error: result.error || 'خطا در دریافت اطلاعات',
+    error: response.error || 'آیتم مورد نظر یافت نشد',
+  };
+}
+
+/**
+ * Delete a gallery item (soft delete)
+ * DELETE /api/users/gallery/{id}/?type=tryon|studio
+ */
+export async function deleteGalleryItem(
+  id: string,
+  type: 'tryon' | 'studio'
+): Promise<{ success: boolean; error?: string }> {
+  const response = await apiDelete(`/users/gallery/${id}/?type=${type}`);
+
+  if (response.success) {
+    return { success: true };
+  }
+
+  return {
+    success: false,
+    error: response.error || 'خطا در حذف آیتم',
   };
 }
 
@@ -144,6 +172,7 @@ export const galleryService = {
   // API operations
   fetchGallery,
   fetchGalleryItem,
+  deleteGalleryItem,
 
   // Pin management
   togglePinItem,
