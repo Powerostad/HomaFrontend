@@ -275,7 +275,7 @@ export default function GalleryDetailPage() {
   // Product Content Component
   // ==========================================================================
   const ProductContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
-    <div className={`flex flex-col gap-8 ${isDesktop ? 'px-10' : 'px-8'} pb-[96px]`}>
+    <div className={`flex flex-col ${isDesktop ? 'gap-8 px-10 pb-24' : 'gap-5 px-6 pb-8'}`}>
       {/* Gallery Context Label */}
       <div className="flex items-center gap-2">
         <div className="px-3 py-1 bg-secondary rounded-full">
@@ -373,7 +373,7 @@ export default function GalleryDetailPage() {
   // ==========================================================================
   return (
     <div
-      className="h-screen w-full bg-background relative overflow-hidden flex flex-col font-vazirmatn select-none"
+      className="min-h-screen md:h-screen w-full bg-background relative flex flex-col font-vazirmatn select-none md:overflow-hidden"
       dir="rtl"
     >
       {!isFullScreen && (
@@ -384,7 +384,7 @@ export default function GalleryDetailPage() {
 
       <SidebarMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden relative">
         {/* Left Side: Info (Desktop) */}
         <div className="hidden md:flex flex-col w-[450px] h-full bg-card z-50 overflow-y-auto border-l border-border relative scrollbar-hide">
           <div className="p-8 pt-10 flex flex-col gap-10">
@@ -422,7 +422,7 @@ export default function GalleryDetailPage() {
         </div>
 
         {/* Right Side: Hero Image */}
-        <div className="flex-1 h-full bg-secondary relative overflow-hidden group">
+        <div className="h-[45vh] flex-shrink-0 md:flex-1 md:h-full bg-secondary relative overflow-hidden group">
           <AuthenticatedImage
             src={item.resultImageUrl}
             alt="Result"
@@ -467,7 +467,7 @@ export default function GalleryDetailPage() {
         </div>
 
         {/* Mobile Info Overlay */}
-        <div className="md:hidden absolute inset-x-0 bottom-0 max-h-[40vh] bg-card rounded-t-[32px] pt-8 shadow-2xl z-30 overflow-y-auto scrollbar-hide">
+        <div className="md:hidden bg-card rounded-t-[32px] -mt-6 pt-8 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] relative z-30">
           <ProductContent />
         </div>
       </div>
