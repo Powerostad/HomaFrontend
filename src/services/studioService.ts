@@ -248,6 +248,14 @@ export function getSessionImageUrl(
 }
 
 /**
+ * Normalize a backend image URL to use the frontend's API host.
+ * Rewrites CDN_BASE_URL to match VITE_API_BASE_URL, preserving query params.
+ */
+export function normalizeImageUrl(url: string | null | undefined): string | null {
+  return getSessionImageUrl(url);
+}
+
+/**
  * Transform backend session to frontend format
  */
 function transformSession(apiSession: APIRedesignSession): RedesignSession {

@@ -4,7 +4,40 @@
  */
 
 import { apiGet } from '@/utils/apiClient';
-import type { SharedItem } from '@/types/shared';
+import { normalizeImageUrl } from '@/services/studioService';
+import type {
+  SharedItem,
+  SharedStudioItem,
+  SharedStudioCategoryItem,
+} from '@/types/shared';
+
+/**
+ * Normalize all image URLs in a shared item to use the frontend API host.
+ * Backend returns CDN_BASE_URL which may differ from the frontend's API host.
+ */
+function normalizeSharedItem(item: SharedItem): SharedItem {
+  if (item.type === 'tryon') {
+    return {
+      ...item,
+      result_image_url: normalizeImageUrl(item.result_image_url) ?? item.result_image_url,
+      product_image_url: normalizeImageUrl(item.product_image_url) ?? item.product_image_url,
+    };
+  }
+
+  // Studio type
+  const studioItem = item as SharedStudioItem;
+  return {
+    ...studioItem,
+    result_image_url: normalizeImageUrl(studioItem.result_image_url) ?? studioItem.result_image_url,
+    items: studioItem.items.map((catItem: SharedStudioCategoryItem) => ({
+      ...catItem,
+      products: catItem.products.map((p) => ({
+        ...p,
+        image_url: normalizeImageUrl(p.image_url) ?? p.image_url,
+      })),
+    })),
+  };
+}
 
 /**
  * Fetch a shared gallery item by token (public, no auth)
@@ -20,7 +53,7 @@ export async function fetchSharedItem(
   if (response.success && response.data) {
     return {
       success: true,
-      data: response.data,
+      data: normalizeSharedItem(response.data),
     };
   }
 
