@@ -501,7 +501,7 @@ export async function refreshToken(): Promise<string | null> {
   }
 
   try {
-    const response = await apiPost<{ access: string }>(
+    const response = await apiPost<{ access: string; refresh?: string }>(
       '/users/refresh/',
       { refresh: refreshTokenValue },
       { skipAuth: true, skipRetryOn401: true }
@@ -509,12 +509,22 @@ export async function refreshToken(): Promise<string | null> {
 
     if (response.success && response.data?.access) {
       const newAccessToken = response.data.access;
-      setAccessToken(newAccessToken);
+      const newRefreshToken = response.data.refresh;
+
+      // Store new tokens (backend rotates refresh tokens, so we must save the new one)
+      if (newRefreshToken) {
+        setStoredTokens({ access: newAccessToken, refresh: newRefreshToken });
+      } else {
+        setAccessToken(newAccessToken);
+      }
 
       // Update expiry in stored state
       const state = getStoredAuthState();
       if (state) {
         state.tokens.access = newAccessToken;
+        if (newRefreshToken) {
+          state.tokens.refresh = newRefreshToken;
+        }
         state.expiresAt = Date.now() + ACCESS_TOKEN_EXPIRY_MS;
         localStorage.setItem(AUTH_STORAGE_KEYS.AUTH_STATE, JSON.stringify(state));
       }
