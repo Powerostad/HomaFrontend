@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,16 +12,18 @@ import {
   Trash2,
   RefreshCw,
   Loader2,
+  Bookmark,
 } from 'lucide-react';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { SidebarMenu } from '@/components/SidebarMenu';
+import { ProductDetailSheet, type Product } from '@/pages/Studio/components/ProductDetailSheet';
 import { toast } from 'sonner';
 import { fetchGalleryItem, deleteGalleryItem } from '@/services/galleryService';
 import { fetchAuthenticatedImage } from '@/utils/apiClient';
-import { type GalleryItem } from '@/types/gallery';
-import { formatRelativeTime } from '@/utils/formatters';
+import { type GalleryItem, type GalleryStudioProduct } from '@/types/gallery';
+import { formatRelativeTime, formatPriceFromRial, formatPriceStartingFrom } from '@/utils/formatters';
 import { trackGalleryShared } from '@/analytics/events';
 
 // =============================================================================
@@ -110,6 +112,9 @@ export default function GalleryDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Studio product state
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   // ==========================================================================
   // Load item data
   // ==========================================================================
@@ -148,6 +153,78 @@ export default function GalleryDetailPage() {
       .then(() => setHasBeforeImage(true))
       .catch(() => setHasBeforeImage(false));
   }, [item?.customerImageUrl]);
+
+  // ==========================================================================
+  // Studio product helpers
+  // ==========================================================================
+
+  /** Convert a GalleryStudioProduct to the UI Product type used by ProductDetailSheet */
+  const galleryProductToUIProduct = useCallback(
+    (p: GalleryStudioProduct, index: number): Product & { store?: string; matchScore?: number } => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      category: p.categoryDisplay || p.category || '',
+      store: p.shopName || '',
+      image: p.imageUrl,
+      hotspot: { x: 50, y: 50 + index * 10 },
+      isPromoted: p.isPromoted,
+      persianReason: p.persianReason,
+      matchHighlights: p.matchHighlights,
+      description: p.description,
+      extraDetails: p.extraDetails,
+      link: p.link,
+      uniqueLink: p.uniqueLink,
+      availableSizes: p.availableSizes,
+      availableSizesDisplay: p.availableSizesDisplay,
+      sizePrices: p.sizePrices,
+      sizePricesDisplay: p.sizePricesDisplay?.map(sp => ({
+        code: sp.code,
+        display: sp.display,
+        price: sp.price,
+        hasSpecificPrice: sp.hasSpecificPrice,
+      })),
+      priceRange: p.priceRange,
+      matchScore: p.matchScore,
+    }),
+    []
+  );
+
+  /** Group studio items into category groups with UI products */
+  const categoryGroups = useMemo(() => {
+    if (!item?.studioItems?.length) return [];
+    return item.studioItems
+      .filter(si => si.products.length > 0)
+      .map(si => ({
+        category: si.category,
+        categoryDisplay: si.categoryDisplay,
+        itemType: si.itemType,
+        fitReasoningFa: si.fitReasoningFa,
+        products: si.products.map((p, i) => galleryProductToUIProduct(p, i)),
+      }));
+  }, [item?.studioItems, galleryProductToUIProduct]);
+
+  /** Alternatives scoped to same category as selected product */
+  const productAlternatives = useMemo(() => {
+    if (!selectedProduct || !categoryGroups.length) return [];
+    for (const group of categoryGroups) {
+      if (group.products.find(p => p.id === selectedProduct.id)) {
+        return group.products.filter(p => p.id !== selectedProduct.id);
+      }
+    }
+    return [];
+  }, [selectedProduct, categoryGroups]);
+
+  const handleProductClick = useCallback(
+    (product: Product) => {
+      const group = categoryGroups.find(g => g.products.some(p => p.id === product.id));
+      setSelectedProduct({
+        ...product,
+        persianReason: product.persianReason || group?.fitReasoningFa || '',
+      });
+    },
+    [categoryGroups]
+  );
 
   // ==========================================================================
   // Handlers
@@ -274,6 +351,8 @@ export default function GalleryDetailPage() {
   // ==========================================================================
   // Product Content Component
   // ==========================================================================
+  const isStudio = item.type === 'studio';
+
   const ProductContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
     <div className={`flex flex-col ${isDesktop ? 'gap-8 px-10 pb-24' : 'gap-5 px-6 pb-8'}`}>
       {/* Gallery Context Label */}
@@ -286,32 +365,192 @@ export default function GalleryDetailPage() {
         </span>
       </div>
 
-      {/* Used Product Section */}
-      <div className="flex flex-col gap-4 pb-6 border-b border-border">
-        <div className="flex justify-between items-center">
-          <h4 className="text-[16px] font-bold text-foreground">{t('gallery.detail.usedProduct')}</h4>
-          <span className="px-2 py-0.5 bg-[#dfff00]/20 text-foreground text-[10px] font-bold rounded-sm">
-            {t('gallery.detail.usedInTryOn')}
-          </span>
-        </div>
-        <div className="flex gap-4 items-center">
-          <div className="relative w-[84px] h-[84px] rounded-[14px] overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
-            <AuthenticatedImage
-              src={item.productImageUrl || item.customerImageUrl}
-              alt={item.productName ?? undefined}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <h1 className="text-[18px] font-bold text-foreground leading-tight">
-              {item.productName}
-            </h1>
-            <span className="text-[12px] font-medium text-muted-foreground">
-              {item.productCategory}
+      {/* --- Try-on: Used Product Section --- */}
+      {!isStudio && (
+        <div className="flex flex-col gap-4 pb-6 border-b border-border">
+          <div className="flex justify-between items-center">
+            <h4 className="text-[16px] font-bold text-foreground">{t('gallery.detail.usedProduct')}</h4>
+            <span className="px-2 py-0.5 bg-[#dfff00]/20 text-foreground text-[10px] font-bold rounded-sm">
+              {t('gallery.detail.usedInTryOn')}
             </span>
           </div>
+          <div className="flex gap-4 items-center">
+            <div className="relative w-[84px] h-[84px] rounded-[14px] overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
+              <AuthenticatedImage
+                src={item.productImageUrl || item.customerImageUrl}
+                alt={item.productName ?? undefined}
+                imageWidth={200}
+                imageQuality={80}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <h1 className="text-[18px] font-bold text-foreground leading-tight">
+                {item.productName}
+              </h1>
+              <span className="text-[12px] font-medium text-muted-foreground">
+                {item.productCategory}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* --- Studio: Recommended Products by Category --- */}
+      {isStudio && categoryGroups.length > 0 && (
+        <div className="space-y-2 pt-0">
+          <div className="flex items-baseline justify-between border-b border-black/[0.05] pb-2">
+            <h2 className="text-[20px] font-medium text-foreground tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+              {t('studio.result.suggestedProducts', 'محصولات پیشنهادی')}
+            </h2>
+            <span className="text-[10px] text-foreground/30 font-medium tracking-wide uppercase" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+              {t('studio.result.curated', 'Curated')}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-8">
+            {categoryGroups.map((group) => {
+              const topPick = group.products[0];
+              const alternatives = group.products.slice(1);
+
+              return (
+                <div key={`${group.category}-${group.itemType}`} className="flex flex-col gap-4">
+                  {/* Category Header */}
+                  <div className="flex items-center gap-3 pt-4">
+                    <span className="text-[16px] font-bold text-foreground" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                      {group.categoryDisplay}
+                    </span>
+                    <div className="flex-1 h-px bg-foreground/[0.06]" />
+                  </div>
+
+                  {/* Top Pick - Large Editorial Card */}
+                  {topPick && (
+                    <div className="group flex flex-row gap-6 py-4">
+                      <div
+                        className="relative w-[130px] aspect-[3/4] bg-foreground/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
+                        onClick={() => handleProductClick(topPick)}
+                      >
+                        <AuthenticatedImage
+                          src={topPick.image}
+                          alt={topPick.name}
+                          imageWidth={300}
+                          imageQuality={80}
+                          className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                        />
+                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-1.5 py-0.5 flex items-center gap-1.5">
+                          <div className="w-1 h-1 rounded-full bg-accent" />
+                          <span className="text-[7px] font-bold text-black uppercase tracking-[0.2em]" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                            {t('studio.result.homaPick', 'انتخاب هُما')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex flex-col gap-1">
+                              <h3 className="text-[13px] font-bold text-foreground uppercase tracking-[0.05em] leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                {topPick.name}
+                              </h3>
+                              <div className="flex items-center gap-2 opacity-30">
+                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{topPick.category}</span>
+                                <span className="w-0.5 h-0.5 rounded-full bg-foreground" />
+                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{topPick.store}</span>
+                              </div>
+                            </div>
+                            <Bookmark size={16} strokeWidth={1.5} className="text-foreground/10" />
+                          </div>
+
+                          <div className="flex items-baseline gap-1.5 mt-2">
+                            {topPick.priceRange ? (
+                              <span className="text-[15px] font-bold text-foreground tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                {formatPriceStartingFrom(topPick.priceRange.min)}
+                              </span>
+                            ) : (
+                              <>
+                                <span className="text-[18px] font-bold text-foreground tabular-nums tracking-tighter">
+                                  {formatPriceFromRial(topPick.price, false)}
+                                </span>
+                                <span className="text-[9px] text-foreground/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                  {t('common.toman', 'تومان')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleProductClick(topPick)}
+                          className="w-full h-10 border border-foreground/10 text-foreground text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-foreground hover:text-background active:scale-[0.98]"
+                          style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
+                        >
+                          {t('studio.result.productDetails', 'جزییات محصول')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Alternative Products - Compact Row */}
+                  {alternatives.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {alternatives.map((alt) => (
+                        <div
+                          key={alt.id}
+                          className="min-w-0 cursor-pointer group/alt"
+                          onClick={() => handleProductClick(alt)}
+                        >
+                          <div className="relative aspect-square bg-foreground/[0.02] overflow-hidden mb-2">
+                            <AuthenticatedImage
+                              src={alt.image}
+                              alt={alt.name}
+                              imageWidth={200}
+                              imageQuality={75}
+                              className="w-full h-full object-cover grayscale-[0.2] group-hover/alt:grayscale-0 transition-all duration-700 group-hover/alt:scale-105"
+                            />
+                          </div>
+                          <h4 className="text-[11px] font-bold text-foreground truncate leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                            {alt.name}
+                          </h4>
+                          <div className="flex items-baseline gap-1 mt-0.5">
+                            {alt.priceRange ? (
+                              <span className="text-[11px] font-bold text-foreground tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                {formatPriceStartingFrom(alt.priceRange.min)}
+                              </span>
+                            ) : (
+                              <>
+                                <span className="text-[13px] font-bold text-foreground tabular-nums tracking-tighter">
+                                  {formatPriceFromRial(alt.price, false)}
+                                </span>
+                                <span className="text-[8px] text-foreground/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                                  {t('common.toman', 'تومان')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Studio: empty state when no products */}
+      {isStudio && categoryGroups.length === 0 && (
+        <div className="flex flex-col gap-2 pb-6 border-b border-border">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-secondary text-foreground text-[10px] font-bold rounded-sm">
+              {t('gallery.detail.studioDesign', 'طراحی استودیو')}
+            </span>
+          </div>
+          <span className="text-[12px] font-medium text-muted-foreground">
+            {item.productCategory}
+          </span>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="grid grid-cols-3 gap-3 border-b border-border pb-6">
@@ -410,10 +649,12 @@ export default function GalleryDetailPage() {
 
             <div className="flex flex-col gap-2">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-                {item.productCategory}
+                {isStudio ? item.productCategory : item.productCategory}
               </span>
               <h1 className="text-[28px] font-bold text-foreground leading-tight">
-                {item.productName}
+                {isStudio
+                  ? t('gallery.detail.studioDesign', 'طراحی استودیو')
+                  : item.productName}
               </h1>
             </div>
           </div>
@@ -426,11 +667,15 @@ export default function GalleryDetailPage() {
           <AuthenticatedImage
             src={item.resultImageUrl}
             alt="Result"
+            imageWidth={1200}
+            imageQuality={85}
             className={`w-full h-full object-cover transition-opacity duration-700 ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
           />
           {hasBeforeImage && (
             <AuthenticatedImage
               src={item.customerImageUrl}
+              imageWidth={1200}
+              imageQuality={85}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
               alt="Before"
             />
@@ -490,11 +735,15 @@ export default function GalleryDetailPage() {
             <div className="relative max-w-full max-h-[80vh] aspect-[4/5] rounded-[24px] overflow-hidden border border-white/10 shadow-2xl">
               <AuthenticatedImage
                 src={item.resultImageUrl}
+                imageWidth={1200}
+                imageQuality={85}
                 className={`w-full h-full object-contain transition-opacity ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
               />
               {hasBeforeImage && (
                 <AuthenticatedImage
                   src={item.customerImageUrl}
+                  imageWidth={1200}
+                  imageQuality={85}
                   className={`absolute inset-0 w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
                   alt="Before"
                 />
@@ -519,6 +768,17 @@ export default function GalleryDetailPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Product Detail Sheet (Studio items) */}
+      {selectedProduct && (
+        <ProductDetailSheet
+          product={selectedProduct}
+          isOpen={!!selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onReplace={() => {}}
+          alternatives={productAlternatives}
+        />
+      )}
     </div>
   );
 }

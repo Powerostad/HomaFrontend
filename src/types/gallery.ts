@@ -4,10 +4,55 @@
  */
 
 import { apiConfig } from '@/utils/apiClient';
+import { normalizeImageUrl } from '@/services/studioService';
 
 // =============================================================================
 // Backend Response Types
 // =============================================================================
+
+/**
+ * Matched product in a studio gallery item (from ProductListSerializer + extras)
+ * Same structure as APIMatchedProduct in studioService.ts
+ */
+export interface BackendGalleryStudioProduct {
+  id: number;
+  name: string;
+  image_url: string;
+  match_score: number;
+  price: number;
+  category?: string;
+  category_display?: string;
+  shop_name?: string;
+  shop_slug?: string;
+  unique_link?: string;
+  is_promoted?: boolean;
+  persian_reason?: string;
+  match_highlights?: string[];
+  description?: string;
+  extra_details?: Record<string, unknown>;
+  link?: string;
+  available_sizes?: string[];
+  available_sizes_display?: string[];
+  size_prices?: Record<string, number> | null;
+  size_prices_display?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    has_specific_price: boolean;
+  }>;
+  price_range?: { min: number; max: number } | null;
+}
+
+/**
+ * A category item in a studio gallery detail response
+ */
+export interface BackendGalleryStudioItem {
+  item_type: string;
+  category: string;
+  category_display: string;
+  fit_reasoning_fa: string;
+  products: BackendGalleryStudioProduct[];
+}
 
 /**
  * Gallery item as returned from Django backend
@@ -26,6 +71,8 @@ export interface BackendGalleryItem {
   created_at: string;
   claimed_at: string | null;
   share_token?: string | null;
+  // Studio detail only: matched products grouped by category
+  items?: BackendGalleryStudioItem[];
 }
 
 /**
@@ -52,6 +99,49 @@ export interface GalleryAPIResponse {
 // =============================================================================
 
 /**
+ * Frontend matched product for studio gallery items (camelCase)
+ */
+export interface GalleryStudioProduct {
+  id: number;
+  name: string;
+  imageUrl: string;
+  matchScore: number;
+  price: number;
+  category?: string;
+  categoryDisplay?: string;
+  shopName?: string;
+  shopSlug?: string;
+  uniqueLink?: string;
+  isPromoted?: boolean;
+  persianReason?: string;
+  matchHighlights?: string[];
+  description?: string;
+  extraDetails?: Record<string, unknown>;
+  link?: string;
+  availableSizes?: string[];
+  availableSizesDisplay?: string[];
+  sizePrices?: Record<string, number> | null;
+  sizePricesDisplay?: Array<{
+    code: string;
+    display: string;
+    price: number | null;
+    hasSpecificPrice: boolean;
+  }>;
+  priceRange?: { min: number; max: number } | null;
+}
+
+/**
+ * Frontend category item for studio gallery items (camelCase)
+ */
+export interface GalleryStudioCategoryItem {
+  itemType: string;
+  category: string;
+  categoryDisplay: string;
+  fitReasoningFa: string;
+  products: GalleryStudioProduct[];
+}
+
+/**
  * Gallery item for frontend use (transformed from BackendGalleryItem)
  */
 export interface GalleryItem {
@@ -69,6 +159,8 @@ export interface GalleryItem {
   shareToken: string | null;
   // Local-only state (not from API)
   isPinned: boolean;
+  // Studio detail only: matched products grouped by category
+  studioItems?: GalleryStudioCategoryItem[];
 }
 
 /**
@@ -137,6 +229,57 @@ export function getImageUrl(path: string, width?: number): string {
 }
 
 /**
+ * Transform a backend studio product to frontend format
+ */
+function transformGalleryStudioProduct(
+  p: BackendGalleryStudioProduct
+): GalleryStudioProduct {
+  return {
+    id: p.id,
+    name: p.name,
+    imageUrl: normalizeImageUrl(p.image_url) || '',
+    matchScore: p.match_score,
+    price: p.price,
+    category: p.category,
+    categoryDisplay: p.category_display,
+    shopName: p.shop_name,
+    shopSlug: p.shop_slug,
+    uniqueLink: p.unique_link,
+    isPromoted: p.is_promoted ?? false,
+    persianReason: p.persian_reason || '',
+    matchHighlights: p.match_highlights || [],
+    description: p.description || '',
+    extraDetails: p.extra_details || {},
+    link: p.link || '',
+    availableSizes: p.available_sizes || [],
+    availableSizesDisplay: p.available_sizes_display || [],
+    sizePrices: p.size_prices,
+    sizePricesDisplay: p.size_prices_display?.map(sp => ({
+      code: sp.code,
+      display: sp.display,
+      price: sp.price,
+      hasSpecificPrice: sp.has_specific_price,
+    })),
+    priceRange: p.price_range,
+  };
+}
+
+/**
+ * Transform a backend studio category item to frontend format
+ */
+function transformGalleryStudioItem(
+  item: BackendGalleryStudioItem
+): GalleryStudioCategoryItem {
+  return {
+    itemType: item.item_type,
+    category: item.category,
+    categoryDisplay: item.category_display,
+    fitReasoningFa: item.fit_reasoning_fa,
+    products: (item.products || []).map(transformGalleryStudioProduct),
+  };
+}
+
+/**
  * Transform BackendGalleryItem to frontend GalleryItem
  */
 export function transformBackendGalleryItem(
@@ -158,6 +301,7 @@ export function transformBackendGalleryItem(
     claimedAt: backendItem.claimed_at,
     shareToken: backendItem.share_token ?? null,
     isPinned: pinnedIds.has(id),
+    studioItems: backendItem.items?.map(transformGalleryStudioItem),
   };
 }
 

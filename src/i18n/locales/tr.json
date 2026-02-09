@@ -370,7 +370,8 @@
       "downloadStarted": "İndirme başladı",
       "deleteConfirm": "Bu görüntüyü silmek istediğinize emin misiniz?",
       "deleteSuccess": "Görüntü başarıyla silindi",
-      "shareLinkCopied": "Paylaşım bağlantısı kopyalandı"
+      "shareLinkCopied": "Paylaşım bağlantısı kopyalandı",
+      "studioDesign": "Stüdyo Tasarımı"
     }
   },
   "shared": {

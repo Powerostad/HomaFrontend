@@ -370,7 +370,8 @@
       "downloadStarted": "بدأ التنزيل",
       "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الصورة؟",
       "deleteSuccess": "تم حذف الصورة بنجاح",
-      "shareLinkCopied": "تم نسخ رابط المشاركة"
+      "shareLinkCopied": "تم نسخ رابط المشاركة",
+      "studioDesign": "تصميم الاستوديو"
     }
   },
   "shared": {
