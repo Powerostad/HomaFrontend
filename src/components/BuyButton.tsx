@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
-import { apiPost } from '../utils/apiClient';
+import { apiPost, apiConfig } from '../utils/apiClient';
 import { trackBuyButtonClicked } from '../analytics/events';
 
 interface BuyButtonProps {
@@ -56,8 +56,9 @@ export function BuyButton({
           }
         );
 
-        if (response.success && response.data?.tracking_url) {
-          setTrackingUrl(response.data.tracking_url);
+        if (response.success && response.data?.click_id) {
+          // Build tracking URL using frontend's API base URL (BACKEND_BASE_URL may be misconfigured)
+          setTrackingUrl(`${apiConfig.baseURL}/tracking/go/${response.data.click_id}/`);
         } else {
           // Product has no link
           setTrackingUrl(null);

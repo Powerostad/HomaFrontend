@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 // import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
 import { formatPriceFromRial, formatPriceStartingFrom } from '@/utils/formatters';
-import { apiPost } from '@/utils/apiClient';
+import { apiPost, apiConfig } from '@/utils/apiClient';
 import type { MatchedProduct } from '@/services/studioService';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import {
@@ -353,14 +353,15 @@ export function StudioResultPage() {
         if (!topPick?.uniqueLink) return;
 
         try {
-          const response = await apiPost<{ tracking_url: string | null }>('/tracking/clicks/', {
+          const response = await apiPost<{ click_id: string | null; tracking_url: string | null }>('/tracking/clicks/', {
             product_id: topPick.uniqueLink,
             source_context: 'studio',
             redesign_session_id: currentSessionId || null,
           });
 
-          if (response.success && response.data?.tracking_url) {
-            urls[topPick.id] = response.data.tracking_url;
+          if (response.success && response.data?.click_id) {
+            // Build tracking URL using frontend's API base URL (BACKEND_BASE_URL may be misconfigured)
+            urls[topPick.id] = `${apiConfig.baseURL}/tracking/go/${response.data.click_id}/`;
           }
         } catch {
           // Will fall back to product.link in handleFinalize
