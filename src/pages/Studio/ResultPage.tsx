@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 // import { submitToGallery } from '@/services/socialGalleryService'; // TODO: Uncomment when gallery submission is enabled
 import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '@/utils/downloadUtils';
 import { formatPriceFromRial, formatPriceStartingFrom } from '@/utils/formatters';
+import { apiPost } from '@/utils/apiClient';
 import type { MatchedProduct } from '@/services/studioService';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import {
@@ -106,6 +107,7 @@ export function StudioResultPage() {
   // const [isSubmittingToGallery, setIsSubmittingToGallery] = useState(false);
   // const [isSubmittedToGallery, setIsSubmittedToGallery] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [topPickUrls, setTopPickUrls] = useState<Record<string, string>>({});
   const [preparedDownloadData, setPreparedDownloadData] = useState<PreparedDownload | null>(null);
   const [showDownloadReady, setShowDownloadReady] = useState(false);
   // Google Lens search disabled
@@ -338,6 +340,49 @@ export function StudioResultPage() {
     }
   }, [selectedFile, activeSession?.roomImageUrl]);
 
+  // Pre-fetch tracking URLs for top pick products (same pattern as BuyButton)
+  useEffect(() => {
+    if (categoryGroups.length === 0) return;
+
+    const fetchUrls = async () => {
+      const urls: Record<string, string> = {};
+      const currentSessionId = activeSessionId || sessionId || '';
+
+      await Promise.all(categoryGroups.map(async (group) => {
+        const topPick = group.products[0];
+        if (!topPick?.uniqueLink) return;
+
+        try {
+          const response = await apiPost<{ tracking_url: string | null }>('/tracking/clicks/', {
+            product_id: topPick.uniqueLink,
+            source_context: 'studio',
+            redesign_session_id: currentSessionId || null,
+          });
+
+          if (response.success && response.data?.tracking_url) {
+            urls[topPick.id] = response.data.tracking_url;
+          }
+        } catch {
+          // Will fall back to product.link in handleFinalize
+        }
+      }));
+
+      setTopPickUrls(urls);
+    };
+
+    fetchUrls();
+  }, [categoryGroups, sessionId, activeSessionId]);
+
+  // Open all top pick product pages in new tabs
+  const handleFinalize = () => {
+    categoryGroups.forEach(group => {
+      const topPick = group.products[0];
+      if (!topPick) return;
+      const url = topPickUrls[topPick.id] || topPick.link;
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    });
+  };
+
   // Handle product click — enrich with category-level AI reasoning
   const handleProductClick = (product: Product) => {
     const group = categoryGroups.find(g => g.products.some(p => p.id === product.id));
@@ -517,7 +562,7 @@ export function StudioResultPage() {
           <div className="space-y-1">
             <span className="block text-[9px] text-black/30 font-bold uppercase tracking-[0.3em]">{t('studio.result.collectionSummary', 'Collection Summary')}</span>
             <span className="block text-[11px] text-black/60 font-medium" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              {t('studio.result.productsInList', '{{count}} محصول در لیست نهایی', { count: displayProducts.length })}
+              {t('studio.result.productsInList', '{{count}} محصول در لیست نهایی', { count: categoryGroups.length })}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -532,6 +577,7 @@ export function StudioResultPage() {
 
         <div className="space-y-4">
           <button
+            onClick={handleFinalize}
             className="w-full h-12 bg-black text-white text-[11px] font-bold rounded-none uppercase tracking-[0.3em] hover:bg-black/90 transition-all active:scale-[0.99]"
             style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
           >
