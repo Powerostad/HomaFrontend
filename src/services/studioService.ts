@@ -70,6 +70,9 @@ export interface APISessionItem {
   category?: string; // e.g., 'rug', 'furniture', 'cushion'
   category_display?: string; // Persian display name e.g., 'فرش و قالی'
   fit_reasoning_fa?: string; // AI reasoning in Persian for why this item fits
+  recommended_size?: string; // AI-recommended size e.g., '2x3 متر'
+  quantity?: number; // Number of items recommended e.g., 2
+  placement?: string; // Where in the room e.g., 'وسط اتاق زیر لوستر'
   description?: Record<string, unknown>;
   matched_products: APIMatchedProduct[];
   tryon_status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -160,6 +163,9 @@ export interface SessionItem {
   category: string;
   categoryDisplay: string;
   fitReasoningFa: string;
+  recommendedSize: string;
+  quantity: number;
+  placement: string;
   matchedProducts: MatchedProduct[];
   tryonStatus: 'pending' | 'processing' | 'completed' | 'failed';
   tryonImageUrl: string | null;
@@ -280,6 +286,9 @@ function transformSessionItem(apiItem: APISessionItem): SessionItem {
     category: apiItem.category || apiItem.item_type || '',
     categoryDisplay: apiItem.category_display || apiItem.item_type || '',
     fitReasoningFa: apiItem.fit_reasoning_fa || '',
+    recommendedSize: apiItem.recommended_size || '',
+    quantity: apiItem.quantity ?? 1,
+    placement: apiItem.placement || '',
     matchedProducts: (apiItem.matched_products || []).map(transformMatchedProduct),
     tryonStatus: apiItem.tryon_status,
     tryonImageUrl: getSessionImageUrl(apiItem.tryon_image_url),

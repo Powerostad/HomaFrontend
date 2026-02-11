@@ -324,7 +324,10 @@
       "downloaded": "تصویر دانلود شد",
       "imageReady": "تصویر آماده است",
       "clickToSave": "برای ذخیره تصویر روی دکمه زیر کلیک کنید",
-      "saveImage": "ذخیره تصویر"
+      "saveImage": "ذخیره تصویر",
+      "quantity": "{{amount}} عدد",
+      "recommendedSize": "سایز: {{size}}",
+      "placement": "جایگاه: {{placement}}"
     }
   },
   "gallery": {

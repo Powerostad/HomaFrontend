@@ -324,7 +324,10 @@
       "downloaded": "تم تحميل الصورة",
       "imageReady": "الصورة جاهزة",
       "clickToSave": "انقر على الزر أدناه لحفظ الصورة",
-      "saveImage": "حفظ الصورة"
+      "saveImage": "حفظ الصورة",
+      "quantity": "{{amount}} قطعة",
+      "recommendedSize": "الحجم: {{size}}",
+      "placement": "الموقع: {{placement}}"
     }
   },
   "gallery": {

@@ -324,7 +324,10 @@
       "downloaded": "Image downloaded",
       "imageReady": "Image is ready",
       "clickToSave": "Click the button below to save the image",
-      "saveImage": "Save Image"
+      "saveImage": "Save Image",
+      "quantity": "{{amount}} pcs",
+      "recommendedSize": "Size: {{size}}",
+      "placement": "Placement: {{placement}}"
     }
   },
   "gallery": {

@@ -324,7 +324,10 @@
       "downloaded": "Görüntü indirildi",
       "imageReady": "Görüntü hazır",
       "clickToSave": "Görüntüyü kaydetmek için aşağıdaki düğmeye tıklayın",
-      "saveImage": "Görüntüyü Kaydet"
+      "saveImage": "Görüntüyü Kaydet",
+      "quantity": "{{amount}} adet",
+      "recommendedSize": "Boyut: {{size}}",
+      "placement": "Yerleşim: {{placement}}"
     }
   },
   "gallery": {

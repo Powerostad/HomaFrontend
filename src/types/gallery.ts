@@ -51,6 +51,9 @@ export interface BackendGalleryStudioItem {
   category: string;
   category_display: string;
   fit_reasoning_fa: string;
+  recommended_size?: string;
+  quantity?: number;
+  placement?: string;
   products: BackendGalleryStudioProduct[];
 }
 
@@ -138,6 +141,9 @@ export interface GalleryStudioCategoryItem {
   category: string;
   categoryDisplay: string;
   fitReasoningFa: string;
+  recommendedSize: string;
+  quantity: number;
+  placement: string;
   products: GalleryStudioProduct[];
 }
 
@@ -275,6 +281,9 @@ function transformGalleryStudioItem(
     category: item.category,
     categoryDisplay: item.category_display,
     fitReasoningFa: item.fit_reasoning_fa,
+    recommendedSize: item.recommended_size || '',
+    quantity: item.quantity ?? 1,
+    placement: item.placement || '',
     products: (item.products || []).map(transformGalleryStudioProduct),
   };
 }

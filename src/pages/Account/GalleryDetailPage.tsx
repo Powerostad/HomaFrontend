@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { fetchGalleryItem, deleteGalleryItem } from '@/services/galleryService';
 import { fetchAuthenticatedImage } from '@/utils/apiClient';
 import { type GalleryItem, type GalleryStudioProduct } from '@/types/gallery';
-import { formatRelativeTime, formatPriceFromRial, formatPriceStartingFrom } from '@/utils/formatters';
+import { formatRelativeTime, formatPriceFromRial, formatPriceStartingFrom, toLocalizedDigits } from '@/utils/formatters';
 import { trackGalleryShared } from '@/analytics/events';
 
 // =============================================================================
@@ -200,6 +200,9 @@ export default function GalleryDetailPage() {
         categoryDisplay: si.categoryDisplay,
         itemType: si.itemType,
         fitReasoningFa: si.fitReasoningFa,
+        recommendedSize: si.recommendedSize || '',
+        quantity: si.quantity ?? 1,
+        placement: si.placement || '',
         products: si.products.map((p, i) => galleryProductToUIProduct(p, i)),
       }));
   }, [item?.studioItems, galleryProductToUIProduct]);
@@ -422,6 +425,33 @@ export default function GalleryDetailPage() {
                     </span>
                     <div className="flex-1 h-px bg-foreground/[0.06]" />
                   </div>
+
+                  {/* Item Metadata (quantity, size, placement) */}
+                  {(group.quantity > 1 || group.recommendedSize || group.placement) && (
+                    <div className="flex items-center gap-2 flex-wrap px-1">
+                      {group.quantity > 1 && (
+                        <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                          {t('studio.result.quantity', '{{amount}} عدد', { amount: toLocalizedDigits(group.quantity) })}
+                        </span>
+                      )}
+                      {group.quantity > 1 && (group.recommendedSize || group.placement) && (
+                        <span className="w-0.5 h-0.5 rounded-full bg-foreground/20" />
+                      )}
+                      {group.recommendedSize && (
+                        <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                          {t('studio.result.recommendedSize', 'سایز: {{size}}', { size: group.recommendedSize })}
+                        </span>
+                      )}
+                      {group.recommendedSize && group.placement && (
+                        <span className="w-0.5 h-0.5 rounded-full bg-foreground/20" />
+                      )}
+                      {group.placement && (
+                        <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                          {t('studio.result.placement', 'جایگاه: {{placement}}', { placement: group.placement })}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Top Pick - Large Editorial Card */}
                   {topPick && (
