@@ -469,16 +469,16 @@ export function StudioResultPage() {
 
                 {/* Top Pick - Large Editorial Card */}
                 {topPick && (
-                  <div className="group flex flex-row gap-6 py-4">
-                    {/* Product Frame */}
+                  <div className="group flex flex-row gap-5 py-4">
+                    {/* Product Frame - Prominent */}
                     <div
-                      className="relative w-[130px] aspect-[3/4] bg-black/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
+                      className="relative w-[170px] aspect-[3/4] bg-black/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
                       onClick={() => handleProductClick(topPick)}
                     >
                       <AuthenticatedImage
                         src={topPick.image}
                         alt={topPick.name}
-                        imageWidth={300}
+                        imageWidth={400}
                         imageQuality={80}
                         className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
                       />
@@ -491,10 +491,10 @@ export function StudioResultPage() {
                     </div>
 
                     {/* Content Section */}
-                    <div className="flex-1 flex flex-col justify-between py-1">
+                    <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
                       <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-start">
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1 min-w-0">
                             <h3 className="text-[13px] font-bold text-black uppercase tracking-[0.05em] leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                               {topPick.name}
                             </h3>
@@ -506,7 +506,7 @@ export function StudioResultPage() {
                           </div>
                           <button
                             onClick={(e) => { e.stopPropagation(); setIsSaved(!isSaved); }}
-                            className={`transition-all active:scale-90 ${isSaved ? 'text-accent' : 'text-black/10 hover:text-black'}`}
+                            className={`transition-all active:scale-90 shrink-0 ${isSaved ? 'text-accent' : 'text-black/10 hover:text-black'}`}
                           >
                             <Bookmark size={16} strokeWidth={1.5} className={isSaved ? 'fill-current' : ''} />
                           </button>
@@ -541,16 +541,16 @@ export function StudioResultPage() {
                   </div>
                 )}
 
-                {/* Alternative Products - Compact Row */}
+                {/* Alternative Products - Compact Thumbnails */}
                 {alternatives.length > 0 && (
                   <div className="flex gap-3">
                     {alternatives.map((alt) => (
                       <div
                         key={alt.id}
-                        className="flex-1 min-w-0 cursor-pointer group/alt"
+                        className="w-[100px] shrink-0 cursor-pointer group/alt"
                         onClick={() => handleProductClick(alt)}
                       >
-                        <div className="relative aspect-square bg-black/[0.02] overflow-hidden mb-2">
+                        <div className="relative aspect-[3/4] bg-black/[0.02] overflow-hidden mb-1.5">
                           <AuthenticatedImage
                             src={alt.image}
                             alt={alt.name}
@@ -559,20 +559,20 @@ export function StudioResultPage() {
                             className="w-full h-full object-cover grayscale-[0.2] group-hover/alt:grayscale-0 transition-all duration-700 group-hover/alt:scale-105"
                           />
                         </div>
-                        <h4 className="text-[11px] font-bold text-black truncate leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                        <h4 className="text-[10px] font-bold text-black truncate leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                           {alt.name}
                         </h4>
                         <div className="flex items-baseline gap-1 mt-0.5">
                           {alt.priceRange ? (
-                            <span className="text-[11px] font-bold text-black tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                            <span className="text-[10px] font-bold text-black tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                               {formatPriceStartingFrom(alt.priceRange.min)}
                             </span>
                           ) : (
                             <>
-                              <span className="text-[13px] font-bold text-black tabular-nums tracking-tighter">
+                              <span className="text-[11px] font-bold text-black tabular-nums tracking-tighter">
                                 {formatPriceFromRial(alt.price, false)}
                               </span>
-                              <span className="text-[8px] text-black/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
+                              <span className="text-[7px] text-black/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                                 {t('common.toman', 'تومان')}
                               </span>
                             </>
