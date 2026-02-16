@@ -118,14 +118,14 @@ export function getResultImageUrl(
  * @param productUniqueLink - The product's unique identifier (UUID)
  * @param customerImage - The customer's room photo file
  * @param onProgress - Optional callback for upload progress (0-100)
- * @param selectedSize - Optional size code for rug products
+ * @param selectedVariantId - Optional variant ID for rug products (sent as variant_id to backend)
  * @returns task_id for polling
  */
 export async function submitVisualizationTask(
   productUniqueLink: string,
   customerImage: File,
   onProgress?: (progress: number) => void,
-  selectedSize?: string
+  selectedVariantId?: string
 ): Promise<{
   success: boolean;
   taskId?: string;
@@ -171,10 +171,10 @@ export async function submitVisualizationTask(
     };
   }
 
-  // Build additional form data with selected size (for rug products)
-  const additionalData = selectedSize ? { selected_size: selectedSize } : undefined;
+  // Build additional form data with variant ID (for rug products)
+  const additionalData = selectedVariantId ? { variant_id: selectedVariantId } : undefined;
 
-  console.log('[Visualization] Submitting task with size:', { selectedSize, additionalData });
+  console.log('[Visualization] Submitting task with variant_id:', { selectedVariantId, additionalData });
 
   const response = await apiUpload<SubmitTaskResponse>(
     `/products/${productUniqueLink}/process/`,

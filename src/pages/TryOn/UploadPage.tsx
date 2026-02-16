@@ -19,16 +19,46 @@ import type { Product } from '../../types/product';
 import type { APIProduct } from '../../types/apiProduct';
 
 /**
- * Extract available sizes from a product (handles both API and mock formats)
+ * Extract available sizes from a product (handles backend variants, legacy sizes, and mock formats)
+ *
+ * The code in SizeOption is the variant ID (as string) which is sent as variant_id to the backend.
  *
  * @param product - Product from context (could be API or mock format)
- * @returns Array of size options with code and display label
+ * @returns Array of size options with code (variant ID) and display label
  */
 function getAvailableSizes(product: Product | APIProduct | null): SizeOption[] {
   if (!product) return [];
 
-  // Check raw backend format (available_sizes - snake_case from API response)
-  // This is the most common case when product comes directly from backend
+  // Check for new variants format (from backend API with variants array)
+  const apiProduct = product as APIProduct;
+  if (apiProduct.variants && apiProduct.variants.length > 0) {
+    return apiProduct.variants.map((v) => ({
+      code: String(v.id),
+      display: v.labelFa,
+    }));
+  }
+
+  // Check raw backend format with variants (snake_case, before transform)
+  const rawProduct = product as unknown as {
+    variants?: Array<{ id: number; label_fa: string }>;
+  };
+  if (rawProduct.variants && Array.isArray(rawProduct.variants) && rawProduct.variants.length > 0 && rawProduct.variants[0]?.label_fa) {
+    return rawProduct.variants.map((v) => ({
+      code: String(v.id),
+      display: v.label_fa,
+    }));
+  }
+
+  // Legacy: Check availableSizes (derived from variants in transformBackendProduct)
+  if (apiProduct.availableSizes && apiProduct.availableSizes.length > 0) {
+    const displayLabels = (apiProduct as unknown as { availableSizesDisplay?: string[] }).availableSizesDisplay;
+    return apiProduct.availableSizes.map((code, index) => ({
+      code,
+      display: displayLabels?.[index] || code,
+    }));
+  }
+
+  // Legacy: Check raw backend format (available_sizes - snake_case)
   const backendProduct = product as unknown as {
     available_sizes?: string[];
     available_sizes_display?: string[];
@@ -36,16 +66,6 @@ function getAvailableSizes(product: Product | APIProduct | null): SizeOption[] {
   if (backendProduct.available_sizes && backendProduct.available_sizes.length > 0) {
     const displayLabels = backendProduct.available_sizes_display;
     return backendProduct.available_sizes.map((code, index) => ({
-      code,
-      display: displayLabels?.[index] || code,
-    }));
-  }
-
-  // Check transformed API product format (availableSizes - camelCase)
-  const apiProduct = product as APIProduct;
-  if (apiProduct.availableSizes && apiProduct.availableSizes.length > 0) {
-    const displayLabels = (apiProduct as unknown as { availableSizesDisplay?: string[] }).availableSizesDisplay;
-    return apiProduct.availableSizes.map((code, index) => ({
       code,
       display: displayLabels?.[index] || code,
     }));
@@ -269,7 +289,7 @@ export function TryOnUploadPage() {
         <ContextBar
           items={[
             { label: t('nav.home'), href: '/' },
-            { label: t('tryOn.title'), href: '/try-on' },
+            { label: t('shared.products'), href: product?.shopSlug && productId ? `/store/${product.shopSlug}/product/${productId}` : `/explore` },
             { label: t('tryOn.upload.title') }
           ]}
         />

@@ -19,6 +19,20 @@ import type { Product } from './product';
  * GET /api/products/
  * GET /api/products/{unique_link}/
  */
+/**
+ * Product variant as returned from backend
+ */
+export interface BackendProductVariant {
+  id: number;
+  width_cm: string | null;
+  length_cm: string | null;
+  height_cm: string | null;
+  shape: string;
+  label_fa: string;
+  price: number | null;
+  is_default: boolean;
+}
+
 export interface BackendProduct {
   id: number;
   name: string;
@@ -34,6 +48,8 @@ export interface BackendProduct {
   description?: string;
   link?: string | null;
   extra_details?: Record<string, string | string[]> | null;
+  variants?: BackendProductVariant[];
+  // Legacy fields (may still be present on older endpoints)
   available_sizes?: string[];
   available_sizes_display?: string[];
   size_prices?: Record<string, number> | null;
@@ -65,6 +81,23 @@ export interface PaginatedProductResponse {
 /**
  * Product for frontend use (transformed from BackendProduct)
  */
+/**
+ * Transformed product variant for frontend use
+ */
+export interface ProductVariant {
+  id: number;
+  widthCm: string | null;
+  lengthCm: string | null;
+  heightCm: string | null;
+  shape: string;
+  labelFa: string;
+  price: number | null;
+  isDefault: boolean;
+}
+
+/**
+ * Product for frontend use (transformed from BackendProduct)
+ */
 export interface APIProduct {
   id: string;
   name: string;
@@ -79,6 +112,7 @@ export interface APIProduct {
   description?: string;
   externalLink?: string;
   extraDetails?: Record<string, string | string[]> | null;
+  variants?: ProductVariant[];
   availableSizes?: string[];
   availableSizesDisplay?: string[];
   sizePrices?: Record<string, number> | null;
@@ -185,6 +219,26 @@ export function getProductImageUrl(
  * Transform BackendProduct to frontend APIProduct
  */
 export function transformBackendProduct(backendProduct: BackendProduct): APIProduct {
+  // Transform variants from backend format
+  const variants = backendProduct.variants?.map(v => ({
+    id: v.id,
+    widthCm: v.width_cm,
+    lengthCm: v.length_cm,
+    heightCm: v.height_cm,
+    shape: v.shape,
+    labelFa: v.label_fa,
+    price: v.price,
+    isDefault: v.is_default,
+  }));
+
+  // Derive availableSizes from variants for backwards compatibility
+  const availableSizes = variants && variants.length > 0
+    ? variants.map(v => String(v.id))
+    : backendProduct.available_sizes;
+  const availableSizesDisplay = variants && variants.length > 0
+    ? variants.map(v => v.labelFa)
+    : backendProduct.available_sizes_display;
+
   return {
     id: String(backendProduct.id),
     name: backendProduct.name,
@@ -199,8 +253,9 @@ export function transformBackendProduct(backendProduct: BackendProduct): APIProd
     description: backendProduct.description,
     externalLink: backendProduct.link || undefined,
     extraDetails: backendProduct.extra_details,
-    availableSizes: backendProduct.available_sizes,
-    availableSizesDisplay: backendProduct.available_sizes_display,
+    variants,
+    availableSizes,
+    availableSizesDisplay,
     sizePrices: backendProduct.size_prices,
     sizePricesDisplay: backendProduct.size_prices_display?.map(sp => ({
       code: sp.code,
