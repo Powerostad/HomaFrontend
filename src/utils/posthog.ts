@@ -57,4 +57,17 @@ if (!isDev || isDevEnabled) {
   });
 }
 
+// Register homa_session_id as a super property on every PostHog event
+try {
+  const STORAGE_KEY = 'homa_session_id';
+  let sessionId = localStorage.getItem(STORAGE_KEY);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(STORAGE_KEY, sessionId);
+  }
+  posthog.register({ homa_session_id: sessionId });
+} catch {
+  // PostHog unreachable or localStorage unavailable — fail silently
+}
+
 export { posthog };

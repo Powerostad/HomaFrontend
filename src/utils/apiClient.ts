@@ -262,6 +262,16 @@ function buildHeaders(
     ...customHeaders,
   };
 
+  // Attach unified session ID for cross-system tracking
+  try {
+    const sessionId = localStorage.getItem('homa_session_id');
+    if (sessionId) {
+      headers['X-Homa-Session'] = sessionId;
+    }
+  } catch {
+    // localStorage unavailable
+  }
+
   // Add Authorization header if token exists and not skipped
   if (!skipAuth) {
     const tokens = getStoredTokens();
@@ -729,6 +739,16 @@ export async function apiUpload<T>(
         xhr.setRequestHeader('Authorization', `Bearer ${tokens.access}`);
       }
 
+      // Attach unified session ID
+      try {
+        const sessionId = localStorage.getItem('homa_session_id');
+        if (sessionId) {
+          xhr.setRequestHeader('X-Homa-Session', sessionId);
+        }
+      } catch {
+        // localStorage unavailable
+      }
+
       xhr.send(formData);
     });
   } catch (error) {
@@ -912,6 +932,15 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
 
   if (tokens?.access) {
     headers['Authorization'] = `Bearer ${tokens.access}`;
+  }
+
+  try {
+    const sessionId = localStorage.getItem('homa_session_id');
+    if (sessionId) {
+      headers['X-Homa-Session'] = sessionId;
+    }
+  } catch {
+    // localStorage unavailable
   }
 
   const response = await fetch(imageUrl, { headers });

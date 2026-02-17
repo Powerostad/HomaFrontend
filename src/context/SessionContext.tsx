@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useMemo } from "react";
-import { trackEvent as trackAnalytics } from "../utils/analytics";
 import { posthog } from "@/utils/posthog";
+
+const STORAGE_KEY = 'homa_session_id';
 
 /**
  * SessionContext - manages session tracking and error state
@@ -16,25 +17,31 @@ interface SessionContextType {
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-function generateSessionId(): string {
-  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+function getOrCreateSessionId(): string {
+  try {
+    const existing = localStorage.getItem(STORAGE_KEY);
+    if (existing) return existing;
+  } catch {
+    // localStorage unavailable (SSR, private browsing)
+  }
+  const id = crypto.randomUUID();
+  try {
+    localStorage.setItem(STORAGE_KEY, id);
+  } catch {
+    // localStorage unavailable
+  }
+  return id;
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  // Session ID is constant per session
-  const sessionId = useMemo(() => generateSessionId(), []);
+  // Session ID persists across page reloads via localStorage
+  const sessionId = useMemo(() => getOrCreateSessionId(), []);
 
   const [errorType, setErrorType] = useState<string>("network");
   const [placementSuccess, setPlacementSuccess] = useState<boolean>(true);
 
   const trackKPI = (event: string, metadata?: Record<string, unknown>) => {
-    const eventData = {
-      timestamp: new Date().toISOString(),
-      sessionId,
-      ...metadata,
-    };
-    console.log(`[KPI] ${event}`, eventData);
-    trackAnalytics(event, eventData);
+    console.log(`[KPI] ${event}`, { sessionId, ...metadata });
     posthog.capture(event, { session_id: sessionId, ...metadata });
   };
 

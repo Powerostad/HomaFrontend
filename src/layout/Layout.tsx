@@ -1,13 +1,12 @@
 import { Outlet as RouterOutlet } from "react-router-dom";
 import { Toaster } from "../components/ui/sonner";
-import { AdminDashboard } from "../components/AdminDashboard";
 import { BrandColors } from "../components/BrandColors";
 
 /**
  * Layout - Main application layout wrapper
  *
  * Provides consistent styling and dev-only debug tools.
- * Debug components (AdminDashboard, BrandColors) only render in development.
+ * Debug components (BrandColors) only render in development.
  */
 export function Layout() {
   const isDev = import.meta.env.DEV;
@@ -18,12 +17,7 @@ export function Layout() {
       <Toaster position="top-center" dir="rtl" richColors />
 
       {/* Dev-only debug overlays - excluded from production builds */}
-      {isDev && (
-        <>
-          <AdminDashboard />
-          <BrandColors />
-        </>
-      )}
+      {isDev && <BrandColors />}
     </div>
   );
 }
