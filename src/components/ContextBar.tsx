@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { formatPriceFromRial } from '../utils/formatters';
 
 interface BreadcrumbItem {
@@ -13,9 +14,10 @@ interface ContextBarProps {
 }
 
 export function ContextBar({ items, price }: ContextBarProps) {
+  const { t } = useTranslation();
   const validItems = items.filter(item => item.label).map(item => ({
     ...item,
-    label: item.label === 'امتحان در فضای تو' ? 'محصول' : item.label
+    label: item.label === t('tryOn.title') ? t('contextBar.product') : item.label
   }));
 
   return (
@@ -23,7 +25,7 @@ export function ContextBar({ items, price }: ContextBarProps) {
       <div className="flex items-center gap-1.5 whitespace-nowrap">
         {validItems.map((item, index) => {
           const isLast = index === validItems.length - 1;
-          const isStudio = item.label === 'استودیو' || item.href?.includes('/studio');
+          const isStudio = item.href?.includes('/studio');
           
           return (
             <React.Fragment key={index}>
@@ -53,7 +55,7 @@ export function ContextBar({ items, price }: ContextBarProps) {
             {formatPriceFromRial(price, false)}
           </span>
           <span className="text-muted-foreground" style={{ fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-medium)' }}>
-            تومان
+            {t('common.toman')}
           </span>
         </div>
       )}

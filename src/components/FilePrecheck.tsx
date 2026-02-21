@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Camera } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Header } from "./Header";
 import svgPaths from "../imports/svg-m4kfj8jpfi";
 
@@ -88,6 +89,7 @@ function AlertIcon() {
 }
 
 export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: FilePrecheckProps) {
+  const { t } = useTranslation();
   const [checks, setChecks] = useState<CheckResult[]>([]);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -103,13 +105,13 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
       if (file.type === "image/jpeg" || file.type === "image/png") {
         results.push({
           type: "success",
-          message: "فرمت فایل صحیح است (JPG/PNG)",
+          message: t('filePrecheck.formatOk'),
           canContinue: true
         });
       } else {
         results.push({
           type: "error",
-          message: "فرمت فایل پشتیبانی نمی‌شود. لطفاً JPG یا PNG استفاده کنید",
+          message: t('filePrecheck.formatError'),
           canContinue: false
         });
       }
@@ -122,19 +124,19 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
       if (sizeMB < 10) {
         results.push({
           type: "success",
-          message: `حجم فایل مناسب است (${sizeMB.toFixed(2)} MB)`,
+          message: t('filePrecheck.sizeOk', { size: sizeMB.toFixed(2) }),
           canContinue: true
         });
       } else if (sizeMB < 20) {
         results.push({
           type: "warning",
-          message: "حجم فایل بزرگ است، ممکن است پردازش کندتر باشد",
+          message: t('filePrecheck.sizeLarge'),
           canContinue: true
         });
       } else {
         results.push({
           type: "error",
-          message: "حجم فایل بیش از حد مجاز (حداکثر 20MB)",
+          message: t('filePrecheck.sizeError'),
           canContinue: false
         });
       }
@@ -147,13 +149,13 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
       if (qualityCheck > 0.3) {
         results.push({
           type: "success",
-          message: "کیفیت تصویر مناسب است",
+          message: t('filePrecheck.qualityOk'),
           canContinue: true
         });
       } else {
         results.push({
           type: "warning",
-          message: "تصویر ممکن است کمی تار باشد، اما ادامه می‌دهیم",
+          message: t('filePrecheck.qualityWarning'),
           canContinue: true
         });
       }
@@ -166,13 +168,13 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
       if (roomDetection > 0.2) {
         results.push({
           type: "success",
-          message: "محیط داخلی شناسایی شد",
+          message: t('filePrecheck.roomDetected'),
           canContinue: true
         });
       } else {
         results.push({
           type: "warning",
-          message: "اطمینان از نوع تصویر نداریم، اما می‌توانید ادامه دهید",
+          message: t('filePrecheck.roomUncertain'),
           canContinue: true
         });
       }
@@ -211,7 +213,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="mb-14"
         >
-          <h1 className="text-center text-[#1a1a1a] mb-2" style={{ fontWeight: 700 }}>بررسی تصویر</h1>
+          <h1 className="text-center text-[#1a1a1a] mb-2" style={{ fontWeight: 700 }}>{t('filePrecheck.title')}</h1>
         </motion.div>
 
         {/* Checks List */}
@@ -281,7 +283,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
               >
                 <div className="flex-shrink-0 size-6 border-3 border-[#E5E7EB] border-t-[#1A1A1A] rounded-full animate-spin" />
                 <div className="flex-1">
-                  <p className="text-[#6B7280]">در حال بررسی...</p>
+                  <p className="text-[#6B7280]">{t('filePrecheck.checking')}</p>
                 </div>
               </motion.div>
             )}
@@ -306,7 +308,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   className="w-full h-[55.993px] flex items-center justify-center gap-2 rounded-full bg-[#212121] text-white transition-all duration-300"
                 >
                   <Camera className="size-[19.983px]" />
-                  <span>عکس بهتری انتخاب کنید</span>
+                  <span>{t('filePrecheck.chooseBetterPhoto')}</span>
                 </motion.button>
                 <motion.button
                   onClick={onContinueAnyway}
@@ -314,7 +316,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   whileTap={{ scale: 0.98 }}
                   className="w-full h-[55.993px] flex items-center justify-center rounded-full bg-[#f3f4f6] text-[#1a1a1a] transition-all duration-300"
                 >
-                  به هر حال ادامه دهید
+                  {t('filePrecheck.continueAnyway')}
                 </motion.button>
               </>
             ) : hasWarning ? (
@@ -327,7 +329,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   className="w-full h-[55.993px] flex items-center justify-center gap-2 rounded-full bg-[#212121] text-white transition-all duration-300"
                 >
                   <Camera className="size-[19.983px]" />
-                  <span>عکس بهتری انتخاب کنید</span>
+                  <span>{t('filePrecheck.chooseBetterPhoto')}</span>
                 </motion.button>
                 <motion.button
                   onClick={onContinueAnyway}
@@ -335,7 +337,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   whileTap={{ scale: 0.98 }}
                   className="w-full h-[55.993px] flex items-center justify-center rounded-full bg-[#f3f4f6] text-[#1a1a1a] transition-all duration-300"
                 >
-                  با همین عکس ادامه بده
+                  {t('filePrecheck.continueWithThis')}
                 </motion.button>
               </>
             ) : (
@@ -346,7 +348,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   animate={{ scale: 1, opacity: 1 }}
                   className="w-full h-[55.993px] flex items-center justify-center rounded-full bg-[#dff370] text-[#212121] transition-all duration-300"
                 >
-                  <span>✓ تصویر تایید شد - در حال انتقال...</span>
+                  <span>✓ {t('filePrecheck.imageApproved')}</span>
                 </motion.div>
               </>
             )}

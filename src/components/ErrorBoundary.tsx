@@ -1,5 +1,6 @@
 import React, { Component, ReactNode } from "react";
 import { RefreshCw, Home, AlertTriangle } from "lucide-react";
+import i18n from "../i18n/config";
 
 interface Props {
   children: ReactNode;
@@ -94,13 +95,13 @@ export class ErrorBoundary extends Component<Props, State> {
               className="text-xl font-bold mb-2"
               style={{ color: "var(--color-content-primary)" }}
             >
-              مشکلی پیش آمد
+              {i18n.t('errorBoundary.title')}
             </h1>
             <p
               className="text-sm mb-6"
               style={{ color: "var(--color-content-secondary)" }}
             >
-              متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.
+              {i18n.t('errorBoundary.message')}
             </p>
 
             {/* Error Details (development only) */}
@@ -133,7 +134,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 }}
               >
                 <RefreshCw className="w-4 h-4" />
-                تلاش مجدد
+                {i18n.t('common.retry')}
               </button>
 
               <button
@@ -145,7 +146,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 }}
               >
                 <Home className="w-4 h-4" />
-                صفحه اصلی
+                {i18n.t('errorBoundary.home')}
               </button>
             </div>
           </div>

@@ -107,7 +107,11 @@
     "myProjects": "My Projects",
     "settings": "Settings",
     "orders": "Orders",
-    "menu": "Menu"
+    "menu": "Menu",
+    "aboutUs": "About Us",
+    "contactUs": "Contact Us",
+    "faq": "FAQ",
+    "mySpace": "My Space"
   },
   "product": {
     "addToCart": "Add to cart",
@@ -598,5 +602,65 @@
       "entFeature3": "SLA contract",
       "entFeature4": "Hourly backup"
     }
+  },
+  "footer": {
+    "tagline": "The distance between dream and reality is just one click. We help you experience a more confident, beautiful, and tasteful result in your space.",
+    "quickAccess": "Quick Access",
+    "collaboration": "Collaboration",
+    "collaborateWithHoma": "Collaborate with Homa",
+    "support": "Support",
+    "terms": "Terms & Conditions"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "An unexpected error has occurred. Please try again.",
+    "home": "Home Page"
+  },
+  "errorRecovery": {
+    "networkTitle": "Connection Problem",
+    "networkMessage": "Please check your internet connection and try again.",
+    "timeoutTitle": "Request Timed Out",
+    "timeoutMessage": "Processing took too long. Please try again.",
+    "serverTitle": "Server Error",
+    "serverMessage": "Something went wrong on our end. Please try again later.",
+    "unknownTitle": "Unknown Error",
+    "unknownMessage": "Something went wrong. Please try again.",
+    "needHelp": "Need help?",
+    "contactSupport": "Contact Support"
+  },
+  "filePrecheck": {
+    "title": "Image Check",
+    "checking": "Checking...",
+    "formatOk": "File format is correct (JPG/PNG)",
+    "formatError": "File format is not supported. Please use JPG or PNG",
+    "sizeOk": "File size is appropriate ({{size}} MB)",
+    "sizeLarge": "File size is large, processing may be slower",
+    "sizeError": "File size exceeds the limit (maximum 20MB)",
+    "qualityOk": "Image quality is suitable",
+    "qualityWarning": "Image may be slightly blurry, but we'll continue",
+    "roomDetected": "Indoor environment detected",
+    "roomUncertain": "Uncertain about the image type, but you can continue",
+    "chooseBetterPhoto": "Choose a better photo",
+    "continueAnyway": "Continue anyway",
+    "continueWithThis": "Continue with this photo",
+    "imageApproved": "Image approved - transferring..."
+  },
+  "sizeSelection": {
+    "title": "Select Size",
+    "selectSizeFor": "Select the desired size for {{productName}}",
+    "confirmAndContinue": "Confirm and Continue",
+    "sizeNote": "The selected size will be used to display the product in your space"
+  },
+  "productDetails": {
+    "title": "Product Details",
+    "viewInfo": "View complete product information here.",
+    "seller": "Seller: {{name}}",
+    "brand": "Brand: {{name}}",
+    "availableColors": "Available Colors",
+    "availableSizes": "Available Sizes",
+    "uploadToTest": "Upload photo to test"
+  },
+  "contextBar": {
+    "product": "Product"
   }
 }

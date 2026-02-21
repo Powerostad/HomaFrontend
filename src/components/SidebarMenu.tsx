@@ -163,7 +163,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                 {/* Section: Personal Area */}
                 {isLoggedIn && (
                   <div className="space-y-10 pt-10 border-t border-[var(--border-subtle)]">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--muted-foreground)] block">My Space</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--muted-foreground)] block">{t('nav.mySpace')}</span>
                     <div className="space-y-8">
                       {accountItems.map((item) => {
                         const isActive = location.pathname === item.href;
@@ -194,9 +194,9 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                 {/* Section: Secondary Info */}
                 <div className="pt-10 border-t border-[var(--border-subtle)] space-y-6">
                    <div className="flex flex-col gap-4">
-                      <Link to="/about" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">درباره ما</Link>
-                      <Link to="/contact" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">تماس با ما</Link>
-                      <Link to="/faq" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">سوالات متداول</Link>
+                      <Link to="/about" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">{t('nav.aboutUs')}</Link>
+                      <Link to="/contact" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">{t('nav.contactUs')}</Link>
+                      <Link to="/faq" onClick={onClose} className="text-[12px] font-bold uppercase tracking-[0.3em] text-[var(--jet-black)] hover:text-accent transition-colors">{t('nav.faq')}</Link>
                    </div>
                 </div>
               </div>

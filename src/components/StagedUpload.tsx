@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Header } from "./Header";
 import svgPaths from "../imports/svg-m4kfj8jpfi";
 
@@ -68,10 +69,11 @@ function ProcessingIcon() {
 }
 
 export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
+  const { t } = useTranslation();
   const [stages, setStages] = useState<Stage[]>([
-    { id: 1, label: "بارگذاری فایل", progress: 0, status: "active" },
-    { id: 2, label: "پردازش تصویر", progress: 0, status: "pending" },
-    { id: 3, label: "آماده‌سازی نتایج", progress: 0, status: "pending" }
+    { id: 1, label: t('tryOn.uploadPhoto'), progress: 0, status: "active" },
+    { id: 2, label: t('tryOn.processing'), progress: 0, status: "pending" },
+    { id: 3, label: t('tryOn.progress.generating'), progress: 0, status: "pending" }
   ]);
 
   useEffect(() => {
@@ -134,7 +136,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
           onComplete();
         }, 1000); // Delay to show final completion state
       } catch (error) {
-        onError("خطا در بارگذاری فایل");
+        onError(t('tryOn.errors.uploadFailed'));
         setStages(prev => prev.map(s => 
           s.status === "active" ? { ...s, status: "error" as const } : s
         ));
@@ -185,9 +187,9 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="mb-14"
         >
-          <h2 className="text-center text-[#1a1a1a] mb-2">در حال پردازش</h2>
+          <h2 className="text-center text-[#1a1a1a] mb-2">{t('tryOn.progress.title')}</h2>
           <p className="text-center text-[#6B7280]">
-            {activeStage ? activeStage.label : "تکمیل شد"}
+            {activeStage ? activeStage.label : t('common.success')}
           </p>
         </motion.div>
 
@@ -199,7 +201,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
           className="mb-10"
         >
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[#6B7280]">پیشرفت کلی</p>
+            <p className="text-[#6B7280]">{t('tryOn.progress.title')}</p>
             <p className="text-[#1A1A1A] tabular-nums" style={{ fontWeight: 600 }}>
               {Math.round(overallProgress)}٪
             </p>
@@ -287,7 +289,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                           fontWeight: 500
                         }}
                       >
-                        ✓ تکمیل شد
+                        ✓ {t('common.success')}
                       </motion.span>
                     )}
                   </div>
@@ -327,7 +329,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
               className="w-full h-[55.993px] flex items-center justify-center gap-2 rounded-full bg-[#212121] text-white transition-all duration-300"
             >
               <Sparkles className="size-[19.983px]" />
-              <span>مشاهده نتیجه</span>
+              <span>{t('studio.viewResult')}</span>
             </motion.button>
           </motion.div>
         )}

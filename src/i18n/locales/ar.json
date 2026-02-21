@@ -107,7 +107,11 @@
     "myProjects": "مشاريعي",
     "settings": "الإعدادات",
     "orders": "الطلبات",
-    "menu": "القائمة"
+    "menu": "القائمة",
+    "aboutUs": "من نحن",
+    "contactUs": "اتصل بنا",
+    "faq": "الأسئلة الشائعة",
+    "mySpace": "مساحتي"
   },
   "product": {
     "addToCart": "إضافة للسلة",
@@ -598,5 +602,65 @@
       "entFeature3": "عقد SLA",
       "entFeature4": "نسخ احتياطي كل ساعة"
     }
+  },
+  "footer": {
+    "tagline": "المسافة بين الحلم والواقع هي نقرة واحدة فقط. نساعدك في تجربة نتيجة أكثر ثقة وجمالاً وأناقة في مساحتك.",
+    "quickAccess": "الوصول السريع",
+    "collaboration": "التعاون",
+    "collaborateWithHoma": "التعاون مع هوما",
+    "support": "الدعم",
+    "terms": "الشروط والأحكام"
+  },
+  "errorBoundary": {
+    "title": "حدث خطأ ما",
+    "message": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    "home": "الصفحة الرئيسية"
+  },
+  "errorRecovery": {
+    "networkTitle": "مشكلة في الاتصال",
+    "networkMessage": "يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.",
+    "timeoutTitle": "انتهت مهلة الطلب",
+    "timeoutMessage": "استغرقت المعالجة وقتاً طويلاً. يرجى المحاولة مرة أخرى.",
+    "serverTitle": "خطأ في الخادم",
+    "serverMessage": "حدث خطأ من جانبنا. يرجى المحاولة لاحقاً.",
+    "unknownTitle": "خطأ غير معروف",
+    "unknownMessage": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "needHelp": "تحتاج مساعدة؟",
+    "contactSupport": "اتصل بالدعم"
+  },
+  "filePrecheck": {
+    "title": "فحص الصورة",
+    "checking": "جارٍ الفحص...",
+    "formatOk": "تنسيق الملف صحيح (JPG/PNG)",
+    "formatError": "تنسيق الملف غير مدعوم. يرجى استخدام JPG أو PNG",
+    "sizeOk": "حجم الملف مناسب ({{size}} MB)",
+    "sizeLarge": "حجم الملف كبير، قد تكون المعالجة أبطأ",
+    "sizeError": "حجم الملف يتجاوز الحد المسموح (الحد الأقصى 20MB)",
+    "qualityOk": "جودة الصورة مناسبة",
+    "qualityWarning": "قد تكون الصورة ضبابية قليلاً، لكن سنستمر",
+    "roomDetected": "تم اكتشاف بيئة داخلية",
+    "roomUncertain": "غير متأكدين من نوع الصورة، لكن يمكنك المتابعة",
+    "chooseBetterPhoto": "اختر صورة أفضل",
+    "continueAnyway": "المتابعة على أي حال",
+    "continueWithThis": "المتابعة بهذه الصورة",
+    "imageApproved": "تمت الموافقة على الصورة - جارٍ النقل..."
+  },
+  "sizeSelection": {
+    "title": "اختيار المقاس",
+    "selectSizeFor": "اختر المقاس المطلوب لـ {{productName}}",
+    "confirmAndContinue": "تأكيد ومتابعة",
+    "sizeNote": "سيتم استخدام المقاس المحدد لعرض المنتج في مساحتك"
+  },
+  "productDetails": {
+    "title": "تفاصيل المنتج",
+    "viewInfo": "شاهد معلومات المنتج الكاملة هنا.",
+    "seller": "البائع: {{name}}",
+    "brand": "العلامة التجارية: {{name}}",
+    "availableColors": "الألوان المتاحة",
+    "availableSizes": "المقاسات المتاحة",
+    "uploadToTest": "رفع صورة للاختبار"
+  },
+  "contextBar": {
+    "product": "المنتج"
   }
 }

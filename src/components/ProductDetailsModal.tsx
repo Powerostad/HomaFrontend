@@ -7,6 +7,7 @@ import {
 } from "./SimpleDialog";
 import { SimpleButton as Button } from "./SimpleButton";
 import { CheckCircle, Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Product } from "../types/product";
 import { formatPriceFromRial } from "../utils/formatters";
 
@@ -23,6 +24,7 @@ export function ProductDetailsModal({
   product,
   onUploadSticky 
 }: ProductDetailsModalProps) {
+  const { t } = useTranslation();
   const displayPrice = product.price
     ? formatPriceFromRial(product.price)
     : product.priceRange
@@ -33,8 +35,8 @@ export function ProductDetailsModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white rounded-3xl border-gray-200">
         <DialogHeader>
-          <DialogTitle className="text-gray-900">جزئیات محصول</DialogTitle>
-          <DialogDescription className="text-gray-600">اطلاعات کامل محصول را در اینجا مشاهده کنید.</DialogDescription>
+          <DialogTitle className="text-gray-900">{t('productDetails.title')}</DialogTitle>
+          <DialogDescription className="text-gray-600">{t('productDetails.viewInfo')}</DialogDescription>
         </DialogHeader>
 
         {/* Product Images Gallery */}
@@ -73,19 +75,19 @@ export function ProductDetailsModal({
             </div>
             
             <p className="text-gray-600">
-              فروشنده: {product.seller.name}
+              {t('productDetails.seller', { name: product.seller.name })}
             </p>
-            
+
             {product.brand && (
               <p className="text-gray-600">
-                برند: {product.brand}
+                {t('productDetails.brand', { name: product.brand })}
               </p>
             )}
           </div>
 
           {displayPrice && (
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
-              <p className="text-gray-600 mb-1">قیمت</p>
+              <p className="text-gray-600 mb-1">{t('product.price')}</p>
               <p className="text-gray-900">{displayPrice}</p>
             </div>
           )}
@@ -93,7 +95,7 @@ export function ProductDetailsModal({
           {/* Description */}
           {product.description && (
             <div>
-              <h3 className="text-gray-900 mb-2">توضیحات</h3>
+              <h3 className="text-gray-900 mb-2">{t('product.description')}</h3>
               <p className="text-gray-600 leading-relaxed">
                 {product.description}
               </p>
@@ -103,7 +105,7 @@ export function ProductDetailsModal({
           {/* Features */}
           {product.features && product.features.length > 0 && (
             <div>
-              <h3 className="text-gray-900 mb-2">ویژگی‌ها</h3>
+              <h3 className="text-gray-900 mb-2">{t('product.specifications')}</h3>
               <ul className="space-y-2">
                 {product.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-gray-600">
@@ -120,7 +122,7 @@ export function ProductDetailsModal({
             <div className="space-y-3">
               {product.variants.colors && (
                 <div>
-                  <h4 className="text-gray-900 mb-2">رنگ‌های موجود</h4>
+                  <h4 className="text-gray-900 mb-2">{t('productDetails.availableColors')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {product.variants.colors.map((color) => (
                       <div
@@ -140,7 +142,7 @@ export function ProductDetailsModal({
 
               {product.variants.sizes && (
                 <div>
-                  <h4 className="text-gray-900 mb-2">سایزهای موجود</h4>
+                  <h4 className="text-gray-900 mb-2">{t('productDetails.availableSizes')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {product.variants.sizes.map((size) => (
                       <div
@@ -168,7 +170,7 @@ export function ProductDetailsModal({
             className="w-full h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full transition-colors flex items-center justify-center gap-2"
           >
             <Upload className="w-5 h-5" />
-            آپلود عکس برای تست
+            {t('productDetails.uploadToTest')}
           </Button>
         </div>
       </DialogContent>

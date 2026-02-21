@@ -107,7 +107,11 @@
     "myProjects": "Projelerim",
     "settings": "Ayarlar",
     "orders": "Siparişler",
-    "menu": "Menü"
+    "menu": "Menü",
+    "aboutUs": "Hakkımızda",
+    "contactUs": "Bize Ulaşın",
+    "faq": "SSS",
+    "mySpace": "Alanım"
   },
   "product": {
     "addToCart": "Sepete ekle",
@@ -598,5 +602,65 @@
       "entFeature3": "SLA sözleşmesi",
       "entFeature4": "Saatlik yedekleme"
     }
+  },
+  "footer": {
+    "tagline": "Hayal ile gerçeklik arasındaki mesafe sadece bir tık. Mekanınızda daha güvenli, daha güzel ve daha zevkli bir sonucu deneyimlemenize yardımcı oluyoruz.",
+    "quickAccess": "Hızlı Erişim",
+    "collaboration": "İş Birliği",
+    "collaborateWithHoma": "Homa ile İş Birliği",
+    "support": "Destek",
+    "terms": "Şartlar ve Koşullar"
+  },
+  "errorBoundary": {
+    "title": "Bir şeyler ters gitti",
+    "message": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    "home": "Ana Sayfa"
+  },
+  "errorRecovery": {
+    "networkTitle": "Bağlantı Sorunu",
+    "networkMessage": "Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.",
+    "timeoutTitle": "İstek Zaman Aşımına Uğradı",
+    "timeoutMessage": "İşlem çok uzun sürdü. Lütfen tekrar deneyin.",
+    "serverTitle": "Sunucu Hatası",
+    "serverMessage": "Sunucumuzda bir sorun oluştu. Lütfen daha sonra tekrar deneyin.",
+    "unknownTitle": "Bilinmeyen Hata",
+    "unknownMessage": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "needHelp": "Yardıma mı ihtiyacınız var?",
+    "contactSupport": "Destek ile İletişime Geçin"
+  },
+  "filePrecheck": {
+    "title": "Görsel Kontrolü",
+    "checking": "Kontrol ediliyor...",
+    "formatOk": "Dosya formatı doğru (JPG/PNG)",
+    "formatError": "Dosya formatı desteklenmiyor. Lütfen JPG veya PNG kullanın",
+    "sizeOk": "Dosya boyutu uygun ({{size}} MB)",
+    "sizeLarge": "Dosya boyutu büyük, işlem daha yavaş olabilir",
+    "sizeError": "Dosya boyutu sınırı aşıyor (maksimum 20MB)",
+    "qualityOk": "Görsel kalitesi uygun",
+    "qualityWarning": "Görsel biraz bulanık olabilir, ancak devam ediyoruz",
+    "roomDetected": "İç mekan ortamı algılandı",
+    "roomUncertain": "Görsel türünden emin değiliz, ancak devam edebilirsiniz",
+    "chooseBetterPhoto": "Daha iyi bir fotoğraf seçin",
+    "continueAnyway": "Yine de devam et",
+    "continueWithThis": "Bu fotoğrafla devam et",
+    "imageApproved": "Görsel onaylandı - aktarılıyor..."
+  },
+  "sizeSelection": {
+    "title": "Beden Seçimi",
+    "selectSizeFor": "{{productName}} için istediğiniz bedeni seçin",
+    "confirmAndContinue": "Onayla ve Devam Et",
+    "sizeNote": "Seçilen beden, ürünü mekanınızda göstermek için kullanılacaktır"
+  },
+  "productDetails": {
+    "title": "Ürün Detayları",
+    "viewInfo": "Tam ürün bilgilerini burada görüntüleyin.",
+    "seller": "Satıcı: {{name}}",
+    "brand": "Marka: {{name}}",
+    "availableColors": "Mevcut Renkler",
+    "availableSizes": "Mevcut Bedenler",
+    "uploadToTest": "Test için fotoğraf yükle"
+  },
+  "contextBar": {
+    "product": "Ürün"
   }
 }

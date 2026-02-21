@@ -1,6 +1,7 @@
 import { SimpleButton as Button } from "./SimpleButton";
 import { motion } from "motion/react";
 import { WifiOff, RefreshCcw, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ErrorRecoveryProps {
   errorType: "network" | "timeout" | "server" | "unknown";
@@ -9,34 +10,36 @@ interface ErrorRecoveryProps {
 }
 
 export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryProps) {
+  const { t } = useTranslation();
+
   const getErrorContent = () => {
     switch (errorType) {
       case "network":
         return {
           icon: WifiOff,
-          title: "مشکل در اتصال",
-          message: "لطفاً اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
+          title: t('errorRecovery.networkTitle'),
+          message: t('errorRecovery.networkMessage'),
           color: "blue"
         };
       case "timeout":
         return {
           icon: AlertCircle,
-          title: "زمان انتظار تمام شد",
-          message: "پردازش بیش از حد طول کشید. لطفاً دوباره تلاش کنید.",
+          title: t('errorRecovery.timeoutTitle'),
+          message: t('errorRecovery.timeoutMessage'),
           color: "yellow"
         };
       case "server":
         return {
           icon: AlertCircle,
-          title: "خطای سرور",
-          message: "مشکلی در سرور ما پیش آمده. لطفاً لحظاتی بعد تلاش کنید.",
+          title: t('errorRecovery.serverTitle'),
+          message: t('errorRecovery.serverMessage'),
           color: "red"
         };
       default:
         return {
           icon: AlertCircle,
-          title: "خطای ناشناخته",
-          message: "مشکلی پیش آمده. لطفاً دوباره تلاش کنید.",
+          title: t('errorRecovery.unknownTitle'),
+          message: t('errorRecovery.unknownMessage'),
           color: "gray"
         };
     }
@@ -106,15 +109,15 @@ export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryPro
               className="w-full h-14 bg-gray-900 hover:bg-gray-800 text-white rounded-full transition-colors flex items-center justify-center gap-2"
             >
               <RefreshCcw className="w-5 h-5" />
-              تلاش مجدد
+              {t('common.retry')}
             </Button>
-            
+
             <Button
               onClick={onCancel}
               variant="outline"
               className="w-full h-14 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-full"
             >
-              انصراف
+              {t('common.cancel')}
             </Button>
           </motion.div>
 
@@ -126,9 +129,9 @@ export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryPro
             className="mt-6 text-center"
           >
             <p className="text-gray-500">
-              نیاز به کمک دارید؟{" "}
+              {t('errorRecovery.needHelp')}{" "}
               <button className="text-gray-900 hover:underline">
-                تماس با پشتیبانی
+                {t('errorRecovery.contactSupport')}
               </button>
             </p>
           </motion.div>

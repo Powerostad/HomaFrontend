@@ -107,7 +107,11 @@
     "myProjects": "پروژه‌های من",
     "settings": "تنظیمات",
     "orders": "سفارش‌ها",
-    "menu": "منو"
+    "menu": "منو",
+    "aboutUs": "درباره ما",
+    "contactUs": "تماس با ما",
+    "faq": "سوالات متداول",
+    "mySpace": "فضای من"
   },
   "product": {
     "addToCart": "افزودن به سبد",
@@ -598,5 +602,65 @@
       "entFeature3": "قرارداد SLA",
       "entFeature4": "بک‌آپ ساعتی"
     }
+  },
+  "footer": {
+    "tagline": "فاصله بین رویا و واقعیت، فقط یک کلیک است. ما کمک می‌کنیم تا نتیجه‌ای مطمئن‌تر، زیباتر و با سلیقه‌تر را در فضای خود تجربه کنید.",
+    "quickAccess": "دسترسی سریع",
+    "collaboration": "همکاری",
+    "collaborateWithHoma": "همکاری با هما",
+    "support": "پشتیبانی",
+    "terms": "قوانین و مقررات"
+  },
+  "errorBoundary": {
+    "title": "مشکلی پیش آمد",
+    "message": "متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.",
+    "home": "صفحه اصلی"
+  },
+  "errorRecovery": {
+    "networkTitle": "مشکل در اتصال",
+    "networkMessage": "لطفاً اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
+    "timeoutTitle": "زمان انتظار تمام شد",
+    "timeoutMessage": "پردازش بیش از حد طول کشید. لطفاً دوباره تلاش کنید.",
+    "serverTitle": "خطای سرور",
+    "serverMessage": "مشکلی در سرور ما پیش آمده. لطفاً لحظاتی بعد تلاش کنید.",
+    "unknownTitle": "خطای ناشناخته",
+    "unknownMessage": "مشکلی پیش آمده. لطفاً دوباره تلاش کنید.",
+    "needHelp": "نیاز به کمک دارید؟",
+    "contactSupport": "تماس با پشتیبانی"
+  },
+  "filePrecheck": {
+    "title": "بررسی تصویر",
+    "checking": "در حال بررسی...",
+    "formatOk": "فرمت فایل صحیح است (JPG/PNG)",
+    "formatError": "فرمت فایل پشتیبانی نمی‌شود. لطفاً JPG یا PNG استفاده کنید",
+    "sizeOk": "حجم فایل مناسب است ({{size}} MB)",
+    "sizeLarge": "حجم فایل بزرگ است، ممکن است پردازش کندتر باشد",
+    "sizeError": "حجم فایل بیش از حد مجاز (حداکثر 20MB)",
+    "qualityOk": "کیفیت تصویر مناسب است",
+    "qualityWarning": "تصویر ممکن است کمی تار باشد، اما ادامه می‌دهیم",
+    "roomDetected": "محیط داخلی شناسایی شد",
+    "roomUncertain": "اطمینان از نوع تصویر نداریم، اما می‌توانید ادامه دهید",
+    "chooseBetterPhoto": "عکس بهتری انتخاب کنید",
+    "continueAnyway": "به هر حال ادامه دهید",
+    "continueWithThis": "با همین عکس ادامه بده",
+    "imageApproved": "تصویر تایید شد - در حال انتقال..."
+  },
+  "sizeSelection": {
+    "title": "انتخاب سایز",
+    "selectSizeFor": "سایز مورد نظر برای {{productName}} را انتخاب کنید",
+    "confirmAndContinue": "تایید و ادامه",
+    "sizeNote": "سایز انتخابی برای نمایش محصول در فضای شما استفاده می‌شود"
+  },
+  "productDetails": {
+    "title": "جزئیات محصول",
+    "viewInfo": "اطلاعات کامل محصول را در اینجا مشاهده کنید.",
+    "seller": "فروشنده: {{name}}",
+    "brand": "برند: {{name}}",
+    "availableColors": "رنگ‌های موجود",
+    "availableSizes": "سایزهای موجود",
+    "uploadToTest": "آپلود عکس برای تست"
+  },
+  "contextBar": {
+    "product": "محصول"
   }
 }

@@ -1,8 +1,10 @@
 // Social icons commented out until links are configured
 // import { Instagram, Send, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer
       className="w-full pt-16 pb-12 px-6 md:px-12 lg:px-24 overflow-hidden relative bg-surface-page text-content-primary border-t"
@@ -23,32 +25,32 @@ export function Footer() {
               className="text-p font-light leading-relaxed opacity-40"
               style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
             >
-              فاصله بین رویا و واقعیت، فقط یک کلیک است. ما کمک می‌کنیم تا نتیجه‌ای مطمئن‌تر، زیباتر و با سلیقه‌تر را در فضای خود تجربه کنید.
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Middle Section: Links Grid */}
           <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-12 md:gap-20 w-full lg:w-auto">
-            {/* Column 1: دسترسی سریع */}
+            {/* Column 1 */}
             <div className="flex flex-col gap-8 items-start lg:items-end">
-              <h3 
+              <h3
                 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80"
               >
-                دسترسی سریع
+                {t('footer.quickAccess')}
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
-                <li><Link to="/" className="hover:text-content-primary transition-colors text-p font-light">خانه</Link></li>
-                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">فروشگاه‌ها</Link></li>
-                <li><Link to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">گالری</Link></li>
+                <li><Link to="/" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.home')}</Link></li>
+                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.stores')}</Link></li>
+                <li><Link to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.gallery')}</Link></li>
               </ul>
             </div>
 
-            {/* Column 2: همکاری */}
+            {/* Column 2 */}
             <div className="flex flex-col gap-8 items-start lg:items-end">
-              <h3 
+              <h3
                 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80"
               >
-                همکاری
+                {t('footer.collaboration')}
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
                 <li>
@@ -56,23 +58,23 @@ export function Footer() {
                     to="/collaboration"
                     className="hover:text-content-primary transition-colors text-p font-light"
                   >
-                    همکاری با هما
+                    {t('footer.collaborateWithHoma')}
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Column 3: پشتیبانی */}
+            {/* Column 3 */}
             <div className="flex flex-col gap-8 items-start md:items-end">
-              <h3 
+              <h3
                 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80"
               >
-                پشتیبانی
+                {t('footer.support')}
               </h3>
               <ul className="flex flex-col gap-5 text-start md:text-end text-content-secondary">
-                <li><Link to="/faq" className="hover:text-content-primary transition-colors text-p font-light">سوالات متداول</Link></li>
-                <li><Link to="/terms" className="hover:text-content-primary transition-colors text-p font-light">قوانین و مقررات</Link></li>
-                <li><Link to="/contact" className="hover:text-content-primary transition-colors text-p font-light">تماس با ما</Link></li>
+                <li><Link to="/faq" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.faq')}</Link></li>
+                <li><Link to="/terms" className="hover:text-content-primary transition-colors text-p font-light">{t('footer.terms')}</Link></li>
+                <li><Link to="/contact" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.contactUs')}</Link></li>
               </ul>
             </div>
           </div>

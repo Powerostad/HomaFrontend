@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, X, ArrowUpRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { BuyButton } from "./BuyButton";
 import type { Product } from "../types/product";
@@ -13,6 +14,7 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ products, onSelectProduct }: ProductGalleryProps) {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -50,7 +52,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                 The <span className="font-bold">Gallery</span>
               </h1>
               <p className="text-[14px] md:text-[16px] text-[var(--muted-foreground)] max-w-lg leading-relaxed italic opacity-80">
-                مجموعه‌ای از اشیاء و مبلمان منتخب، طراحی شده برای ایجاد فضایی آکنده از آرامش و اصالت در خانه‌ی شما.
+                {t('explore.description')}
               </p>
             </div>
 
@@ -64,7 +66,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                         animate={{ width: 200, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
                         type="text"
-                        placeholder="جستجو..."
+                        placeholder={t('common.search') + '...'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="bg-transparent border-b border-[var(--jet-black)] text-[12px] pb-1 outline-none"
@@ -170,7 +172,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
           {/* New Arrivals / Coming Soon Editorial Card */}
           <div className="md:col-span-4 flex flex-col items-center justify-center p-12 border border-[var(--border-subtle)] bg-white/20 min-h-[400px]">
              <span className="text-[10px] font-bold tracking-[0.5em] uppercase text-accent mb-6">Upcoming</span>
-             <h3 className="text-[24px] font-light text-center leading-relaxed">کالکشن بهاره هُما به‌زودی...</h3>
+             <h3 className="text-[24px] font-light text-center leading-relaxed">{t('common.comingSoon')}...</h3>
              <div className="w-12 h-[1px] bg-[var(--jet-black)] mt-8 opacity-20" />
           </div>
         </div>
@@ -181,7 +183,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
               <div className="space-y-4">
                  <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase">About the Collection</h4>
                  <p className="text-[12px] leading-relaxed max-w-xs">
-                    هر آیتم در این گالری با دقت و وسواس از میان هزاران طرح انتخاب شده است تا تجربه‌ای فراتر از دکوراسیون، و در حد یک اثر هنری به شما ارائه دهد.
+                    {t('explore.description')}
                  </p>
               </div>
               <div className="flex flex-col gap-2">

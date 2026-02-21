@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronsLeftRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { OptimizedImage } from './OptimizedImage';
 
@@ -14,6 +15,7 @@ interface BeforeAfterSliderProps {
 }
 
 export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false }: BeforeAfterSliderProps) {
+  const { t } = useTranslation();
   const [sliderPosition, setSliderPosition] = useState(35); // Default to 35% so it's not dead center
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
       <div className="absolute inset-0 w-full h-full">
         <OptimizedImage
           src={beforeImage}
-          alt="قبل"
+          alt={t('tryOn.result.before')}
           className="w-full h-full object-cover"
           priority={priority}
           lazy={lazy}
@@ -88,7 +90,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
       >
         <OptimizedImage
           src={afterImage}
-          alt="بعد"
+          alt={t('tryOn.result.after')}
           className="w-full h-full object-cover"
           lazy={lazy}
         />

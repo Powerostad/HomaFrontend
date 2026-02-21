@@ -52,7 +52,7 @@ i18n
     supportedLngs: ['fa', 'ar', 'en', 'tr'],
 
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['localStorage', 'htmlTag'],
       caches: ['localStorage'],
     },
 

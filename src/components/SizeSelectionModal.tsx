@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Ruler, Check, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // =============================================================================
 // Types
@@ -37,6 +38,7 @@ export function SizeSelectionModal({
   onSelect,
   onClose,
 }: SizeSelectionModalProps) {
+  const { t } = useTranslation();
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
   // Handle confirm button click
@@ -96,12 +98,12 @@ export function SizeSelectionModal({
               </div>
 
               <h2 className="text-[24px] font-bold text-black tracking-tight leading-tight">
-                انتخاب سایز
+                {t('sizeSelection.title')}
               </h2>
 
               {productName && (
                 <p className="text-[14px] text-black/50">
-                  سایز مورد نظر برای <span className="font-bold text-black/70">{productName}</span> را انتخاب کنید
+                  {t('sizeSelection.selectSizeFor', { productName })}
                 </p>
               )}
             </div>
@@ -142,13 +144,13 @@ export function SizeSelectionModal({
               disabled={!selectedCode}
               className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
             >
-              <span>تایید و ادامه</span>
+              <span>{t('sizeSelection.confirmAndContinue')}</span>
               <Check size={18} />
             </button>
 
             {/* Footer Note */}
             <p className="mt-6 text-[11px] text-center text-black/30 font-medium">
-              سایز انتخابی برای نمایش محصول در فضای شما استفاده می‌شود
+              {t('sizeSelection.sizeNote')}
             </p>
           </div>
         </motion.div>
