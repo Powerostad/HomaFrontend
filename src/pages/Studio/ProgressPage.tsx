@@ -25,6 +25,7 @@ function statusToPhase(status: SessionStatus | null): number {
     case 'analyzing':
       return 0;
     case 'generating':
+    case 'retrying':
       return 1;
     case 'matching':
     case 'ready':
@@ -405,11 +406,16 @@ export function StudioProgressPage() {
             </AnimatePresence>
           </div>
 
-          {/* ETA */}
+          {/* ETA / Provider retry notice */}
           <div className="text-[12px] font-medium text-black/50 dark:text-white/50">
             {sessionStatus === 'pending' && 'در حال شروع...'}
             {sessionStatus === 'analyzing' && 'در حال تحلیل تصویر...'}
             {sessionStatus === 'generating' && 'در حال طراحی...'}
+            {sessionStatus === 'retrying' && (
+              <span className="text-amber-600 dark:text-amber-400">
+                سرویس هوش مصنوعی در لحظه شلوغ است — در حال تلاش مجدد...
+              </span>
+            )}
             {sessionStatus === 'matching' && 'در حال یافتن محصولات...'}
             {!sessionStatus && 'معمولاً کمتر از ۳۰ ثانیه'}
           </div>

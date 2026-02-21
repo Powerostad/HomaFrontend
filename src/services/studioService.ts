@@ -18,12 +18,14 @@ import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 /**
  * Session processing status
- * pending → analyzing → generating → matching → ready (or failed)
+ * pending → analyzing → generating → [retrying] → matching → ready (or failed)
+ * 'retrying' means the AI provider returned 503 and the task is waiting to retry
  */
 export type SessionStatus =
   | 'pending'
   | 'analyzing'
   | 'generating'
+  | 'retrying'
   | 'matching'
   | 'ready'
   | 'failed';
