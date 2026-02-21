@@ -1,10 +1,7 @@
 import { motion } from "motion/react";
-import { useTranslation } from "react-i18next";
 import { Logo } from "./Logo";
 
 export function HomaLoader({ message: _message }: { message?: string }) {
-  const { t } = useTranslation();
-  const _defaultMessage = _message || t('common.loading');
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white" dir="rtl">
       <motion.div 
