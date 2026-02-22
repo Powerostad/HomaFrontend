@@ -340,8 +340,22 @@
         },
         "diagnosis": {
           "title": "التشخيص المكاني",
+          "label": "تحليل المساحة",
           "harmonyScore": "نقاط التناسق",
-          "improvementPoints": "نقاط التحسين"
+          "improvementPoints": "نقاط التحسين",
+          "headlineGood": "مع بعض التغييرات المستهدفة، ستكتمل المساحة",
+          "headlineFair": "مساحتك تملك إمكانيات عالية",
+          "budgetLabel": "تقدير الميزانية لـ",
+          "budgetActions": "إجراء",
+          "defaultDetail": "بناءً على تحليل مساحتك، حددنا أهم فرص التحسين.",
+          "improvementTitle": "فرص التحسين",
+          "detailToggle": "التفاصيل التشخيصية",
+          "collapse": "إغلاق التفاصيل",
+          "expand": "التفاصيل التشخيصية",
+          "good": "جيد",
+          "fair": "متوسط",
+          "low": "منخفض",
+          "scoreLabel": "درجة التناسق"
         },
         "tier": {
           "quickWin": "مكاسب سريعة",

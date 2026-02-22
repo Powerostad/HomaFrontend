@@ -340,8 +340,22 @@
         },
         "diagnosis": {
           "title": "Mekansal Teşhis",
+          "label": "Alan Analizi",
           "harmonyScore": "Uyum Puanı",
-          "improvementPoints": "İyileştirme Noktaları"
+          "improvementPoints": "İyileştirme Noktaları",
+          "headlineGood": "Birkaç hedefli değişiklikle alan tamamlanacak",
+          "headlineFair": "Alanınız yüksek potansiyele sahip",
+          "budgetLabel": "Tahmini bütçe:",
+          "budgetActions": "işlem",
+          "defaultDetail": "Alanınızın analizine dayanarak en önemli iyileştirme fırsatlarını belirledik.",
+          "improvementTitle": "İyileştirme Fırsatları",
+          "detailToggle": "Teşhis detayları",
+          "collapse": "Detayları kapat",
+          "expand": "Teşhis detayları",
+          "good": "İyi",
+          "fair": "Orta",
+          "low": "Düşük",
+          "scoreLabel": "Uyum puanı"
         },
         "tier": {
           "quickWin": "Hızlı Kazanımlar",

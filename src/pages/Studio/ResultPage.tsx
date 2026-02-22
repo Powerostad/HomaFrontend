@@ -99,6 +99,9 @@ function InsightContent({
               diagnosis={activeSession.diagnosis}
               diagnosisExpanded={state.diagnosisExpanded}
               onToggleDiagnosis={() => state.setDiagnosisExpanded(!state.diagnosisExpanded)}
+              totalPrice={state.totalPrice}
+              selectedPrice={state.selectedPrice}
+              actionCount={state.categoryGroups.length}
             />
           ) : (
             // No diagnosis data (old sessions) — show a brief note, then auto-advance

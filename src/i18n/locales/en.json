@@ -341,7 +341,21 @@
         "diagnosis": {
           "title": "Spatial Diagnosis",
           "harmonyScore": "Harmony Score",
-          "improvementPoints": "Improvement Points"
+          "improvementPoints": "Improvement Points",
+          "label": "Space Analysis",
+          "headlineGood": "A few targeted changes will complete the space",
+          "headlineFair": "Your space has great potential",
+          "budgetLabel": "Estimated budget for",
+          "budgetActions": "actions",
+          "defaultDetail": "Based on our analysis, we've identified the key improvement opportunities for your space.",
+          "improvementTitle": "Improvement Opportunities",
+          "detailToggle": "Diagnosis Details",
+          "collapse": "Collapse details",
+          "expand": "Diagnosis Details",
+          "good": "Good Space Harmony",
+          "fair": "Space Has Great Potential",
+          "low": "Many Improvement Opportunities",
+          "scoreLabel": "Harmony Score"
         },
         "tier": {
           "quickWin": "Quick Wins",
