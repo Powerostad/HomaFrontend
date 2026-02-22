@@ -353,7 +353,6 @@ export function useStudioResult(): UseStudioResultReturn {
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
     if (!activeSession?.items?.length) return [];
     return activeSession.items
-      .filter(item => item.matchedProducts.length > 0 || item.actionStatus)
       .map(item => ({
         category: item.category || item.type,
         categoryDisplay: item.categoryDisplay || item.type,
@@ -406,36 +405,10 @@ export function useStudioResult(): UseStudioResultReturn {
   }, [categoryGroups]);
 
   // Completion checklist: items with NO matched products (non-purchasable actions)
+  // Derived from categoryGroups to avoid duplicating mapping logic
   const completionChecklistItems = useMemo<CategoryGroup[]>(() => {
-    if (!activeSession?.items?.length) return [];
-    return activeSession.items
-      .filter(item => item.matchedProducts.length === 0 && item.actionStatus && item.actionStatus !== 'available')
-      .map(item => ({
-        category: item.category || item.type,
-        categoryDisplay: item.categoryDisplay || item.type,
-        itemId: item.id,
-        fitReasoningFa: item.fitReasoningFa || '',
-        recommendedSize: item.recommendedSize || '',
-        quantity: item.quantity ?? 1,
-        placement: item.placement || '',
-        problemStatement: item.problemStatement || '',
-        whyChangeReasons: item.whyChangeReasons || [],
-        designStrategy: item.designStrategy || '',
-        designStrategyBenefits: item.designStrategyBenefits || [],
-        harmonyImpact: item.harmonyImpact ?? 0,
-        products: [],
-        actionStatus: item.actionStatus as CategoryGroup['actionStatus'],
-        interventionTier: (item.interventionTier || 'enhancement') as CategoryGroup['interventionTier'],
-        impactLevel: (item.impactLevel || 'medium') as CategoryGroup['impactLevel'],
-        effortLevel: (item.effortLevel || 'medium') as CategoryGroup['effortLevel'],
-        actionType: item.actionType,
-        actionGuidance: item.actionGuidance,
-        actionDifficulty: item.actionDifficulty as CategoryGroup['actionDifficulty'],
-        actionEstimate: item.actionEstimate,
-        referenceImageUrl: item.referenceImageUrl,
-        specNote: item.specNote,
-      }));
-  }, [activeSession]);
+    return categoryGroups.filter(g => g.products.length === 0);
+  }, [categoryGroups]);
 
   // Flat product list (backward compat for context bar, etc.)
   const displayProducts = useMemo(() => {
@@ -779,8 +752,8 @@ export function useStudioResult(): UseStudioResultReturn {
 
   // Project name and target style — will be populated when AI prompt is updated
   // to include room metadata in the session-level diagnosis
-  const projectName = '';
-  const targetStyle = '';
+  const projectName = activeSession?.roomType || '';
+  const targetStyle = activeSession?.preferredStyle || '';
   const isDownloading = downloadState === 'preparing';
 
   // Priority ranking: items sorted by harmony impact (highest first)

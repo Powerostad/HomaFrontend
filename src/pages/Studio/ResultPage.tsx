@@ -15,11 +15,13 @@ import { AnimatePresence } from 'motion/react';
 import { Loader2, Download as DownloadIcon, Bookmark } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Header } from '@/components/Header';
+import { ContextLock } from '@/components/studio/ContextLock';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { HomaLoader } from '@/components/HomaLoader';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSimpleTranslation } from './result/types';
 import { useStudioResult } from './result/useStudioResult';
+import { ImpactProgressCard } from './result/ImpactProgressCard';
 import { SpatialDiagnosis } from './result/SpatialDiagnosis';
 import type { DetectedContext } from './result/SpatialDiagnosis';
 import type { DiagnosisAction } from './result/DiagnosisActionCard';
@@ -43,16 +45,16 @@ export function StudioResultPage() {
   const { t } = useSimpleTranslation();
   const state = useStudioResult();
 
-  /* ── Detected context metadata — only shown when real data exists ── */
-  const detectedContext: DetectedContext | undefined =
-    state.projectName || state.targetStyle
-      ? {
-          roomType: state.projectName,
-          targetStyle: state.targetStyle,
-          naturalLight: '',
-          dominantSurfaces: '',
-        }
-      : undefined;
+  /* ── Detected context metadata ── */
+  const roomTypeDisplay = state.projectName || state.categoryGroups[0]?.categoryDisplay || '';
+  const detectedContext: DetectedContext | undefined = roomTypeDisplay
+    ? {
+        roomType: roomTypeDisplay,
+        targetStyle: state.targetStyle || '',
+        naturalLight: '',
+        dominantSurfaces: '',
+      }
+    : undefined;
 
   /* ── Diagnosis Actions — built from real AI category groups ── */
   const diagnosisActions: DiagnosisAction[] = (() => {
@@ -260,6 +262,15 @@ export function StudioResultPage() {
 
       {/* ── Phase 1: Analysis (Decision Dashboard) ── */}
       <div id="section-analysis">
+        {/* Harmony Score Gauge */}
+        <ImpactProgressCard
+          currentScore={state.harmonyScore}
+          liveProjectedScore={state.liveProjectedScore}
+          maxProjectedScore={state.projectedScore}
+          acceptedCount={state.acceptedItems.size}
+          totalCount={state.categoryGroups.length}
+        />
+
         <SpatialDiagnosis
           harmonyScore={state.harmonyScore}
           projectedScore={state.projectedScore}
@@ -401,6 +412,11 @@ export function StudioResultPage() {
       {!state.isFullScreen && (
         <div className="md:hidden">
           <Header />
+          <ContextLock
+            projectName={state.projectName || 'پروژه طراحی'}
+            targetStyle={state.targetStyle}
+            variant="mobile"
+          />
         </div>
       )}
 

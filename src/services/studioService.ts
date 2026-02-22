@@ -175,6 +175,8 @@ export interface RedesignSession {
   items: SessionItem[];
   createdAt: string;
   errorMessage?: string;
+  roomType?: string;
+  preferredStyle?: string;
   diagnosis?: {
     harmonyScore: number;
     improvementPoints: string[];
@@ -317,6 +319,8 @@ function transformSession(apiSession: APIRedesignSession): RedesignSession {
     items: (apiSession.items || []).map(transformSessionItem),
     createdAt: apiSession.created_at,
     errorMessage: apiSession.error_message,
+    roomType: apiSession.room_type,
+    preferredStyle: apiSession.preferred_style,
     diagnosis: apiSession.diagnosis
       ? {
           harmonyScore: apiSession.diagnosis.harmony_score,
