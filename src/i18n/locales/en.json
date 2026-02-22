@@ -331,7 +331,60 @@
       "saveImage": "Save Image",
       "quantity": "{{amount}} pcs",
       "recommendedSize": "Size: {{size}}",
-      "placement": "Placement: {{placement}}"
+      "placement": "Placement: {{placement}}",
+      "v2": {
+        "phase": {
+          "analysis": "Space Analysis",
+          "recommendations": "Recommendations",
+          "basket": "Shopping Basket"
+        },
+        "diagnosis": {
+          "title": "Spatial Diagnosis",
+          "harmonyScore": "Harmony Score",
+          "improvementPoints": "Improvement Points"
+        },
+        "tier": {
+          "quickWin": "Quick Wins",
+          "enhancement": "Enhancements",
+          "structural": "Structural Changes"
+        },
+        "card": {
+          "whyChange": "Why Change?",
+          "designStrategy": "Design Strategy",
+          "benefits": "Benefits",
+          "accept": "Accept",
+          "reject": "Reject",
+          "problemStatement": "Current Issue",
+          "actionGuidance": "Action Guide"
+        },
+        "basket": {
+          "total": "Total",
+          "finalize": "Finalize",
+          "quantity": "Quantity",
+          "empty": "Basket is empty",
+          "selectedItems": "{{count}} items selected",
+          "itemTotal": "Items Total"
+        },
+        "consultation": {
+          "title": "Request Consultation",
+          "fullName": "Full Name",
+          "phone": "Phone Number",
+          "message": "Message (Optional)",
+          "submit": "Submit Request",
+          "success": "Your consultation request has been submitted",
+          "serviceItems": "Items Requiring Consultation"
+        },
+        "checklist": {
+          "title": "Completion Checklist",
+          "searchWeb": "Search Web",
+          "description": "These items are not available in Homa store"
+        },
+        "harmonyImpact": "Harmony Impact",
+        "before": "Before",
+        "after": "After",
+        "projectedScore": "Projected Score",
+        "saveCollection": "Save Collection"
+      }
     }
   },
   "gallery": {

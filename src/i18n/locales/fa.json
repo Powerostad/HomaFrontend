@@ -331,7 +331,60 @@
       "saveImage": "ذخیره تصویر",
       "quantity": "{{amount}} عدد",
       "recommendedSize": "سایز: {{size}}",
-      "placement": "جایگاه: {{placement}}"
+      "placement": "جایگاه: {{placement}}",
+      "v2": {
+        "phase": {
+          "analysis": "تحلیل فضا",
+          "recommendations": "پیشنهادات",
+          "basket": "سبد خرید"
+        },
+        "diagnosis": {
+          "title": "تشخیص فضایی",
+          "harmonyScore": "امتیاز هارمونی",
+          "improvementPoints": "نقاط بهبود"
+        },
+        "tier": {
+          "quickWin": "تغییرات سریع",
+          "enhancement": "بهبودها",
+          "structural": "تغییرات ساختاری"
+        },
+        "card": {
+          "whyChange": "چرا تغییر؟",
+          "designStrategy": "راهبرد طراحی",
+          "benefits": "مزایا",
+          "accept": "تایید",
+          "reject": "رد",
+          "problemStatement": "مشکل فعلی",
+          "actionGuidance": "راهنمای اقدام"
+        },
+        "basket": {
+          "total": "جمع کل",
+          "finalize": "نهایی‌سازی",
+          "quantity": "تعداد",
+          "empty": "سبد خالی است",
+          "selectedItems": "{{count}} محصول انتخاب شده",
+          "itemTotal": "جمع اقلام"
+        },
+        "consultation": {
+          "title": "درخواست مشاوره",
+          "fullName": "نام و نام خانوادگی",
+          "phone": "شماره تماس",
+          "message": "پیام (اختیاری)",
+          "submit": "ارسال درخواست",
+          "success": "درخواست مشاوره شما با موفقیت ثبت شد",
+          "serviceItems": "موارد نیازمند مشاوره"
+        },
+        "checklist": {
+          "title": "موارد تکمیلی",
+          "searchWeb": "جستجو در وب",
+          "description": "این موارد در فروشگاه هُما موجود نیست"
+        },
+        "harmonyImpact": "تاثیر بر هارمونی",
+        "before": "قبل",
+        "after": "بعد",
+        "projectedScore": "امتیاز پیش‌بینی شده",
+        "saveCollection": "ذخیره مجموعه"
+      }
     }
   },
   "gallery": {

@@ -331,7 +331,60 @@
       "saveImage": "Görüntüyü Kaydet",
       "quantity": "{{amount}} adet",
       "recommendedSize": "Boyut: {{size}}",
-      "placement": "Yerleşim: {{placement}}"
+      "placement": "Yerleşim: {{placement}}",
+      "v2": {
+        "phase": {
+          "analysis": "Alan Analizi",
+          "recommendations": "Öneriler",
+          "basket": "Alışveriş Sepeti"
+        },
+        "diagnosis": {
+          "title": "Mekansal Teşhis",
+          "harmonyScore": "Uyum Puanı",
+          "improvementPoints": "İyileştirme Noktaları"
+        },
+        "tier": {
+          "quickWin": "Hızlı Kazanımlar",
+          "enhancement": "İyileştirmeler",
+          "structural": "Yapısal Değişiklikler"
+        },
+        "card": {
+          "whyChange": "Neden Değişiklik?",
+          "designStrategy": "Tasarım Stratejisi",
+          "benefits": "Faydalar",
+          "accept": "Kabul Et",
+          "reject": "Reddet",
+          "problemStatement": "Mevcut Sorun",
+          "actionGuidance": "Eylem Rehberi"
+        },
+        "basket": {
+          "total": "Toplam",
+          "finalize": "Tamamla",
+          "quantity": "Miktar",
+          "empty": "Sepet boş",
+          "selectedItems": "{{count}} ürün seçildi",
+          "itemTotal": "Ürün Toplamı"
+        },
+        "consultation": {
+          "title": "Danışma Talebi",
+          "fullName": "Ad Soyad",
+          "phone": "Telefon Numarası",
+          "message": "Mesaj (İsteğe Bağlı)",
+          "submit": "Talebi Gönder",
+          "success": "Danışma talebiniz başarıyla gönderildi",
+          "serviceItems": "Danışma Gerektiren Öğeler"
+        },
+        "checklist": {
+          "title": "Tamamlama Listesi",
+          "searchWeb": "Web'de Ara",
+          "description": "Bu ürünler Homa mağazasında mevcut değil"
+        },
+        "harmonyImpact": "Uyum Etkisi",
+        "before": "Önce",
+        "after": "Sonra",
+        "projectedScore": "Tahmini Puan",
+        "saveCollection": "Koleksiyonu Kaydet"
+      }
     }
   },
   "gallery": {

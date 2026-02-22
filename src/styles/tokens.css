@@ -181,6 +181,52 @@
   --header-height: 56px;
   --max-width-content: 1440px;
   --max-width-narrow: 680px;
+
+  /* ========================================
+     EDITORIAL PALETTE
+     Warm, editorial-inspired tones for Studio result pages
+     ======================================== */
+  --color-editorial-accent: #9A8C74;
+  --color-editorial-stone: #FAF9F6;
+  --color-editorial-charcoal: #1C1C1A;
+  --color-editorial-taupe: #8C8A84;
+  --color-editorial-hairline: #EAE8E3;
+  --color-editorial-product-bg: #F0EFEB;
+
+  /* ========================================
+     TIER COLORS
+     Intervention tier visual hierarchy
+     ======================================== */
+  --color-tier-quickwin: #2D6A4F;
+  --color-tier-quickwin-light: rgba(45, 106, 79, 0.06);
+  --color-tier-quickwin-border: rgba(45, 106, 79, 0.18);
+  --color-tier-enhancement: #B8860B;
+  --color-tier-enhancement-light: rgba(184, 134, 11, 0.06);
+  --color-tier-enhancement-border: rgba(184, 134, 11, 0.18);
+  --color-tier-structural: #8B6914;
+  --color-tier-structural-light: rgba(139, 105, 20, 0.06);
+  --color-tier-structural-border: rgba(139, 105, 20, 0.18);
+
+  /* ========================================
+     FEEDBACK COLORS
+     ======================================== */
+  --color-feedback-good: #00312D;
+  --color-feedback-neutral: #FC6F20;
+  --color-feedback-bad: #5D0D02;
+  --color-feedback-bg: #FEE8D0;
+
+  /* ========================================
+     EDITORIAL TYPOGRAPHY
+     Serif font for editorial accents
+     ======================================== */
+  --font-family-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+  /* ========================================
+     SCORE RING
+     ======================================== */
+  --score-ring-track: rgba(0, 0, 0, 0.06);
+  --score-ring-size: 120px;
+  --score-ring-stroke: 8px;
 }
 
 /* ========================================

@@ -79,6 +79,22 @@ export interface APISessionItem {
   matched_products: APIMatchedProduct[];
   tryon_status: 'pending' | 'processing' | 'completed' | 'failed';
   tryon_image_url: string | null;
+  // Design diagnosis fields
+  problem_statement?: string;
+  why_change_reasons?: string[];
+  design_strategy?: string;
+  design_strategy_benefits?: string[];
+  harmony_impact?: number;
+  action_status?: 'available' | 'custom_order' | 'architectural';
+  intervention_tier?: 'quick_win' | 'enhancement' | 'structural';
+  impact_level?: 'low' | 'medium' | 'high';
+  effort_level?: 'low' | 'medium' | 'high';
+  action_type?: string;
+  action_guidance?: string;
+  action_difficulty?: string;
+  action_estimate?: string;
+  spec_note?: string;
+  reference_image_url?: string;
 }
 
 /**
@@ -96,6 +112,11 @@ export interface APIRedesignSession {
   created_at: string;
   updated_at?: string;
   error_message?: string;
+  diagnosis?: {
+    harmony_score: number;
+    improvement_points: string[];
+    diagnosis_detail: string;
+  } | null;
 }
 
 /**
@@ -154,6 +175,11 @@ export interface RedesignSession {
   items: SessionItem[];
   createdAt: string;
   errorMessage?: string;
+  diagnosis?: {
+    harmonyScore: number;
+    improvementPoints: string[];
+    diagnosisDetail: string;
+  } | null;
 }
 
 /**
@@ -171,6 +197,22 @@ export interface SessionItem {
   matchedProducts: MatchedProduct[];
   tryonStatus: 'pending' | 'processing' | 'completed' | 'failed';
   tryonImageUrl: string | null;
+  // Design diagnosis fields
+  problemStatement?: string;
+  whyChangeReasons?: string[];
+  designStrategy?: string;
+  designStrategyBenefits?: string[];
+  harmonyImpact?: number;
+  actionStatus?: 'available' | 'custom_order' | 'architectural';
+  interventionTier?: 'quick_win' | 'enhancement' | 'structural';
+  impactLevel?: 'low' | 'medium' | 'high';
+  effortLevel?: 'low' | 'medium' | 'high';
+  actionType?: string;
+  actionGuidance?: string;
+  actionDifficulty?: string;
+  actionEstimate?: string;
+  specNote?: string;
+  referenceImageUrl?: string;
 }
 
 /**
@@ -275,6 +317,13 @@ function transformSession(apiSession: APIRedesignSession): RedesignSession {
     items: (apiSession.items || []).map(transformSessionItem),
     createdAt: apiSession.created_at,
     errorMessage: apiSession.error_message,
+    diagnosis: apiSession.diagnosis
+      ? {
+          harmonyScore: apiSession.diagnosis.harmony_score,
+          improvementPoints: apiSession.diagnosis.improvement_points,
+          diagnosisDetail: apiSession.diagnosis.diagnosis_detail,
+        }
+      : null,
   };
 }
 
@@ -294,6 +343,22 @@ function transformSessionItem(apiItem: APISessionItem): SessionItem {
     matchedProducts: (apiItem.matched_products || []).map(transformMatchedProduct),
     tryonStatus: apiItem.tryon_status,
     tryonImageUrl: getSessionImageUrl(apiItem.tryon_image_url),
+    // Design diagnosis fields
+    problemStatement: apiItem.problem_statement || '',
+    whyChangeReasons: apiItem.why_change_reasons || [],
+    designStrategy: apiItem.design_strategy || '',
+    designStrategyBenefits: apiItem.design_strategy_benefits || [],
+    harmonyImpact: apiItem.harmony_impact ?? 0,
+    actionStatus: apiItem.action_status || 'available',
+    interventionTier: apiItem.intervention_tier || 'quick_win',
+    impactLevel: apiItem.impact_level || 'medium',
+    effortLevel: apiItem.effort_level || 'medium',
+    actionType: apiItem.action_type || '',
+    actionGuidance: apiItem.action_guidance || '',
+    actionDifficulty: apiItem.action_difficulty || '',
+    actionEstimate: apiItem.action_estimate || '',
+    specNote: apiItem.spec_note || '',
+    referenceImageUrl: apiItem.reference_image_url || '',
   };
 }
 
@@ -669,6 +734,26 @@ export async function deleteSession(sessionId: string): Promise<{
   };
 }
 
+/**
+ * Submit a consultation request for a session
+ *
+ * @param sessionId - The session UUID
+ * @param data - Consultation request data
+ */
+export async function submitConsultationRequest(sessionId: string, data: {
+  fullName: string;
+  phone: string;
+  message?: string;
+  selectedItemIds?: number[];
+}): Promise<void> {
+  await apiPost(`/recommendations/sessions/${sessionId}/consultation/`, {
+    full_name: data.fullName,
+    phone: data.phone,
+    message: data.message || '',
+    selected_item_ids: data.selectedItemIds || [],
+  });
+}
+
 // =============================================================================
 // Service Export
 // =============================================================================
@@ -681,4 +766,5 @@ export const studioService = {
   tryProductOnItem,
   deleteSession,
   getSessionImageUrl,
+  submitConsultationRequest,
 };

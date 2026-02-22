@@ -331,7 +331,60 @@
       "saveImage": "حفظ الصورة",
       "quantity": "{{amount}} قطعة",
       "recommendedSize": "الحجم: {{size}}",
-      "placement": "الموقع: {{placement}}"
+      "placement": "الموقع: {{placement}}",
+      "v2": {
+        "phase": {
+          "analysis": "تحليل الفضاء",
+          "recommendations": "التوصيات",
+          "basket": "سلة التسوق"
+        },
+        "diagnosis": {
+          "title": "التشخيص المكاني",
+          "harmonyScore": "نقاط التناسق",
+          "improvementPoints": "نقاط التحسين"
+        },
+        "tier": {
+          "quickWin": "مكاسب سريعة",
+          "enhancement": "تحسينات",
+          "structural": "تغييرات هيكلية"
+        },
+        "card": {
+          "whyChange": "لماذا التغيير؟",
+          "designStrategy": "استراتيجية التصميم",
+          "benefits": "الفوائد",
+          "accept": "قبول",
+          "reject": "رفض",
+          "problemStatement": "المشكلة الحالية",
+          "actionGuidance": "دليل الإجراء"
+        },
+        "basket": {
+          "total": "المجموع",
+          "finalize": "إنهاء",
+          "quantity": "الكمية",
+          "empty": "السلة فارغة",
+          "selectedItems": "{{count}} منتج مختار",
+          "itemTotal": "مجموع العناصر"
+        },
+        "consultation": {
+          "title": "طلب استشارة",
+          "fullName": "الاسم الكامل",
+          "phone": "رقم الهاتف",
+          "message": "رسالة (اختيارية)",
+          "submit": "إرسال الطلب",
+          "success": "تم تقديم طلب الاستشارة بنجاح",
+          "serviceItems": "عناصر تحتاج استشارة"
+        },
+        "checklist": {
+          "title": "قائمة الإكمال",
+          "searchWeb": "البحث في الويب",
+          "description": "هذه العناصر غير متوفرة في متجر هُما"
+        },
+        "harmonyImpact": "التأثير على التناسق",
+        "before": "قبل",
+        "after": "بعد",
+        "projectedScore": "النقاط المتوقعة",
+        "saveCollection": "حفظ المجموعة"
+      }
     }
   },
   "gallery": {
