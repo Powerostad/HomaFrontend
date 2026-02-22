@@ -149,12 +149,6 @@ export interface UseStudioResultReturn {
 }
 
 // ---------------------------------------------------------------------------
-// Fallback image (only used when API data not available)
-// ---------------------------------------------------------------------------
-const FALLBACK_RESULT_IMAGE =
-  'https://images.unsplash.com/photo-1597665863042-47e00964d899?q=80&w=1200&auto=format&fit=crop';
-
-// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -347,12 +341,7 @@ export function useStudioResult(): UseStudioResultReturn {
   // Computed Values
   // =========================================================================
 
-  const resultImage = useMemo(() => {
-    if (activeSession?.redesignedImageUrl) {
-      return activeSession.redesignedImageUrl;
-    }
-    return FALLBACK_RESULT_IMAGE;
-  }, [activeSession]);
+  const resultImage = activeSession?.redesignedImageUrl ?? '';
 
   // Build category groups from session items
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
