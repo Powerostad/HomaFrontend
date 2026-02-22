@@ -1,108 +1,352 @@
 /**
- * UnifiedConsultationCTA - Form for consultation request
+ * UnifiedConsultationCTA — Single consultation request for ALL non-purchasable items
  *
- * Shows which service items (custom_order/architectural) need consultation.
- * Form: full name, phone (LTR), message (optional).
- * Submits via submitConsultationRequest() from studioService.
- * Loading, success, error states.
- * Uses react-hook-form + Zod for validation.
+ * Aggregates two sources into ONE consultation request:
+ *   1. Service items (painting, ceiling, etc.) — from enhancement/structural tiers
+ *   2. Sourcing items (checklist) — AI suggestions not in Huma's inventory
  *
- * i18n keys from studio.result.v2.consultation.*
+ * One CTA, one form sheet, one localStorage record.
+ *
+ * Uses CSS transitions only (no motion). All styling via CSS variables.
+ * Fonts: Vazirmatn.
  */
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Phone,
+  Check,
+  Wallet,
   Send,
   CheckCircle,
-  Wrench,
   Puzzle,
-  Wallet,
-  Check,
+  Wrench,
 } from 'lucide-react';
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { toLocalizedDigits } from '@/utils/formatters';
-import { submitConsultationRequest } from '@/services/studioService';
 import type { CategoryGroup } from './types';
+import type { CompletionChecklistItem } from './types';
+
+const FONT = 'var(--font-family-vazirmatn)';
+
+/* ─── localStorage helper ─── */
+const CONSULTATION_KEY = 'homa:consultation-requests';
+
+interface ConsultationRequest {
+  id: string;
+  timestamp: string;
+  name: string;
+  phone: string;
+  notes: string;
+  serviceItems: {
+    type: string;
+    category: string;
+    estimate: string;
+  }[];
+  sourcingItems: {
+    name: string;
+    category: string;
+  }[];
+}
+
+function saveConsultationRequest(request: ConsultationRequest): void {
+  try {
+    const raw = localStorage.getItem(CONSULTATION_KEY);
+    const existing: ConsultationRequest[] = raw ? JSON.parse(raw) : [];
+    existing.unshift(request);
+    localStorage.setItem(CONSULTATION_KEY, JSON.stringify(existing));
+  } catch {
+    /* silently fail */
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Exported Component
+   ═══════════════════════════════════════════════ */
 
 interface UnifiedConsultationCTAProps {
   /** Enhancement/structural service items (painting, ceiling, etc.) */
   serviceItems: CategoryGroup[];
   /** Which service items the user has accepted */
   acceptedServiceIds: Set<number>;
-  /** Checklist items not available in store */
-  checklistItems: CategoryGroup[];
-  /** Which checklist items the user has checked */
-  checkedChecklistIds: Set<number>;
-  /** Session ID for submitting the request */
-  sessionId?: string;
+  /** Checklist items not available in Huma's store */
+  sourcingItems: CompletionChecklistItem[];
+  /** Which sourcing items the user has checked */
+  checkedSourcingIds: Set<number>;
 }
-
-const consultationSchema = z.object({
-  fullName: z.string().min(1, 'نام الزامی است'),
-  phone: z
-    .string()
-    .min(1, 'شماره تماس الزامی است')
-    .regex(/^(09\d{9}|\+989\d{9})$/, 'شماره تماس معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹)'),
-  message: z.string().optional(),
-});
-
-type ConsultationForm = z.infer<typeof consultationSchema>;
 
 export function UnifiedConsultationCTA({
   serviceItems,
   acceptedServiceIds,
-  checklistItems,
-  checkedChecklistIds,
-  sessionId,
+  sourcingItems,
+  checkedSourcingIds,
 }: UnifiedConsultationCTAProps) {
-  const { t } = useTranslation();
   const [showSheet, setShowSheet] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const selectedServices = useMemo(
-    () => serviceItems.filter((g) => acceptedServiceIds.has(g.itemId)),
+    () => serviceItems.filter(g => acceptedServiceIds.has(g.itemId)),
     [serviceItems, acceptedServiceIds],
   );
 
-  const selectedChecklist = useMemo(
-    () => checklistItems.filter((item) => checkedChecklistIds.has(item.itemId)),
-    [checklistItems, checkedChecklistIds],
+  const selectedSourcing = useMemo(
+    () => sourcingItems.filter(item => checkedSourcingIds.has(item.id)),
+    [sourcingItems, checkedSourcingIds],
   );
 
-  const totalSelected = selectedServices.length + selectedChecklist.length;
+  const totalSelected = selectedServices.length + selectedSourcing.length;
   const hasSelected = totalSelected > 0;
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ConsultationForm>({
-    resolver: zodResolver(consultationSchema),
-    defaultValues: { fullName: '', phone: '', message: '' },
-  });
+  // Don't render if there are no items in either source at all
+  if (serviceItems.length === 0 && sourcingItems.length === 0) return null;
 
-  // Reset form when sheet opens
+  return (
+    <div
+      className="flex flex-col"
+      style={{
+        fontFamily: FONT,
+        marginTop: 'var(--spacing-sm)',
+        marginBottom: 'var(--spacing-xl)',
+        padding: 'var(--spacing-md)',
+        borderRadius: 'var(--radius-card)',
+        background: 'var(--surface)',
+        border: '1px solid var(--editorial-hairline)',
+        boxShadow: 'var(--elevation-sm)',
+        gap: 'var(--spacing-sm)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex flex-col" style={{ gap: '4px' }}>
+        <div className="flex items-center" style={{ gap: '6px' }}>
+          <Phone
+            size={13}
+            strokeWidth={1.5}
+            style={{ color: 'var(--editorial-accent)', opacity: 0.7 }}
+          />
+          <h3
+            style={{
+              fontSize: 'var(--text-h4-size)',
+              fontWeight: 'var(--font-weight-semibold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-charcoal)',
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
+            درخواست مشاوره
+          </h3>
+        </div>
+        <p
+          style={{
+            fontSize: 'var(--text-caption-size)',
+            fontWeight: 'var(--font-weight-regular)',
+            fontFamily: FONT,
+            color: 'var(--editorial-taupe)',
+            lineHeight: 1.7,
+            margin: 0,
+          }}
+        >
+          خدمات اجرایی و موارد تکمیلی انتخابی‌تون رو یکجا درخواست مشاوره بدید
+        </p>
+      </div>
+
+      {/* Selected services summary */}
+      {selectedServices.length > 0 && (
+        <div className="flex flex-col" style={{ gap: '6px' }}>
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 'var(--font-weight-semibold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <Wrench size={9} strokeWidth={2} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
+            خدمات اجرایی
+          </span>
+          {selectedServices.map(item => (
+            <div
+              key={`svc-${item.itemId}`}
+              className="flex items-center justify-between"
+              style={{
+                padding: '8px 12px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(0,49,45,0.04)',
+                border: '1px solid rgba(0,49,45,0.08)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Check size={12} strokeWidth={2.5} style={{ color: 'var(--feedback-good)' }} />
+                <span
+                  style={{
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    fontFamily: FONT,
+                    color: 'var(--editorial-charcoal)',
+                  }}
+                >
+                  {item.categoryDisplay}
+                </span>
+              </div>
+              {item.actionEstimate && (
+                <span
+                  className="flex items-center gap-1 tabular-nums"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 'var(--font-weight-regular)',
+                    fontFamily: FONT,
+                    color: 'var(--editorial-taupe)',
+                  }}
+                >
+                  <Wallet size={9} strokeWidth={1.5} />
+                  ~ {toLocalizedDigits(item.actionEstimate)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Selected sourcing items summary */}
+      {selectedSourcing.length > 0 && (
+        <div className="flex flex-col" style={{ gap: '6px' }}>
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 'var(--font-weight-semibold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <Puzzle size={9} strokeWidth={2} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
+            موارد تکمیلی
+          </span>
+          <div className="flex flex-wrap" style={{ gap: '6px' }}>
+            {selectedSourcing.map(item => (
+              <span
+                key={`src-${item.id}`}
+                className="inline-flex items-center gap-1"
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 'var(--radius-full)',
+                  background: 'rgba(154,140,116,0.06)',
+                  border: '1px solid rgba(154,140,116,0.15)',
+                  fontSize: '11px',
+                  fontWeight: 'var(--font-weight-regular)',
+                  fontFamily: FONT,
+                  color: 'var(--editorial-charcoal)',
+                }}
+              >
+                <Check size={9} strokeWidth={2.5} style={{ color: 'var(--editorial-accent)' }} />
+                {item.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Single CTA Button */}
+      <button
+        onClick={() => setShowSheet(true)}
+        disabled={!hasSelected}
+        className="w-full flex items-center justify-center gap-2 cursor-pointer transition-all duration-200"
+        style={{
+          height: 'var(--btn-dark-h-mobile)',
+          borderRadius: 'var(--btn-dark-radius)',
+          background: hasSelected ? 'var(--editorial-charcoal)' : 'var(--muted)',
+          border: 'none',
+          color: hasSelected ? 'var(--surface)' : 'var(--editorial-taupe)',
+          fontSize: 'var(--text-caption-size)',
+          fontWeight: 'var(--font-weight-semibold)',
+          fontFamily: FONT,
+          letterSpacing: '0.02em',
+          opacity: hasSelected ? 1 : 0.6,
+          pointerEvents: hasSelected ? 'auto' : 'none',
+        }}
+        aria-label="درخواست مشاوره برای موارد انتخابی"
+      >
+        <Phone size={14} strokeWidth={2} />
+        درخواست مشاوره
+        {hasSelected && (
+          <span
+            className="tabular-nums"
+            style={{
+              fontSize: '11px',
+              fontWeight: 'var(--font-weight-regular)',
+              opacity: 0.7,
+            }}
+          >
+            ({toLocalizedDigits(totalSelected)})
+          </span>
+        )}
+      </button>
+
+      {!hasSelected && (
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 'var(--font-weight-regular)',
+            fontFamily: FONT,
+            color: 'var(--editorial-taupe)',
+            textAlign: 'center',
+          }}
+        >
+          ابتدا خدمات اجرایی یا موارد تکمیلی مورد نظر خود را انتخاب کنید
+        </span>
+      )}
+
+      {/* Unified Consultation Sheet */}
+      <UnifiedConsultationSheet
+        isOpen={showSheet}
+        onClose={() => setShowSheet(false)}
+        selectedServices={selectedServices}
+        selectedSourcing={selectedSourcing}
+      />
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════
+   Unified Consultation Sheet
+   — Uses CSS transitions only (no motion)
+   ═══════════════════════════════════════════════ */
+function UnifiedConsultationSheet({
+  isOpen,
+  onClose,
+  selectedServices,
+  selectedSourcing,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedServices: CategoryGroup[];
+  selectedSourcing: CompletionChecklistItem[];
+}) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formNotes, setFormNotes] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
+  const totalItems = selectedServices.length + selectedSourcing.length;
+
+  /* Reset form when sheet opens */
   useEffect(() => {
-    if (showSheet) {
-      reset();
-      setSubmitted(false);
-      setSubmitting(false);
-      setSubmitError(null);
+    if (isOpen) {
+      setFormName(''); setFormPhone(''); setFormNotes('');
+      setSubmitted(false); setSubmitting(false); setPhoneError('');
       setTimeout(() => nameInputRef.current?.focus(), 400);
     }
-  }, [showSheet, reset]);
+  }, [isOpen]);
 
-  // Lock body scroll when sheet is open
+  /* Lock body scroll */
   useEffect(() => {
-    if (showSheet) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.dispatchEvent(new CustomEvent('homa:sheet-toggle', { detail: { open: true } }));
     } else {
@@ -113,24 +357,21 @@ export function UnifiedConsultationCTA({
       document.body.style.overflow = '';
       window.dispatchEvent(new CustomEvent('homa:sheet-toggle', { detail: { open: false } }));
     };
-  }, [showSheet]);
+  }, [isOpen]);
 
-  // Escape key to close
+  /* Close on Esc */
   useEffect(() => {
-    if (!showSheet) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowSheet(false);
-    };
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showSheet]);
+  }, [isOpen, onClose]);
 
-  // Drag to dismiss
+  /* Drag-to-dismiss */
   const dragStartY = useRef(0);
   const dragging = useRef(false);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    dragStartY.current = e.touches[0].clientY;
-    dragging.current = true;
+    dragStartY.current = e.touches[0].clientY; dragging.current = true;
   }, []);
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!dragging.current || !sheetRef.current) return;
@@ -141,359 +382,448 @@ export function UnifiedConsultationCTA({
     if (!dragging.current || !sheetRef.current) return;
     dragging.current = false;
     const delta = e.changedTouches[0].clientY - dragStartY.current;
-    if (delta > 120) setShowSheet(false);
+    if (delta > 120) onClose();
     sheetRef.current.style.transform = '';
-  }, []);
+  }, [onClose]);
 
-  const onSubmit = async (data: ConsultationForm) => {
-    if (!sessionId) return;
-    setSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      await submitConsultationRequest(sessionId, {
-        fullName: data.fullName,
-        phone: data.phone.replace(/[\s\-]/g, ''),
-        message: data.message || '',
-        selectedItemIds: [
-          ...selectedServices.map((s) => s.itemId),
-          ...selectedChecklist.map((c) => c.itemId),
-        ],
-      });
-      setSubmitted(true);
-    } catch {
-      setSubmitError(t('studio.result.v2.consultation.error', 'خطا در ثبت درخواست. لطفا دوباره تلاش کنید.'));
-    } finally {
-      setSubmitting(false);
-    }
+  const validatePhone = (value: string): boolean => {
+    const cleaned = value.replace(/[\s\-]/g, '');
+    return /^(09\d{9}|\+989\d{9})$/.test(cleaned);
   };
 
-  // Don't render if no items at all
-  if (serviceItems.length === 0 && checklistItems.length === 0) return null;
+  const handleSubmit = useCallback(() => {
+    if (!formPhone.trim()) { setPhoneError('شماره تماس الزامی است'); return; }
+    if (!validatePhone(formPhone)) { setPhoneError('شماره تماس معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹)'); return; }
+    setPhoneError(''); setSubmitting(true);
 
-  const inputClasses =
-    'w-full h-11 px-3.5 rounded-lg border border-border-subtle bg-surface-default text-sm text-content-primary outline-none transition-colors duration-200 focus:border-brand-primary';
+    setTimeout(() => {
+      const request: ConsultationRequest = {
+        id: `con-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        timestamp: new Date().toISOString(),
+        name: formName.trim(),
+        phone: formPhone.trim(),
+        notes: formNotes.trim(),
+        serviceItems: selectedServices.map(item => ({
+          type: item.actionType || 'اقدام پیشنهادی',
+          category: item.actionCategory || item.categoryDisplay,
+          estimate: item.actionEstimate || '',
+        })),
+        sourcingItems: selectedSourcing.map(item => ({
+          name: item.name,
+          category: item.category,
+        })),
+      };
+      saveConsultationRequest(request);
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 600);
+  }, [formName, formPhone, formNotes, selectedServices, selectedSourcing]);
+
+  const canSubmit = formPhone.trim().length > 0;
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', height: '44px', padding: '0 14px',
+    borderRadius: 'var(--btn-dark-radius)',
+    border: '1px solid var(--editorial-hairline)',
+    background: 'var(--input-background)',
+    fontSize: 'var(--text-label-size)',
+    fontWeight: 'var(--font-weight-regular)',
+    fontFamily: FONT,
+    color: 'var(--editorial-charcoal)',
+    outline: 'none',
+    transition: 'border-color 0.2s ease',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 'var(--text-caption-size)',
+    fontWeight: 'var(--font-weight-semibold)',
+    fontFamily: FONT,
+    color: 'var(--editorial-charcoal)',
+    letterSpacing: '0.02em',
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div
-      className="flex flex-col gap-3 mt-3 mb-8 p-4 rounded-xl bg-surface-default"
-      style={{
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--elevation-sm)',
-      }}
-    >
-      {/* Header */}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <Phone size={13} strokeWidth={1.5} className="text-brand-primary opacity-70" />
-          <h3 className="text-base font-semibold text-content-primary leading-snug m-0">
-            {t('studio.result.v2.consultation.title', 'درخواست مشاوره')}
-          </h3>
-        </div>
-        <p className="text-xs text-content-muted leading-7 m-0">
-          {t('studio.result.v2.consultation.subtitle', 'خدمات اجرایی و موارد تکمیلی انتخابی\u200Cتون رو یکجا درخواست مشاوره بدید')}
-        </p>
-      </div>
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[9998] transition-opacity duration-300"
+        style={{ background: 'rgba(0,0,0,0.18)' }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Selected services */}
-      {selectedServices.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold text-content-muted uppercase tracking-wider">
-            <Wrench size={9} strokeWidth={2} className="inline mr-1 align-middle" />
-            {t('studio.result.v2.consultation.services', 'خدمات اجرایی')}
-          </span>
-          {selectedServices.map((item) => (
-            <div
-              key={`svc-${item.itemId}`}
-              className="flex items-center justify-between px-3 py-2 rounded-full"
-              style={{ background: 'rgba(0,49,45,0.04)', border: '1px solid rgba(0,49,45,0.08)' }}
-            >
-              <div className="flex items-center gap-2">
-                <Check size={12} strokeWidth={2.5} style={{ color: 'var(--color-feedback-good)' }} />
-                <span className="text-xs font-semibold text-content-primary">{item.categoryDisplay}</span>
-              </div>
-              {item.actionEstimate && (
-                <span className="flex items-center gap-1 tabular-nums text-[11px] text-content-muted">
-                  <Wallet size={9} strokeWidth={1.5} />
-                  ~ {toLocalizedDigits(item.actionEstimate)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Selected checklist items */}
-      {selectedChecklist.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold text-content-muted uppercase tracking-wider">
-            <Puzzle size={9} strokeWidth={2} className="inline mr-1 align-middle" />
-            {t('studio.result.v2.consultation.completionItems', 'موارد تکمیلی')}
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {selectedChecklist.map((item) => (
-              <span
-                key={`src-${item.itemId}`}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] text-content-primary"
-                style={{ background: 'rgba(154,140,116,0.06)', border: '1px solid rgba(154,140,116,0.15)' }}
-              >
-                <Check size={9} strokeWidth={2.5} className="text-content-secondary" />
-                {item.categoryDisplay}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* CTA Button */}
-      <button
-        onClick={() => setShowSheet(true)}
-        disabled={!hasSelected}
-        className="w-full flex items-center justify-center gap-2 cursor-pointer transition-all duration-200"
+      {/* Sheet */}
+      <div
+        ref={sheetRef}
+        className="fixed bottom-0 left-0 right-0 z-[9999] flex flex-col transition-transform duration-300"
         style={{
-          height: 'var(--btn-dark-h-mobile, 48px)',
-          borderRadius: 'var(--radius-lg, 8px)',
-          background: hasSelected ? 'var(--content-primary)' : 'var(--surface-elevated)',
-          border: 'none',
-          color: hasSelected ? 'var(--surface-page)' : 'var(--content-muted)',
-          fontSize: '12px',
-          fontWeight: 600,
-          letterSpacing: '0.02em',
-          opacity: hasSelected ? 1 : 0.6,
-          pointerEvents: hasSelected ? 'auto' : 'none',
+          background: 'var(--surface)',
+          borderTopLeftRadius: '16px',
+          borderTopRightRadius: '16px',
+          boxShadow: '0 -4px 40px rgba(0,0,0,0.08)',
+          fontFamily: FONT,
+          transform: 'translateY(0)',
         }}
-        aria-label={t('studio.result.v2.consultation.requestBtn', 'درخواست مشاوره برای موارد انتخابی')}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="درخواست مشاوره"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        <Phone size={14} strokeWidth={2} />
-        {t('studio.result.v2.consultation.request', 'درخواست مشاوره')}
-        {hasSelected && (
-          <span className="tabular-nums text-[11px] opacity-70">({toLocalizedDigits(totalSelected)})</span>
-        )}
-      </button>
+        {/* Drag handle */}
+        <div className="flex justify-center" style={{ padding: '10px 0 0' }}>
+          <div style={{
+            width: '28px', height: '3px', borderRadius: 'var(--radius-full)',
+            background: 'var(--editorial-charcoal)', opacity: 0.12,
+          }} />
+        </div>
 
-      {!hasSelected && (
-        <span className="text-[11px] text-content-muted text-center">
-          {t('studio.result.v2.consultation.selectFirst', 'ابتدا خدمات اجرایی یا موارد تکمیلی مورد نظر خود را انتخاب کنید')}
-        </span>
-      )}
-
-      {/* Bottom sheet form */}
-      {showSheet && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-modal transition-opacity duration-300"
-            style={{ background: 'rgba(0,0,0,0.18)' }}
-            onClick={() => setShowSheet(false)}
-            aria-hidden="true"
-          />
-
-          {/* Sheet */}
-          <div
-            ref={sheetRef}
-            className="fixed bottom-0 left-0 right-0 z-modal flex flex-col transition-transform duration-300"
-            style={{
-              background: 'var(--surface-default)',
-              borderTopLeftRadius: '16px',
-              borderTopRightRadius: '16px',
-              boxShadow: '0 -4px 40px rgba(0,0,0,0.08)',
-              transform: 'translateY(0)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('studio.result.v2.consultation.title', 'درخواست مشاوره')}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-2.5">
-              <div className="w-7 h-[3px] rounded-full bg-content-primary opacity-10" />
-            </div>
-
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto overscroll-contain" style={{ maxHeight: '80vh' }}>
-              {submitted ? (
-                /* Success state */
-                <div className="flex flex-col items-center text-center px-6 py-10 transition-opacity duration-400">
-                  <CheckCircle size={56} strokeWidth={1.5} style={{ color: 'var(--color-feedback-good)' }} />
-                  <h3 className="text-xl font-semibold text-content-primary mt-4 m-0">
-                    {t('studio.result.v2.consultation.success', 'درخواست شما ثبت شد')}
-                  </h3>
-                  <p className="text-sm text-content-muted mt-2 leading-7">
-                    {t('studio.result.v2.consultation.successDetail', 'تیم مشاوره هُما به\u200Cزودی با شما تماس خواهد گرفت')}
-                  </p>
-                </div>
-              ) : (
-                /* Form state */
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="flex flex-col px-6 pt-4"
-                >
-                  <h3 className="text-base font-semibold text-content-primary m-0">
-                    {t('studio.result.v2.consultation.title', 'درخواست مشاوره')}
-                  </h3>
-                  <p className="text-xs text-content-muted mt-1.5 leading-relaxed">
-                    {t('studio.result.v2.consultation.formDescription', 'اطلاعات تماس خود را وارد کنید تا تیم ما با شما تماس بگیرد')}
-                  </p>
-
-                  {/* Form fields */}
-                  <div className="flex flex-col gap-3 mt-4">
-                    {/* Full name */}
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="consultation-name" className="text-xs font-semibold text-content-primary">
-                        {t('studio.result.v2.consultation.name', 'نام شما')}
-                      </label>
-                      <input
-                        {...register('fullName')}
-                        ref={(e) => {
-                          register('fullName').ref(e);
-                          (nameInputRef as React.MutableRefObject<HTMLInputElement | null>).current = e;
-                        }}
-                        id="consultation-name"
-                        type="text"
-                        placeholder={t('studio.result.v2.consultation.namePlaceholder', 'مثال: علی محمدی')}
-                        className={inputClasses}
-                        autoComplete="name"
-                      />
-                      {errors.fullName && (
-                        <span className="text-[11px] text-red-500 pr-1">{errors.fullName.message}</span>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="consultation-phone" className="text-xs font-semibold text-content-primary">
-                        {t('studio.result.v2.consultation.phone', 'شماره تماس')}
-                        <span className="text-red-500 mr-0.5">*</span>
-                      </label>
-                      <input
-                        {...register('phone')}
-                        id="consultation-phone"
-                        type="tel"
-                        inputMode="tel"
-                        dir="ltr"
-                        placeholder="09123456789"
-                        className={inputClasses}
-                        style={{ textAlign: 'left' }}
-                        autoComplete="tel"
-                      />
-                      {errors.phone && (
-                        <span className="text-[11px] text-red-500 pr-1">{errors.phone.message}</span>
-                      )}
-                    </div>
-
-                    {/* Message */}
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="consultation-message" className="text-xs font-semibold text-content-primary">
-                        {t('studio.result.v2.consultation.message', 'توضیحات')}
-                        <span className="text-content-muted mr-1 text-[11px] font-normal">
-                          ({t('studio.result.v2.consultation.optional', 'اختیاری')})
-                        </span>
-                      </label>
-                      <textarea
-                        {...register('message')}
-                        id="consultation-message"
-                        placeholder={t('studio.result.v2.consultation.messagePlaceholder', 'مثلا: ترجیحا صبح\u200Cها تماس بگیرید...')}
-                        rows={3}
-                        className={`${inputClasses} h-auto py-3 resize-none leading-7`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Submit error */}
-                  {submitError && (
-                    <p className="text-[11px] text-red-500 mt-2">{submitError}</p>
-                  )}
-
-                  <div className="h-3" />
-                </form>
-              )}
-            </div>
-
-            {/* Sticky CTA */}
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ maxHeight: '80vh' }}>
+          {submitted ? (
+            /* ── Success state ── */
             <div
-              className="px-6 pt-3 pb-6"
+              className="flex flex-col items-center transition-opacity duration-400"
               style={{
-                paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-                borderTop: '1px solid var(--border-subtle)',
+                padding: 'var(--spacing-xl) var(--spacing-lg)',
+                textAlign: 'center',
+                opacity: 1,
               }}
             >
-              {submitted ? (
-                <button
-                  onClick={() => setShowSheet(false)}
-                  className="w-full flex items-center justify-center cursor-pointer"
-                  style={{
-                    height: 'var(--btn-dark-h-mobile, 48px)',
-                    borderRadius: 'var(--radius-lg, 8px)',
-                    background: 'var(--content-primary)',
-                    border: 'none',
-                    color: 'var(--surface-page)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {t('studio.result.v2.consultation.close', 'بستن')}
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowSheet(false)}
-                    className="w-full flex items-center justify-center cursor-pointer mb-2"
+              <div className="transition-transform duration-300" style={{ transform: 'scale(1)' }}>
+                <CheckCircle size={56} strokeWidth={1.5} style={{ color: 'var(--feedback-good)' }} />
+              </div>
+              <h3 style={{
+                fontSize: 'var(--text-h3-size)', fontWeight: 'var(--font-weight-semibold)',
+                fontFamily: FONT, color: 'var(--editorial-charcoal)',
+                margin: 0, marginTop: 'var(--spacing-md)',
+              }}>
+                درخواست شما ثبت شد
+              </h3>
+              <p style={{
+                fontSize: 'var(--text-label-size)', fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT, color: 'var(--editorial-taupe)',
+                marginTop: 'var(--spacing-xs)', lineHeight: 1.7,
+              }}>
+                تیم مشاوره هُما به‌زودی با شما تماس خواهد گرفت
+              </p>
+              <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: 'var(--spacing-sm)' }}>
+                {selectedServices.map(item => (
+                  <span
+                    key={`svc-${item.itemId}`}
+                    className="inline-flex items-center gap-1"
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      padding: '6px 0',
-                      fontSize: '12px',
-                      color: 'var(--content-muted)',
-                      letterSpacing: '0.03em',
+                      padding: '4px 12px', borderRadius: 'var(--radius-full)',
+                      background: 'var(--muted)',
+                      fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
+                      fontFamily: FONT, color: 'var(--editorial-taupe)',
                     }}
                   >
-                    {t('common.cancel', 'انصراف')}
-                  </button>
-                  <button
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={submitting}
-                    className="w-full flex items-center justify-center gap-2 cursor-pointer"
+                    <Wrench size={9} strokeWidth={2} />
+                    {item.categoryDisplay}
+                  </span>
+                ))}
+                {selectedSourcing.map(item => (
+                  <span
+                    key={`src-${item.id}`}
+                    className="inline-flex items-center gap-1"
                     style={{
-                      height: 'var(--btn-dark-h-mobile, 48px)',
-                      borderRadius: 'var(--radius-lg, 8px)',
-                      background: 'var(--content-primary)',
-                      border: 'none',
-                      color: 'var(--surface-page)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      letterSpacing: '0.04em',
-                      opacity: submitting ? 0.5 : 1,
-                      pointerEvents: submitting ? 'none' : 'auto',
+                      padding: '4px 12px', borderRadius: 'var(--radius-full)',
+                      background: 'var(--muted)',
+                      fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
+                      fontFamily: FONT, color: 'var(--editorial-taupe)',
                     }}
                   >
-                    {submitting ? (
-                      <div
-                        className="animate-spin"
-                        style={{
-                          width: 14,
-                          height: 14,
-                          border: '2px solid transparent',
-                          borderTopColor: 'var(--surface-page)',
-                          borderRadius: '50%',
-                        }}
-                      />
-                    ) : (
-                      <Send size={14} strokeWidth={2} />
-                    )}
-                    {submitting
-                      ? t('studio.result.v2.consultation.submitting', 'در حال ثبت...')
-                      : `${t('studio.result.v2.consultation.submit', 'ثبت درخواست مشاوره')} (${toLocalizedDigits(totalSelected)})`}
-                  </button>
-                </>
-              )}
+                    <Puzzle size={9} strokeWidth={2} />
+                    {item.name}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        </>
-      )}
-    </div>
+          ) : (
+            /* ── Form state ── */
+            <div
+              className="flex flex-col transition-opacity duration-300"
+              style={{
+                padding: 'var(--spacing-md) var(--spacing-lg) 0',
+                opacity: 1,
+              }}
+            >
+              <h3 style={{
+                fontSize: 'var(--text-h4-size)', fontWeight: 'var(--font-weight-semibold)',
+                fontFamily: FONT, color: 'var(--editorial-charcoal)',
+                margin: 0, letterSpacing: '0.01em',
+              }}>
+                درخواست مشاوره
+              </h3>
+              <p style={{
+                fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT, color: 'var(--editorial-taupe)',
+                marginTop: '6px', lineHeight: 1.6,
+              }}>
+                اطلاعات تماس خود را وارد کنید تا تیم ما با شما تماس بگیرد
+              </p>
+
+              {/* ── Selected items grouped by type ── */}
+              <div className="flex flex-col" style={{ gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-sm)' }}>
+
+                {/* Services */}
+                {selectedServices.length > 0 && (
+                  <div className="flex flex-col" style={{ gap: '6px' }}>
+                    <span style={{
+                      fontSize: '10px', fontWeight: 'var(--font-weight-semibold)',
+                      fontFamily: FONT, color: 'var(--editorial-taupe)',
+                      letterSpacing: '0.06em',
+                    }}>
+                      خدمات اجرایی
+                    </span>
+                    {selectedServices.map(item => (
+                      <div
+                        key={`svc-${item.itemId}`}
+                        className="flex items-center justify-between"
+                        style={{
+                          padding: '10px 14px',
+                          borderRadius: 'var(--btn-dark-radius)',
+                          background: 'var(--muted)',
+                        }}
+                      >
+                        <span style={{
+                          fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
+                          fontFamily: FONT, color: 'var(--editorial-charcoal)',
+                        }}>
+                          {item.categoryDisplay}
+                          <span style={{
+                            fontWeight: 'var(--font-weight-regular)',
+                            color: 'var(--editorial-taupe)',
+                            marginRight: '4px',
+                          }}>
+                            · {item.actionType || 'اقدام پیشنهادی'}
+                          </span>
+                        </span>
+                        {item.actionEstimate && (
+                          <span className="flex items-center gap-1" style={{
+                            fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
+                            fontFamily: FONT, color: 'var(--editorial-taupe)',
+                          }}>
+                            <Wallet size={10} strokeWidth={1.5} />
+                            ~ {toLocalizedDigits(item.actionEstimate)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sourcing items */}
+                {selectedSourcing.length > 0 && (
+                  <div className="flex flex-col" style={{ gap: '6px' }}>
+                    <span style={{
+                      fontSize: '10px', fontWeight: 'var(--font-weight-semibold)',
+                      fontFamily: FONT, color: 'var(--editorial-taupe)',
+                      letterSpacing: '0.06em',
+                    }}>
+                      موارد تکمیلی
+                    </span>
+                    {selectedSourcing.map(item => (
+                      <div
+                        key={`src-${item.id}`}
+                        className="flex items-center"
+                        style={{
+                          padding: '10px 14px',
+                          borderRadius: 'var(--btn-dark-radius)',
+                          background: 'var(--muted)',
+                          gap: '10px',
+                        }}
+                      >
+                        <div
+                          className="shrink-0 overflow-hidden"
+                          style={{
+                            width: '28px', height: '28px',
+                            borderRadius: 'var(--radius-full)',
+                            border: '1px solid var(--editorial-hairline)',
+                          }}
+                        >
+                          <ImageWithFallback
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <span style={{
+                          fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
+                          fontFamily: FONT, color: 'var(--editorial-charcoal)',
+                          flex: 1,
+                        }}>
+                          {item.name}
+                          <span style={{
+                            fontWeight: 'var(--font-weight-regular)',
+                            color: 'var(--editorial-taupe)',
+                            marginRight: '4px',
+                          }}>
+                            · {item.category}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Form Fields */}
+              <div className="flex flex-col" style={{ gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
+                <div className="flex flex-col" style={{ gap: '6px' }}>
+                  <label htmlFor="unified-req-name" style={labelStyle}>نام شما</label>
+                  <input
+                    ref={nameInputRef}
+                    id="unified-req-name"
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="مثال: علی محمدی"
+                    style={inputStyle}
+                    autoComplete="name"
+                  />
+                </div>
+
+                <div className="flex flex-col" style={{ gap: '6px' }}>
+                  <label htmlFor="unified-req-phone" style={labelStyle}>
+                    شماره تماس
+                    <span style={{ color: 'var(--destructive)', marginRight: '2px' }}>*</span>
+                  </label>
+                  <input
+                    id="unified-req-phone"
+                    type="tel"
+                    inputMode="tel"
+                    dir="ltr"
+                    value={formPhone}
+                    onChange={(e) => { setFormPhone(e.target.value); if (phoneError) setPhoneError(''); }}
+                    placeholder="09123456789"
+                    style={{
+                      ...inputStyle,
+                      textAlign: 'left' as const,
+                      borderColor: phoneError ? 'var(--destructive)' : undefined,
+                    }}
+                    autoComplete="tel"
+                  />
+                  {phoneError && (
+                    <span style={{
+                      fontSize: '11px', fontWeight: 'var(--font-weight-regular)',
+                      fontFamily: FONT, color: 'var(--destructive)', paddingRight: '4px',
+                    }}>
+                      {phoneError}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col" style={{ gap: '6px' }}>
+                  <label htmlFor="unified-req-notes" style={labelStyle}>
+                    توضیحات
+                    <span style={{
+                      fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-taupe)',
+                      marginRight: '4px', fontSize: '11px',
+                    }}>(اختیاری)</span>
+                  </label>
+                  <textarea
+                    id="unified-req-notes"
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                    placeholder="مثلاً: ترجیحاً صبح‌ها تماس بگیرید..."
+                    rows={3}
+                    style={{
+                      ...inputStyle,
+                      height: 'auto',
+                      paddingTop: '12px',
+                      paddingBottom: '12px',
+                      resize: 'none' as const,
+                      lineHeight: 1.7,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ height: 'var(--spacing-sm)' }} />
+            </div>
+          )}
+        </div>
+
+        {/* Sticky CTA */}
+        <div style={{
+          padding: 'var(--spacing-sm) var(--spacing-lg)',
+          paddingBottom: 'max(var(--spacing-lg), env(safe-area-inset-bottom))',
+          borderTop: '1px solid var(--editorial-hairline)',
+        }}>
+          {submitted ? (
+            <button
+              onClick={onClose}
+              className="w-full flex items-center justify-center cursor-pointer"
+              style={{
+                height: 'var(--btn-dark-h-mobile)',
+                borderRadius: 'var(--btn-dark-radius)',
+                background: 'var(--editorial-charcoal)',
+                border: 'none',
+                color: 'var(--surface)',
+                fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
+                fontFamily: FONT, letterSpacing: '0.04em',
+              }}
+              aria-label="بستن"
+            >
+              بستن
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onClose}
+                className="w-full flex items-center justify-center cursor-pointer"
+                style={{
+                  background: 'transparent', border: 'none',
+                  padding: '6px 0', marginBottom: '8px',
+                  fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
+                  fontFamily: FONT, color: 'var(--editorial-taupe)', letterSpacing: '0.03em',
+                }}
+                aria-label="انصراف"
+              >
+                انصراف
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit || submitting}
+                className="w-full flex items-center justify-center gap-2 cursor-pointer"
+                style={{
+                  height: 'var(--btn-dark-h-mobile)',
+                  borderRadius: 'var(--btn-dark-radius)',
+                  background: 'var(--editorial-charcoal)',
+                  border: 'none',
+                  color: 'var(--surface)',
+                  fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
+                  fontFamily: FONT, letterSpacing: '0.04em',
+                  opacity: (!canSubmit || submitting) ? 0.5 : 1,
+                  pointerEvents: (!canSubmit || submitting) ? 'none' : 'auto',
+                }}
+                aria-label="ثبت درخواست"
+              >
+                {submitting ? (
+                  <div
+                    className="animate-spin"
+                    style={{
+                      width: 14, height: 14,
+                      border: '2px solid transparent', borderTopColor: 'var(--surface)',
+                      borderRadius: 'var(--radius-full)',
+                    }}
+                  />
+                ) : (
+                  <Send size={14} strokeWidth={2} />
+                )}
+                {submitting ? 'در حال ثبت...' : `ثبت درخواست مشاوره (${toLocalizedDigits(totalItems)})`}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

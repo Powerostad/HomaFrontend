@@ -1,43 +1,53 @@
 /**
- * CollectionSummary - Floating bottom dock with frosted glass
+ * CollectionSummary — Commit Bar (Floating Glass Capsule)
  *
- * Three-tab navigation: Analysis / Recommendations / Basket
- * Shows selected count and live price when not in analysis phase.
- * Active tab highlighted with editorial accent.
+ * Navigation bar + live price indicator:
+ *   - In analysis phase: 3 navigation tabs only
+ *   - In recommendations / basket phase: 3 navigation tabs + live total price
  *
- * RTL layout, i18n keys from studio.result.v2.phase.*
+ * The "ادامه به پرداخت" CTA lives inside InvoiceSummary,
+ * keeping this dock compact and consistent across phases.
+ *
+ * Uses CSS transitions for tab pill indicator.
+ * Uses design tokens from globals.css throughout.
  */
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import type { ResultPhase } from './useStudioResult';
+import { formatPriceFromRial } from '@/utils/formatters';
+
+type Phase = 'analysis' | 'recommendations' | 'basket';
 
 interface CollectionSummaryProps {
-  phase: ResultPhase;
-  onNavigateToPhase: (phase: ResultPhase) => void;
+  activePhase?: Phase;
+  onNavigateToPhase?: (phase: Phase) => void;
   selectedCount: number;
-  selectedPrice: number;
+  totalRecommendations: number;
+  onFinalize?: () => void;
+  selectedPrice?: number;
+  totalCount?: number;
+  totalPrice?: number;
+  harmonyScore?: number;
+  projectedScore?: number;
+  liveProjectedScore?: number;
 }
 
 export function CollectionSummary({
-  phase,
+  activePhase = 'analysis',
+  selectedPrice = 0,
   onNavigateToPhase,
-  selectedCount,
-  selectedPrice,
 }: CollectionSummaryProps) {
-  const { t } = useTranslation();
-
-  const tabs: { id: ResultPhase; label: string }[] = [
-    { id: 'analysis', label: t('studio.result.v2.phase.analysis', 'تحلیل فضا') },
-    { id: 'recommendations', label: t('studio.result.v2.phase.recommendations', 'محصولات') },
-    { id: 'basket', label: t('studio.result.v2.phase.basket', 'سبد') },
+  /* Tabs defined inside function body to guarantee availability */
+  const tabs: { id: Phase; label: string }[] = [
+    { id: 'analysis', label: 'تحلیل فضا' },
+    { id: 'recommendations', label: 'محصولات' },
+    { id: 'basket', label: 'سبد' },
   ];
 
   const hasPrice = selectedPrice > 0;
-  const isAnalysisPhase = phase === 'analysis';
+  const isAnalysisPhase = activePhase === 'analysis';
 
-  // Hide when a bottom sheet is open
+  /* Hide when bottom sheet is open */
   const [hidden, setHidden] = useState(false);
+
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ open: boolean }>).detail;
@@ -63,6 +73,7 @@ export function CollectionSummary({
       <div
         className="pointer-events-auto flex items-center"
         style={{
+          fontFamily: 'var(--font-family-vazirmatn)',
           background: 'var(--glass-light)',
           backdropFilter: 'blur(var(--blur-lg))',
           WebkitBackdropFilter: 'blur(var(--blur-lg))',
@@ -73,17 +84,22 @@ export function CollectionSummary({
         }}
       >
         {/* Navigation tabs */}
-        <nav aria-label={t('studio.result.v2.phase.navLabel', 'مراحل طراحی')} className="flex items-center relative" style={{ gap: '2px' }}>
+        <nav
+          aria-label="مراحل طراحی"
+          className="flex items-center relative"
+          style={{ gap: '2px' }}
+        >
           {tabs.map((tab) => {
-            const isActive = tab.id === phase;
+            const isActive = tab.id === activePhase;
+
             return (
               <button
                 key={tab.id}
-                onClick={() => onNavigateToPhase(tab.id)}
+                onClick={() => onNavigateToPhase?.(tab.id)}
                 className="relative flex items-center justify-center transition-all duration-200"
                 style={{
                   padding: '8px 14px',
-                  background: isActive ? 'var(--surface-default)' : 'none',
+                  background: isActive ? 'var(--surface)' : 'none',
                   border: 'none',
                   cursor: 'pointer',
                   borderRadius: 'var(--radius-full)',
@@ -94,26 +110,19 @@ export function CollectionSummary({
                 aria-current={isActive ? 'step' : undefined}
               >
                 <span
-                  className="text-caption"
                   style={{
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? 'var(--content-primary)' : 'var(--content-muted)',
-                    transition: 'color 0.25s ease',
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: isActive
+                      ? 'var(--font-weight-semibold)'
+                      : 'var(--font-weight-regular)',
+                    fontFamily: 'var(--font-family-vazirmatn)',
+                    color: isActive
+                      ? 'var(--editorial-charcoal)'
+                      : 'var(--editorial-taupe)',
+                    transition: 'color 0.25s ease, font-weight 0.25s ease',
                   }}
                 >
                   {tab.label}
-                  {tab.id === 'basket' && selectedCount > 0 && (
-                    <span
-                      className="tabular-nums"
-                      style={{
-                        marginRight: '4px',
-                        fontSize: '10px',
-                        opacity: 0.7,
-                      }}
-                    >
-                      ({toLocalizedDigits(selectedCount)})
-                    </span>
-                  )}
                 </span>
               </button>
             );
@@ -121,25 +130,29 @@ export function CollectionSummary({
         </nav>
 
         {/* Divider + Price */}
-        {!isAnalysisPhase && hasPrice && (
+        {!isAnalysisPhase && hasPrice ? (
           <div className="flex items-center">
+            {/* Vertical divider */}
             <div
               style={{
                 width: '1px',
                 height: '20px',
-                background: 'var(--border-subtle)',
+                background: 'var(--editorial-hairline)',
                 marginLeft: '4px',
                 marginRight: '4px',
                 flexShrink: 0,
               }}
             />
+
+            {/* Live total price */}
             <span
               className="tabular-nums"
               dir="ltr"
               style={{
-                fontSize: 'var(--text-caption-size, 12px)',
-                fontWeight: 600,
-                color: 'var(--content-primary)',
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-semibold)',
+                fontFamily: 'var(--font-family-vazirmatn)',
+                color: 'var(--editorial-charcoal)',
                 letterSpacing: '0.02em',
                 paddingLeft: '6px',
                 paddingRight: '6px',
@@ -149,7 +162,7 @@ export function CollectionSummary({
               {formatPriceFromRial(selectedPrice, true)}
             </span>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

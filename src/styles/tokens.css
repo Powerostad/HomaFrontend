@@ -227,6 +227,80 @@
   --score-ring-track: rgba(0, 0, 0, 0.06);
   --score-ring-size: 120px;
   --score-ring-stroke: 8px;
+
+  /* ========================================
+     FRIEND'S DESIGN SYSTEM ALIASES
+     These match the variable names used by the
+     vibecoded Studio result components.
+     ======================================== */
+
+  /* Editorial palette (unprefixed) */
+  --editorial-accent: #9A8C74;
+  --editorial-stone: #FAF9F6;
+  --editorial-charcoal: #1C1C1A;
+  --editorial-taupe: #8C8A84;
+  --editorial-hairline: #EAE8E3;
+  --editorial-product-bg: #F0EFEB;
+
+  /* Feedback (unprefixed) */
+  --feedback-good: #00312D;
+  --feedback-neutral: #FC6F20;
+  --feedback-bad: #5D0D02;
+  --feedback-bg: #FEE8D0;
+
+  /* Tier (unprefixed) */
+  --tier-structural: #8B6914;
+  --tier-structural-light: rgba(139, 105, 20, 0.06);
+  --tier-structural-border: rgba(139, 105, 20, 0.18);
+
+  /* Surfaces & primitives */
+  --surface: #FFFFFF;
+  --card: rgba(255, 255, 255, 1.00);
+  --card-foreground: rgba(0, 0, 0, 1.00);
+  --muted: rgba(118, 118, 128, 0.12);
+  --muted-foreground: rgba(60, 60, 67, 0.60);
+  --accent: #E31E24;
+  --accent-foreground: #ffffff;
+  --accent-light: #F5E6D3;
+  --accent-light-foreground: #1a1a1a;
+  --border-subtle: #E9E9E6;
+
+  /* Typography */
+  --font-family-vazirmatn: 'Vazirmatn', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-weight-regular: 400;
+
+  /* Typography — size tokens */
+  --text-h1-size: 34px;
+  --text-h2-size: 22px;
+  --text-h3-size: 20px;
+  --text-h4-size: 17px;
+  --text-label-size: 15px;
+  --text-caption-size: 12px;
+
+  /* Spacing (named) */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  --spacing-2xl: 64px;
+
+  /* Elevation */
+  --elevation-sm: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  --elevation-md: 0px 4px 12px rgba(0, 0, 0, 0.10);
+  --elevation-lg: 0px 8px 24px rgba(0, 0, 0, 0.12);
+  --elevation-xl: 0px 16px 44px rgba(0, 0, 0, 0.10);
+
+  /* Button — dark CTA */
+  --btn-dark-bg: #111111;
+  --btn-dark-hover: #0B0B0B;
+  --btn-dark-pressed: #000000;
+  --btn-dark-text: #FFFFFF;
+  --btn-dark-radius: 18px;
+  --btn-dark-h-desktop: 52px;
+  --btn-dark-h-mobile: 48px;
+  --btn-dark-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  --btn-dark-shadow-hover: 0 12px 34px rgba(0,0,0,0.14);
 }
 
 /* ========================================

@@ -143,6 +143,12 @@ export interface UseStudioResultReturn {
   handleExit: () => void;
   getActiveProduct: (group: CategoryGroup) => Product | null;
 
+  // Derived session metadata
+  projectName: string;
+  targetStyle: string;
+  isDownloading: boolean;
+  priorityRankedIds: number[];
+
   // Auth
   isLoggedIn: boolean;
   login: (user: any, tokens: any) => void;
@@ -373,7 +379,7 @@ export function useStudioResult(): UseStudioResultReturn {
         effortLevel: (item.effortLevel || 'medium') as CategoryGroup['effortLevel'],
         actionType: item.actionType,
         actionGuidance: item.actionGuidance,
-        actionDifficulty: item.actionDifficulty,
+        actionDifficulty: item.actionDifficulty as CategoryGroup['actionDifficulty'],
         actionEstimate: item.actionEstimate,
         referenceImageUrl: item.referenceImageUrl,
         specNote: item.specNote,
@@ -424,7 +430,7 @@ export function useStudioResult(): UseStudioResultReturn {
         effortLevel: (item.effortLevel || 'medium') as CategoryGroup['effortLevel'],
         actionType: item.actionType,
         actionGuidance: item.actionGuidance,
-        actionDifficulty: item.actionDifficulty,
+        actionDifficulty: item.actionDifficulty as CategoryGroup['actionDifficulty'],
         actionEstimate: item.actionEstimate,
         referenceImageUrl: item.referenceImageUrl,
         specNote: item.specNote,
@@ -768,6 +774,23 @@ export function useStudioResult(): UseStudioResultReturn {
   }, [clearActiveSession, navigate]);
 
   // =========================================================================
+  // Derived Session Metadata
+  // =========================================================================
+
+  // Project name and target style — will be populated when AI prompt is updated
+  // to include room metadata in the session-level diagnosis
+  const projectName = '';
+  const targetStyle = '';
+  const isDownloading = downloadState === 'preparing';
+
+  // Priority ranking: items sorted by harmony impact (highest first)
+  const priorityRankedIds = useMemo(() => {
+    return [...categoryGroups]
+      .sort((a, b) => b.harmonyImpact - a.harmonyImpact)
+      .map(g => g.itemId);
+  }, [categoryGroups]);
+
+  // =========================================================================
   // Return
   // =========================================================================
 
@@ -867,6 +890,12 @@ export function useStudioResult(): UseStudioResultReturn {
     handleProductClick,
     handleExit,
     getActiveProduct,
+
+    // Derived session metadata
+    projectName,
+    targetStyle,
+    isDownloading,
+    priorityRankedIds,
 
     // Auth
     isLoggedIn,

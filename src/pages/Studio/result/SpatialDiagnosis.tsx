@@ -1,300 +1,262 @@
 /**
  * SpatialDiagnosis — Decision Dashboard (Teaser Mode)
  *
- * Adapted from Homastudio01 design. UX principles:
- *   - NO score ring (removed for clarity — budget is the hero number)
- *   - Benefit-oriented headline + budget estimate
- *   - Improvement points with descriptive category icons
- *   - Flowing diagnosis text (not collapsed)
- *   - Trust metadata (collapsed)
+ * UX principles applied:
+ *   ✅ NO per-issue CTA buttons (eliminates ping-pong / click fatigue)
+ *   ✅ NO warning triangles (replaced with descriptive category icons)
+ *   ✅ NO abstract +80 impact badges (removes confusing gamification)
+ *   ✅ Reads as a flowing, inspiring narrative — builds desire
+ *   ✅ Budget-only card — score removed for clarity
+ *
+ * Structure (above fold):
+ *   1. Benefit-oriented headline + short detail + inline budget estimate
+ *   2. Issues list with descriptive icons — pure reading flow
+ *   3. Trust metadata (collapsed)
+ *
+ * All styling from CSS variables. Fonts: Vazirmatn + Serif.
  */
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'motion/react';
+
+import { useState } from 'react';
 import {
   ChevronDown,
-  Sofa,
-  Lamp,
-  Palette,
-  LayoutGrid,
-  TrendingUp,
-  Ruler,
-  Sparkles,
-  type LucideIcon,
+  CheckCircle2,
 } from 'lucide-react';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import type { RedesignSession } from '@/services/studioService';
+import { type DiagnosisAction, getDescriptiveIcon } from './DiagnosisActionCard';
 
-// ---------------------------------------------------------------------------
-// Icon utilities (from DiagnosisActionCard pattern)
-// ---------------------------------------------------------------------------
+const FONT = 'var(--font-family-vazirmatn)';
 
-type IconType = 'furniture' | 'lighting' | 'boundary' | 'color' | 'growth' | 'proportion' | 'default';
-
-const ICON_MAP: Record<IconType, LucideIcon> = {
-  furniture: Sofa,
-  lighting: Lamp,
-  boundary: LayoutGrid,
-  color: Palette,
-  growth: TrendingUp,
-  proportion: Ruler,
-  default: Sparkles,
-};
-
-/**
- * Guess an icon category from the Persian improvement point text.
- * Simple keyword matching — not perfect, but gives visual variety.
- */
-function guessIconType(text: string): IconType {
-  const lower = text.toLowerCase();
-  if (/نور|لامپ|روشنایی|آباژور|چراغ|led/i.test(lower)) return 'lighting';
-  if (/فرش|کف|مرز|حاشیه|لایه/i.test(lower)) return 'boundary';
-  if (/رنگ|پالت|تعادل رنگ|تنالیته|کنتراست/i.test(lower)) return 'color';
-  if (/مبل|کاناپه|صندلی|چینش|جابجا/i.test(lower)) return 'furniture';
-  if (/رشد|پتانسیل|ارتقا|بلند|عمودی|گیاه/i.test(lower)) return 'growth';
-  if (/اندازه|تناسب|ابعاد|فاصله/i.test(lower)) return 'proportion';
-  return 'default';
+/* ── Public Types ── */
+export interface DetectedContext {
+  roomType: string;
+  targetStyle: string;
+  naturalLight: string;
+  dominantSurfaces: string;
 }
-
-/**
- * Extract a short title from an improvement point string.
- * Takes the first phrase (before dash, comma, or parentheses) as the title.
- */
-function extractTitleAndDetail(text: string): { title: string; detail: string } {
-  // Try common Persian separators
-  const separators = [' — ', ' - ', '؛ ', ': ', '، '];
-  for (const sep of separators) {
-    const idx = text.indexOf(sep);
-    if (idx > 0 && idx < 40) {
-      return {
-        title: text.slice(0, idx).trim(),
-        detail: text.slice(idx + sep.length).trim(),
-      };
-    }
-  }
-  // If text is short enough, use it all as title
-  if (text.length <= 40) {
-    return { title: text, detail: '' };
-  }
-  // Fallback: first ~30 chars as title
-  const spaceIdx = text.indexOf(' ', 25);
-  if (spaceIdx > 0) {
-    return { title: text.slice(0, spaceIdx), detail: text.slice(spaceIdx + 1) };
-  }
-  return { title: text, detail: '' };
-}
-
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
 
 interface SpatialDiagnosisProps {
-  diagnosis: RedesignSession['diagnosis'];
+  harmonyScore: number;
+  projectedScore: number;
+  totalPrice: number;
+  selectedPrice: number;
+  selectedCount: number;
+  diagnosisDetail: string;
   diagnosisExpanded: boolean;
   onToggleDiagnosis: () => void;
-  /** Total price of all items (Rial) */
-  totalPrice: number;
-  /** Price of currently selected/accepted items (Rial) */
-  selectedPrice: number;
-  /** Number of actionable items */
-  actionCount: number;
+  detectedContext?: DetectedContext;
+  diagnosisActions?: DiagnosisAction[];
+  onScrollToStep?: (itemId: number) => void;
+  onNavigateToRecommendations?: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
+/* ── Icon color per category — warm, editorial, non-threatening ── */
+function getIconColor(status: string): string {
+  switch (status) {
+    case 'good':
+      return 'var(--feedback-good)';
+    case 'critical':
+      return 'var(--accent)';
+    default:
+      // All warning-level items get a warm editorial charcoal — no alarming colors
+      return 'var(--editorial-charcoal)';
+  }
+}
 
+/* ═══════════════════════════════════════════════
+   Main Component — Decision Dashboard
+   ═══════════════════════════════════════════════ */
 export function SpatialDiagnosis({
-  diagnosis,
-  diagnosisExpanded,
-  onToggleDiagnosis,
+  harmonyScore,
   totalPrice,
   selectedPrice,
-  actionCount,
+  diagnosisDetail,
+  detectedContext,
+  diagnosisActions = [],
 }: SpatialDiagnosisProps) {
-  const { t } = useTranslation();
+  const [trustOpen, setTrustOpen] = useState(false);
 
-  if (!diagnosis) return null;
+  /* Split actions: issues vs good */
+  const issues = diagnosisActions.filter((a) => a.status !== 'good');
+  const goods = diagnosisActions.filter((a) => a.status === 'good');
 
-  const { harmonyScore, improvementPoints, diagnosisDetail } = diagnosis;
-
+  /* Use selectedPrice for display — matches the bottom bar for consistency */
   const displayPrice = selectedPrice > 0 ? selectedPrice : totalPrice;
+  const purchasableCount = issues.length;
 
-  // Parse improvement points into structured items with icons
-  const structuredPoints = useMemo(
-    () =>
-      improvementPoints.map((point, idx) => {
-        const iconType = guessIconType(point);
-        const { title, detail } = extractTitleAndDetail(point);
-        return { id: idx, iconType, title, detail, fullText: point };
-      }),
-    [improvementPoints],
-  );
+  /* Issues sorted by priority (critical first, then warning) */
+  const sortedIssues = [...issues].sort((a, b) => {
+    const order = { critical: 0, warning: 1, good: 2 };
+    return (order[a.status] ?? 1) - (order[b.status] ?? 1);
+  });
 
   return (
     <section
-      aria-label={t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
+      aria-label="تحلیل فضا"
       className="w-full"
       style={{
-        paddingTop: 'var(--spacing-sm, 8px)',
-        paddingBottom: 'var(--spacing-md, 16px)',
+        fontFamily: FONT,
+        paddingTop: 'var(--spacing-sm)',
+        paddingBottom: 'var(--spacing-md)',
       }}
     >
-      {/* ═══ Benefit headline ═══ */}
-      <div style={{ marginBottom: 'var(--spacing-lg, 24px)' }}>
-        {/* Headline */}
+      {/* ═══ Benefit headline + budget estimate + detail ═══ */}
+      <div
+        style={{ marginBottom: 'var(--spacing-lg)' }}
+      >
+        {/* 1. Title */}
         <h1
           style={{
             fontSize: '20px',
-            fontWeight: 400,
-            color: 'var(--color-editorial-charcoal)',
+            fontWeight: 'var(--font-weight-regular)',
+            fontFamily: FONT,
+            color: 'var(--editorial-charcoal)',
             lineHeight: 1.5,
-            marginBottom: 'var(--spacing-sm, 8px)',
-            margin: 0,
+            marginBottom: 'var(--spacing-sm)',
           }}
         >
           {harmonyScore >= 75
-            ? t('studio.result.v2.diagnosis.headlineGood', 'با چند تغییر هدفمند، فضا کامل‌تر می‌شه')
-            : t('studio.result.v2.diagnosis.headlineFair', 'فضای شما پتانسیل بالایی داره')}
+            ? 'با چند تغییر هدفمند، فضا کامل‌تر می‌شه'
+            : 'فضای شما پتانسیل بالایی داره'}
         </h1>
 
-        {/* Budget estimate */}
-        {displayPrice > 0 && (
-          <div
-            className="flex items-baseline flex-wrap"
-            style={{ gap: '6px', marginTop: 'var(--spacing-sm, 8px)', marginBottom: 'var(--spacing-sm, 8px)' }}
+        {/* 2. Budget estimate — right after title */}
+        <div className="flex items-baseline flex-wrap" style={{ gap: '6px', marginBottom: 'var(--spacing-sm)' }}>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
+              lineHeight: 1,
+            }}
           >
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 400,
-                color: 'var(--color-editorial-taupe)',
-                lineHeight: 1,
-              }}
-            >
-              {t('studio.result.v2.diagnosis.budgetLabel', 'تخمین بودجه برای')} {toLocalizedDigits(actionCount)} {t('studio.result.v2.diagnosis.budgetActions', 'اقدام')}:
-            </span>
-            <span
-              className="tabular-nums"
-              style={{
-                fontSize: 'var(--text-h2-size, 24px)',
-                fontWeight: 700,
-                color: 'var(--color-editorial-charcoal)',
-                lineHeight: 1,
-                transition: 'all 0.3s ease',
-              }}
-            >
-              {formatPriceFromRial(displayPrice, false)}
-            </span>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 400,
-                color: 'var(--color-editorial-taupe)',
-                lineHeight: 1,
-              }}
-            >
-              {t('common.toman', 'تومان')}
-            </span>
-          </div>
-        )}
+            تخمین بودجه برای {toLocalizedDigits(purchasableCount)} اقدام:
+          </span>
+          <span
+            className="tabular-nums"
+            style={{
+              fontSize: 'var(--text-h2-size)',
+              fontWeight: 'var(--font-weight-bold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-charcoal)',
+              lineHeight: 1,
+              transition: 'all 0.3s ease',
+            }}
+          >
+            {formatPriceFromRial(displayPrice, false)}
+          </span>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
+              lineHeight: 1,
+            }}
+          >
+            تومان
+          </span>
+        </div>
 
-        {/* Diagnosis detail text — flowing paragraph */}
+        {/* 3. Analytical detail text */}
         <p
           style={{
-            fontSize: 'var(--text-caption-size, 12px)',
-            fontWeight: 400,
-            color: 'var(--color-editorial-taupe)',
+            fontSize: 'var(--text-caption-size)',
+            fontWeight: 'var(--font-weight-regular)',
+            fontFamily: FONT,
+            color: 'var(--editorial-taupe)',
             lineHeight: 1.7,
-            margin: 0,
-            marginTop: 'var(--spacing-xs, 4px)',
           }}
         >
           {diagnosisDetail ||
-            t('studio.result.v2.diagnosis.defaultDetail', 'بر اساس تحلیل فضای شما، مهم‌ترین فرصت‌های بهبود رو شناسایی کردیم.')}
+            'بر اساس تحلیل فضای شما، مهم‌ترین فرصت‌های بهبود رو شناسایی کردیم.'}
         </p>
       </div>
 
-      {/* ═══ Improvement points with category icons ═══ */}
-      {structuredPoints.length > 0 && (
+      {/* ═══ Issues list — pure reading flow, no CTAs ═══ */}
+      {sortedIssues.length > 0 && (
         <div
           className="flex flex-col"
-          style={{ gap: 0, marginBottom: 'var(--spacing-lg, 24px)' }}
+          style={{ gap: '0', marginBottom: 'var(--spacing-lg)' }}
         >
           <span
             style={{
               fontSize: '11px',
-              fontWeight: 600,
-              color: 'var(--color-editorial-taupe)',
+              fontWeight: 'var(--font-weight-semibold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
               letterSpacing: '0.06em',
-              marginBottom: 'var(--spacing-sm, 8px)',
+              marginBottom: 'var(--spacing-sm)',
             }}
           >
-            {t('studio.result.v2.diagnosis.improvementTitle', 'فرصت‌های بهبود')}
+            فرصت‌های بهبود
           </span>
 
-          {structuredPoints.map((item, idx) => {
-            const IconComponent = ICON_MAP[item.iconType] || Sparkles;
+          {sortedIssues.map((issue, idx) => {
+            const IconComponent = getDescriptiveIcon(issue.status, issue.iconType);
+            const iconColor = getIconColor(issue.status);
 
             return (
               <div
-                key={item.id}
+                key={issue.id}
                 className="flex items-start"
                 style={{
                   padding: '14px 0',
                   borderBottom:
-                    idx < structuredPoints.length - 1
-                      ? '1px solid var(--color-editorial-hairline)'
+                    idx < sortedIssues.length - 1
+                      ? '1px solid var(--editorial-hairline)'
                       : 'none',
                   gap: '12px',
                 }}
               >
-                {/* Category icon in circle */}
+                {/* Descriptive category icon */}
                 <div
-                  className="flex items-center justify-center shrink-0"
                   style={{
                     width: '28px',
                     height: '28px',
-                    borderRadius: '50%',
-                    background: 'var(--color-editorial-stone, #FAF9F6)',
+                    borderRadius: 'var(--radius-full)',
+                    background: issue.status === 'critical'
+                      ? 'rgba(41, 128, 185, 0.06)'
+                      : 'var(--muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                     marginTop: '1px',
                   }}
                 >
                   <IconComponent
                     size={14}
                     strokeWidth={1.5}
-                    style={{
-                      color: 'var(--color-editorial-charcoal)',
-                      opacity: 0.75,
-                    }}
+                    style={{ color: iconColor, opacity: 0.75 }}
                   />
                 </div>
 
-                {/* Title + detail */}
-                <div className="flex flex-col flex-1 min-w-0" style={{ gap: '4px' }}>
+                {/* Content — diagnosis + solution, flowing text */}
+                <div className="flex flex-col flex-1" style={{ gap: '4px', minWidth: 0 }}>
                   <span
                     style={{
-                      fontSize: 'var(--text-caption-size, 12px)',
-                      fontWeight: 600,
-                      color: 'var(--color-editorial-charcoal)',
+                      fontSize: 'var(--text-caption-size)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      fontFamily: FONT,
+                      color: 'var(--editorial-charcoal)',
                       lineHeight: 1.5,
                     }}
                   >
-                    {item.title}
+                    {issue.title}
                   </span>
 
-                  {item.detail && (
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 400,
-                        color: 'var(--color-editorial-taupe)',
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {item.detail}
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 'var(--font-weight-regular)',
+                      fontFamily: FONT,
+                      color: 'var(--editorial-taupe)',
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {issue.solution || issue.diagnosis}
+                  </span>
                 </div>
               </div>
             );
@@ -302,68 +264,106 @@ export function SpatialDiagnosis({
         </div>
       )}
 
-      {/* ═══ Expandable trust/detail section ═══ */}
-      {diagnosisDetail && (
-        <div style={{ marginTop: 'var(--spacing-xs, 4px)' }}>
-          <button
-            onClick={onToggleDiagnosis}
-            className="flex items-center gap-1.5 transition-colors duration-200"
+      {/* ═══ Good items (collapsed) ═══ */}
+      {goods.length > 0 && (
+        <div
+          className="flex items-center"
+          style={{ gap: '6px', marginBottom: 'var(--spacing-md)' }}
+        >
+          <CheckCircle2
+            size={13}
+            strokeWidth={1.5}
+            style={{ color: 'var(--feedback-good)', opacity: 0.7 }}
+          />
+          <span
             style={{
-              padding: '4px 0',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: FONT,
+              color: 'var(--editorial-taupe)',
             }}
-            aria-expanded={diagnosisExpanded}
-            aria-label={
-              diagnosisExpanded
-                ? t('studio.result.v2.diagnosis.collapse', 'بستن جزئیات')
-                : t('studio.result.v2.diagnosis.expand', 'جزئیات تشخیصی')
-            }
+          >
+            {goods.map((g) => g.title).join('، ')} — وضعیت خوبه
+          </span>
+        </div>
+      )}
+
+      {/* ═══ Trust metadata (collapsed) ═══ */}
+      {detectedContext && (
+        <div
+          style={{ marginTop: 'var(--spacing-xs)' }}
+        >
+          <button
+            onClick={() => setTrustOpen(!trustOpen)}
+            className="flex items-center gap-1.5 transition-colors duration-200"
+            style={{ padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label={trustOpen ? 'بستن جزئیات تشخیص' : 'جزئیات تشخیص'}
           >
             <span
               style={{
                 fontSize: '11px',
-                color: 'var(--color-editorial-taupe)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--editorial-taupe)',
+                fontFamily: FONT,
               }}
             >
-              {t('studio.result.v2.diagnosis.detailToggle', 'جزئیات تشخیصی')}
+              جزئیات تشخیص
             </span>
             <ChevronDown
               size={11}
-              strokeWidth={1.5}
               className="transition-transform duration-300"
               style={{
-                color: 'var(--color-editorial-taupe)',
+                color: 'var(--editorial-taupe)',
                 opacity: 0.4,
-                transform: diagnosisExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transform: trustOpen ? 'rotate(180deg)' : 'rotate(0deg)',
               }}
+              strokeWidth={1.5}
             />
           </button>
 
-          <AnimatePresence initial={false}>
-            {diagnosisExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
+          <div
+            style={{
+              height: trustOpen ? 'auto' : 0,
+              overflow: 'hidden',
+              opacity: trustOpen ? 1 : 0,
+              transition: 'all 0.3s ease',
+            }}
+          >
+             <div
                 className="overflow-hidden"
               >
-                <p
-                  style={{
-                    paddingTop: 'var(--spacing-sm, 8px)',
-                    fontSize: 'var(--text-caption-size, 12px)',
-                    color: 'var(--color-editorial-charcoal)',
-                    lineHeight: 1.8,
-                    margin: 0,
-                  }}
+                <div
+                  className="flex flex-wrap gap-2"
+                  style={{ paddingTop: '10px', paddingBottom: '4px' }}
                 >
-                  {diagnosisDetail}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {[
+                    { label: 'فضا', value: detectedContext.roomType },
+                    { label: 'سبک', value: detectedContext.targetStyle },
+                    { label: 'نور طبیعی', value: detectedContext.naturalLight },
+                    { label: 'سطوح', value: detectedContext.dominantSurfaces },
+                  ].filter((item) => item.value).map((item) => (
+                    <span
+                      key={item.label}
+                      className="flex items-center gap-1"
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 'var(--font-weight-regular)',
+                        color: 'var(--editorial-charcoal)',
+                        fontFamily: FONT,
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--muted)',
+                      }}
+                    >
+                      <span style={{ color: 'var(--editorial-taupe)', fontSize: '10px' }}>
+                        {item.label}:
+                      </span>
+                      {item.value}
+                    </span>
+                  ))}
+                </div>
+              </div>
+          </div>
         </div>
       )}
     </section>

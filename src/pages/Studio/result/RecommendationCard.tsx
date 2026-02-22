@@ -1,102 +1,101 @@
 /**
- * RecommendationCard -- Editorial product/action recommendation card
+ * RecommendationCard — Zara Home Editorial Product Card
  *
- * Simplified from the vibecoded 1375-line version. Two display modes:
- *   - 'available': Product display with hero, alternatives, basket, quantity
- *   - 'custom_order' / 'architectural': Action guidance with metadata
+ * Matches the Zara Home PDP reference:
+ *   - Clean edge-to-edge product images
+ *   - CATEGORY | NAME title pattern
+ *   - Black CTA button + outlined ♡ action
+ *   - Circle ⊕ buttons on alternative thumbnails
+ *   - Rich editorial action items (enhancement/structural) with
+ *     reference image, design strategy, difficulty/estimate metadata,
+ *     expandable guidance, spec note, and consultation CTA
  *
- * Structure:
- *   1. Header: category label + step number + tier accent
- *   2. Problem statement (1-2 lines)
- *   3. Why change? (collapsible bullet list)
- *   4. Design strategy + benefits
- *   5. Product section (available) or Action guidance (custom_order/architectural)
- *   6. Accept/Reject toggle at bottom
+ * All styling uses CSS variables from globals.css.
+ * Only Vazirmatn + Playfair Display fonts used.
  */
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus,
   Check,
   Minus,
+  X,
+  ChevronRight,
   ChevronDown,
-  ChevronLeft,
+  Heart,
+  Share2,
+  MoreHorizontal,
+  ShoppingBag,
+  Phone,
   Wrench,
 } from 'lucide-react';
-import { ImageWithFallback } from '@components/figma/ImageWithFallback';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import type { Product } from '../components/ProductDetailSheet';
-import {
-  type CategoryGroup,
-  TIER_CONFIG,
-  ACTION_DIFFICULTY_MAP,
-} from './types';
+import { type CategoryGroup, type InterventionTier, ACTION_DIFFICULTY_MAP } from './types';
 
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
+const FONT = 'var(--font-family-vazirmatn)';
+const FONT_SERIF = 'var(--font-family-serif)';
+
+/* ─── Match score colour helper ─── */
+function matchScoreColor(score: number | undefined): string {
+  if (!score) return 'var(--editorial-taupe)';
+  if (score >= 85) return 'var(--feedback-good)';
+  if (score >= 65) return 'var(--feedback-neutral)';
+  return 'var(--feedback-bad)';
+}
+
+/* =============================================
+   Main Card
+   ============================================= */
 
 interface RecommendationCardProps {
   group: CategoryGroup;
+  tier: InterventionTier;
+  isTopPriority: boolean;
+  priorityRank: number;
   stepNumber?: number;
-  // State
-  isAccepted: boolean;
   isWhyExpanded: boolean;
-  isCollapsed: boolean;
-  quantity: number;
+  isSaved: boolean;
+  isAccepted?: boolean;
+  sessionId?: string;
   basketProductIds: Set<string>;
-  productQuantityOverrides: Map<string, number>;
-  // Handlers
-  onToggleAccept: () => void;
   onToggleWhy: () => void;
-  onToggleCollapsed: () => void;
   onProductClick: (product: Product) => void;
-  onQuantityChange?: (newQuantity: number) => void;
-  toggleBasketProduct: (productId: string) => void;
-  setProductQuantity: (productId: string, newQuantity: number) => void;
+  onToggleSaved: () => void;
+  onToggleAccepted?: () => void;
+  onToggleBasketProduct: (productId: string) => void;
+  onScrollToAnalysis?: () => void;
+  onUpdateQuantity?: (newQuantity: number) => void;
+  isLast?: boolean;
 }
-
-// ---------------------------------------------------------------------------
-// Match score color helper
-// ---------------------------------------------------------------------------
-
-function matchScoreColor(score: number | undefined): string {
-  if (!score) return 'var(--color-editorial-taupe)';
-  if (score >= 85) return 'var(--color-feedback-good)';
-  if (score >= 65) return 'var(--color-feedback-neutral)';
-  return 'var(--color-feedback-bad)';
-}
-
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
 
 export function RecommendationCard({
   group,
   stepNumber,
-  isAccepted,
   isWhyExpanded,
-  isCollapsed,
-  quantity,
+  isAccepted,
   basketProductIds,
-  productQuantityOverrides,
-  onToggleAccept,
   onToggleWhy,
-  onToggleCollapsed,
   onProductClick,
-  onQuantityChange,
-  toggleBasketProduct,
-  setProductQuantity,
+  onToggleAccepted,
+  onToggleBasketProduct,
+  onUpdateQuantity,
 }: RecommendationCardProps) {
-  const { t } = useTranslation();
+  const [sheetProduct, setSheetProduct] = useState<Product | null>(null);
+  const [showGuidance, setShowGuidance] = useState(false);
 
   const heroProduct = group.products[0] || null;
-  const alternativeProducts = group.products.slice(1, 4);
+  const alternativeProducts = group.products.slice(1, 5);
   const hasProduct = group.actionStatus === 'available' && !!heroProduct;
   const isActionItem =
     group.actionStatus === 'custom_order' || group.actionStatus === 'architectural';
-  const tierCfg = TIER_CONFIG[group.interventionTier];
+  const quantity = group.quantity || 1;
   const hasMultipleQuantity = quantity > 1;
   const isHeroInBasket = heroProduct ? basketProductIds.has(heroProduct.id) : false;
 
@@ -104,197 +103,492 @@ export function RecommendationCard({
     <article
       id={`recommendation-${group.itemId}`}
       className="flex flex-col"
+      style={{ fontFamily: FONT }}
     >
-      {/* ===== 1. Header: category + step + tier accent ===== */}
-      <div
-        className="flex items-center justify-between cursor-pointer"
-        onClick={onToggleCollapsed}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && onToggleCollapsed()}
-        style={{
-          marginBottom: isCollapsed ? 0 : 'var(--spacing-sm, 8px)',
-          paddingBottom: 'var(--spacing-xs, 4px)',
-          borderBottom: '1px solid var(--color-editorial-hairline)',
-        }}
-      >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {/* Tier accent bar */}
-          <span
-            className="shrink-0 rounded-full"
+      {/* ═══════ A) Category label ═══════ */}
+      {isActionItem ? (
+        <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+          <div
+            className="flex items-center justify-between"
+            style={{ paddingBottom: '6px' }}
+          >
+            <span
+              style={{
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT,
+                color: 'var(--editorial-taupe)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {group.actionType || 'اقدام پیشنهادی'}
+            </span>
+            {stepNumber != null && (
+              <span
+                className="tabular-nums"
+                dir="ltr"
+                style={{
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  fontFamily: FONT_SERIF,
+                  fontStyle: 'italic',
+                  color: 'var(--editorial-taupe)',
+                  opacity: 0.5,
+                }}
+              >
+                {String(stepNumber).padStart(2, '0')}
+              </span>
+            )}
+          </div>
+          <h3
             style={{
-              width: 4,
-              height: 20,
-              background: tierCfg.color,
+              fontSize: 'var(--text-h3-size)',
+              fontWeight: 'var(--font-weight-bold)',
+              fontFamily: FONT,
+              color: 'var(--editorial-charcoal)',
+              lineHeight: 1.4,
+              margin: 0,
+              paddingBottom: 'var(--spacing-xs)',
+              borderBottom: '1px solid var(--editorial-hairline)',
             }}
-          />
+          >
+            {group.categoryDisplay}
+          </h3>
+        </div>
+      ) : (
+        <div
+          className="flex items-center justify-between"
+          style={{
+            marginBottom: 'var(--spacing-sm)',
+            paddingBottom: 'var(--spacing-xs)',
+            borderBottom: '1px solid var(--editorial-hairline)',
+          }}
+        >
           <span
-            className="truncate"
             style={{
-              fontSize: 'var(--text-h3-size, 16px)',
-              fontWeight: 600,
-              color: 'var(--color-editorial-charcoal)',
+              fontSize: 'var(--text-h2-size)',
+              fontWeight: 'var(--font-weight-regular)',
+              fontFamily: FONT,
+              color: 'var(--editorial-charcoal)',
               letterSpacing: '-0.01em',
             }}
           >
             {group.categoryDisplay}
           </span>
-          {/* Intervention tier badge */}
-          {group.interventionTier !== 'quick_win' && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: tierCfg.color,
-                background: tierCfg.bg,
-                padding: '2px 8px',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {tierCfg.label}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
           {stepNumber != null && (
             <span
               className="tabular-nums"
               dir="ltr"
               style={{
-                fontSize: 'var(--text-caption-size, 12px)',
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT_SERIF,
                 fontStyle: 'italic',
-                color: 'var(--color-editorial-taupe)',
+                color: 'var(--editorial-taupe)',
                 opacity: 0.6,
               }}
             >
               {String(stepNumber).padStart(2, '0')}
             </span>
           )}
-          <ChevronDown
-            size={16}
-            strokeWidth={1.5}
-            className="transition-transform duration-300"
-            style={{
-              color: 'var(--color-editorial-taupe)',
-              transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-            }}
-          />
         </div>
-      </div>
+      )}
 
-      {/* ===== Collapsible body ===== */}
-      <AnimatePresence initial={false}>
-        {!isCollapsed && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
+      {/* ═══════ B) Hero Product ═══════ */}
+      {hasProduct && heroProduct && (
+        <div className="flex flex-col" style={{ gap: 'var(--spacing-sm)' }}>
+          {/* ── Hero Image ── */}
+          <div
+            className="relative w-full overflow-hidden cursor-pointer group"
+            style={{
+              background: 'var(--editorial-product-bg)',
+              borderRadius: '0px',
+            }}
+            onClick={() => onProductClick(heroProduct)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onProductClick(heroProduct)}
+            aria-label={`مشاهده جزئیات ${heroProduct.name}`}
           >
-            {/* ---- 2. Problem statement ---- */}
+            <ImageWithFallback
+              src={heroProduct.image}
+              alt={heroProduct.name}
+              className="w-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]"
+              style={{ aspectRatio: '4 / 5', mixBlendMode: 'multiply' }}
+            />
+
+            {/* Smart Choice badge */}
+            {heroProduct.matchScore != null && heroProduct.matchScore > 0 && (
+              <div
+                className="absolute"
+                style={{
+                  top: 'var(--spacing-xs)',
+                  right: 'var(--spacing-xs)',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    fontFamily: FONT,
+                    color: 'var(--editorial-charcoal)',
+                    background: 'rgba(255,255,255,0.92)',
+                    backdropFilter: 'blur(var(--blur-sm))',
+                    padding: '4px var(--spacing-xs)',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  انتخاب هوشمند
+                </span>
+              </div>
+            )}
+
+            {/* Quantity badge */}
+            {hasMultipleQuantity && (
+              <div
+                className="absolute flex items-center"
+                style={{
+                  bottom: 'var(--spacing-xs)',
+                  left: 'var(--spacing-xs)',
+                  padding: '4px var(--spacing-xs)',
+                  background: 'rgba(255,255,255,0.92)',
+                  backdropFilter: 'blur(var(--blur-sm))',
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  fontFamily: FONT,
+                  color: 'var(--editorial-charcoal)',
+                  gap: '4px',
+                }}
+              >
+                {toLocalizedDigits(quantity)} عدد
+              </div>
+            )}
+          </div>
+
+          {/* ── Product Info ── */}
+          <div className="flex flex-col" style={{ gap: '4px' }}>
+            {/* Category | Name */}
+            <span
+              style={{
+                fontSize: 'var(--text-label-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT,
+                color: 'var(--editorial-charcoal)',
+                lineHeight: 1.5,
+                letterSpacing: '0.01em',
+              }}
+            >
+              {heroProduct.name}
+            </span>
+
+            {/* Price */}
+            <span
+              className="tabular-nums"
+              style={{
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                fontFamily: FONT,
+                color: 'var(--editorial-taupe)',
+                lineHeight: 1.5,
+              }}
+            >
+              {hasMultipleQuantity
+                ? `${formatPriceFromRial(heroProduct.price, true)} × ${toLocalizedDigits(quantity)}`
+                : formatPriceFromRial(heroProduct.price, true)}
+            </span>
+
+            {hasMultipleQuantity && (
+              <span
+                className="tabular-nums"
+                style={{
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  fontFamily: FONT,
+                  color: 'var(--editorial-charcoal)',
+                }}
+              >
+                جمع: {formatPriceFromRial(heroProduct.price * quantity, true)}
+              </span>
+            )}
+          </div>
+
+          {/* ── CTA Row: Black button + Heart ── */}
+          <div
+            className="flex items-stretch"
+            style={{ gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)' }}
+          >
+            {/* Quantity stepper (if adjustable) */}
+            {onUpdateQuantity && (
+              <div
+                className="flex items-center"
+                style={{
+                  height: '40px',
+                  padding: '0 var(--spacing-xs)',
+                  border: '1px solid var(--editorial-hairline)',
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateQuantity(quantity - 1);
+                  }}
+                  disabled={quantity <= 1}
+                  className="flex items-center justify-center w-7 h-full disabled:opacity-30"
+                  style={{ color: 'var(--editorial-taupe)' }}
+                  aria-label="کاهش تعداد"
+                >
+                  <Minus size={13} />
+                </button>
+                <span
+                  className="w-7 text-center tabular-nums"
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    color: 'var(--editorial-charcoal)',
+                  }}
+                >
+                  {toLocalizedDigits(quantity)}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateQuantity(quantity + 1);
+                  }}
+                  disabled={quantity >= 99}
+                  className="flex items-center justify-center w-7 h-full disabled:opacity-30"
+                  style={{ color: 'var(--editorial-charcoal)' }}
+                  aria-label="افزایش تعداد"
+                >
+                  <Plus size={13} />
+                </button>
+              </div>
+            )}
+
+            {/* Add/Remove Button — Solid black / outlined */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleBasketProduct(heroProduct.id);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
+              style={{
+                height: '40px',
+                fontFamily: FONT,
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-semibold)',
+                letterSpacing: '0.04em',
+                backgroundColor: isHeroInBasket
+                  ? 'transparent'
+                  : 'var(--editorial-charcoal)',
+                color: isHeroInBasket
+                  ? 'var(--editorial-charcoal)'
+                  : 'var(--btn-dark-text)',
+                border: '1px solid var(--editorial-charcoal)',
+                borderRadius: '0px',
+              }}
+            >
+              {isHeroInBasket ? (
+                <>
+                  <Check size={14} strokeWidth={2} />
+                  <span>در سبد خرید</span>
+                </>
+              ) : (
+                'افزودن به سبد'
+              )}
+            </button>
+
+            {/* Heart button — outlined square like Zara Home */}
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-center transition-all active:scale-95"
+              style={{
+                width: '40px',
+                height: '40px',
+                border: '1px solid var(--editorial-hairline)',
+                borderRadius: '0px',
+                color: 'var(--editorial-charcoal)',
+                background: 'transparent',
+              }}
+              aria-label="علاقه‌مندی"
+            >
+              <Heart size={18} strokeWidth={1} />
+            </button>
+          </div>
+
+          {/* ═══════ C) Alternatives — COMPLETE THE LOOK ═══════ */}
+          {alternativeProducts.length > 0 && (
+            <div
+              className="flex flex-col"
+              style={{
+                borderTop: '1px solid var(--editorial-hairline)',
+                marginTop: 'var(--spacing-lg)',
+                paddingTop: 'var(--spacing-md)',
+              }}
+            >
+              {/* Section Header */}
+              <div
+                className="flex items-center justify-between"
+                style={{ marginBottom: 'var(--spacing-sm)' }}
+              >
+                <span
+                  style={{
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-regular)',
+                    fontFamily: FONT,
+                    color: 'var(--editorial-charcoal)',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  سایر گزینه‌ها
+                </span>
+                <span
+                  style={{
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-regular)',
+                    fontFamily: FONT,
+                    color: 'var(--editorial-taupe)',
+                  }}
+                >
+                  {toLocalizedDigits(alternativeProducts.length)} مورد
+                </span>
+              </div>
+
+              {/* Horizontal Scroll */}
+              <div
+                className="flex overflow-x-auto"
+                style={{
+                  gap: 'var(--spacing-sm)',
+                  paddingBottom: '4px',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              >
+                <style>{`
+                  .alt-scroll-zh::-webkit-scrollbar { display: none; }
+                `}</style>
+                {alternativeProducts.map((alt) => (
+                  <div
+                    key={alt.id}
+                    style={{ minWidth: '150px', maxWidth: '150px' }}
+                  >
+                    <AlternativeCard
+                      product={alt}
+                      isInBasket={basketProductIds.has(alt.id)}
+                      onTap={() => setSheetProduct(alt)}
+                      onToggleBasket={() => onToggleBasketProduct(alt.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════ Action Item (non-product) ═══════ */}
+      {isActionItem && (() => {
+        const difficultyConfig = group.actionDifficulty
+          ? ACTION_DIFFICULTY_MAP[group.actionDifficulty]
+          : null;
+        const DifficultyIcon = difficultyConfig?.icon || Wrench;
+
+        return (
+          <div className="flex flex-col">
+            {/* ── Reference Image (hero-style) ── */}
+            {group.referenceImageUrl && (
+              <div
+                className="relative w-full overflow-hidden"
+                style={{
+                  background: 'var(--editorial-product-bg)',
+                  marginBottom: 'var(--spacing-sm)',
+                }}
+              >
+                <ImageWithFallback
+                  src={group.referenceImageUrl}
+                  alt={group.categoryDisplay}
+                  className="w-full object-cover"
+                  style={{ aspectRatio: '16 / 10' }}
+                />
+                {/* Tier badge overlay */}
+                <div
+                  className="absolute flex items-center"
+                  style={{
+                    top: 'var(--spacing-xs)',
+                    right: 'var(--spacing-xs)',
+                    padding: '4px var(--spacing-xs)',
+                    background: 'rgba(255,255,255,0.92)',
+                    backdropFilter: 'blur(var(--blur-sm))',
+                    gap: '4px',
+                  }}
+                >
+                  <DifficultyIcon size={11} strokeWidth={2} style={{ color: difficultyConfig?.color || 'var(--editorial-taupe)' }} />
+                  <span
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: 'var(--text-caption-size)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      color: 'var(--editorial-charcoal)',
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {group.actionStatus === 'architectural' ? 'مداخله معماری' : 'بهبود فضا'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* ── Problem Statement ── */}
             {group.problemStatement && (
               <p
                 style={{
-                  fontSize: 'var(--text-caption-size, 12px)',
-                  color: 'var(--color-editorial-taupe)',
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--editorial-taupe)',
                   lineHeight: 1.7,
-                  margin: '0 0 var(--spacing-sm, 8px) 0',
+                  margin: '0 0 var(--spacing-sm) 0',
                 }}
               >
                 {group.problemStatement}
               </p>
             )}
 
-            {/* ---- 3. Why change? (collapsible) ---- */}
-            {group.whyChangeReasons.length > 0 && (
-              <div style={{ marginBottom: 'var(--spacing-sm, 8px)' }}>
-                <button
-                  onClick={onToggleWhy}
-                  className="flex items-center gap-1 underline underline-offset-4 transition-colors"
-                  style={{
-                    fontSize: 'var(--text-caption-size, 12px)',
-                    color: 'var(--color-editorial-taupe)',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {isWhyExpanded
-                    ? t('studio.result.v2.card.whyClose', 'بستن توضیحات')
-                    : t('studio.result.v2.card.whyOpen', 'چرا این انتخاب؟')}
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isWhyExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                      <div
-                        style={{
-                          marginTop: 'var(--spacing-xs, 4px)',
-                          padding: 'var(--spacing-sm, 8px)',
-                          background: 'var(--color-editorial-stone)',
-                        }}
-                      >
-                        <ul className="list-disc list-inside space-y-1">
-                          {group.whyChangeReasons.map((reason, i) => (
-                            <li
-                              key={i}
-                              style={{
-                                fontSize: 'var(--text-caption-size, 12px)',
-                                color: 'var(--color-editorial-charcoal)',
-                                lineHeight: 1.6,
-                              }}
-                            >
-                              {reason}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {/* ---- 4. Design strategy + benefits ---- */}
+            {/* ── Design Strategy ── */}
             {group.designStrategy && (
-              <div style={{ marginBottom: 'var(--spacing-sm, 8px)' }}>
+              <div style={{ marginBottom: 'var(--spacing-sm)' }}>
                 <p
                   style={{
-                    fontSize: 'var(--text-label-size, 14px)',
-                    fontWeight: 600,
-                    color: 'var(--color-editorial-charcoal)',
+                    fontFamily: FONT,
+                    fontSize: 'var(--text-label-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    color: 'var(--editorial-charcoal)',
                     lineHeight: 1.6,
                     margin: 0,
                   }}
                 >
                   {group.designStrategy}
                 </p>
-                {group.designStrategyBenefits.length > 0 && (
-                  <div
-                    className="flex flex-col"
-                    style={{ gap: 6, marginTop: 'var(--spacing-xs, 4px)' }}
-                  >
+                {/* Benefits */}
+                {group.designStrategyBenefits && group.designStrategyBenefits.length > 0 && (
+                  <div className="flex flex-col" style={{ gap: '6px', marginTop: 'var(--spacing-xs)' }}>
                     {group.designStrategyBenefits.map((benefit, i) => (
-                      <div key={i} className="flex items-start" style={{ gap: 6 }}>
+                      <div key={i} className="flex items-start" style={{ gap: '6px' }}>
                         <Check
                           size={12}
                           strokeWidth={2.5}
                           className="shrink-0"
-                          style={{ color: tierCfg.color, marginTop: 3 }}
+                          style={{
+                            color: difficultyConfig?.color || 'var(--feedback-good)',
+                            marginTop: '3px',
+                          }}
                         />
                         <span
                           style={{
-                            fontSize: 'var(--text-caption-size, 12px)',
-                            color: 'var(--color-editorial-charcoal)',
+                            fontFamily: FONT,
+                            fontSize: 'var(--text-caption-size)',
+                            fontWeight: 'var(--font-weight-regular)',
+                            color: 'var(--editorial-charcoal)',
                             lineHeight: 1.5,
                           }}
                         >
@@ -307,623 +601,776 @@ export function RecommendationCard({
               </div>
             )}
 
-            {/* ===== 5. Product section (available items) ===== */}
-            {hasProduct && heroProduct && (
-              <div className="flex flex-col" style={{ gap: 'var(--spacing-sm, 8px)' }}>
-                {/* Hero product image */}
-                <div
-                  className="relative w-full overflow-hidden cursor-pointer group"
-                  style={{ background: 'var(--color-editorial-product-bg)' }}
-                  onClick={() => onProductClick(heroProduct)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && onProductClick(heroProduct)}
-                  aria-label={`${t('studio.result.v2.card.viewDetails', 'مشاهده جزئیات')} ${heroProduct.name}`}
+            {/* ── Metadata Row: Difficulty + Estimate ── */}
+            <div
+              className="flex items-center flex-wrap"
+              style={{
+                gap: 'var(--spacing-xs)',
+                marginBottom: 'var(--spacing-sm)',
+                paddingBottom: 'var(--spacing-sm)',
+                borderBottom: '1px solid var(--editorial-hairline)',
+              }}
+            >
+              {/* Difficulty badge */}
+              {difficultyConfig && (
+                <span
+                  className="inline-flex items-center"
+                  style={{
+                    padding: '4px 10px',
+                    background: difficultyConfig.bg,
+                    gap: '4px',
+                  }}
                 >
-                  <ImageWithFallback
-                    src={heroProduct.image}
-                    alt={heroProduct.name}
-                    className="w-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]"
-                    style={{ aspectRatio: '4 / 5', mixBlendMode: 'multiply' }}
-                  />
-
-                  {/* Match score badge */}
-                  {heroProduct.matchScore != null && heroProduct.matchScore > 0 && (
-                    <div
-                      className="absolute flex items-center gap-1"
-                      style={{
-                        top: 'var(--spacing-xs, 4px)',
-                        right: 'var(--spacing-xs, 4px)',
-                        padding: '4px 8px',
-                        background: 'rgba(255,255,255,0.92)',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      <span
-                        className="rounded-full"
-                        style={{
-                          width: 6,
-                          height: 6,
-                          background: matchScoreColor(heroProduct.matchScore),
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: 'var(--text-caption-size, 12px)',
-                          fontWeight: 600,
-                          color: 'var(--color-editorial-charcoal)',
-                        }}
-                      >
-                        {toLocalizedDigits(heroProduct.matchScore)}%
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Quantity badge */}
-                  {hasMultipleQuantity && (
-                    <div
-                      className="absolute flex items-center"
-                      style={{
-                        bottom: 'var(--spacing-xs, 4px)',
-                        left: 'var(--spacing-xs, 4px)',
-                        padding: '4px 8px',
-                        background: 'rgba(255,255,255,0.92)',
-                        backdropFilter: 'blur(8px)',
-                        fontSize: 'var(--text-caption-size, 12px)',
-                        fontWeight: 600,
-                        color: 'var(--color-editorial-charcoal)',
-                        gap: 4,
-                      }}
-                    >
-                      {toLocalizedDigits(quantity)} {t('studio.result.v2.card.pcs', 'عدد')}
-                    </div>
-                  )}
-                </div>
-
-                {/* Product name + price + shop */}
-                <div className="flex flex-col" style={{ gap: 4 }}>
+                  <DifficultyIcon size={11} strokeWidth={2} style={{ color: difficultyConfig.color }} />
                   <span
                     style={{
-                      fontSize: 'var(--text-label-size, 14px)',
-                      color: 'var(--color-editorial-charcoal)',
-                      lineHeight: 1.5,
+                      fontFamily: FONT,
+                      fontSize: 'var(--text-caption-size)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      color: 'var(--editorial-charcoal)',
                     }}
                   >
-                    {heroProduct.name}
+                    {difficultyConfig.label}
+                  </span>
+                </span>
+              )}
+              {/* Estimate */}
+              {group.actionEstimate && (
+                <span
+                  className="inline-flex items-center tabular-nums"
+                  style={{
+                    padding: '4px 10px',
+                    background: 'var(--muted)',
+                    gap: '4px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: 'var(--text-caption-size)',
+                      fontWeight: 'var(--font-weight-regular)',
+                      color: 'var(--editorial-taupe)',
+                    }}
+                  >
+                    هزینه تخمینی:
                   </span>
                   <span
-                    className="tabular-nums"
                     style={{
-                      fontSize: 'var(--text-caption-size, 12px)',
-                      color: 'var(--color-editorial-taupe)',
-                      lineHeight: 1.5,
+                      fontFamily: FONT,
+                      fontSize: 'var(--text-caption-size)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      color: 'var(--editorial-charcoal)',
                     }}
                   >
-                    {hasMultipleQuantity
-                      ? `${formatPriceFromRial(heroProduct.price, true)} \u00D7 ${toLocalizedDigits(quantity)}`
-                      : formatPriceFromRial(heroProduct.price, true)}
+                    {toLocalizedDigits(group.actionEstimate)}
                   </span>
-                  {hasMultipleQuantity && (
-                    <span
-                      className="tabular-nums"
-                      style={{
-                        fontSize: 'var(--text-caption-size, 12px)',
-                        fontWeight: 600,
-                        color: 'var(--color-editorial-charcoal)',
-                      }}
-                    >
-                      {t('studio.result.v2.card.total', 'جمع')}: {formatPriceFromRial(heroProduct.price * quantity, true)}
-                    </span>
-                  )}
-                  {heroProduct.store && (
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: 'var(--color-editorial-taupe)',
-                        opacity: 0.7,
-                      }}
-                    >
-                      {heroProduct.store}
-                    </span>
-                  )}
-                </div>
+                </span>
+              )}
+            </div>
 
-                {/* CTA row: quantity + basket toggle */}
-                <div
-                  className="flex items-stretch"
-                  style={{ gap: 'var(--spacing-xs, 4px)', marginTop: 'var(--spacing-xs, 4px)' }}
+            {/* ── Guidance (expandable) ── */}
+            {group.actionGuidance && (
+              <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+                <button
+                  onClick={() => setShowGuidance(!showGuidance)}
+                  className="flex items-center transition-colors w-full"
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    color: 'var(--editorial-charcoal)',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    gap: '4px',
+                  }}
                 >
-                  {/* Quantity stepper */}
-                  {onQuantityChange && (
-                    <div
-                      className="flex items-center"
-                      style={{
-                        height: 40,
-                        padding: '0 var(--spacing-xs, 4px)',
-                        border: '1px solid var(--color-editorial-hairline)',
-                      }}
-                    >
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onQuantityChange(quantity - 1); }}
-                        disabled={quantity <= 1}
-                        className="flex items-center justify-center w-7 h-full disabled:opacity-30"
-                        style={{ color: 'var(--color-editorial-taupe)' }}
-                        aria-label={t('studio.result.v2.card.decreaseQty', 'کاهش تعداد')}
-                      >
-                        <Minus size={13} />
-                      </button>
-                      <span
-                        className="w-7 text-center tabular-nums"
-                        style={{
-                          fontSize: 'var(--text-caption-size, 12px)',
-                          fontWeight: 600,
-                          color: 'var(--color-editorial-charcoal)',
-                        }}
-                      >
-                        {toLocalizedDigits(quantity)}
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onQuantityChange(quantity + 1); }}
-                        disabled={quantity >= 99}
-                        className="flex items-center justify-center w-7 h-full disabled:opacity-30"
-                        style={{ color: 'var(--color-editorial-charcoal)' }}
-                        aria-label={t('studio.result.v2.card.increaseQty', 'افزایش تعداد')}
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
+                  {showGuidance ? (
+                    <ChevronDown size={14} strokeWidth={1.5} />
+                  ) : (
+                    <ChevronRight size={14} strokeWidth={1.5} />
                   )}
-
-                  {/* Basket toggle (hero product) */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleBasketProduct(heroProduct.id); }}
-                    className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
-                    style={{
-                      height: 40,
-                      fontSize: 'var(--text-caption-size, 12px)',
-                      fontWeight: 600,
-                      letterSpacing: '0.04em',
-                      backgroundColor: isHeroInBasket ? 'transparent' : 'var(--color-editorial-charcoal)',
-                      color: isHeroInBasket ? 'var(--color-editorial-charcoal)' : '#FAFAF8',
-                      border: '1px solid var(--color-editorial-charcoal)',
-                    }}
-                  >
-                    {isHeroInBasket ? (
-                      <>
-                        <Check size={14} strokeWidth={2} />
-                        <span>{t('studio.result.v2.card.inBasket', 'در سبد خرید')}</span>
-                      </>
-                    ) : (
-                      t('studio.result.v2.card.addToBasket', 'افزودن به سبد')
-                    )}
-                  </button>
-                </div>
-
-                {/* Alternatives row (up to 3 circular thumbnails) */}
-                {alternativeProducts.length > 0 && (
+                  جزئیات طرح پیشنهادی
+                </button>
+                {showGuidance && (
                   <div
-                    className="flex flex-col"
                     style={{
-                      borderTop: '1px solid var(--color-editorial-hairline)',
-                      marginTop: 'var(--spacing-md, 16px)',
-                      paddingTop: 'var(--spacing-sm, 8px)',
+                      marginTop: 'var(--spacing-xs)',
+                      padding: 'var(--spacing-sm)',
+                      background: 'var(--editorial-stone)',
                     }}
                   >
-                    <div
-                      className="flex items-center justify-between"
-                      style={{ marginBottom: 'var(--spacing-sm, 8px)' }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 'var(--text-caption-size, 12px)',
-                          color: 'var(--color-editorial-charcoal)',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {t('studio.result.v2.card.alternatives', 'سایر گزینه‌ها')}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 'var(--text-caption-size, 12px)',
-                          color: 'var(--color-editorial-taupe)',
-                        }}
-                      >
-                        {toLocalizedDigits(alternativeProducts.length)}{' '}
-                        {t('studio.result.v2.card.items', 'مورد')}
-                      </span>
-                    </div>
-
-                    {/* Horizontal scroll of alternatives */}
-                    <div
-                      className="flex overflow-x-auto"
+                    <p
                       style={{
-                        gap: 'var(--spacing-sm, 8px)',
-                        paddingBottom: 4,
-                        scrollbarWidth: 'none',
+                        fontFamily: FONT,
+                        fontSize: 'var(--text-caption-size)',
+                        fontWeight: 'var(--font-weight-regular)',
+                        color: 'var(--editorial-charcoal)',
+                        lineHeight: 1.8,
+                        margin: 0,
                       }}
                     >
-                      {alternativeProducts.map((alt) => {
-                        const altInBasket = basketProductIds.has(alt.id);
-                        const altQty = productQuantityOverrides.get(alt.id) ?? 1;
+                      {group.actionGuidance}
+                    </p>
 
-                        return (
-                          <div
-                            key={alt.id}
-                            className="flex flex-col shrink-0 cursor-pointer group/alt"
-                            style={{ width: 120 }}
-                          >
-                            {/* Thumbnail */}
-                            <div
-                              className="relative w-full overflow-hidden"
-                              style={{
-                                background: 'var(--color-editorial-product-bg)',
-                                marginBottom: 'var(--spacing-xs, 4px)',
-                              }}
-                              onClick={() => onProductClick(alt)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => e.key === 'Enter' && onProductClick(alt)}
-                            >
-                              <ImageWithFallback
-                                src={alt.image}
-                                alt={alt.name}
-                                className="w-full object-cover transition-transform duration-700 group-hover/alt:scale-[1.03]"
-                                style={{ aspectRatio: '3 / 4', mixBlendMode: 'multiply' }}
-                              />
-
-                              {/* Circle add/check button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleBasketProduct(alt.id);
-                                }}
-                                className="absolute flex items-center justify-center transition-all active:scale-90"
-                                style={{
-                                  bottom: 'var(--spacing-xs, 4px)',
-                                  left: 'var(--spacing-xs, 4px)',
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: '50%',
-                                  background: altInBasket
-                                    ? 'var(--color-editorial-charcoal)'
-                                    : 'rgba(255,255,255,0.92)',
-                                  color: altInBasket
-                                    ? '#FAFAF8'
-                                    : 'var(--color-editorial-charcoal)',
-                                  border: altInBasket
-                                    ? '1px solid var(--color-editorial-charcoal)'
-                                    : '1px solid var(--color-editorial-hairline)',
-                                }}
-                                aria-label={altInBasket
-                                  ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
-                                  : t('studio.result.v2.card.addToBasket', 'افزودن به سبد')
-                                }
-                              >
-                                {altInBasket
-                                  ? <Check size={13} strokeWidth={2} />
-                                  : <Plus size={13} strokeWidth={2} />
-                                }
-                              </button>
-                            </div>
-
-                            {/* Name */}
+                    {/* Action Steps */}
+                    {group.actionSteps && group.actionSteps.length > 0 && (
+                      <div className="flex flex-col" style={{ gap: '6px', marginTop: 'var(--spacing-xs)' }}>
+                        {group.actionSteps.map((step, i) => (
+                          <div key={i} className="flex items-start" style={{ gap: '6px' }}>
                             <span
-                              className="line-clamp-2"
+                              className="tabular-nums shrink-0"
+                              dir="ltr"
                               style={{
-                                fontSize: 'var(--text-caption-size, 12px)',
-                                color: 'var(--color-editorial-charcoal)',
-                                lineHeight: 1.4,
-                                marginBottom: 2,
+                                fontFamily: FONT_SERIF,
+                                fontSize: 'var(--text-caption-size)',
+                                fontWeight: 'var(--font-weight-regular)',
+                                fontStyle: 'italic',
+                                color: 'var(--editorial-taupe)',
+                                width: '16px',
+                                textAlign: 'center',
                               }}
                             >
-                              {alt.name}
+                              {i + 1}
                             </span>
-
-                            {/* Price */}
                             <span
-                              className="tabular-nums"
                               style={{
-                                fontSize: 'var(--text-caption-size, 12px)',
-                                color: 'var(--color-editorial-taupe)',
-                                lineHeight: 1.4,
+                                fontFamily: FONT,
+                                fontSize: 'var(--text-caption-size)',
+                                fontWeight: 'var(--font-weight-regular)',
+                                color: 'var(--editorial-charcoal)',
+                                lineHeight: 1.6,
                               }}
                             >
-                              {formatPriceFromRial(alt.price, true)}
+                              {step}
                             </span>
-
-                            {/* Per-product quantity (only if in basket) */}
-                            {altInBasket && (
-                              <div
-                                className="flex items-center justify-center"
-                                style={{
-                                  marginTop: 4,
-                                  gap: 4,
-                                }}
-                              >
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setProductQuantity(alt.id, altQty - 1); }}
-                                  disabled={altQty <= 1}
-                                  className="flex items-center justify-center w-5 h-5 disabled:opacity-30"
-                                  style={{ color: 'var(--color-editorial-taupe)' }}
-                                  aria-label={t('studio.result.v2.card.decreaseQty', 'کاهش تعداد')}
-                                >
-                                  <Minus size={10} />
-                                </button>
-                                <span
-                                  className="tabular-nums"
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    color: 'var(--color-editorial-charcoal)',
-                                    minWidth: 14,
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  {toLocalizedDigits(altQty)}
-                                </span>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setProductQuantity(alt.id, altQty + 1); }}
-                                  disabled={altQty >= 99}
-                                  className="flex items-center justify-center w-5 h-5 disabled:opacity-30"
-                                  style={{ color: 'var(--color-editorial-charcoal)' }}
-                                  aria-label={t('studio.result.v2.card.increaseQty', 'افزایش تعداد')}
-                                >
-                                  <Plus size={10} />
-                                </button>
-                              </div>
-                            )}
                           </div>
-                        );
-                      })}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ===== 6. Action guidance (custom_order / architectural) ===== */}
-            {isActionItem && (() => {
-              const difficultyConfig = group.actionDifficulty
-                ? ACTION_DIFFICULTY_MAP[group.actionDifficulty]
-                : null;
-              const DifficultyIcon = difficultyConfig?.icon || Wrench;
+            {/* ── Spec Note (like product ref code) ── */}
+            {group.specNote && (
+              <p
+                className="tabular-nums"
+                dir="ltr"
+                style={{
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--editorial-taupe)',
+                  margin: '0 0 var(--spacing-sm) 0',
+                  letterSpacing: '0.04em',
+                  textAlign: 'start',
+                }}
+              >
+                {group.specNote}
+              </p>
+            )}
 
-              return (
-                <div className="flex flex-col">
-                  {/* Reference image */}
-                  {group.referenceImageUrl && (
-                    <div
-                      className="relative w-full overflow-hidden"
-                      style={{
-                        background: 'var(--color-editorial-product-bg)',
-                        marginBottom: 'var(--spacing-sm, 8px)',
-                      }}
-                    >
-                      <ImageWithFallback
-                        src={group.referenceImageUrl}
-                        alt={group.categoryDisplay}
-                        className="w-full object-cover"
-                        style={{ aspectRatio: '16 / 10' }}
-                      />
-                      {/* Action type badge */}
-                      <div
-                        className="absolute flex items-center gap-1"
-                        style={{
-                          top: 'var(--spacing-xs, 4px)',
-                          right: 'var(--spacing-xs, 4px)',
-                          padding: '4px 8px',
-                          background: 'rgba(255,255,255,0.92)',
-                          backdropFilter: 'blur(8px)',
-                        }}
-                      >
-                        <DifficultyIcon
-                          size={11}
-                          strokeWidth={2}
-                          style={{ color: difficultyConfig?.color || 'var(--color-editorial-taupe)' }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 'var(--text-caption-size, 12px)',
-                            fontWeight: 600,
-                            color: 'var(--color-editorial-charcoal)',
-                          }}
-                        >
-                          {group.actionType || (group.actionStatus === 'architectural'
-                            ? t('studio.result.v2.card.architectural', 'مداخله معماری')
-                            : t('studio.result.v2.card.enhancement', 'بهبود فضا')
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+            {/* ── CTA: Accept for consultation ── */}
+            <div className="flex items-stretch" style={{ gap: 'var(--spacing-xs)' }}>
+              <button
+                onClick={onToggleAccepted}
+                className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
+                style={{
+                  height: '40px',
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  letterSpacing: '0.04em',
+                  backgroundColor: isAccepted
+                    ? 'transparent'
+                    : 'var(--editorial-charcoal)',
+                  color: isAccepted
+                    ? 'var(--editorial-charcoal)'
+                    : 'var(--btn-dark-text)',
+                  border: '1px solid var(--editorial-charcoal)',
+                  borderRadius: '0px',
+                }}
+                aria-label={isAccepted ? 'لغو درخواست مشاوره' : 'درخواست مشاوره'}
+              >
+                {isAccepted ? (
+                  <>
+                    <Check size={14} strokeWidth={2} />
+                    <span>ثبت شد — در انتظار مشاوره</span>
+                  </>
+                ) : (
+                  <>
+                    <Phone size={14} strokeWidth={2} />
+                    <span>درخواست مشاوره</span>
+                  </>
+                )}
+              </button>
 
-                  {/* Difficulty + Estimate metadata */}
-                  <div
-                    className="flex items-center flex-wrap"
-                    style={{
-                      gap: 'var(--spacing-xs, 4px)',
-                      marginBottom: 'var(--spacing-sm, 8px)',
-                      paddingBottom: 'var(--spacing-sm, 8px)',
-                      borderBottom: '1px solid var(--color-editorial-hairline)',
-                    }}
-                  >
-                    {difficultyConfig && (
-                      <span
-                        className="inline-flex items-center gap-1"
-                        style={{
-                          padding: '4px 10px',
-                          background: difficultyConfig.bg,
-                        }}
-                      >
-                        <DifficultyIcon
-                          size={11}
-                          strokeWidth={2}
-                          style={{ color: difficultyConfig.color }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 'var(--text-caption-size, 12px)',
-                            color: 'var(--color-editorial-charcoal)',
-                          }}
-                        >
-                          {difficultyConfig.label}
-                        </span>
-                      </span>
-                    )}
-                    {group.actionEstimate && (
-                      <span
-                        className="inline-flex items-center gap-1 tabular-nums"
-                        style={{
-                          padding: '4px 10px',
-                          background: 'var(--color-surface-muted, #f5f5f3)',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 'var(--text-caption-size, 12px)',
-                            color: 'var(--color-editorial-taupe)',
-                          }}
-                        >
-                          {t('studio.result.v2.card.estimatedCost', 'هزینه تخمینی')}:
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 'var(--text-caption-size, 12px)',
-                            fontWeight: 600,
-                            color: 'var(--color-editorial-charcoal)',
-                          }}
-                        >
-                          {toLocalizedDigits(group.actionEstimate)}
-                        </span>
-                      </span>
-                    )}
-                  </div>
+              {/* Share */}
+              <button
+                className="flex items-center justify-center transition-all active:scale-95"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '1px solid var(--editorial-hairline)',
+                  borderRadius: '0px',
+                  color: 'var(--editorial-charcoal)',
+                  background: 'transparent',
+                }}
+                aria-label="اشتراک‌گذاری"
+              >
+                <Share2 size={18} strokeWidth={1} />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
-                  {/* Expandable guidance */}
-                  {group.actionGuidance && (
-                    <ActionGuidance guidance={group.actionGuidance} />
-                  )}
-
-                  {/* Spec note */}
-                  {group.specNote && (
-                    <p
-                      className="tabular-nums"
-                      dir="ltr"
-                      style={{
-                        fontSize: 'var(--text-caption-size, 12px)',
-                        color: 'var(--color-editorial-taupe)',
-                        margin: '0 0 var(--spacing-sm, 8px) 0',
-                        letterSpacing: '0.04em',
-                        textAlign: 'start',
-                      }}
-                    >
-                      {group.specNote}
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* ===== 7. Accept/Reject toggle ===== */}
-            <button
-              onClick={onToggleAccept}
-              className="w-full flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
+      {/* ═══════ Why Section ═══════ */}
+      {group.whyChangeReasons.length > 0 && (
+        <div style={{ marginTop: 'var(--spacing-sm)' }}>
+          <button
+            onClick={onToggleWhy}
+            className="underline underline-offset-4 transition-colors"
+            style={{
+              fontFamily: FONT,
+              fontSize: 'var(--text-caption-size)',
+              fontWeight: 'var(--font-weight-regular)',
+              color: 'var(--editorial-taupe)',
+            }}
+          >
+            {isWhyExpanded ? 'بستن توضیحات' : 'چرا این انتخاب؟'}
+          </button>
+          {isWhyExpanded && (
+            <div
               style={{
-                height: 40,
-                marginTop: 'var(--spacing-xs, 4px)',
-                fontSize: 'var(--text-caption-size, 12px)',
-                fontWeight: 600,
-                letterSpacing: '0.04em',
-                backgroundColor: isAccepted ? 'transparent' : 'var(--color-editorial-charcoal)',
-                color: isAccepted ? 'var(--color-editorial-charcoal)' : '#FAFAF8',
-                border: '1px solid var(--color-editorial-charcoal)',
+                fontFamily: FONT,
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                lineHeight: 1.6,
+                backgroundColor: 'var(--editorial-stone)',
+                color: 'var(--editorial-charcoal)',
+                marginTop: 'var(--spacing-xs)',
+                padding: 'var(--spacing-sm)',
               }}
             >
-              {isAccepted ? (
-                <>
-                  <Check size={14} strokeWidth={2} />
-                  <span>
-                    {isActionItem
-                      ? t('studio.result.v2.card.consultRequested', 'ثبت شد — در انتظار مشاوره')
-                      : t('studio.result.v2.card.accepted', 'پذیرفته شد')
-                    }
-                  </span>
-                </>
-              ) : (
-                isActionItem
-                  ? t('studio.result.v2.card.requestConsult', 'درخواست مشاوره')
-                  : t('studio.result.v2.card.accept', 'تایید پیشنهاد')
-              )}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <ul className="list-disc list-inside space-y-1">
+                {group.whyChangeReasons.map((reason, i) => (
+                  <li key={i}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════ D) Alternative Bottom Sheet ═══════ */}
+      <AlternativeBottomSheet
+        product={sheetProduct}
+        isOpen={!!sheetProduct}
+        isInBasket={sheetProduct ? basketProductIds.has(sheetProduct.id) : false}
+        heroName={heroProduct?.name}
+        onClose={() => setSheetProduct(null)}
+        onToggleBasket={(p) => onToggleBasketProduct(p.id)}
+        onViewFull={(p) => {
+          setSheetProduct(null);
+          onProductClick(p);
+        }}
+        quantity={quantity}
+        onUpdateQuantity={onUpdateQuantity}
+      />
     </article>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Action guidance expandable sub-component
-// ---------------------------------------------------------------------------
-
-function ActionGuidance({ guidance }: { guidance: string }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-
+/* =============================================
+   AlternativeCard — Zara Home "COMPLETE THE LOOK" item
+   ============================================= */
+function AlternativeCard({
+  product,
+  isInBasket,
+  onTap,
+  onToggleBasket,
+}: {
+  product: Product & { store?: string; matchScore?: number };
+  isInBasket: boolean;
+  onTap: () => void;
+  onToggleBasket?: () => void;
+}) {
   return (
-    <div style={{ marginBottom: 'var(--spacing-sm, 8px)' }}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 transition-colors"
+    <div
+      className="flex flex-col group/alt cursor-pointer relative"
+      onClick={onTap}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onTap();
+      }}
+    >
+      {/* Thumbnail */}
+      <div
+        className="relative w-full overflow-hidden"
         style={{
-          fontSize: 'var(--text-caption-size, 12px)',
-          fontWeight: 600,
-          color: 'var(--color-editorial-charcoal)',
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
+          background: 'var(--editorial-product-bg)',
+          marginBottom: 'var(--spacing-xs)',
         }}
       >
-        <ChevronLeft
-          size={14}
-          strokeWidth={1.5}
-          className="transition-transform duration-300"
-          style={{ transform: open ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+        <ImageWithFallback
+          src={product.image}
+          alt={product.name}
+          className="w-full object-cover transition-transform duration-700 group-hover/alt:scale-[1.03]"
+          style={{ aspectRatio: '3 / 4', mixBlendMode: 'multiply' }}
         />
-        {t('studio.result.v2.card.guidanceToggle', 'جزئیات طرح پیشنهادی')}
-      </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
+        {/* Circle ⊕ Button — Zara Home style */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleBasket?.();
+          }}
+          className="absolute flex items-center justify-center transition-all active:scale-90"
+          style={{
+            bottom: 'var(--spacing-xs)',
+            left: 'var(--spacing-xs)',
+            width: '28px',
+            height: '28px',
+            borderRadius: 'var(--radius-full)',
+            background: isInBasket
+              ? 'var(--editorial-charcoal)'
+              : 'var(--surface)',
+            color: isInBasket ? 'var(--btn-dark-text)' : 'var(--editorial-charcoal)',
+            border: isInBasket
+              ? '1px solid var(--editorial-charcoal)'
+              : '1px solid var(--editorial-hairline)',
+            boxShadow: 'var(--elevation-sm)',
+          }}
+          aria-label={isInBasket ? 'حذف از سبد' : 'افزودن به سبد'}
+        >
+          {isInBasket ? (
+            <Check size={13} strokeWidth={2} />
+          ) : (
+            <Plus size={13} strokeWidth={2} />
+          )}
+        </button>
+      </div>
+
+      {/* Name */}
+      <span
+        className="line-clamp-2"
+        style={{
+          fontFamily: FONT,
+          fontSize: 'var(--text-caption-size)',
+          fontWeight: 'var(--font-weight-regular)',
+          color: 'var(--editorial-charcoal)',
+          lineHeight: 1.4,
+          marginBottom: '2px',
+        }}
+      >
+        {product.name}
+      </span>
+
+      {/* Price */}
+      <span
+        className="tabular-nums"
+        style={{
+          fontFamily: FONT,
+          fontSize: 'var(--text-caption-size)',
+          fontWeight: 'var(--font-weight-regular)',
+          color: 'var(--editorial-taupe)',
+          lineHeight: 1.4,
+        }}
+      >
+        {formatPriceFromRial(product.price, true)}
+      </span>
+    </div>
+  );
+}
+
+/* =============================================
+   AlternativeBottomSheet — Zara Home PDP style for alternatives
+   ============================================= */
+function AlternativeBottomSheet({
+  product,
+  isOpen,
+  isInBasket,
+  heroName,
+  onClose,
+  onToggleBasket,
+  onViewFull: _onViewFull,
+  quantity = 1,
+  onUpdateQuantity,
+}: {
+  product: Product | null;
+  isOpen: boolean;
+  isInBasket: boolean;
+  heroName?: string;
+  onClose: () => void;
+  onToggleBasket: (product: Product) => void;
+  onViewFull: (product: Product) => void;
+  quantity?: number;
+  onUpdateQuantity?: (newQuantity: number) => void;
+}) {
+  const [isFav, setIsFav] = useState(false);
+  if (!product) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className="p-0 overflow-hidden flex flex-col focus:outline-none max-w-md mx-auto z-[9999]"
+        style={{
+          backgroundColor: 'var(--card)',
+          borderRadius: '0px',
+          fontFamily: FONT,
+          height: '100dvh',
+          maxHeight: '100dvh',
+          boxShadow: 'none',
+          border: 'none',
+        }}
+      >
+        <div className="sr-only">
+          <DialogTitle>جزئیات محصول جایگزین</DialogTitle>
+          <DialogDescription>{product.name}</DialogDescription>
+        </div>
+
+        {/* ═══ SCROLLABLE CONTENT ═══ */}
+        <div className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden relative scroll-smooth pb-32">
+          {/* ── Hero Image + Floating Header ── */}
+          <div
+            className="relative w-full overflow-hidden"
+            style={{ background: 'var(--editorial-product-bg)' }}
           >
+            {/* Floating header */}
+            <div
+              className="absolute top-0 inset-x-0 z-20 flex items-center justify-between"
+              style={{ padding: 'var(--spacing-sm)' }}
+            >
+              <button
+                onClick={onClose}
+                className="flex items-center justify-center transition-all active:scale-95"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-full)',
+                  background: 'var(--surface)',
+                  color: 'var(--editorial-charcoal)',
+                  boxShadow: 'var(--elevation-sm)',
+                }}
+                aria-label="بستن"
+              >
+                <X size={18} strokeWidth={1.5} />
+              </button>
+
+              <div
+                className="flex items-center"
+                style={{ gap: 'var(--spacing-xs)' }}
+              >
+                <button
+                  className="flex items-center justify-center transition-all active:scale-95"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--surface)',
+                    color: 'var(--editorial-charcoal)',
+                    boxShadow: 'var(--elevation-sm)',
+                  }}
+                  aria-label="گزینه‌های بیشتر"
+                >
+                  <MoreHorizontal size={18} strokeWidth={1.5} />
+                </button>
+                <button
+                  className="flex items-center justify-center transition-all active:scale-95 relative"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--surface)',
+                    color: 'var(--editorial-charcoal)',
+                    boxShadow: 'var(--elevation-sm)',
+                  }}
+                  aria-label="سبد خرید"
+                >
+                  <ShoppingBag size={18} strokeWidth={1.5} />
+                  {isInBasket && (
+                    <span
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        top: '-2px',
+                        left: '-2px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--editorial-charcoal)',
+                        color: 'var(--btn-dark-text)',
+                        fontSize: '9px',
+                        fontWeight: 'var(--font-weight-bold)',
+                        fontFamily: FONT,
+                      }}
+                    >
+                      ✓
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <ImageWithFallback
+              src={product.image}
+              alt={product.name}
+              className="w-full object-cover"
+              style={{ aspectRatio: '3 / 4', mixBlendMode: 'multiply' }}
+            />
+
+            {/* Match Score */}
+            {product.matchScore != null && product.matchScore > 0 && (
+              <div
+                className="absolute flex items-center"
+                style={{
+                  bottom: 'var(--spacing-sm)',
+                  right: 'var(--spacing-sm)',
+                  padding: '4px var(--spacing-xs)',
+                  background: 'rgba(255,255,255,0.92)',
+                  backdropFilter: 'blur(var(--blur-sm))',
+                  gap: 'var(--spacing-xs)',
+                }}
+              >
+                <span
+                  className="rounded-full"
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    background: matchScoreColor(product.matchScore),
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    color: 'var(--editorial-charcoal)',
+                  }}
+                >
+                  {toLocalizedDigits(product.matchScore)}٪ تطابق
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* ── Product Info ── */}
+          <div
+            style={{
+              padding: 'var(--spacing-md) var(--spacing-sm)',
+              paddingBottom: 0,
+            }}
+          >
+            {/* Category | Name */}
+            <h2
+              style={{
+                fontFamily: FONT,
+                fontSize: 'var(--text-label-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--editorial-charcoal)',
+                lineHeight: 1.5,
+                margin: '0 0 var(--spacing-xs) 0',
+              }}
+            >
+              {product.category || 'جایگزین'} | {product.name}
+            </h2>
+
+            {/* Price */}
+            <p
+              className="tabular-nums"
+              style={{
+                fontFamily: FONT,
+                fontSize: 'var(--text-label-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--editorial-taupe)',
+                margin: '0 0 var(--spacing-md) 0',
+              }}
+            >
+              {formatPriceFromRial(product.price, true)}
+            </p>
+
+            {/* CTA Row */}
+            <div
+              className="flex items-stretch"
+              style={{
+                gap: 'var(--spacing-xs)',
+                marginBottom: 'var(--spacing-md)',
+              }}
+            >
+              <button
+                onClick={() => onToggleBasket(product)}
+                className="flex-1 flex items-center justify-center transition-all active:scale-[0.98]"
+                style={{
+                  height: 'var(--btn-dark-h-mobile)',
+                  background: isInBasket
+                    ? 'transparent'
+                    : 'var(--editorial-charcoal)',
+                  color: isInBasket
+                    ? 'var(--editorial-charcoal)'
+                    : 'var(--btn-dark-text)',
+                  border: '1px solid var(--editorial-charcoal)',
+                  borderRadius: '0px',
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {isInBasket ? (
+                  <span
+                    className="flex items-center"
+                    style={{ gap: 'var(--spacing-xs)' }}
+                  >
+                    <Check size={15} strokeWidth={2} />
+                    در سبد خرید
+                  </span>
+                ) : (
+                  'افزودن به سبد خرید'
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsFav(!isFav)}
+                className="flex items-center justify-center transition-all active:scale-95"
+                style={{
+                  width: 'var(--btn-dark-h-mobile)',
+                  height: 'var(--btn-dark-h-mobile)',
+                  border: '1px solid var(--editorial-hairline)',
+                  borderRadius: '0px',
+                  color: 'var(--editorial-charcoal)',
+                  background: 'transparent',
+                }}
+                aria-label="علاقه‌مندی"
+              >
+                <Heart
+                  size={20}
+                  strokeWidth={1}
+                  className={isFav ? 'fill-current' : ''}
+                />
+              </button>
+
+              <button
+                className="flex items-center justify-center transition-all active:scale-95"
+                style={{
+                  width: 'var(--btn-dark-h-mobile)',
+                  height: 'var(--btn-dark-h-mobile)',
+                  border: '1px solid var(--editorial-hairline)',
+                  borderRadius: '0px',
+                  color: 'var(--editorial-charcoal)',
+                  background: 'transparent',
+                }}
+                aria-label="اشتراک‌گذاری"
+              >
+                <Share2 size={20} strokeWidth={1} />
+              </button>
+            </div>
+
+            {/* Description */}
+            <p
+              style={{
+                fontFamily: FONT,
+                fontSize: 'var(--text-caption-size)',
+                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--editorial-charcoal)',
+                lineHeight: 1.7,
+                margin: '0 0 var(--spacing-md) 0',
+              }}
+            >
+              این محصول به عنوان جایگزین برای{' '}
+              {heroName ? `«${heroName}»` : 'محصول اصلی'} پیشنهاد شده است. طراحی
+              آن با سبک کلی فضا هماهنگی دارد.
+            </p>
+
+            {/* Ref/Store */}
             <div
               style={{
-                marginTop: 'var(--spacing-xs, 4px)',
-                padding: 'var(--spacing-sm, 8px)',
-                background: 'var(--color-editorial-stone)',
+                paddingBottom: 'var(--spacing-md)',
+                borderBottom: '1px solid var(--editorial-hairline)',
               }}
             >
               <p
                 style={{
-                  fontSize: 'var(--text-caption-size, 12px)',
-                  color: 'var(--color-editorial-charcoal)',
-                  lineHeight: 1.8,
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--editorial-charcoal)',
                   margin: 0,
+                  letterSpacing: '0.04em',
                 }}
               >
-                {guidance}
+                {product.store && `${product.store} | `}
+                {product.category}
               </p>
             </div>
-          </motion.div>
+          </div>
+        </div>
+
+        {/* ═══ STICKY FOOTER ═══ */}
+        {onUpdateQuantity && (
+          <div
+            className="absolute bottom-0 inset-x-0 z-[100]"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.97)',
+              backdropFilter: 'blur(var(--blur-md))',
+              borderTop: '1px solid var(--editorial-hairline)',
+              padding: 'var(--spacing-sm)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                style={{
+                  fontFamily: FONT,
+                  fontSize: 'var(--text-caption-size)',
+                  fontWeight: 'var(--font-weight-regular)',
+                  color: 'var(--editorial-taupe)',
+                }}
+              >
+                تعداد
+              </span>
+              <div
+                className="flex items-center"
+                style={{
+                  border: '1px solid var(--editorial-hairline)',
+                  gap: 'var(--spacing-sm)',
+                  padding: '6px var(--spacing-xs)',
+                }}
+              >
+                <button
+                  onClick={() => onUpdateQuantity(quantity - 1)}
+                  disabled={quantity <= 1}
+                  className="disabled:opacity-30"
+                  aria-label="کاهش تعداد"
+                >
+                  <Minus size={14} />
+                </button>
+                <span
+                  className="tabular-nums text-center"
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: 'var(--text-caption-size)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    width: '16px',
+                  }}
+                >
+                  {toLocalizedDigits(quantity)}
+                </span>
+                <button
+                  onClick={() => onUpdateQuantity(quantity + 1)}
+                  disabled={quantity >= 99}
+                  className="disabled:opacity-30"
+                  aria-label="افزایش تعداد"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
