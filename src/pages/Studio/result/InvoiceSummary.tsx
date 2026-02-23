@@ -60,7 +60,7 @@ export function InvoiceSummary({
         const isMain = i === 0;
         const qty = isMain
           ? (group.quantity || 1)
-          : (productQuantityOverrides.get(product.id) ?? 1);
+          : (productQuantityOverrides.get(product.id) ?? group.quantity ?? 1);
         items.push({
           product,
           group,

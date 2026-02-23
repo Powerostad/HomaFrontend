@@ -187,6 +187,19 @@ export const ACTION_DIFFICULTY_MAP: Record<string, { label: string; icon: typeof
 /**
  * Convert API matched product to UI Product format
  */
+/**
+ * Returns the effective price for a product, using the size-specific price if a size is selected.
+ */
+export function getEffectivePrice(
+  product: { price: number; sizePrices?: Record<string, number> | null },
+  selectedSize?: string | null
+): number {
+  if (selectedSize && product.sizePrices && product.sizePrices[selectedSize] != null) {
+    return product.sizePrices[selectedSize];
+  }
+  return product.price;
+}
+
 export function matchedProductToUIProduct(product: MatchedProduct, index: number): Product & { store?: string; style?: string; isPromoted?: boolean; matchScore?: number } {
   return {
     id: String(product.id),

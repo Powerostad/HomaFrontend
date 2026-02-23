@@ -439,7 +439,7 @@ export function useStudioResult(): UseStudioResultReturn {
         const isMain = i === 0;
         const qty = isMain
           ? (group.quantity || 1)
-          : (productQuantityOverrides.get(product.id) ?? 1);
+          : (productQuantityOverrides.get(product.id) ?? group.quantity ?? 1);
         total += (product.price || 0) * qty;
       }
     }
