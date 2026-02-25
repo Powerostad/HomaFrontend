@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth, useUpload } from '../../context/AppProviders';
 import { Header } from '../../components/Header';
 import { AuthModal } from '../../components/AuthModal';
+import { ProgressScreen, type ProgressStep } from '../../components/ProgressScreen';
 import {
   submitVisualizationTask,
   pollTaskStatus,
@@ -24,27 +24,42 @@ export function TryOnProgressPage() {
   const { t } = useTranslation();
   const { isLoggedIn, login } = useAuth();
 
-  /**
-   * Progress phases shown during AI processing
-   * Each phase represents a stage of the visualization pipeline
-   */
-  const PHASES = [
+  // 3 steps with sub-messages for TryOn flow
+  const STEPS: ProgressStep[] = useMemo(() => [
     {
-      h1: t('tryOn.progress.phase1Title', "داریم فضای خونه‌ت رو می‌فهمیم…"),
-      body: t('tryOn.progress.phase1Body', "نور، مقیاس و حال‌وهوای فضا"),
-      micro: t('tryOn.progress.phase1Micro', "درک فضا")
+      label: t('tryOn.progress.step1Label', 'درک فضا'),
+      subMessages: [
+        { text: t('tryOn.progress.step1Msg1', 'بررسی نور و ابعاد فضا...'), delayMs: 0 },
+        { text: t('tryOn.progress.step1Msg2', 'تحلیل حال‌وهوای اتاق...'), delayMs: 2000 },
+      ],
+      estimatedSec: 8,
     },
     {
-      h1: t('tryOn.progress.phase2Title', "داریم محصول رو تو فضا می‌چینیم…"),
-      body: t('tryOn.progress.phase2Body', "با رعایت ابعاد و سایه‌زنی دقیق"),
-      micro: t('tryOn.progress.phase2Micro', "تطبیق محصول")
+      label: t('tryOn.progress.step2Label', 'تطبیق محصول'),
+      subMessages: [
+        { text: t('tryOn.progress.step2Msg1', 'جایگذاری محصول در فضا...'), delayMs: 0 },
+        { text: t('tryOn.progress.step2Msg2', 'تنظیم ابعاد و سایه‌زنی...'), delayMs: 3000 },
+      ],
+      estimatedSec: 10,
     },
     {
-      h1: t('tryOn.progress.phase3Title', "داریم بهترین تصویر رو برات می‌سازیم…"),
-      body: t('tryOn.progress.phase3Body', "تا ببینی چقدر به خونت میاد"),
-      micro: t('tryOn.progress.phase3Micro', "ساخت نتیجه")
-    }
-  ];
+      label: t('tryOn.progress.step3Label', 'ساخت نتیجه'),
+      subMessages: [
+        { text: t('tryOn.progress.step3Msg1', 'رندر نهایی تصویر...'), delayMs: 0 },
+        { text: t('tryOn.progress.step3Msg2', 'بهینه‌سازی کیفیت...'), delayMs: 3000 },
+      ],
+      estimatedSec: 8,
+    },
+  ], [t]);
+
+  // 4 rotating tips about product visualization
+  const TIPS = useMemo(() => [
+    t('tryOn.progress.tip1', 'نور طبیعی بهترین نتیجه رو میده'),
+    t('tryOn.progress.tip2', 'هر چه زاویه عکس صاف‌تر باشه، نتیجه واقعی‌تره'),
+    t('tryOn.progress.tip3', 'تصویر با کیفیت بالا = نتیجه بهتر'),
+    t('tryOn.progress.tip4', 'بعد از دیدن نتیجه، می‌تونی تو گالریت ذخیره‌ش کنی'),
+  ], [t]);
+
   const {
     selectedFile,
     getSelectedFile,
@@ -75,15 +90,12 @@ export function TryOnProgressPage() {
 
   /**
    * Handle back button case - if processing already completed, redirect to result
-   * This handles the case where user presses back from result page
    */
   useEffect(() => {
     if (processingStatus === 'completed' && productId) {
-      // Check if we have stored result info
       const storedResult = loadFromStorage<StoredTryOnResult>(STORAGE_KEYS.TRYON_RESULT);
 
       if (storedResult) {
-        // Redirect back to result page with params (productId now in URL path)
         const params = new URLSearchParams();
         params.set('resultId', String(storedResult.id));
         params.set('path', storedResult.path);
@@ -95,7 +107,6 @@ export function TryOnProgressPage() {
 
   /**
    * Task recovery - resume polling for existing task on page reload
-   * This handles the case where user refreshes page during processing
    */
   useEffect(() => {
     if (currentTaskId && processingStatus === 'idle' && !hasStartedRef.current) {
@@ -122,7 +133,7 @@ export function TryOnProgressPage() {
       setVisualizedImageUrl(result.data.imageUrl);
       setResultImageId(result.data.imageId);
       setResultImagePath(result.data.imagePath);
-      setCurrentTaskId(null);  // Clear task after completion
+      setCurrentTaskId(null);
 
       const params = new URLSearchParams();
       params.set('resultId', String(result.data.imageId));
@@ -144,7 +155,7 @@ export function TryOnProgressPage() {
     }
   }, [selectedFile]);
 
-  // Phase animation timer
+  // Phase animation timer — drives activeStepIndex for ProgressScreen
   useEffect(() => {
     if (processingStatus === 'error') return;
 
@@ -159,23 +170,17 @@ export function TryOnProgressPage() {
   }, [processingStatus]);
 
   // Start processing when component mounts
-  // IMPORTANT: Check file BEFORE auth to detect file loss early
   useEffect(() => {
-    // Prevent double execution in strict mode
     if (hasStartedRef.current) return;
 
-    // Validate productId from URL
     if (!productId) {
       toast.error(t('errors.productNotFound'));
       navigate('/explore');
       return;
     }
 
-    // Get file synchronously from ref (handles race condition with navigation)
-    // Check file FIRST before showing auth modal
     const file = getSelectedFile();
 
-    // Need file to process - redirect if missing
     if (!file) {
       console.warn('[Progress] Missing file, redirecting to upload');
       toast.error(t('tryOn.progress.fileNotSelected'));
@@ -183,24 +188,17 @@ export function TryOnProgressPage() {
       return;
     }
 
-    // Check if user is logged in AFTER confirming file exists
-    // This ensures we don't lose the file check when user authenticates
     if (!isLoggedIn) {
       setShowAuth(true);
-      return;  // handleAuthSuccess will start processing after login
+      return;
     }
 
     hasStartedRef.current = true;
-    // Use productId from URL directly (no need for context product)
     startProcessing(productId);
-    // Note: isLoggedIn removed from dependencies to prevent re-runs on login
-    // handleAuthSuccess handles starting processing after authentication
   }, [selectedFile, productId, getSelectedFile, navigate]);
 
   /**
    * Start the AI visualization processing (two-phase async flow)
-   * Phase 1: Submit task and get task_id
-   * Phase 2: Poll for completion
    */
   const startProcessing = async (productUniqueLink: string) => {
     const file = getSelectedFile();
@@ -211,7 +209,6 @@ export function TryOnProgressPage() {
       return;
     }
 
-    // Get size synchronously from ref (handles navigation race condition)
     const currentSize = getSelectedSize();
     console.log('[Progress] Starting processing with selectedSize:', currentSize);
 
@@ -228,7 +225,6 @@ export function TryOnProgressPage() {
         file,
         (progress) => {
           setProcessingProgress(progress);
-          // Switch to processing phase after upload completes
           if (progress >= 100) {
             setProcessingStatus('processing');
           }
@@ -242,7 +238,6 @@ export function TryOnProgressPage() {
         return;
       }
 
-      // Store task ID for recovery
       setCurrentTaskId(submitResult.taskId);
       setProcessingStatus('processing');
 
@@ -262,9 +257,8 @@ export function TryOnProgressPage() {
         setVisualizedImageUrl(result.data.imageUrl);
         setResultImageId(result.data.imageId);
         setResultImagePath(result.data.imagePath);
-        setCurrentTaskId(null);  // Clear task after completion
+        setCurrentTaskId(null);
 
-        // Navigate to result page with productId in URL path
         const params = new URLSearchParams();
         params.set('resultId', String(result.data.imageId));
         params.set('path', result.data.imagePath);
@@ -297,9 +291,9 @@ export function TryOnProgressPage() {
   const handleRetry = () => {
     hasStartedRef.current = false;
     resetProcessing();
-    setCurrentTaskId(null);  // Clear any stale task ID
+    setCurrentTaskId(null);
+    setPhase(0);
 
-    // Re-trigger processing using productId from URL
     const file = getSelectedFile();
     if (productId && file) {
       hasStartedRef.current = true;
@@ -312,23 +306,17 @@ export function TryOnProgressPage() {
 
   /**
    * Handle successful authentication
-   * Ensures tokens are stored before starting processing to avoid race conditions
    */
   const handleAuthSuccess = (
     userData: User,
     tokens: { access: string; refresh: string }
   ) => {
-    // Store tokens directly FIRST to ensure they're available for API calls
-    // This is a safeguard against race conditions with the login() context function
     setStoredTokens(tokens);
     console.log('[Progress] Tokens stored directly, verifying...', !!getStoredTokens()?.access);
 
-    // Then update React state via context
     login(userData, tokens);
     setShowAuth(false);
 
-    // Use queueMicrotask to ensure all synchronous operations complete
-    // before starting processing (belt-and-suspenders approach)
     queueMicrotask(() => {
       const storedTokens = getStoredTokens();
       console.log('[Progress] After microtask, tokens available:', !!storedTokens?.access);
@@ -339,7 +327,6 @@ export function TryOnProgressPage() {
         return;
       }
 
-      // Start processing after auth using productId from URL
       const file = getSelectedFile();
       if (productId && file && !hasStartedRef.current) {
         hasStartedRef.current = true;
@@ -356,7 +343,6 @@ export function TryOnProgressPage() {
    */
   const handleAuthClose = () => {
     setShowAuth(false);
-    // Go back to upload if user cancels auth
     navigate(`/try-on/${productId}/upload`);
   };
 
@@ -417,138 +403,21 @@ export function TryOnProgressPage() {
     );
   }
 
-  // Normal processing UI
+  // Normal processing UI with ProgressScreen
   return (
     <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
 
-      {/* --- Background --- */}
-      <div className="absolute inset-0 z-0">
-        {bgImage ? (
-          <>
-            <img
-              src={bgImage}
-              alt="Background"
-              className="w-full h-full object-cover blur-[80px] scale-110 opacity-60"
-            />
-            <div className="absolute inset-0 bg-white/40 dark:bg-black/40 mix-blend-overlay" />
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-zinc-50 to-zinc-200 dark:from-zinc-900 dark:to-zinc-800" />
-        )}
-        <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-[20px]" />
-      </div>
-
       <Header theme="light" disableNavigation={true} />
 
-      {/* --- Center Stack --- */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6 text-center">
-
-        {/* Progress Ring */}
-        <div className="relative w-[120px] h-[120px] mb-6 flex items-center justify-center">
-          {/* Base Circle */}
-          <svg className="absolute inset-0 w-full h-full -rotate-90">
-            <circle
-              cx="60"
-              cy="60"
-              r="56"
-              fill="none"
-              stroke="currentColor"
-              className="text-black/5 dark:text-white/5"
-              strokeWidth="2"
-            />
-            {/* Animated Ring - Changes per phase */}
-            <motion.circle
-              key={`ring-${phase}`}
-              cx="60"
-              cy="60"
-              r="56"
-              fill="none"
-              stroke="currentColor"
-              className="text-black dark:text-white"
-              strokeWidth={phase === 0 ? 2 : phase === 1 ? 3 : 4}
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{
-                pathLength: [0, 0.3, 0.7, 1],
-                opacity: 1,
-                rotate: phase === 0 ? 0 : phase === 1 ? 180 : 360
-              }}
-              transition={{
-                duration: 3,
-                ease: "linear",
-                repeat: Infinity
-              }}
-            />
-          </svg>
-
-          {/* Logo in Center */}
-          <motion.div
-            animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <div className="w-3 h-3 bg-black dark:bg-white rounded-full" />
-          </motion.div>
-        </div>
-
-        {/* Narrative Text */}
-        <div className="h-[140px] flex flex-col items-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={phase}
-              initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-              className="flex flex-col items-center"
-            >
-              <h1 className="text-[28px] sm:text-[32px] font-bold leading-tight tracking-tight text-black dark:text-white mb-2">
-                {PHASES[phase].h1}
-              </h1>
-              <p className="text-[14px] sm:text-[16px] font-medium text-black/60 dark:text-white/60">
-                {PHASES[phase].body}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Micro Status */}
-        <div className="mt-4 mb-3">
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={`micro-${phase}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              className="text-[12px] font-medium text-black dark:text-white uppercase tracking-widest"
-            >
-              {PHASES[phase].micro}
-            </motion.span>
-          </AnimatePresence>
-        </div>
-
-        {/* Upload Progress Bar (shown during upload phase) */}
-        {processingStatus === 'uploading' && processingProgress > 0 && (
-          <div className="w-full max-w-[200px] mb-4">
-            <div className="h-1 bg-black/10 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-black"
-                initial={{ width: 0 }}
-                animate={{ width: `${processingProgress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-            <p className="text-[11px] text-black/40 mt-2">
-              {t('tryOn.progress.uploadPercent', { percent: Math.round(processingProgress) })}
-            </p>
-          </div>
-        )}
-
-        {/* ETA */}
-        <div className="text-[12px] font-medium text-black/50 dark:text-white/50">
-          {t('tryOn.progress.eta', "معمولاً کمتر از ۳۰ ثانیه")}
-        </div>
-
-      </div>
+      {/* ProgressScreen replaces the ring + text + upload bar */}
+      <ProgressScreen
+        steps={STEPS}
+        activeStepIndex={phase}
+        tips={TIPS}
+        bgImage={bgImage}
+        isUploading={processingStatus === 'uploading'}
+        uploadProgress={processingProgress}
+      />
 
       {/* AUTH MODAL - Appears if user not logged in */}
       <AuthModal

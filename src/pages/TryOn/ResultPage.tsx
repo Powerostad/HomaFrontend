@@ -126,7 +126,6 @@ export function TryOnResultPage() {
    const urlResultPath = searchParams.get('path');
 
    // Recovery state
-   const [isRecovering, setIsRecovering] = useState(false);
    const [recoveryFailed, setRecoveryFailed] = useState(false);
 
    /**
@@ -138,7 +137,6 @@ export function TryOnResultPage() {
          // Skip if we already have the visualized image
          if (visualizedImageUrl) return;
 
-         setIsRecovering(true);
 
          // Try to recover from URL params first, then sessionStorage
          let recoveredPath = urlResultPath ? decodeURIComponent(urlResultPath) : null;
@@ -166,7 +164,6 @@ export function TryOnResultPage() {
             console.warn('[TryOnResult] No recovery data found');
          }
 
-         setIsRecovering(false);
 
          // Track result viewed if we have a URL
          if (visualizedImageUrl || recoveredPath) {
@@ -564,19 +561,6 @@ export function TryOnResultPage() {
       );
    };
 
-   // Recovery loading state
-   if (isRecovering) {
-      return (
-         <div className="h-screen w-full bg-background flex flex-col items-center justify-center font-vazirmatn" dir="rtl">
-            <Header />
-            <div className="flex flex-col items-center gap-4">
-               <Loader2 size={40} className="animate-spin text-black/30" />
-               <p className="text-[14px] text-black/50">{t('tryOn.result.recoveringResult')}</p>
-            </div>
-         </div>
-      );
-   }
-
    // Recovery failed state - no result data found
    if (recoveryFailed && !resultImageUrl) {
       return (
@@ -665,7 +649,7 @@ export function TryOnResultPage() {
 
             {/* 3. Left Hero (Image Area) - Desktop Only */}
             <div className="hidden md:block flex-1 h-full bg-secondary relative overflow-hidden group">
-               {/* Show result image only when available */}
+               {/* Show result image or shimmer during recovery */}
                {resultImageUrl ? (
                   <AuthenticatedImage
                      src={resultImageUrl}
@@ -673,9 +657,7 @@ export function TryOnResultPage() {
                      className={`w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
                   />
                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-black/5">
-                     <span className="text-black/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
-                  </div>
+                  <div className="w-full h-full image-loading" />
                )}
                {originalImage && (
                   <img
@@ -753,9 +735,7 @@ export function TryOnResultPage() {
                            className={`w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
                         />
                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-black/5">
-                           <span className="text-black/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
-                        </div>
+                        <div className="w-full h-full image-loading" />
                      )}
 
                      {/* Full Screen Trigger Overlay (Invisible button over image) */}
@@ -887,9 +867,7 @@ export function TryOnResultPage() {
                            className={`w-full h-full object-contain transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
                         />
                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-white/5">
-                           <span className="text-white/30 text-sm">{t('tryOn.result.noImageAvailable')}</span>
-                        </div>
+                        <div className="w-full h-full image-loading" />
                      )}
                      {originalImage && (
                         <img

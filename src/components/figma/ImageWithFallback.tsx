@@ -33,7 +33,7 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   return (
     <div className="relative w-full h-full">
       {!isLoaded && (
-        <div className="absolute inset-0 bg-black/[0.03] animate-pulse" />
+        <div className="absolute inset-0 image-loading" />
       )}
       <img
         src={src}

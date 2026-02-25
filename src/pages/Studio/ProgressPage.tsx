@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUpload } from '../../context/AppProviders';
 import { useStudio } from '../../context/StudioContext';
 import { Header } from '../../components/Header';
+import { ProgressScreen, type ProgressStep } from '../../components/ProgressScreen';
 import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
@@ -17,9 +17,9 @@ import {
 } from '@/analytics/events';
 
 /**
- * Map session status from API to UI phase index
+ * Map session status from API to step index for ProgressScreen
  */
-function statusToPhase(status: SessionStatus | null): number {
+function statusToStepIndex(status: SessionStatus | null): number {
   switch (status) {
     case 'pending':
     case 'analyzing':
@@ -28,8 +28,9 @@ function statusToPhase(status: SessionStatus | null): number {
     case 'retrying':
       return 1;
     case 'matching':
-    case 'ready':
       return 2;
+    case 'ready':
+      return 3;
     default:
       return 0;
   }
@@ -50,32 +51,55 @@ export function StudioProgressPage() {
     startSession
   } = useStudio();
 
-  /**
-   * Progress phases shown during AI processing
-   * Each phase represents a stage of the studio pipeline
-   */
-  const PHASES = [
+  // 4 steps with sub-messages for Studio flow (retrying is NOT a visible step)
+  const STEPS: ProgressStep[] = useMemo(() => [
     {
-      h1: t('studio.progress.phase1Title', "داریم فضای خونه‌ت رو می‌فهمیم…"),
-      body: t('studio.progress.phase1Body', "نور، مقیاس و حال‌وهوای فضا"),
-      micro: t('studio.progress.phase1Micro', "درک فضا")
+      label: t('studio.progress.step1Label', 'تحلیل فضا'),
+      subMessages: [
+        { text: t('studio.progress.step1Msg1', 'بررسی ساختار و نور فضا...'), delayMs: 0 },
+        { text: t('studio.progress.step1Msg2', 'شناسایی سبک و رنگ‌بندی...'), delayMs: 2000 },
+      ],
+      estimatedSec: 10,
     },
     {
-      h1: t('studio.progress.phase2Title', "داریم بررسی می‌کنیم این فضا می‌تونه چی بشه…"),
-      body: t('studio.progress.phase2Body', "با انتخاب‌هایی که به سبکِ فضا می‌خوره"),
-      micro: t('studio.progress.phase2Micro', "هماهنگی سبک")
+      label: t('studio.progress.step2Label', 'طراحی تصویر'),
+      subMessages: [
+        { text: t('studio.progress.step2Msg1', 'طراحی چیدمان جدید...'), delayMs: 0 },
+        { text: t('studio.progress.step2Msg2', 'هماهنگ‌سازی المان‌ها...'), delayMs: 3000 },
+        { text: t('studio.progress.step2Msg3', 'اعمال جزئیات نهایی...'), delayMs: 7000 },
+      ],
+      estimatedSec: 25,
     },
     {
-      h1: t('studio.progress.phase3Title', "داریم بهترین چیدمان رو برات می‌سازیم…"),
-      body: t('studio.progress.phase3Body', "تا انتخاب و خرید، ساده‌تر بشه"),
-      micro: t('studio.progress.phase3Micro', "ساخت نتیجه")
-    }
-  ];
+      label: t('studio.progress.step4Label', 'یافتن محصولات'),
+      subMessages: [
+        { text: t('studio.progress.step4Msg1', 'جستجوی محصولات مناسب...'), delayMs: 0 },
+        { text: t('studio.progress.step4Msg2', 'تطبیق با سبک فضا...'), delayMs: 2500 },
+      ],
+      estimatedSec: 15,
+    },
+    {
+      label: t('studio.progress.step5Label', 'آماده‌سازی'),
+      subMessages: [
+        { text: t('studio.progress.step5Msg1', 'آماده‌سازی نتیجه نهایی...'), delayMs: 0 },
+      ],
+      estimatedSec: 10,
+    },
+  ], [t]);
+
+  // 6 rotating tips about Studio / interior design
+  const TIPS = useMemo(() => [
+    t('studio.progress.tip1', 'استودیو هُما بهترین چیدمان رو برات پیدا می‌کنه'),
+    t('studio.progress.tip2', 'محصولات پیشنهادی بر اساس سبک فضات انتخاب میشن'),
+    t('studio.progress.tip3', 'می‌تونی نتیجه رو ذخیره کنی و بعداً ببینی'),
+    t('studio.progress.tip4', 'هر دسته‌بندی، بهترین گزینه‌ها رو نشونت میده'),
+    t('studio.progress.tip5', 'قبل از خرید، نتیجه رو تو فضای واقعی ببین'),
+    t('studio.progress.tip6', 'تحلیل فضا شامل نور، رنگ و ابعاده'),
+  ], [t]);
 
   // URL params for recovery
   const urlSessionId = searchParams.get('sessionId');
 
-  const [phase, setPhase] = useState(0);
   const [bgImage, setBgImage] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
@@ -83,6 +107,16 @@ export function StudioProgressPage() {
   const hasStartedPolling = useRef(false);
   const hasRecoveredRef = useRef(false);
   const startTimeRef = useRef<number>(Date.now());
+
+  // Derive step index from session status
+  const activeStepIndex = statusToStepIndex(sessionStatus);
+
+  // Status override for retrying state
+  const statusOverride = sessionStatus === 'retrying' ? (
+    <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400">
+      {t('studio.progress.retryingNotice', 'سرویس هوش مصنوعی در لحظه شلوغ است — در حال تلاش مجدد...')}
+    </span>
+  ) : undefined;
 
   // Navigation guard - warn user before leaving during processing
   useNavigationGuard(isPolling || isRecovering);
@@ -95,11 +129,6 @@ export function StudioProgressPage() {
       reader.readAsDataURL(selectedFile);
     }
   }, [selectedFile]);
-
-  // Update phase based on session status
-  useEffect(() => {
-    setPhase(statusToPhase(sessionStatus));
-  }, [sessionStatus]);
 
   /**
    * Session recovery effect - handles page reload scenarios
@@ -221,7 +250,6 @@ export function StudioProgressPage() {
     hasStartedPolling.current = false;
     setError(null);
     setIsPolling(true);
-    setPhase(0); // Reset phase to beginning
 
     // Create a NEW session with the same image
     const createResult = await startSession(file);
@@ -268,23 +296,6 @@ export function StudioProgressPage() {
   return (
     <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
 
-      {/* --- Background --- */}
-      <div className="absolute inset-0 z-0">
-        {bgImage ? (
-          <>
-            <img
-              src={bgImage}
-              alt="Background"
-              className="w-full h-full object-cover blur-[80px] scale-110 opacity-60"
-            />
-            <div className="absolute inset-0 bg-white/40 dark:bg-black/40 mix-blend-overlay" />
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-zinc-50 to-zinc-200 dark:from-zinc-900 dark:to-zinc-800" />
-        )}
-        <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-[20px]" />
-      </div>
-
       <Header theme="light" disableNavigation={true} />
 
       {/* --- Error State --- */}
@@ -319,108 +330,15 @@ export function StudioProgressPage() {
         </div>
       )}
 
-      {/* --- Processing State --- */}
+      {/* --- Processing State (ProgressScreen) --- */}
       {(!error || isPolling) && (
-        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6 text-center">
-
-          {/* Progress Ring */}
-          <div className="relative w-[120px] h-[120px] mb-6 flex items-center justify-center">
-            {/* Base Circle */}
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-              <circle
-                cx="60"
-                cy="60"
-                r="56"
-                fill="none"
-                stroke="currentColor"
-                className="text-black/5 dark:text-white/5"
-                strokeWidth="2"
-              />
-              {/* Animated Ring - Changes per phase */}
-              <motion.circle
-                key={`ring-${phase}`}
-                cx="60"
-                cy="60"
-                r="56"
-                fill="none"
-                stroke="currentColor"
-                className="text-black dark:text-white"
-                strokeWidth={phase === 0 ? 2 : phase === 1 ? 3 : 4}
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{
-                  pathLength: [0, 0.3, 0.7, 1],
-                  opacity: 1,
-                  rotate: phase === 0 ? 0 : phase === 1 ? 180 : 360
-                }}
-                transition={{
-                  duration: 10,
-                  ease: "linear",
-                  repeat: Infinity
-                }}
-              />
-            </svg>
-
-            {/* Logo in Center */}
-            <motion.div
-              animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-               <div className="w-3 h-3 bg-black dark:bg-white rounded-full" />
-            </motion.div>
-          </div>
-
-          {/* Narrative Text */}
-          <div className="h-[140px] flex flex-col items-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={phase}
-                initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                className="flex flex-col items-center"
-              >
-                <h1 className="text-[28px] sm:text-[32px] font-bold leading-tight tracking-tight text-black dark:text-white mb-2">
-                  {PHASES[phase].h1}
-                </h1>
-                <p className="text-[14px] sm:text-[16px] font-medium text-black/60 dark:text-white/60">
-                  {PHASES[phase].body}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Micro Status */}
-          <div className="mt-4 mb-3">
-            <AnimatePresence mode="wait">
-               <motion.span
-                key={`micro-${phase}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.6 }}
-                exit={{ opacity: 0 }}
-                className="text-[12px] font-medium text-black dark:text-white uppercase tracking-widest"
-               >
-                 {PHASES[phase].micro}
-               </motion.span>
-            </AnimatePresence>
-          </div>
-
-          {/* ETA / Provider retry notice */}
-          <div className="text-[12px] font-medium text-black/50 dark:text-white/50">
-            {sessionStatus === 'pending' && 'در حال شروع...'}
-            {sessionStatus === 'analyzing' && 'در حال تحلیل تصویر...'}
-            {sessionStatus === 'generating' && 'در حال طراحی...'}
-            {sessionStatus === 'retrying' && (
-              <span className="text-amber-600 dark:text-amber-400">
-                سرویس هوش مصنوعی در لحظه شلوغ است — در حال تلاش مجدد...
-              </span>
-            )}
-            {sessionStatus === 'matching' && 'در حال یافتن محصولات...'}
-            {!sessionStatus && 'معمولاً کمتر از ۳۰ ثانیه'}
-          </div>
-
-        </div>
+        <ProgressScreen
+          steps={STEPS}
+          activeStepIndex={activeStepIndex}
+          tips={TIPS}
+          bgImage={bgImage}
+          statusOverride={statusOverride}
+        />
       )}
 
     </div>

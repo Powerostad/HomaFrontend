@@ -167,7 +167,7 @@ export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImag
   if (isLoading) {
     return (
       <div
-        className={`inline-block bg-gray-100 animate-pulse ${className ?? ''}`}
+        className={`inline-block image-loading ${className ?? ''}`}
         style={style}
         role="img"
         aria-label={alt || 'در حال بارگذاری...'}

@@ -193,7 +193,20 @@
       "phase3Body": "To see how it fits your home",
       "phase3Micro": "Building result",
       "uploadPercent": "Upload: {{percent}}%",
-      "eta": "Usually less than 30 seconds"
+      "eta": "Usually less than 30 seconds",
+      "step1Label": "Understanding space",
+      "step2Label": "Product matching",
+      "step3Label": "Building result",
+      "step1Msg1": "Checking lighting and dimensions...",
+      "step1Msg2": "Analyzing room atmosphere...",
+      "step2Msg1": "Placing product in your space...",
+      "step2Msg2": "Adjusting dimensions and shadows...",
+      "step3Msg1": "Final image rendering...",
+      "step3Msg2": "Optimizing quality...",
+      "tip1": "Natural lighting gives the best results",
+      "tip2": "Straighter angle photos produce more realistic results",
+      "tip3": "Higher quality image = better result",
+      "tip4": "After viewing, you can save the result to your gallery"
     },
     "result": {
       "title": "Try-on result",
@@ -280,7 +293,28 @@
       "phase3Title": "Creating the best layout for you…",
       "phase3Body": "To make selection and purchase easier",
       "phase3Micro": "Building result",
-      "recovering": "Recovering session..."
+      "recovering": "Recovering session...",
+      "step1Label": "Space analysis",
+      "step2Label": "Image design",
+      "step3Label": "Retrying",
+      "step4Label": "Finding products",
+      "step5Label": "Preparation",
+      "step1Msg1": "Analyzing structure and lighting...",
+      "step1Msg2": "Identifying style and color palette...",
+      "step2Msg1": "Designing new layout...",
+      "step2Msg2": "Harmonizing elements...",
+      "step2Msg3": "Applying final details...",
+      "step3Msg1": "AI service retrying...",
+      "step4Msg1": "Searching for matching products...",
+      "step4Msg2": "Matching with space style...",
+      "step5Msg1": "Preparing final result...",
+      "retryingNotice": "AI service is busy — retrying...",
+      "tip1": "Homa Studio finds the best layout for you",
+      "tip2": "Suggested products are selected based on your space style",
+      "tip3": "You can save the result and view it later",
+      "tip4": "Each category shows you the best options",
+      "tip5": "See the result in your actual space before buying",
+      "tip6": "Space analysis includes lighting, color and dimensions"
     },
     "roomTypes": {
       "living": "Living room",
@@ -539,6 +573,9 @@
     "searchError": "Unknown search error",
     "downloadError": "Error downloading image",
     "shareError": "Error sharing"
+  },
+  "progress": {
+    "timeEstimate": "Less than {{seconds}} seconds"
   },
   "time": {
     "justNow": "Just now",

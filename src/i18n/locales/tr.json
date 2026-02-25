@@ -193,7 +193,20 @@
       "phase3Body": "Evinize nasıl uyduğunu görmek için",
       "phase3Micro": "Sonuç oluşturma",
       "uploadPercent": "Yükleme: {{percent}}%",
-      "eta": "Genellikle 30 saniyeden az"
+      "eta": "Genellikle 30 saniyeden az",
+      "step1Label": "Alanı anlama",
+      "step2Label": "Ürün eşleştirme",
+      "step3Label": "Sonuç oluşturma",
+      "step1Msg1": "Aydınlatma ve boyutlar kontrol ediliyor...",
+      "step1Msg2": "Oda atmosferi analiz ediliyor...",
+      "step2Msg1": "Ürün alanınıza yerleştiriliyor...",
+      "step2Msg2": "Boyutlar ve gölgeler ayarlanıyor...",
+      "step3Msg1": "Son görüntü işleniyor...",
+      "step3Msg2": "Kalite optimize ediliyor...",
+      "tip1": "Doğal aydınlatma en iyi sonuçları verir",
+      "tip2": "Düz açılı fotoğraflar daha gerçekçi sonuçlar üretir",
+      "tip3": "Yüksek kaliteli görüntü = daha iyi sonuç",
+      "tip4": "Görüntüledikten sonra sonucu galerinize kaydedebilirsiniz"
     },
     "result": {
       "title": "Deneme sonucu",
@@ -280,7 +293,28 @@
       "phase3Title": "Sizin için en iyi düzeni oluşturuyoruz…",
       "phase3Body": "Seçim ve satın almayı kolaylaştırmak için",
       "phase3Micro": "Sonuç oluşturma",
-      "recovering": "Oturum kurtarılıyor..."
+      "recovering": "Oturum kurtarılıyor...",
+      "step1Label": "Alan analizi",
+      "step2Label": "Görüntü tasarımı",
+      "step3Label": "Yeniden deneme",
+      "step4Label": "Ürün bulma",
+      "step5Label": "Hazırlık",
+      "step1Msg1": "Yapı ve aydınlatma analiz ediliyor...",
+      "step1Msg2": "Stil ve renk paleti belirleniyor...",
+      "step2Msg1": "Yeni düzen tasarlanıyor...",
+      "step2Msg2": "Öğeler uyumlaştırılıyor...",
+      "step2Msg3": "Son detaylar uygulanıyor...",
+      "step3Msg1": "Yapay zeka servisi yeniden deniyor...",
+      "step4Msg1": "Uygun ürünler aranıyor...",
+      "step4Msg2": "Alan stiliyle eşleştiriliyor...",
+      "step5Msg1": "Son sonuç hazırlanıyor...",
+      "retryingNotice": "Yapay zeka servisi meşgul — yeniden deneniyor...",
+      "tip1": "Homa Stüdyo sizin için en iyi düzeni bulur",
+      "tip2": "Önerilen ürünler alan stilinize göre seçilir",
+      "tip3": "Sonucu kaydedip daha sonra görüntüleyebilirsiniz",
+      "tip4": "Her kategori size en iyi seçenekleri gösterir",
+      "tip5": "Satın almadan önce sonucu gerçek mekanınızda görün",
+      "tip6": "Alan analizi aydınlatma, renk ve boyutları içerir"
     },
     "roomTypes": {
       "living": "Oturma odası",
@@ -539,6 +573,9 @@
     "searchError": "Bilinmeyen arama hatası",
     "downloadError": "Görüntü indirme hatası",
     "shareError": "Paylaşım hatası"
+  },
+  "progress": {
+    "timeEstimate": "{{seconds}} saniyeden az"
   },
   "time": {
     "justNow": "Az önce",

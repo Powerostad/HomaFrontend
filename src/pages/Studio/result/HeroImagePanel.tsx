@@ -94,11 +94,15 @@ export function DesktopHeroPanel({
       style={{ background: 'var(--editorial-hairline)' }}
     >
       {/* Result Image */}
-      <AuthenticatedImage
-        src={resultImage}
-        alt="نتیجه طراحی"
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out ${showOriginal ? 'opacity-0 scale-[1.02]' : 'opacity-100 scale-100'}`}
-      />
+      {resultImage ? (
+        <AuthenticatedImage
+          src={resultImage}
+          alt="نتیجه طراحی"
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out ${showOriginal ? 'opacity-0 scale-[1.02]' : 'opacity-100 scale-100'}`}
+        />
+      ) : (
+        <div className="absolute inset-0 image-loading" />
+      )}
       {/* Original Image */}
       {originalImage && (
         <AuthenticatedImage
@@ -212,11 +216,15 @@ export function MobileHeroSection({
   return (
     <div className="relative w-full" style={{ height: '60vh', minHeight: '360px' }}>
       {/* Images */}
-      <AuthenticatedImage
-        src={resultImage}
-        alt="نتیجه طراحی"
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
-      />
+      {resultImage ? (
+        <AuthenticatedImage
+          src={resultImage}
+          alt="نتیجه طراحی"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showOriginal ? 'opacity-0' : 'opacity-100'}`}
+        />
+      ) : (
+        <div className="absolute inset-0 image-loading" />
+      )}
       {originalImage && (
         <AuthenticatedImage
           src={originalImage}

@@ -17,7 +17,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ContextLock } from '@/components/studio/ContextLock';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
-import { HomaLoader } from '@/components/HomaLoader';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSimpleTranslation } from './result/types';
 import { useStudioResult } from './result/useStudioResult';
@@ -377,16 +376,6 @@ export function StudioResultPage() {
       <div style={{ height: '80px' }} />
     </div>
   );
-
-  /* ── Loader ── */
-  if (!state.isInitialized && state.isLoading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center"
-        style={{ background: 'var(--editorial-stone)' }} dir="rtl">
-        <HomaLoader />
-      </div>
-    );
-  }
 
   /* ── Hero Props ── */
   const heroProps = {
