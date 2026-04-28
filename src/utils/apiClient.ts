@@ -11,15 +11,16 @@
 
 import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
 import i18n from '@/i18n/config';
+import { appConfig } from '@/config/appConfig';
 
 // =============================================================================
 // Environment Configuration
 // =============================================================================
 
-const API_HOST = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_HOST = appConfig.apiBaseUrl;
 const API_PREFIX = '/api';
-const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000; // 30 seconds
-const UPLOAD_TIMEOUT = Number(import.meta.env.VITE_UPLOAD_TIMEOUT) || 180000; // 3 minutes for uploads
+const API_TIMEOUT = appConfig.apiTimeout;
+const UPLOAD_TIMEOUT = appConfig.apiImageProcessingTimeout;
 
 // Build full API base URL: host + prefix (e.g., http://localhost:8000/api)
 const API_BASE_URL = `${API_HOST.replace(/\/$/, '')}${API_PREFIX}`;

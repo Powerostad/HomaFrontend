@@ -10,12 +10,13 @@
  */
 
 import posthog from 'posthog-js';
+import { appConfig } from '@/config/appConfig';
 
-const POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY || 'phc_5ie0tXqbc7I6IFfLeuhZg7FA6fMnyEu1SoaylZktoRp';
-const POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
+const POSTHOG_KEY = appConfig.publicPosthogKey;
+const POSTHOG_HOST = appConfig.publicPosthogHost;
 
 const isDev = import.meta.env.DEV;
-const isDevEnabled = import.meta.env.VITE_ENABLE_POSTHOG_IN_DEV === 'true';
+const isDevEnabled = appConfig.enablePosthogInDev;
 
 // Initialize PostHog unless we're in dev mode without the dev flag
 if (!isDev || isDevEnabled) {

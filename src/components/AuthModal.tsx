@@ -38,6 +38,7 @@ import {
   isValidPhoneNumber,
 } from "@/services/authService";
 import type { User, AuthTokens } from "@/types/auth";
+import { appConfig } from "@/config/appConfig";
 
 // =============================================================================
 // Types
@@ -59,7 +60,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const { t } = useTranslation();
 
   // Auth mode from environment variable
-  const authMode = import.meta.env.VITE_AUTH_MODE || 'password';
+  const authMode = appConfig.authMode;
 
   // Form state
   const [step, setStep] = useState<AuthStep>("phone");
