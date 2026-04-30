@@ -238,29 +238,62 @@ export function StudioResultPage() {
             >
               <Bookmark size={16} strokeWidth={1.5} fill={state.isSaved ? 'currentColor' : 'none'} />
             </button>
-            <button
-              onClick={state.handleDownload}
-              disabled={state.isDownloading}
-              className="flex items-center justify-center transition-all duration-200"
-              style={{
-                width: '32px', height: '32px', borderRadius: 'var(--radius-full)',
-                background: 'transparent', border: 'none',
-                cursor: state.isDownloading ? 'not-allowed' : 'pointer',
-                color: 'var(--editorial-taupe)',
-                opacity: state.isDownloading ? 0.4 : 1,
-              }}
-              aria-label="دانلود"
-            >
-              {state.isDownloading
-                ? <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
-                : <DownloadIcon size={16} strokeWidth={1.5} />}
-            </button>
+            {!state.isNoImageResult && (
+              <button
+                onClick={state.handleDownload}
+                disabled={state.isDownloading}
+                className="flex items-center justify-center transition-all duration-200"
+                style={{
+                  width: '32px', height: '32px', borderRadius: 'var(--radius-full)',
+                  background: 'transparent', border: 'none',
+                  cursor: state.isDownloading ? 'not-allowed' : 'pointer',
+                  color: 'var(--editorial-taupe)',
+                  opacity: state.isDownloading ? 0.4 : 1,
+                }}
+                aria-label="دانلود"
+              >
+                {state.isDownloading
+                  ? <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
+                  : <DownloadIcon size={16} strokeWidth={1.5} />}
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {/* ── Phase 1: Analysis (Decision Dashboard) ── */}
       <div id="section-analysis">
+        {state.isNoImageResult && (
+          <div
+            style={{
+              padding: '12px 14px',
+              marginBottom: 'var(--spacing-md)',
+              border: '1px solid var(--editorial-hairline)',
+              background: 'rgba(255,255,255,0.55)',
+              color: 'var(--editorial-charcoal)',
+              fontSize: '12px',
+              lineHeight: 1.8,
+            }}
+          >
+            <p>این نتیجه بدون تولید تصویر بازطراحی آماده شده است. پیشنهادها بر اساس تحلیل همین فضا هستند.</p>
+            <button
+              onClick={state.handleRequestRedesignCredit}
+              style={{
+                marginTop: '10px',
+                height: '36px',
+                padding: '0 14px',
+                background: 'var(--editorial-charcoal)',
+                color: 'var(--editorial-stone)',
+                fontSize: '12px',
+                fontFamily: FONT,
+                fontWeight: 'var(--font-weight-semibold)',
+              }}
+            >
+              درخواست تولید تصویر بازطراحی برای این طراحی
+            </button>
+          </div>
+        )}
+
         {/* Harmony Score Gauge */}
         <ImpactProgressCard
           currentScore={state.harmonyScore}
@@ -382,12 +415,13 @@ export function StudioResultPage() {
     resultImage: state.resultImage, originalImage: state.originalImage,
     showOriginal: state.showOriginal, isSaved: state.isSaved,
     isDownloading: state.isDownloading,
+    isNoImageResult: state.isNoImageResult,
     sessionId: state.sessionId ?? state.activeSessionId ?? undefined,
     totalPrice: state.totalPrice,
     onToggleOriginal: state.setShowOriginal,
     onToggleSaved: () => state.setIsSaved(!state.isSaved),
     onDownload: state.handleDownload,
-    onFullscreen: () => state.setIsFullScreen(true),
+    onFullscreen: () => !state.isNoImageResult && state.setIsFullScreen(true),
     onExit: () => state.setShowExitDecision(true),
   };
 
@@ -452,12 +486,14 @@ export function StudioResultPage() {
       {/* Fullscreen Overlay */}
       <AnimatePresence>
         {state.isFullScreen && (
+          !state.isNoImageResult && (
           <FullscreenOverlay
             resultImage={state.resultImage} originalImage={state.originalImage}
             showOriginal={state.showOriginal} isSaved={state.isSaved} isDownloading={state.isDownloading}
             onClose={() => state.setIsFullScreen(false)} onToggleOriginal={state.setShowOriginal}
             onToggleSaved={() => state.setIsSaved(!state.isSaved)} onDownload={state.handleDownload}
           />
+          )
         )}
       </AnimatePresence>
 

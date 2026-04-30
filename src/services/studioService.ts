@@ -108,6 +108,7 @@ export interface APIRedesignSession {
   preferred_style?: string;
   room_image_url?: string;
   redesigned_image_url?: string;
+  skip_image_generation?: boolean;
   items: APISessionItem[];
   created_at: string;
   updated_at?: string;
@@ -126,6 +127,41 @@ export interface APIRedesignSession {
 export interface CreateSessionResponse {
   session_id: string;
   status: SessionStatus;
+}
+
+export interface CreditSummary {
+  free_generations_remaining: number;
+  paid_generations_balance: number;
+  total_available_generations: number;
+  free_generations_granted: number;
+  free_generations_used: number;
+  total_paid_generations_added: number;
+  total_paid_generations_used: number;
+}
+
+export interface ImageCreditRequestResponse {
+  id: string;
+  source: 'web' | 'bale' | 'telegram';
+  placement: 'limit_wall' | 'no_image_result_hero' | 'no_image_result_products';
+  status: 'pending' | 'approved' | 'rejected' | 'fulfilled' | 'cancelled';
+  requested_generations: number;
+  pending_request_id: string | null;
+  redesign_session_id: string | null;
+  already_requested?: boolean;
+}
+
+export interface CreditRequiredResponse {
+  status: 'credit_required';
+  pending_request_id: string;
+  allow_continue_without_image: boolean;
+  credit_summary: CreditSummary;
+  existing_credit_request?: ImageCreditRequestResponse | null;
+}
+
+export interface NoImageResumeResponse {
+  session_id: string;
+  status: SessionStatus;
+  skip_image_generation: true;
 }
 
 /**
@@ -172,6 +208,7 @@ export interface RedesignSession {
   status: SessionStatus;
   roomImageUrl: string | null;
   redesignedImageUrl: string | null;
+  skipImageGeneration: boolean;
   items: SessionItem[];
   createdAt: string;
   errorMessage?: string;
@@ -316,6 +353,7 @@ function transformSession(apiSession: APIRedesignSession): RedesignSession {
     status: apiSession.status,
     roomImageUrl: getSessionImageUrl(apiSession.room_image_url),
     redesignedImageUrl: getSessionImageUrl(apiSession.redesigned_image_url),
+    skipImageGeneration: apiSession.skip_image_generation ?? false,
     items: (apiSession.items || []).map(transformSessionItem),
     createdAt: apiSession.created_at,
     errorMessage: apiSession.error_message,
@@ -453,6 +491,13 @@ export async function createRedesignSession(
 ): Promise<{
   success: boolean;
   data?: { sessionId: string; status: SessionStatus };
+  creditRequired?: boolean;
+  creditData?: {
+    pendingRequestId: string;
+    allowContinueWithoutImage: boolean;
+    creditSummary: CreditSummary;
+    existingCreditRequest?: ImageCreditRequestResponse | null;
+  };
   error?: string;
 }> {
   // Pre-flight auth check - ensure tokens exist before making API call
@@ -493,7 +538,7 @@ export async function createRedesignSession(
   if (options?.preferredColors) additionalData['preferred_colors'] = JSON.stringify(options.preferredColors);
   if (options?.userNotes) additionalData['user_notes'] = options.userNotes;
 
-  const response = await apiUpload<CreateSessionResponse>(
+  const response = await apiUpload<CreateSessionResponse | CreditRequiredResponse>(
     '/recommendations/sessions/',
     convertedImage,  // Use converted image
     'room_image',
@@ -502,11 +547,26 @@ export async function createRedesignSession(
   );
 
   if (response.success && response.data) {
+    if ('status' in response.data && response.data.status === 'credit_required') {
+      return {
+        success: false,
+        creditRequired: true,
+        creditData: {
+          pendingRequestId: response.data.pending_request_id,
+          allowContinueWithoutImage: response.data.allow_continue_without_image,
+          creditSummary: response.data.credit_summary,
+          existingCreditRequest: response.data.existing_credit_request,
+        },
+        error: response.message || 'اعتبار تولید تصویر شما تمام شده است',
+      };
+    }
+
+    const createData = response.data as CreateSessionResponse;
     return {
       success: true,
       data: {
-        sessionId: response.data.session_id,
-        status: response.data.status,
+        sessionId: createData.session_id,
+        status: createData.status,
       },
     };
   }
@@ -525,6 +585,63 @@ export async function createRedesignSession(
   return {
     success: false,
     error: errorMessage,
+  };
+}
+
+export async function createImageCreditRequest(params: {
+  source: 'web' | 'bale' | 'telegram';
+  placement: 'limit_wall' | 'no_image_result_hero' | 'no_image_result_products';
+  pendingRequestId?: string;
+  redesignSessionId?: string;
+}): Promise<{
+  success: boolean;
+  data?: ImageCreditRequestResponse;
+  error?: string;
+}> {
+  const response = await apiPost<ImageCreditRequestResponse>(
+    '/recommendations/credit-requests/',
+    {
+      source: params.source,
+      placement: params.placement,
+      ...(params.pendingRequestId && { pending_request_id: params.pendingRequestId }),
+      ...(params.redesignSessionId && { redesign_session_id: params.redesignSessionId }),
+    }
+  );
+
+  if (response.success && response.data) {
+    return { success: true, data: response.data };
+  }
+
+  return {
+    success: false,
+    error: response.error || 'خطا در ثبت درخواست اعتبار',
+  };
+}
+
+export async function resumeSessionWithoutImage(pendingRequestId: string): Promise<{
+  success: boolean;
+  data?: { sessionId: string; status: SessionStatus; skipImageGeneration: true };
+  error?: string;
+}> {
+  const response = await apiPost<NoImageResumeResponse>(
+    '/recommendations/sessions/no-image/',
+    { pending_request_id: pendingRequestId }
+  );
+
+  if (response.success && response.data) {
+    return {
+      success: true,
+      data: {
+        sessionId: response.data.session_id,
+        status: response.data.status,
+        skipImageGeneration: response.data.skip_image_generation,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    error: response.error || 'خطا در ادامه بدون تصویر بازطراحی',
   };
 }
 

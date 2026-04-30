@@ -19,7 +19,21 @@ import {
 /**
  * Map session status from API to step index for ProgressScreen
  */
-function statusToStepIndex(status: SessionStatus | null): number {
+function statusToStepIndex(status: SessionStatus | null, skipImageGeneration = false): number {
+  if (skipImageGeneration) {
+    switch (status) {
+      case 'pending':
+      case 'analyzing':
+        return 0;
+      case 'matching':
+        return 1;
+      case 'ready':
+        return 2;
+      default:
+        return 0;
+    }
+  }
+
   switch (status) {
     case 'pending':
     case 'analyzing':
@@ -104,12 +118,42 @@ export function StudioProgressPage() {
   const [isPolling, setIsPolling] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNoImageSession, setIsNoImageSession] = useState(false);
   const hasStartedPolling = useRef(false);
   const hasRecoveredRef = useRef(false);
   const startTimeRef = useRef<number>(Date.now());
 
   // Derive step index from session status
-  const activeStepIndex = statusToStepIndex(sessionStatus);
+  const activeStepIndex = statusToStepIndex(sessionStatus, isNoImageSession);
+
+  const visibleSteps = useMemo(() => {
+    if (!isNoImageSession) return STEPS;
+    return [
+      {
+        label: t('studio.progress.noImageStep1Label', 'تحلیل فضا'),
+        subMessages: [
+          { text: t('studio.progress.noImageStep1Msg1', 'بررسی ساختار و نور فضا...'), delayMs: 0 },
+          { text: t('studio.progress.noImageStep1Msg2', 'شناسایی سبک و نیازهای فضا...'), delayMs: 2000 },
+        ],
+        estimatedSec: 10,
+      },
+      {
+        label: t('studio.progress.noImageStep2Label', 'یافتن محصولات'),
+        subMessages: [
+          { text: t('studio.progress.noImageStep2Msg1', 'جستجوی محصولات مناسب برای همین فضا...'), delayMs: 0 },
+          { text: t('studio.progress.noImageStep2Msg2', 'تطبیق پیشنهادها با تحلیل تصویر...'), delayMs: 2500 },
+        ],
+        estimatedSec: 15,
+      },
+      {
+        label: t('studio.progress.noImageStep3Label', 'آماده‌سازی'),
+        subMessages: [
+          { text: t('studio.progress.noImageStep3Msg1', 'آماده‌سازی پیشنهادها بدون تولید تصویر بازطراحی...'), delayMs: 0 },
+        ],
+        estimatedSec: 10,
+      },
+    ];
+  }, [STEPS, isNoImageSession, t]);
 
   // Status override for retrying state
   const statusOverride = sessionStatus === 'retrying' ? (
@@ -167,6 +211,7 @@ export function StudioProgressPage() {
       }
 
       const session = result.data!;
+      setIsNoImageSession(session.skipImageGeneration);
 
       if (session.status === 'ready') {
         // Session already complete - redirect to result
@@ -214,6 +259,10 @@ export function StudioProgressPage() {
         // Status change callback - phase updates via useEffect above
         console.log('Session status changed:', status);
       });
+
+      if (result.session?.skipImageGeneration) {
+        setIsNoImageSession(true);
+      }
 
       setIsPolling(false);
 
@@ -333,7 +382,7 @@ export function StudioProgressPage() {
       {/* --- Processing State (ProgressScreen) --- */}
       {(!error || isPolling) && (
         <ProgressScreen
-          steps={STEPS}
+          steps={visibleSteps}
           activeStepIndex={activeStepIndex}
           tips={TIPS}
           bgImage={bgImage}

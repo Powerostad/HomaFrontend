@@ -39,7 +39,14 @@ interface StudioContextType {
   startSession: (
     file: File,
     onProgress?: (progress: number) => void
-  ) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
+  ) => Promise<{
+    success: boolean;
+    sessionId?: string;
+    error?: string;
+    creditRequired?: boolean;
+    pendingRequestId?: string;
+    allowContinueWithoutImage?: boolean;
+  }>;
   loadSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
   pollSession: (
     sessionId: string,
@@ -117,7 +124,14 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const startSession = useCallback(async (
     file: File,
     onProgress?: (progress: number) => void
-  ): Promise<{ success: boolean; sessionId?: string; error?: string }> => {
+  ): Promise<{
+    success: boolean;
+    sessionId?: string;
+    error?: string;
+    creditRequired?: boolean;
+    pendingRequestId?: string;
+    allowContinueWithoutImage?: boolean;
+  }> => {
     setIsCreatingSession(true);
     setSessionError(null);
     setActiveSession(null);
@@ -130,6 +144,17 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setSessionStatus(result.data.status);
       setIsCreatingSession(false);
       return { success: true, sessionId: result.data.sessionId };
+    }
+
+    if (result.creditRequired && result.creditData) {
+      setIsCreatingSession(false);
+      return {
+        success: false,
+        creditRequired: true,
+        pendingRequestId: result.creditData.pendingRequestId,
+        allowContinueWithoutImage: result.creditData.allowContinueWithoutImage,
+        error: result.error,
+      };
     }
 
     setSessionError(result.error || i18n.t('studio.errors.createSession'));

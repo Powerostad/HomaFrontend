@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 import { fetchImageAsFile } from '../../utils/imageUtils';
 import { getStoredTokens } from '../../utils/apiClient';
+import { createImageCreditRequest, resumeSessionWithoutImage } from '@/services/studioService';
 
 export function StudioUploadPage() {
   const navigate = useNavigate();
@@ -40,6 +41,12 @@ export function StudioUploadPage() {
   const [loadingPresetId, setLoadingPresetId] = useState<number | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingUploadAfterAuth, setPendingUploadAfterAuth] = useState(false);
+  const [creditRequired, setCreditRequired] = useState<{
+    pendingRequestId: string;
+    requested: boolean;
+  } | null>(null);
+  const [isRequestingCredit, setIsRequestingCredit] = useState(false);
+  const [isContinuingWithoutImage, setIsContinuingWithoutImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track page view on mount
@@ -99,6 +106,7 @@ export function StudioUploadPage() {
       trackStudioFileSelected({ file_size: file.size, file_type: file.type });
       setSelectedFile(file);
       setLocalSelectedFile(file);
+      setCreditRequired(null);
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
@@ -143,6 +151,7 @@ export function StudioUploadPage() {
     // Set file in state (same as handleFile)
     setSelectedFile(file);
     setLocalSelectedFile(file);
+    setCreditRequired(null);
 
     // Set preview (use original URL for faster display)
     setPreview(preset.image);
@@ -194,6 +203,12 @@ export function StudioUploadPage() {
 
       // Navigate to progress page with sessionId in URL for recovery
       navigate(`/studio/progress?sessionId=${result.sessionId}`);
+    } else if (result.creditRequired && result.pendingRequestId) {
+      setCreditRequired({
+        pendingRequestId: result.pendingRequestId,
+        requested: false,
+      });
+      setShowDecision(true);
     } else {
       // Check if error is auth-related (401 or session expired message)
       const isAuthError = result.error?.includes('منقضی شده') ||
@@ -207,6 +222,40 @@ export function StudioUploadPage() {
         // Show error toast for other errors
         toast.error(result.error || t('errors.resultFailed'));
       }
+    }
+  };
+
+  const handleRequestCredit = async () => {
+    if (!creditRequired || isRequestingCredit) return;
+
+    setIsRequestingCredit(true);
+    const result = await createImageCreditRequest({
+      source: 'web',
+      placement: 'limit_wall',
+      pendingRequestId: creditRequired.pendingRequestId,
+    });
+    setIsRequestingCredit(false);
+
+    if (result.success) {
+      setCreditRequired(prev => prev ? { ...prev, requested: true } : prev);
+      toast.success('درخواست شما ثبت شده است');
+    } else {
+      toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+    }
+  };
+
+  const handleContinueWithoutImage = async () => {
+    if (!creditRequired || isContinuingWithoutImage) return;
+
+    setIsContinuingWithoutImage(true);
+    const result = await resumeSessionWithoutImage(creditRequired.pendingRequestId);
+    setIsContinuingWithoutImage(false);
+
+    if (result.success && result.data?.sessionId) {
+      saveToStorage(STORAGE_KEYS.STUDIO_SESSION_ID, result.data.sessionId);
+      navigate(`/studio/progress?sessionId=${result.data.sessionId}`);
+    } else {
+      toast.error(result.error || 'خطا در ادامه بدون تصویر بازطراحی');
     }
   };
 
@@ -377,35 +426,49 @@ export function StudioUploadPage() {
       {/* DECISION POINT OVERLAY */}
       <DecisionPointOverlay
         isOpen={showDecision}
-        onClose={() => !isCreatingSession && setShowDecision(false)}
-        title={isCreatingSession ? "در حال آپلود..." : "تصویر شما آماده است"}
+        onClose={() => !isCreatingSession && !isContinuingWithoutImage && setShowDecision(false)}
+        title={
+          creditRequired
+            ? "اعتبار تولید تصویر شما تمام شده"
+            : isCreatingSession ? "در حال آپلود..." : "تصویر شما آماده است"
+        }
         description={
-          isCreatingSession
+          creditRequired
+            ? "می‌توانید پیشنهادهای محصول را بدون تصویر بازطراحی ببینید، یا درخواست اعتبار بیشتر ثبت کنید."
+            : isCreatingSession
             ? `${uploadProgress}% آپلود شده`
             : "لطفاً تایید کنید که تصویر انتخابی شفاف و دارای نور کافی است."
         }
         image={preview || undefined}
         primaryCTA={{
-          label: isCreatingSession ? "در حال ارسال..." : "تایید",
-          onClick: handleProceed,
-          icon: isCreatingSession ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />,
-          disabled: isCreatingSession
+          label: creditRequired
+            ? (creditRequired.requested ? "درخواست شما ثبت شده است" : isRequestingCredit ? "در حال ثبت..." : "درخواست اعتبار بیشتر")
+            : isCreatingSession ? "در حال ارسال..." : "تایید",
+          onClick: creditRequired ? handleRequestCredit : handleProceed,
+          icon: (isCreatingSession || isRequestingCredit) ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />,
+          disabled: isCreatingSession || isRequestingCredit || !!creditRequired?.requested
         }}
         secondaryCTA={{
-          label: "انتخاب مجدد",
-          onClick: () => {
-            setShowDecision(false);
-            fileInputRef.current?.click();
-          },
+          label: creditRequired
+            ? (isContinuingWithoutImage ? "در حال ادامه..." : "ادامه بدون تصویر بازطراحی")
+            : "انتخاب مجدد",
+          onClick: creditRequired
+            ? handleContinueWithoutImage
+            : () => {
+              setShowDecision(false);
+              fileInputRef.current?.click();
+            },
           icon: <Camera size={18} />,
-          disabled: isCreatingSession
+          disabled: isCreatingSession || isContinuingWithoutImage
         }}
         exitAction={{
           label: "انصراف",
           onClick: () => {
-            if (!isCreatingSession) {
+            if (!isCreatingSession && !isContinuingWithoutImage) {
               setShowDecision(false);
-              setPreview(null);
+              if (!creditRequired) {
+                setPreview(null);
+              }
             }
           }
         }}
