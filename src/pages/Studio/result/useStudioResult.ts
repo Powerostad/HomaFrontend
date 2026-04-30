@@ -10,7 +10,7 @@
  *   'recommendations' - User selects/rejects items and browses products
  *   'basket'          - Final shopping list review before finalization
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStudio } from '@/context/StudioContext';
@@ -33,6 +33,7 @@ import {
 } from '@/analytics/events';
 import type { Product } from '../components/ProductDetailSheet';
 import type { RedesignSession } from '@/services/studioService';
+import { createImageCreditRequest } from '@/services/studioService';
 import {
   type CategoryGroup,
   type TierGroup,
@@ -64,6 +65,7 @@ export interface UseStudioResultReturn {
   activeSession: RedesignSession | null;
   resultImage: string;
   originalImage: string | null;
+  isNoImageResult: boolean;
   showOriginal: boolean;
   setShowOriginal: (show: boolean) => void;
 
@@ -140,6 +142,7 @@ export interface UseStudioResultReturn {
   handleCancelDownload: () => void;
   handleFinalize: () => void;
   handleProductClick: (product: Product) => void;
+  handleRequestRedesignCredit: () => Promise<void>;
   handleExit: () => void;
   getActiveProduct: (group: CategoryGroup) => Product | null;
 
@@ -202,6 +205,9 @@ export function useStudioResult(): UseStudioResultReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [topPickUrls, setTopPickUrls] = useState<Record<string, string>>({});
+
+  // Track which product IDs have already been fetched to avoid duplicate requests
+  const fetchedTrackingUrls = useRef<Set<string>>(new Set());
 
   // Card-level UI toggle state
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
@@ -347,7 +353,8 @@ export function useStudioResult(): UseStudioResultReturn {
   // Computed Values
   // =========================================================================
 
-  const resultImage = activeSession?.redesignedImageUrl ?? '';
+  const isNoImageResult = !!activeSession && (activeSession.skipImageGeneration || !activeSession.redesignedImageUrl);
+  const resultImage = activeSession?.redesignedImageUrl || activeSession?.roomImageUrl || '';
 
   // Build category groups from session items
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
@@ -521,26 +528,36 @@ export function useStudioResult(): UseStudioResultReturn {
   // Effects
   // =========================================================================
 
+  // Stable ref for loadSession to avoid effect re-runs
+  const loadSessionRef = useRef(loadSession);
+  loadSessionRef.current = loadSession;
+
+  // Track in-flight session loads to prevent duplicate requests
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+
   // Load session data if not already in context
   useEffect(() => {
     const loadSessionData = async () => {
-      if (!authInitialized) return;
-      if (!isLoggedIn) return;
+      if (!authInitialized || !isLoggedIn) return;
+      if (!sessionId) return;
 
-      // If we have a sessionId from URL but no active session (or different session)
-      if (sessionId && (!activeSession || activeSessionId !== sessionId)) {
-        setIsLoading(true);
-        const result = await loadSession(sessionId);
-        setIsLoading(false);
+      // Skip if already loaded or currently loading this session
+      if (activeSession && activeSessionId === sessionId) return;
+      if (loadingSessionId === sessionId) return;
 
-        if (!result.success) {
-          toast.error(result.error || t('errors.resultFailed', '\u062E\u0637\u0627 \u062F\u0631 \u062F\u0631\u06CC\u0627\u0641\u062A \u0646\u062A\u06CC\u062C\u0647 \u0637\u0631\u0627\u062D\u06CC'));
-        }
+      setLoadingSessionId(sessionId);
+      setIsLoading(true);
+      const result = await loadSessionRef.current(sessionId);
+      setIsLoading(false);
+      setLoadingSessionId(null);
+
+      if (!result.success) {
+        toast.error(result.error || t('errors.resultFailed', '\u062E\u0637\u0627 \u062F\u0631 \u062F\u0631\u06CC\u0627\u0641\u062A \u0646\u062A\u06CC\u062C\u0647 \u0637\u0631\u0627\u062D\u06CC'));
       }
     };
 
     loadSessionData();
-  }, [sessionId, activeSession, activeSessionId, loadSession, authInitialized, isLoggedIn, t]);
+  }, [sessionId, authInitialized, isLoggedIn, activeSession, activeSessionId]);
 
   // Track result page view once session data is available
   useEffect(() => {
@@ -600,7 +617,7 @@ export function useStudioResult(): UseStudioResultReturn {
     }
   }, [selectedFile, activeSession?.roomImageUrl]);
 
-  // Pre-fetch tracking URLs for top pick products
+  // Pre-fetch tracking URLs for top pick products (with deduplication)
   useEffect(() => {
     if (categoryGroups.length === 0) return;
 
@@ -608,9 +625,15 @@ export function useStudioResult(): UseStudioResultReturn {
       const urls: Record<string, string> = {};
       const currentSessionId = activeSessionId || sessionId || '';
 
+      // Filter to only products not yet fetched
+      const productsToFetch = categoryGroups
+        .map(g => g.products[0])
+        .filter(p => p?.uniqueLink && !fetchedTrackingUrls.current.has(p.id));
+
+      if (productsToFetch.length === 0) return;
+
       await Promise.all(
-        categoryGroups.map(async (group) => {
-          const topPick = group.products[0];
+        productsToFetch.map(async (topPick) => {
           if (!topPick?.uniqueLink) return;
 
           try {
@@ -625,6 +648,7 @@ export function useStudioResult(): UseStudioResultReturn {
 
             if (response.success && response.data?.click_id) {
               urls[topPick.id] = `${apiConfig.baseURL}/tracking/go/${response.data.click_id}/`;
+              fetchedTrackingUrls.current.add(topPick.id);
             }
           } catch {
             // Will fall back to product.link in handleFinalize
@@ -632,7 +656,9 @@ export function useStudioResult(): UseStudioResultReturn {
         })
       );
 
-      setTopPickUrls(urls);
+      if (Object.keys(urls).length > 0) {
+        setTopPickUrls(prev => ({ ...prev, ...urls }));
+      }
     };
 
     fetchUrls();
@@ -669,6 +695,23 @@ export function useStudioResult(): UseStudioResultReturn {
       toast.error(getDownloadErrorMessage(result.error));
     }
   }, [activeSession?.redesignedImageUrl, sessionId, activeSessionId, t]);
+
+  const handleRequestRedesignCredit = useCallback(async () => {
+    const currentSessionId = sessionId || activeSessionId;
+    if (!currentSessionId) return;
+
+    const result = await createImageCreditRequest({
+      source: 'web',
+      placement: 'no_image_result_hero',
+      redesignSessionId: currentSessionId,
+    });
+
+    if (result.success) {
+      toast.success('درخواست شما ثبت شده است');
+    } else {
+      toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+    }
+  }, [sessionId, activeSessionId]);
 
   // Download: Phase 2 - trigger with fresh user gesture
   const handleConfirmDownload = useCallback(async () => {
@@ -785,6 +828,7 @@ export function useStudioResult(): UseStudioResultReturn {
     activeSession,
     resultImage,
     originalImage,
+    isNoImageResult,
     showOriginal,
     setShowOriginal,
 
@@ -861,6 +905,7 @@ export function useStudioResult(): UseStudioResultReturn {
     handleCancelDownload,
     handleFinalize,
     handleProductClick,
+    handleRequestRedesignCredit,
     handleExit,
     getActiveProduct,
 

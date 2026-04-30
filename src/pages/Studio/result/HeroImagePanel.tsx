@@ -13,6 +13,7 @@ import {
   Maximize2,
   Loader2,
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSimpleTranslation, trackStudioResultAction } from './types';
 
@@ -24,6 +25,7 @@ interface HeroImagePanelProps {
   showOriginal: boolean;
   isSaved: boolean;
   isDownloading: boolean;
+  isNoImageResult?: boolean;
   sessionId?: string;
   totalPrice?: number;
   onToggleOriginal: (show: boolean) => void;
@@ -80,6 +82,7 @@ export function DesktopHeroPanel({
   showOriginal,
   isSaved,
   isDownloading,
+  isNoImageResult,
   sessionId,
   onToggleOriginal,
   onToggleSaved,
@@ -87,12 +90,29 @@ export function DesktopHeroPanel({
   onExit,
 }: HeroImagePanelProps) {
   const { t } = useSimpleTranslation();
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Preload result image before rendering
+  useEffect(() => {
+    if (!resultImage) return;
+    setImageLoaded(false);
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(true);
+    img.src = resultImage;
+  }, [resultImage]);
 
   return (
     <div
       className="hidden md:block flex-1 h-full relative overflow-hidden"
       style={{ background: 'var(--editorial-hairline)' }}
     >
+      {/* Loading overlay while preloading */}
+      {resultImage && !imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--editorial-hairline)] z-10">
+          <div className="w-8 h-8 border-2 border-[var(--editorial-taupe)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       {/* Result Image */}
       {resultImage ? (
         <AuthenticatedImage
@@ -131,13 +151,15 @@ export function DesktopHeroPanel({
             >
               <Heart size={18} className={isSaved ? 'fill-current' : ''} />
             </GlassButton>
-            <GlassButton
-              onClick={onDownload}
-              disabled={isDownloading}
-              ariaLabel="دانلود"
-            >
-              {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-            </GlassButton>
+            {!isNoImageResult && (
+              <GlassButton
+                onClick={onDownload}
+                disabled={isDownloading}
+                ariaLabel="دانلود"
+              >
+                {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+              </GlassButton>
+            )}
             <GlassButton onClick={() => {}} ariaLabel="اشتراک‌گذاری">
               <Share2 size={18} />
             </GlassButton>
@@ -145,6 +167,7 @@ export function DesktopHeroPanel({
         </div>
 
         {/* Bottom Controls — Editorial Before/After */}
+        {!isNoImageResult && (
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto flex items-center">
           <div
             className="flex items-center"
@@ -193,6 +216,7 @@ export function DesktopHeroPanel({
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
@@ -205,6 +229,7 @@ export function MobileHeroSection({
   showOriginal,
   isSaved,
   isDownloading,
+  isNoImageResult,
   sessionId,
   onToggleSaved,
   onDownload,
@@ -212,9 +237,26 @@ export function MobileHeroSection({
   onExit,
 }: HeroImagePanelProps) {
   const { t } = useSimpleTranslation();
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Preload result image before rendering
+  useEffect(() => {
+    if (!resultImage) return;
+    setImageLoaded(false);
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(true);
+    img.src = resultImage;
+  }, [resultImage]);
 
   return (
     <div className="relative w-full" style={{ height: '60vh', minHeight: '360px' }}>
+      {/* Loading overlay while preloading */}
+      {resultImage && !imageLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--editorial-hairline)] z-10">
+          <div className="w-8 h-8 border-2 border-[var(--editorial-taupe)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       {/* Images */}
       {resultImage ? (
         <AuthenticatedImage
@@ -235,11 +277,13 @@ export function MobileHeroSection({
       )}
 
       {/* Tap to fullscreen */}
-      <button
-        className="absolute inset-0 z-10"
-        onClick={onFullscreen}
-        aria-label="تمام‌صفحه"
-      />
+      {!isNoImageResult && (
+        <button
+          className="absolute inset-0 z-10"
+          onClick={onFullscreen}
+          aria-label="تمام‌صفحه"
+        />
+      )}
 
       {/* Top actions */}
       <div className="absolute top-5 left-0 right-0 px-5 flex justify-between items-center z-20">
@@ -258,18 +302,21 @@ export function MobileHeroSection({
           >
             <Heart size={16} className={isSaved ? 'fill-current' : ''} />
           </GlassButton>
-          <GlassButton
-            onClick={onDownload}
-            disabled={isDownloading}
-            ariaLabel="دانلود"
-            size={38}
-          >
-            {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          </GlassButton>
+          {!isNoImageResult && (
+            <GlassButton
+              onClick={onDownload}
+              disabled={isDownloading}
+              ariaLabel="دانلود"
+              size={38}
+            >
+              {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            </GlassButton>
+          )}
         </div>
       </div>
 
       {/* Bottom fullscreen hint */}
+      {!isNoImageResult && (
       <button
         onClick={onFullscreen}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 active:scale-95 transition-all duration-200"
@@ -298,6 +345,7 @@ export function MobileHeroSection({
           </span>
         </div>
       </button>
+      )}
     </div>
   );
 }
