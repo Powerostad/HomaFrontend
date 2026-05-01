@@ -6,6 +6,9 @@ type RuntimeConfig = Partial<{
   VITE_PUBLIC_POSTHOG_HOST: string;
   VITE_AUTH_MODE: string;
   VITE_ENABLE_POSTHOG_IN_DEV: string;
+  VITE_BAZAAR_PACKAGE_NAME: string;
+  VITE_BAZAAR_DEALER_PACKAGE_NAME: string;
+  VITE_BAZAAR_REDIRECT_URL: string;
 }>;
 
 declare global {
@@ -49,9 +52,12 @@ export const appConfig = {
   apiImageProcessingTimeout: getNumber('VITE_API_IMAGE_PROCESSING_TIMEOUT', 180000),
   publicPosthogKey: getString(
     'VITE_PUBLIC_POSTHOG_KEY',
-    'phc_5ie0tXqbc7I6IFfLeuhZg7FA6fMnyEu1SoaylZktoRp',
+    '',
   ),
-  publicPosthogHost: getString('VITE_PUBLIC_POSTHOG_HOST', 'https://us.i.posthog.com'),
+  publicPosthogHost: getString('VITE_PUBLIC_POSTHOG_HOST'),
   authMode: getString('VITE_AUTH_MODE', 'password'),
   enablePosthogInDev: getString('VITE_ENABLE_POSTHOG_IN_DEV') === 'true',
+  bazaarPackageName: getString('VITE_BAZAAR_PACKAGE_NAME'),
+  bazaarDealerPackageName: getString('VITE_BAZAAR_DEALER_PACKAGE_NAME'),
+  bazaarRedirectUrl: getString('VITE_BAZAAR_REDIRECT_URL'),
 };

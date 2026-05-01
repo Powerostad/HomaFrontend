@@ -17,9 +17,10 @@ const POSTHOG_HOST = appConfig.publicPosthogHost;
 
 const isDev = import.meta.env.DEV;
 const isDevEnabled = appConfig.enablePosthogInDev;
+const isConfigured = Boolean(POSTHOG_KEY && POSTHOG_HOST);
 
 // Initialize PostHog unless we're in dev mode without the dev flag
-if (!isDev || isDevEnabled) {
+if (isConfigured && (!isDev || isDevEnabled)) {
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
 

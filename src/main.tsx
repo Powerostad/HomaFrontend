@@ -5,6 +5,9 @@ import { posthog } from './utils/posthog';
 import App from './App';
 import './i18n/config'; // Initialize i18n before rendering
 import './styles/globals.css';
+import { registerSW } from 'virtual:pwa-register';
+
+registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
