@@ -1,0 +1,12 @@
+node_modules/
+.venv/
+venv/
+dist/
+build/
+.cache/
+.next/
+coverage/
+logs/
+*.log
+__pycache__/
+.git/
