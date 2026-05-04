@@ -143,6 +143,7 @@ export interface UseStudioResultReturn {
   handleFinalize: () => void;
   handleProductClick: (product: Product) => void;
   handleRequestRedesignCredit: () => Promise<void>;
+  isRequestingRedesignCredit: boolean;
   handleExit: () => void;
   getActiveProduct: (group: CategoryGroup) => Product | null;
 
@@ -203,6 +204,7 @@ export function useStudioResult(): UseStudioResultReturn {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showExitDecision, setShowExitDecision] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRequestingRedesignCredit, setIsRequestingRedesignCredit] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [topPickUrls, setTopPickUrls] = useState<Record<string, string>>({});
 
@@ -700,16 +702,21 @@ export function useStudioResult(): UseStudioResultReturn {
     const currentSessionId = sessionId || activeSessionId;
     if (!currentSessionId) return;
 
-    const result = await createImageCreditRequest({
-      source: 'web',
-      placement: 'no_image_result_hero',
-      redesignSessionId: currentSessionId,
-    });
+    setIsRequestingRedesignCredit(true);
+    try {
+      const result = await createImageCreditRequest({
+        source: 'web',
+        placement: 'no_image_result_hero',
+        redesignSessionId: currentSessionId,
+      });
 
-    if (result.success) {
-      toast.success('درخواست شما ثبت شده است');
-    } else {
-      toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+      if (result.success) {
+        toast.success('درخواست شما ثبت شده است');
+      } else {
+        toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+      }
+    } finally {
+      setIsRequestingRedesignCredit(false);
     }
   }, [sessionId, activeSessionId]);
 
@@ -906,6 +913,7 @@ export function useStudioResult(): UseStudioResultReturn {
     handleFinalize,
     handleProductClick,
     handleRequestRedesignCredit,
+    isRequestingRedesignCredit,
     handleExit,
     getActiveProduct,
 

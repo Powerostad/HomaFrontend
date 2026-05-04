@@ -278,6 +278,7 @@ export function StudioResultPage() {
             <p>این نتیجه بدون تولید تصویر بازطراحی آماده شده است. پیشنهادها بر اساس تحلیل همین فضا هستند.</p>
             <button
               onClick={state.handleRequestRedesignCredit}
+              disabled={state.isRequestingRedesignCredit}
               style={{
                 marginTop: '10px',
                 height: '36px',
@@ -287,9 +288,12 @@ export function StudioResultPage() {
                 fontSize: '12px',
                 fontFamily: FONT,
                 fontWeight: 'var(--font-weight-semibold)',
+                opacity: state.isRequestingRedesignCredit ? 0.6 : 1,
               }}
             >
-              درخواست تولید تصویر بازطراحی برای این طراحی
+              {state.isRequestingRedesignCredit
+                ? 'در حال ثبت درخواست...'
+                : 'درخواست تولید تصویر بازطراحی برای این طراحی'}
             </button>
           </div>
         )}

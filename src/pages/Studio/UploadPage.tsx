@@ -444,7 +444,9 @@ export function StudioUploadPage() {
           label: creditRequired
             ? (creditRequired.requested ? "درخواست شما ثبت شده است" : isRequestingCredit ? "در حال ثبت..." : "درخواست اعتبار بیشتر")
             : isCreatingSession ? "در حال ارسال..." : "تایید",
-          onClick: creditRequired ? handleRequestCredit : handleProceed,
+          onClick: creditRequired
+            ? handleRequestCredit
+            : handleProceed,
           icon: (isCreatingSession || isRequestingCredit) ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />,
           disabled: isCreatingSession || isRequestingCredit || !!creditRequired?.requested
         }}
@@ -473,7 +475,8 @@ export function StudioUploadPage() {
           }
         }}
         type="accent"
-      />
+      >
+      </DecisionPointOverlay>
 
       <input
         type="file"

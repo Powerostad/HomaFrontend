@@ -27,6 +27,7 @@ interface DecisionPointProps {
   };
   image?: string;
   type?: 'neutral' | 'accent' | 'destructive';
+  children?: React.ReactNode;
 }
 
 export function DecisionPointOverlay({
@@ -38,7 +39,8 @@ export function DecisionPointOverlay({
   secondaryCTA,
   exitAction,
   image,
-  type = 'neutral'
+  type = 'neutral',
+  children,
 }: DecisionPointProps) {
   return createPortal(
     <AnimatePresence>
@@ -96,6 +98,7 @@ export function DecisionPointOverlay({
                   <p className="text-label text-black/60 leading-relaxed font-light">
                     {description}
                   </p>
+                  {children}
                 </div>
               </div>
             </div>
