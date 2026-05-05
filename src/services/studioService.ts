@@ -71,30 +71,19 @@ export interface APISessionItem {
   item_type: string; // e.g., 'rug', 'sofa', 'lamp'
   category?: string; // e.g., 'rug', 'furniture', 'cushion'
   category_display?: string; // Persian display name e.g., 'فرش و قالی'
-  fit_reasoning_fa?: string; // AI reasoning in Persian for why this item fits
-  recommended_size?: string; // AI-recommended size e.g., '2x3 متر'
-  quantity?: number; // Number of items recommended e.g., 2
-  placement?: string; // Where in the room e.g., 'وسط اتاق زیر لوستر'
-  description?: Record<string, unknown>;
+  recommendation_reason_fa?: string;
+  design_rationale_fa?: string;
+  recommended_size?: string;
+  quantity?: number;
+  placements?: string[];
   matched_products: APIMatchedProduct[];
   tryon_status: 'pending' | 'processing' | 'completed' | 'failed';
   tryon_image_url: string | null;
-  // Design diagnosis fields
-  problem_statement?: string;
-  why_change_reasons?: string[];
-  design_strategy?: string;
-  design_strategy_benefits?: string[];
-  harmony_impact?: number;
   action_status?: 'available' | 'custom_order' | 'architectural';
   intervention_tier?: 'quick_win' | 'enhancement' | 'structural';
   impact_level?: 'low' | 'medium' | 'high';
-  effort_level?: 'low' | 'medium' | 'high';
   action_type?: string;
   action_guidance?: string;
-  action_difficulty?: string;
-  action_estimate?: string;
-  spec_note?: string;
-  reference_image_url?: string;
 }
 
 /**
@@ -229,29 +218,19 @@ export interface SessionItem {
   type: string;
   category: string;
   categoryDisplay: string;
-  fitReasoningFa: string;
+  recommendationReasonFa: string;
+  designRationaleFa: string;
   recommendedSize: string;
   quantity: number;
-  placement: string;
+  placements: string[];
   matchedProducts: MatchedProduct[];
   tryonStatus: 'pending' | 'processing' | 'completed' | 'failed';
   tryonImageUrl: string | null;
-  // Design diagnosis fields
-  problemStatement?: string;
-  whyChangeReasons?: string[];
-  designStrategy?: string;
-  designStrategyBenefits?: string[];
-  harmonyImpact?: number;
   actionStatus?: 'available' | 'custom_order' | 'architectural';
   interventionTier?: 'quick_win' | 'enhancement' | 'structural';
   impactLevel?: 'low' | 'medium' | 'high';
-  effortLevel?: 'low' | 'medium' | 'high';
   actionType?: string;
   actionGuidance?: string;
-  actionDifficulty?: string;
-  actionEstimate?: string;
-  specNote?: string;
-  referenceImageUrl?: string;
 }
 
 /**
@@ -378,29 +357,19 @@ function transformSessionItem(apiItem: APISessionItem): SessionItem {
     type: apiItem.item_type,
     category: apiItem.category || apiItem.item_type || '',
     categoryDisplay: apiItem.category_display || apiItem.item_type || '',
-    fitReasoningFa: apiItem.fit_reasoning_fa || '',
+    recommendationReasonFa: apiItem.recommendation_reason_fa || '',
+    designRationaleFa: apiItem.design_rationale_fa || '',
     recommendedSize: apiItem.recommended_size || '',
     quantity: apiItem.quantity ?? 1,
-    placement: apiItem.placement || '',
+    placements: apiItem.placements || [],
     matchedProducts: (apiItem.matched_products || []).map(transformMatchedProduct),
     tryonStatus: apiItem.tryon_status,
     tryonImageUrl: getSessionImageUrl(apiItem.tryon_image_url),
-    // Design diagnosis fields
-    problemStatement: apiItem.problem_statement || '',
-    whyChangeReasons: apiItem.why_change_reasons || [],
-    designStrategy: apiItem.design_strategy || '',
-    designStrategyBenefits: apiItem.design_strategy_benefits || [],
-    harmonyImpact: apiItem.harmony_impact ?? 0,
     actionStatus: apiItem.action_status || 'available',
     interventionTier: apiItem.intervention_tier || 'quick_win',
     impactLevel: apiItem.impact_level || 'medium',
-    effortLevel: apiItem.effort_level || 'medium',
     actionType: apiItem.action_type || '',
     actionGuidance: apiItem.action_guidance || '',
-    actionDifficulty: apiItem.action_difficulty || '',
-    actionEstimate: apiItem.action_estimate || '',
-    specNote: apiItem.spec_note || '',
-    referenceImageUrl: apiItem.reference_image_url || '',
   };
 }
 

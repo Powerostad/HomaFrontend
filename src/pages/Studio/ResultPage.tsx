@@ -60,17 +60,17 @@ export function StudioResultPage() {
     return state.categoryGroups.map((group) => ({
       id: group.itemId,
       status:
-        group.harmonyImpact >= 7
+        group.impactLevel === 'high'
           ? ('critical' as const)
-          : group.harmonyImpact >= 4
+          : group.impactLevel === 'medium'
             ? ('warning' as const)
             : ('good' as const),
       title: group.categoryDisplay,
-      diagnosis: group.problemStatement || group.fitReasoningFa || '',
-      solution: group.designStrategy || '',
+      diagnosis: group.recommendationReasonFa || '',
+      solution: group.designRationaleFa || '',
       ctaText: '',
       linkedItemId: group.itemId,
-      harmonyImpact: group.harmonyImpact,
+      harmonyImpact: group.impactLevel === 'high' ? 80 : group.impactLevel === 'medium' ? 50 : 30,
       iconType: 'default' as const,
     }));
   })();
@@ -93,8 +93,8 @@ export function StudioResultPage() {
     id: g.itemId,
     name: g.categoryDisplay,
     category: g.category,
-    imageUrl: g.referenceImageUrl || '',
-    aiReasoning: g.fitReasoningFa || g.designStrategy,
+    imageUrl: g.products[0]?.image || '',
+    aiReasoning: g.recommendationReasonFa || g.designRationaleFa,
   }));
 
   /* ── Phase tracking (scroll-aware) ── */

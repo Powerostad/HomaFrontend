@@ -488,58 +488,18 @@ export function RecommendationCard({
 
       {/* ═══════ Action Item (non-product) ═══════ */}
       {isActionItem && (() => {
-        const difficultyConfig = group.actionDifficulty
-          ? ACTION_DIFFICULTY_MAP[group.actionDifficulty]
-          : null;
+        const difficultyKey = group.interventionTier === 'structural'
+          ? 'professional'
+          : group.interventionTier === 'enhancement'
+            ? 'moderate'
+            : 'simple';
+        const difficultyConfig = ACTION_DIFFICULTY_MAP[difficultyKey];
         const DifficultyIcon = difficultyConfig?.icon || Wrench;
 
         return (
           <div className="flex flex-col">
-            {/* ── Reference Image (hero-style) ── */}
-            {group.referenceImageUrl && (
-              <div
-                className="relative w-full overflow-hidden"
-                style={{
-                  background: 'var(--editorial-product-bg)',
-                  marginBottom: 'var(--spacing-sm)',
-                }}
-              >
-                <ImageWithFallback
-                  src={group.referenceImageUrl}
-                  alt={group.categoryDisplay}
-                  className="w-full object-cover"
-                  style={{ aspectRatio: '16 / 10' }}
-                />
-                {/* Tier badge overlay */}
-                <div
-                  className="absolute flex items-center"
-                  style={{
-                    top: 'var(--spacing-xs)',
-                    right: 'var(--spacing-xs)',
-                    padding: '4px var(--spacing-xs)',
-                    background: 'rgba(255,255,255,0.92)',
-                    backdropFilter: 'blur(var(--blur-sm))',
-                    gap: '4px',
-                  }}
-                >
-                  <DifficultyIcon size={11} strokeWidth={2} style={{ color: difficultyConfig?.color || 'var(--editorial-taupe)' }} />
-                  <span
-                    style={{
-                      fontFamily: FONT,
-                      fontSize: 'var(--text-caption-size)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--editorial-charcoal)',
-                      letterSpacing: '0.02em',
-                    }}
-                  >
-                    {group.actionStatus === 'architectural' ? 'مداخله معماری' : 'بهبود فضا'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* ── Problem Statement ── */}
-            {group.problemStatement && (
+            {/* ── Reasoning ── */}
+            {group.designRationaleFa && (
               <p
                 style={{
                   fontFamily: FONT,
@@ -550,12 +510,12 @@ export function RecommendationCard({
                   margin: '0 0 var(--spacing-sm) 0',
                 }}
               >
-                {group.problemStatement}
+                {group.designRationaleFa}
               </p>
             )}
 
-            {/* ── Design Strategy ── */}
-            {group.designStrategy && (
+            {/* ── Recommendation reason ── */}
+            {group.recommendationReasonFa && (
               <div style={{ marginBottom: 'var(--spacing-sm)' }}>
                 <p
                   style={{
@@ -567,32 +527,15 @@ export function RecommendationCard({
                     margin: 0,
                   }}
                 >
-                  {group.designStrategy}
+                  {group.recommendationReasonFa}
                 </p>
-                {/* Benefits */}
-                {group.designStrategyBenefits && group.designStrategyBenefits.length > 0 && (
+                {group.placements && group.placements.length > 0 && (
                   <div className="flex flex-col" style={{ gap: '6px', marginTop: 'var(--spacing-xs)' }}>
-                    {group.designStrategyBenefits.map((benefit, i) => (
+                    {group.placements.map((placement: string, i: number) => (
                       <div key={i} className="flex items-start" style={{ gap: '6px' }}>
-                        <Check
-                          size={12}
-                          strokeWidth={2.5}
-                          className="shrink-0"
-                          style={{
-                            color: difficultyConfig?.color || 'var(--feedback-good)',
-                            marginTop: '3px',
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontFamily: FONT,
-                            fontSize: 'var(--text-caption-size)',
-                            fontWeight: 'var(--font-weight-regular)',
-                            color: 'var(--editorial-charcoal)',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {benefit}
+                        <Check size={12} strokeWidth={2.5} className="shrink-0" style={{ color: difficultyConfig?.color || 'var(--feedback-good)', marginTop: '3px' }} />
+                        <span style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-charcoal)', lineHeight: 1.5 }}>
+                          {placement}
                         </span>
                       </div>
                     ))}
@@ -601,226 +544,49 @@ export function RecommendationCard({
               </div>
             )}
 
-            {/* ── Metadata Row: Difficulty + Estimate ── */}
-            <div
-              className="flex items-center flex-wrap"
-              style={{
-                gap: 'var(--spacing-xs)',
-                marginBottom: 'var(--spacing-sm)',
-                paddingBottom: 'var(--spacing-sm)',
-                borderBottom: '1px solid var(--editorial-hairline)',
-              }}
-            >
-              {/* Difficulty badge */}
+            {/* ── Metadata Row ── */}
+            <div className="flex items-center flex-wrap" style={{ gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-sm)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--editorial-hairline)' }}>
               {difficultyConfig && (
-                <span
-                  className="inline-flex items-center"
-                  style={{
-                    padding: '4px 10px',
-                    background: difficultyConfig.bg,
-                    gap: '4px',
-                  }}
-                >
+                <span className="inline-flex items-center" style={{ padding: '4px 10px', background: difficultyConfig.bg, gap: '4px' }}>
                   <DifficultyIcon size={11} strokeWidth={2} style={{ color: difficultyConfig.color }} />
-                  <span
-                    style={{
-                      fontFamily: FONT,
-                      fontSize: 'var(--text-caption-size)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      color: 'var(--editorial-charcoal)',
-                    }}
-                  >
+                  <span style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-charcoal)' }}>
                     {difficultyConfig.label}
                   </span>
                 </span>
               )}
-              {/* Estimate */}
-              {group.actionEstimate && (
-                <span
-                  className="inline-flex items-center tabular-nums"
-                  style={{
-                    padding: '4px 10px',
-                    background: 'var(--muted)',
-                    gap: '4px',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: FONT,
-                      fontSize: 'var(--text-caption-size)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      color: 'var(--editorial-taupe)',
-                    }}
-                  >
-                    هزینه تخمینی:
+              {group.impactLevel && (
+                <span className="inline-flex items-center tabular-nums" style={{ padding: '4px 10px', background: 'var(--muted)', gap: '4px' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-taupe)' }}>
+                    سطح تاثیر:
                   </span>
-                  <span
-                    style={{
-                      fontFamily: FONT,
-                      fontSize: 'var(--text-caption-size)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--editorial-charcoal)',
-                    }}
-                  >
-                    {toLocalizedDigits(group.actionEstimate)}
+                  <span style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--editorial-charcoal)' }}>
+                    {group.impactLevel === 'high' ? 'بالا' : group.impactLevel === 'medium' ? 'متوسط' : 'پایین'}
                   </span>
                 </span>
               )}
             </div>
 
-            {/* ── Guidance (expandable) ── */}
             {group.actionGuidance && (
               <div style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <button
-                  onClick={() => setShowGuidance(!showGuidance)}
-                  className="flex items-center transition-colors w-full"
-                  style={{
-                    fontFamily: FONT,
-                    fontSize: 'var(--text-caption-size)',
-                    fontWeight: 'var(--font-weight-semibold)',
-                    color: 'var(--editorial-charcoal)',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    gap: '4px',
-                  }}
-                >
-                  {showGuidance ? (
-                    <ChevronDown size={14} strokeWidth={1.5} />
-                  ) : (
-                    <ChevronRight size={14} strokeWidth={1.5} />
-                  )}
+                <button onClick={() => setShowGuidance(!showGuidance)} className="flex items-center transition-colors w-full" style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--editorial-charcoal)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', gap: '4px' }}>
+                  {showGuidance ? <ChevronDown size={14} strokeWidth={1.5} /> : <ChevronRight size={14} strokeWidth={1.5} />}
                   جزئیات طرح پیشنهادی
                 </button>
                 {showGuidance && (
-                  <div
-                    style={{
-                      marginTop: 'var(--spacing-xs)',
-                      padding: 'var(--spacing-sm)',
-                      background: 'var(--editorial-stone)',
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: FONT,
-                        fontSize: 'var(--text-caption-size)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--editorial-charcoal)',
-                        lineHeight: 1.8,
-                        margin: 0,
-                      }}
-                    >
+                  <div style={{ marginTop: 'var(--spacing-xs)', padding: 'var(--spacing-sm)', background: 'var(--editorial-stone)' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-charcoal)', lineHeight: 1.8, margin: 0 }}>
                       {group.actionGuidance}
                     </p>
-
-                    {/* Action Steps */}
-                    {group.actionSteps && group.actionSteps.length > 0 && (
-                      <div className="flex flex-col" style={{ gap: '6px', marginTop: 'var(--spacing-xs)' }}>
-                        {group.actionSteps.map((step, i) => (
-                          <div key={i} className="flex items-start" style={{ gap: '6px' }}>
-                            <span
-                              className="tabular-nums shrink-0"
-                              dir="ltr"
-                              style={{
-                                fontFamily: FONT_SERIF,
-                                fontSize: 'var(--text-caption-size)',
-                                fontWeight: 'var(--font-weight-regular)',
-                                fontStyle: 'italic',
-                                color: 'var(--editorial-taupe)',
-                                width: '16px',
-                                textAlign: 'center',
-                              }}
-                            >
-                              {i + 1}
-                            </span>
-                            <span
-                              style={{
-                                fontFamily: FONT,
-                                fontSize: 'var(--text-caption-size)',
-                                fontWeight: 'var(--font-weight-regular)',
-                                color: 'var(--editorial-charcoal)',
-                                lineHeight: 1.6,
-                              }}
-                            >
-                              {step}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── Spec Note (like product ref code) ── */}
-            {group.specNote && (
-              <p
-                className="tabular-nums"
-                dir="ltr"
-                style={{
-                  fontFamily: FONT,
-                  fontSize: 'var(--text-caption-size)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--editorial-taupe)',
-                  margin: '0 0 var(--spacing-sm) 0',
-                  letterSpacing: '0.04em',
-                  textAlign: 'start',
-                }}
-              >
-                {group.specNote}
-              </p>
-            )}
-
-            {/* ── CTA: Accept for consultation ── */}
             <div className="flex items-stretch" style={{ gap: 'var(--spacing-xs)' }}>
-              <button
-                onClick={onToggleAccepted}
-                className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
-                style={{
-                  height: '40px',
-                  fontFamily: FONT,
-                  fontSize: 'var(--text-caption-size)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  letterSpacing: '0.04em',
-                  backgroundColor: isAccepted
-                    ? 'transparent'
-                    : 'var(--editorial-charcoal)',
-                  color: isAccepted
-                    ? 'var(--editorial-charcoal)'
-                    : 'var(--btn-dark-text)',
-                  border: '1px solid var(--editorial-charcoal)',
-                  borderRadius: '0px',
-                }}
-                aria-label={isAccepted ? 'لغو درخواست مشاوره' : 'درخواست مشاوره'}
-              >
-                {isAccepted ? (
-                  <>
-                    <Check size={14} strokeWidth={2} />
-                    <span>ثبت شد — در انتظار مشاوره</span>
-                  </>
-                ) : (
-                  <>
-                    <Phone size={14} strokeWidth={2} />
-                    <span>درخواست مشاوره</span>
-                  </>
-                )}
+              <button onClick={onToggleAccepted} className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]" style={{ height: '40px', fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)', letterSpacing: '0.04em', backgroundColor: isAccepted ? 'transparent' : 'var(--editorial-charcoal)', color: isAccepted ? 'var(--editorial-charcoal)' : 'var(--btn-dark-text)', border: '1px solid var(--editorial-charcoal)', borderRadius: '0px' }} aria-label={isAccepted ? 'لغو درخواست مشاوره' : 'درخواست مشاوره'}>
+                {isAccepted ? (<><Check size={14} strokeWidth={2} /><span>ثبت شد — در انتظار مشاوره</span></>) : (<><Phone size={14} strokeWidth={2} /><span>درخواست مشاوره</span></>)}
               </button>
-
-              {/* Share */}
-              <button
-                className="flex items-center justify-center transition-all active:scale-95"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '1px solid var(--editorial-hairline)',
-                  borderRadius: '0px',
-                  color: 'var(--editorial-charcoal)',
-                  background: 'transparent',
-                }}
-                aria-label="اشتراک‌گذاری"
-              >
+              <button className="flex items-center justify-center transition-all active:scale-95" style={{ width: '40px', height: '40px', border: '1px solid var(--editorial-hairline)', borderRadius: '0px', color: 'var(--editorial-charcoal)', background: 'transparent' }} aria-label="اشتراک‌گذاری">
                 <Share2 size={18} strokeWidth={1} />
               </button>
             </div>
@@ -829,7 +595,7 @@ export function RecommendationCard({
       })()}
 
       {/* ═══════ Why Section ═══════ */}
-      {group.whyChangeReasons.length > 0 && (
+      {group.recommendationReasonFa && (
         <div style={{ marginTop: 'var(--spacing-sm)' }}>
           <button
             onClick={onToggleWhy}
@@ -856,11 +622,7 @@ export function RecommendationCard({
                 padding: 'var(--spacing-sm)',
               }}
             >
-              <ul className="list-disc list-inside space-y-1">
-                {group.whyChangeReasons.map((reason, i) => (
-                  <li key={i}>{reason}</li>
-                ))}
-              </ul>
+              <p>{group.recommendationReasonFa}</p>
             </div>
           )}
         </div>

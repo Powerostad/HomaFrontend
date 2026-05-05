@@ -187,7 +187,7 @@ export function UnifiedConsultationCTA({
                   {item.categoryDisplay}
                 </span>
               </div>
-              {item.actionEstimate && (
+              {item.designRationaleFa && (
                 <span
                   className="flex items-center gap-1 tabular-nums"
                   style={{
@@ -198,7 +198,7 @@ export function UnifiedConsultationCTA({
                   }}
                 >
                   <Wallet size={9} strokeWidth={1.5} />
-                  ~ {toLocalizedDigits(item.actionEstimate)}
+                  {item.designRationaleFa}
                 </span>
               )}
             </div>
@@ -405,8 +405,8 @@ function UnifiedConsultationSheet({
         notes: formNotes.trim(),
         serviceItems: selectedServices.map(item => ({
           type: item.actionType || 'اقدام پیشنهادی',
-          category: item.actionCategory || item.categoryDisplay,
-          estimate: item.actionEstimate || '',
+          category: item.actionType || item.categoryDisplay,
+          estimate: item.designRationaleFa || ''
         })),
         sourcingItems: selectedSourcing.map(item => ({
           name: item.name,
@@ -604,13 +604,13 @@ function UnifiedConsultationSheet({
                             · {item.actionType || 'اقدام پیشنهادی'}
                           </span>
                         </span>
-                        {item.actionEstimate && (
+                        {item.designRationaleFa && (
                           <span className="flex items-center gap-1" style={{
                             fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
                             fontFamily: FONT, color: 'var(--editorial-taupe)',
                           }}>
                             <Wallet size={10} strokeWidth={1.5} />
-                            ~ {toLocalizedDigits(item.actionEstimate)}
+                            {item.designRationaleFa}
                           </span>
                         )}
                       </div>

@@ -366,15 +366,11 @@ export function useStudioResult(): UseStudioResultReturn {
         category: item.category || item.type,
         categoryDisplay: item.categoryDisplay || item.type,
         itemId: item.id,
-        fitReasoningFa: item.fitReasoningFa || '',
+        recommendationReasonFa: item.recommendationReasonFa || '',
+        designRationaleFa: item.designRationaleFa || '',
         recommendedSize: item.recommendedSize || '',
         quantity: quantityOverrides.get(item.id) ?? item.quantity ?? 1,
-        placement: item.placement || '',
-        problemStatement: item.problemStatement || '',
-        whyChangeReasons: item.whyChangeReasons || [],
-        designStrategy: item.designStrategy || '',
-        designStrategyBenefits: item.designStrategyBenefits || [],
-        harmonyImpact: item.harmonyImpact ?? 0,
+        placements: item.placements || [],
         products: item.matchedProducts.map((p, i) => matchedProductToUIProduct(p, i)),
         actionStatus: item.actionStatus || (item.matchedProducts.length > 0 ? 'available' : 'custom_order'),
         interventionTier: (item.interventionTier ||
@@ -384,13 +380,8 @@ export function useStudioResult(): UseStudioResultReturn {
               ? 'enhancement'
               : 'quick_win')) as CategoryGroup['interventionTier'],
         impactLevel: (item.impactLevel || 'medium') as CategoryGroup['impactLevel'],
-        effortLevel: (item.effortLevel || 'medium') as CategoryGroup['effortLevel'],
         actionType: item.actionType,
         actionGuidance: item.actionGuidance,
-        actionDifficulty: item.actionDifficulty as CategoryGroup['actionDifficulty'],
-        actionEstimate: item.actionEstimate,
-        referenceImageUrl: item.referenceImageUrl,
-        specNote: item.specNote,
       }));
   }, [activeSession, quantityOverrides]);
 
@@ -476,7 +467,7 @@ export function useStudioResult(): UseStudioResultReturn {
 
   // Total harmony impact across all category groups
   const totalHarmonyImpact = useMemo(() => {
-    return categoryGroups.reduce((sum, g) => sum + g.harmonyImpact, 0);
+    return categoryGroups.reduce((sum, g) => sum + (g.impactLevel === 'high' ? 3 : g.impactLevel === 'medium' ? 2 : 1), 0);
   }, [categoryGroups]);
 
   // Projected score if all items are applied (diminishing returns model)
@@ -490,7 +481,7 @@ export function useStudioResult(): UseStudioResultReturn {
   const acceptedHarmonyImpact = useMemo(() => {
     return categoryGroups
       .filter(g => acceptedItems.has(g.itemId))
-      .reduce((sum, g) => sum + g.harmonyImpact, 0);
+      .reduce((sum, g) => sum + (g.impactLevel === 'high' ? 3 : g.impactLevel === 'medium' ? 2 : 1), 0);
   }, [categoryGroups, acceptedItems]);
 
   const liveProjectedScore = useMemo(() => {
@@ -782,7 +773,7 @@ export function useStudioResult(): UseStudioResultReturn {
 
       setSelectedProduct({
         ...product,
-        persianReason: product.persianReason || group?.fitReasoningFa || '',
+        persianReason: product.persianReason || group?.recommendationReasonFa || group?.designRationaleFa || '',
       });
     },
     [categoryGroups, sessionId, activeSessionId]
@@ -800,8 +791,7 @@ export function useStudioResult(): UseStudioResultReturn {
   // Derived Session Metadata
   // =========================================================================
 
-  // Project name and target style — will be populated when AI prompt is updated
-  // to include room metadata in the session-level diagnosis
+  // Project name and target style are session-level metadata used by the result page.
   const projectName = activeSession?.roomType || '';
   const targetStyle = activeSession?.preferredStyle || '';
   const isDownloading = downloadState === 'preparing';
@@ -809,7 +799,10 @@ export function useStudioResult(): UseStudioResultReturn {
   // Priority ranking: items sorted by harmony impact (highest first)
   const priorityRankedIds = useMemo(() => {
     return [...categoryGroups]
-      .sort((a, b) => b.harmonyImpact - a.harmonyImpact)
+      .sort((a, b) => {
+        const score = (g: typeof a) => (g.impactLevel === 'high' ? 3 : g.impactLevel === 'medium' ? 2 : 1);
+        return score(b) - score(a);
+      })
       .map(g => g.itemId);
   }, [categoryGroups]);
 

@@ -112,28 +112,17 @@ export interface CategoryGroup {
   category: string;
   categoryDisplay: string;
   itemId: number;
-  fitReasoningFa: string;
+  recommendationReasonFa: string;
+  designRationaleFa: string;
   recommendedSize: string;
   quantity: number;
-  placement: string;
-  problemStatement: string;
-  whyChangeReasons: string[];
-  designStrategy: string;
-  designStrategyBenefits: string[];
-  harmonyImpact: number;
+  placements: string[];
   products: (Product & { store?: string; matchScore?: number })[];
   actionStatus: ActionStatus;
   interventionTier: InterventionTier;
   impactLevel: ImpactLevel;
-  effortLevel: EffortLevel;
   actionType?: string;
   actionGuidance?: string;
-  actionDifficulty?: 'simple' | 'moderate' | 'professional';
-  actionCategory?: string;
-  actionEstimate?: string;
-  referenceImageUrl?: string;
-  actionSteps?: string[];
-  specNote?: string;
 }
 
 // --- Session type ---
@@ -151,29 +140,18 @@ export interface ResultSession {
     category?: string;
     type: string;
     categoryDisplay?: string;
-    fitReasoningFa?: string;
+    recommendationReasonFa?: string;
+    designRationaleFa?: string;
     recommendedSize?: string;
     quantity?: number;
-    placement?: string;
+    placements?: string[];
     tryonStatus?: string;
-    problemStatement?: string;
-    whyChangeReasons?: string[];
-    designStrategy?: string;
-    designStrategyBenefits?: string[];
-    harmonyImpact?: number;
     matchedProducts: MatchedProduct[];
     actionStatus?: ActionStatus;
     actionType?: string;
     interventionTier?: InterventionTier;
     impactLevel?: ImpactLevel;
-    effortLevel?: EffortLevel;
     actionGuidance?: string;
-    actionDifficulty?: 'simple' | 'moderate' | 'professional';
-    actionCategory?: string;
-    actionEstimate?: string;
-    referenceImageUrl?: string;
-    actionSteps?: string[];
-    specNote?: string;
   }[];
 }
 
