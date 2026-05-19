@@ -90,6 +90,15 @@ export function Footer() {
           </div>
           */}
 
+          {/* E-Namad Trust Seal — inserted verbatim per enamad.ir rules; do NOT edit attributes */}
+          <div
+            className="flex items-center"
+            dangerouslySetInnerHTML={{
+              __html:
+                "<a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=731279&Code=pgP9sQsEGONHIBBrO31WWxY6BVAww7Li'><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=731279&Code=pgP9sQsEGONHIBBrO31WWxY6BVAww7Li' alt='' style='cursor:pointer' code='pgP9sQsEGONHIBBrO31WWxY6BVAww7Li'></a>",
+            }}
+          />
+
           {/* Copyright */}
           <div className="text-center md:text-end">
             <p className="text-[10px] tracking-[0.2em] uppercase text-content-tertiary font-light">
