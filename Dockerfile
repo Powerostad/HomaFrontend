@@ -1,5 +1,7 @@
 # Multi-stage build for React application
-FROM docker.arvancloud.ir/node:18-alpine AS builder
+# Node 24 / npm 11 — matches local dev and satisfies deps that require node >=20
+# (vite-plugin-pwa -> workbox-build@7, glob@11).
+FROM docker.arvancloud.ir/node:24-alpine AS builder
 
 # Set working directory
 WORKDIR /app
