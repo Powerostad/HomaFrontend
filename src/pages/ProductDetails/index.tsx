@@ -17,6 +17,7 @@ import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
 import { ContextBar } from '../../components/ContextBar';
 import { BuyButton } from '../../components/BuyButton';
+import { AddToBasketButton } from '../../components/basket/AddToBasketButton';
 import { formatPriceFromRial } from '../../utils/formatters';
 // TODO: Re-enable when backend /api/recommendations/gallery/product is ready
 // import { ProductSocialGallery } from '../../components/ProductSocialGallery';
@@ -270,12 +271,16 @@ export function ProductDetailsPage() {
                     <span className="truncate">امتحانش کن در فضای خودت (AI Try-On)</span>
                   </Button>
                   <div className="flex gap-2 w-full">
-                    <Button 
-                      variant="outline"
-                      className="flex-1 h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest"
-                    >
-                      افزودن به سبد
-                    </Button>
+                    {apiProduct && (
+                      <AddToBasketButton
+                        productUniqueLink={apiProduct.uniqueLink}
+                        sourceContext="product_page"
+                        variant="outline"
+                        size="lg"
+                        openOnAdd
+                        className="flex-1 h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest"
+                      />
+                    )}
                     <button className="flex-1 h-12 flex items-center justify-center border border-black/10 hover:bg-black/5 transition-all text-black/60 font-bold text-[12px] gap-2">
                       <Heart size={18} strokeWidth={1} />
                       ذخیره برای بعد

@@ -24,6 +24,7 @@ import { StudioProjectDetailsPage } from "./pages/Studio/ProjectDetailsPage";
 import { ExplorePage } from "./pages/Explore";
 import { StorePage } from "./pages/Store";
 import { ProductDetailsPage } from "./pages/ProductDetails";
+import { BasketPage } from "./pages/Basket";
 import { ContactPage } from "./pages/Contact/Page";
 import { FAQPage } from "./pages/FAQ/Page";
 import { TermsPage } from "./pages/Terms/Page";
@@ -69,6 +70,7 @@ export default function App() {
               <RouterRoute path="collaboration" element={<CollaborationPage />} />
               <RouterRoute path="store/:slug" element={<StorePage />} />
               <RouterRoute path="store/:slug/product/:productId" element={<ProductDetailsPage />} />
+              <RouterRoute path="basket" element={<BasketPage />} />
               <RouterRoute path="contact" element={<ContactPage />} />
               <RouterRoute path="faq" element={<FAQPage />} />
               <RouterRoute path="terms" element={<TermsPage />} />

@@ -8,8 +8,7 @@ import {
   Bookmark,
   Share2,
   Truck,
-  ShieldCheck,
-  Plus
+  ShieldCheck
 } from 'lucide-react';
 import {
   Dialog,
@@ -19,6 +18,7 @@ import {
 } from '../../../components/ui/dialog';
 import { AuthenticatedImage } from '../../../components/figma/AuthenticatedImage';
 import { BuyButton } from '../../../components/BuyButton';
+import { AddToBasketButton } from '../../../components/basket/AddToBasketButton';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -96,15 +96,19 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
     setSelectedSize(null);
   }, [product, isOpen]);
 
-  if (!product) return null;
-
-  // Computed price based on selected size
+  // Computed price based on selected size. This hook must run unconditionally
+  // — before the early return below — so it guards against a null product.
   const { displayPrice, selectedSizeHasPrice } = useMemo(() => {
+    if (!product) {
+      return { displayPrice: 0, selectedSizeHasPrice: false };
+    }
     if (selectedSize && product.sizePrices && product.sizePrices[selectedSize] != null) {
       return { displayPrice: product.sizePrices[selectedSize], selectedSizeHasPrice: true };
     }
     return { displayPrice: product.price, selectedSizeHasPrice: !selectedSize };
-  }, [selectedSize, product.sizePrices, product.price]);
+  }, [selectedSize, product]);
+
+  if (!product) return null;
 
   // Use passed alternatives or empty array, add labels
   const alternatives: ProductAlternative[] = (propAlternatives || []).map((alt, index) => ({
@@ -595,13 +599,15 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
               </div>
 
               <div className="flex gap-2">
-                <button
-                    className="flex-[2] h-[44px] bg-black text-white rounded-full flex items-center justify-center gap-2 text-[12px] font-bold tracking-tight hover:bg-black/90 transition-all active:scale-[0.98]"
-                    style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
-                >
-                    <Plus size={16} strokeWidth={3} />
-                    افزودن به لیست خرید
-                </button>
+                {product.uniqueLink && (
+                  <AddToBasketButton
+                    productUniqueLink={product.uniqueLink}
+                    sourceContext="studio"
+                    redesign_session_id={redesignSessionId || undefined}
+                    openOnAdd
+                    className="flex-[2] h-[44px] rounded-full text-[12px] font-bold tracking-tight"
+                  />
+                )}
 
                 {product.uniqueLink && (
                   <BuyButton

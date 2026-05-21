@@ -25,7 +25,7 @@ import {
   updateProfile as authUpdateProfile,
   getProfile as authGetProfile,
 } from '@/services/authService';
-import { getStoredTokens, clearAuthData, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
+import { getStoredTokens, clearAuthData, AUTH_LOGOUT_EVENT, AUTH_LOGIN_EVENT } from '@/utils/apiClient';
 import { identifyUser, resetUser, trackAuthEvent } from '@/analytics/events';
 import type { User, AuthTokens, AuthContextType } from '@/types/auth';
 
@@ -134,6 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     trackAuthEvent({ step: 'login_success' });
     console.log('[Auth] User logged in:', userData.name || userData.phone);
 
+    // Notify BasketContext so it can merge the anonymous basket into the user's.
+    try {
+      window.dispatchEvent(new CustomEvent(AUTH_LOGIN_EVENT));
+    } catch {
+      // window unavailable
+    }
+
     // Fetch fresh profile in background to ensure we have latest data
     // This is non-blocking - we don't wait for it
     authGetProfile()
@@ -163,6 +170,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetUser();
       trackAuthEvent({ step: 'logout' });
       setIsLoading(false);
+      // Notify BasketContext (and other listeners) so user-scoped state is
+      // dropped and the anonymous-session basket is re-hydrated. The forced-
+      // logout path already dispatches this from apiClient; a user-initiated
+      // logout must do the same.
+      try {
+        window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT));
+      } catch {
+        // window unavailable
+      }
       console.log('[Auth] User logged out');
     }
   }, []);

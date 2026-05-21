@@ -30,6 +30,7 @@ import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../uti
 import { getProductById } from '../../utils/productLoader';
 import { formatPriceFromRial } from '../../utils/formatters';
 import { BuyButton } from '../../components/BuyButton';
+import { AddToBasketButton } from '../../components/basket/AddToBasketButton';
 import { trackResultViewed, trackResultAction, trackGalleryEvent } from '../../analytics/events';
 import { InlineFeedbackWidget } from '../../components/InlineFeedbackWidget';
 import type { User } from '../../context/AuthContext';
@@ -450,6 +451,19 @@ export function TryOnResultPage() {
                   variant="default"
                   size="lg"
                   className="w-full py-5 bg-black text-white font-bold uppercase tracking-wider text-[13px] hover:bg-black/90 transition-colors"
+               />
+            )}
+
+            {/* Add to Basket - secondary CTA next to Buy */}
+            {product && (
+               <AddToBasketButton
+                  productUniqueLink={product.id}
+                  sourceContext="try_on_result"
+                  processed_image_id={resultImageId || undefined}
+                  variant="outline"
+                  size="lg"
+                  openOnAdd
+                  className="w-full py-5 font-bold uppercase tracking-wider text-[13px]"
                />
             )}
 

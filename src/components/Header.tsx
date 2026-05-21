@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, User } from "lucide-react";
+import { Menu, User, ShoppingBag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UnifiedMenu } from "./SidebarMenu";
 import { AuthModal } from "./AuthModal";
-import { useAuth } from "../context/AppProviders";
+import { useAuth, useBasket } from "../context/AppProviders";
+import { toPersianDigits } from "../utils/formatters";
 
 interface HeaderProps {
   theme?: "light" | "dark";
@@ -21,6 +22,7 @@ export function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { isLoggedIn, login } = useAuth();
+  const { itemCount, openBasket } = useBasket();
   const { t } = useTranslation();
 
   const handleAuthSuccess = (
@@ -80,9 +82,26 @@ export function Header({
             </div>
 
             {/* Quick Access Profile */}
-            <div className="flex justify-end items-center gap-4 md:gap-8">
+            <div className="flex justify-end items-center gap-4 md:gap-6">
               {!disableNavigation && (
                 <>
+                  {/* Basket */}
+                  <button
+                    onClick={openBasket}
+                    className={`relative p-2 transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}
+                    aria-label={t('basket.title', 'سبد خرید')}
+                    data-ph-capture-attribute-nav="basket"
+                  >
+                    <ShoppingBag size={18} strokeWidth={1} />
+                    {itemCount > 0 && (
+                      <span
+                        className="absolute -top-0.5 -left-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-brand-primary text-white text-[10px] font-medium leading-none"
+                      >
+                        {itemCount > 99 ? '۹۹+' : toPersianDigits(itemCount)}
+                      </span>
+                    )}
+                  </button>
+
                   {isLoggedIn ? (
                     <Link to="/account/gallery" data-ph-capture-attribute-nav="account" className={`transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}>
                       <User size={18} strokeWidth={1} />

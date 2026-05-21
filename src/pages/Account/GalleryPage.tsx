@@ -126,7 +126,7 @@ export default function GalleryPage() {
   // Load on mount
   useEffect(() => {
     loadGallery(activeTab, 1);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   // ==========================================================================
   // Tab change handler

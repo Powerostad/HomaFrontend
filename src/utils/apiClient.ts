@@ -137,6 +137,12 @@ export function getRefreshToken(): string | null {
 export const AUTH_LOGOUT_EVENT = 'auth:forced-logout';
 
 /**
+ * Custom event dispatched on successful login.
+ * BasketContext listens for this to merge the anonymous basket into the user's.
+ */
+export const AUTH_LOGIN_EVENT = 'auth:login-success';
+
+/**
  * Clear all auth data from storage
  * @param dispatchEvent - If true, dispatches a custom event for AuthContext to sync state (default: false)
  */
@@ -823,6 +829,80 @@ export async function apiPut<T>(
     };
   } catch (error) {
     console.error('[API PUT Error]', endpoint, error);
+
+    if (error instanceof APIError) {
+      return {
+        success: false,
+        error: error.message,
+        statusCode: error.statusCode,
+      };
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      statusCode: 500,
+    };
+  }
+}
+
+/**
+ * درخواست PATCH
+ */
+export async function apiPatch<T>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<APIResponse<T>> {
+  const { skipAuth = false, headers: customHeaders, skipRetryOn401 = false, ...fetchOptions } = options || {};
+
+  try {
+    const url = buildURL(endpoint);
+    console.log('[API PATCH]', url.toString(), body);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
+
+    const response = await fetch(url.toString(), {
+      method: 'PATCH',
+      headers: buildHeaders(customHeaders, skipAuth),
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      ...fetchOptions,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.status === 401 && !skipRetryOn401) {
+      const newToken = await handleUnauthorized();
+      if (newToken) {
+        return apiPatch<T>(endpoint, body, { ...options, skipRetryOn401: true });
+      }
+      return {
+        success: false,
+        error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+        statusCode: 401,
+      };
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new APIError(
+        data.error || data.message || 'خطا در به‌روزرسانی',
+        response.status,
+        data
+      );
+    }
+
+    return {
+      success: true,
+      data: data.data !== undefined ? data.data : data,
+      message: data.message,
+      statusCode: response.status,
+    };
+  } catch (error) {
+    console.error('[API PATCH Error]', endpoint, error);
 
     if (error instanceof APIError) {
       return {

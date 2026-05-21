@@ -387,7 +387,7 @@ function UnifiedConsultationSheet({
   }, [onClose]);
 
   const validatePhone = (value: string): boolean => {
-    const cleaned = value.replace(/[\s\-]/g, '');
+    const cleaned = value.replace(/[\s-]/g, '');
     return /^(09\d{9}|\+989\d{9})$/.test(cleaned);
   };
 

@@ -4,6 +4,7 @@ import { Search, X, ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { BuyButton } from "./BuyButton";
+import { AddToBasketButton } from "./basket/AddToBasketButton";
 import type { Product } from "../types/product";
 import { Header } from "./Header";
 import { formatPriceFromRial } from "../utils/formatters";
@@ -130,15 +131,22 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                      </span>
                   </div>
 
-                  {/* Buy Button - appears on hover */}
+                  {/* Buy + Add-to-basket - appear on hover */}
                   <div
-                    className="absolute bottom-0 left-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute bottom-0 left-0 right-0 p-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <BuyButton
                       productId={product.id}
                       sourceContext="gallery"
                       shopName={product.seller?.name || product.brand}
+                      variant="ghost"
+                      size="sm"
+                      className="bg-white/80 backdrop-blur-sm hover:bg-white text-[10px] font-bold tracking-wider"
+                    />
+                    <AddToBasketButton
+                      productUniqueLink={product.id}
+                      sourceContext="gallery"
                       variant="ghost"
                       size="sm"
                       className="bg-white/80 backdrop-blur-sm hover:bg-white text-[10px] font-bold tracking-wider"

@@ -563,7 +563,7 @@ export function useStudioResult(): UseStudioResultReturn {
       product_count: displayProducts.length,
       category_count: categoryGroups.length,
     });
-  }, [activeSession?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSession?.id]);  
 
   // Auth check: show modal if not logged in after auth initialization
   useEffect(() => {
