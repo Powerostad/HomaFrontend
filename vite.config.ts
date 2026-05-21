@@ -113,10 +113,7 @@ export default defineConfig({
                     if (id.includes('node_modules/@radix-ui/')) {
                         return 'radix-vendor';
                     }
-                    // PostHog analytics - loaded async, separate from main bundle
-                    if (id.includes('node_modules/posthog-js/')) {
-                        return 'analytics-vendor';
-                    }
+                    // Note: Umami analytics loads as an external <script>, not a bundled module
                     // Note: i18n is not chunked separately as it depends on react-vendor
                     // causing circular dependencies
                 },

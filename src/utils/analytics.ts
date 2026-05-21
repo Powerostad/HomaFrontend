@@ -1,12 +1,12 @@
 /**
- * Analytics — thin wrapper around PostHog.
+ * Analytics — thin wrapper around Umami.
  *
  * The previous in-memory AnalyticsService and KPI calculations have been
- * removed.  All analytics are now handled by PostHog (best-effort).
+ * removed. All analytics are now handled by Umami (best-effort).
  */
 
-import { posthog } from './posthog';
+import { umamiTrack } from './umami';
 
 export function trackEvent(event: string, metadata?: Record<string, unknown>) {
-  posthog.capture(event, metadata);
+  umamiTrack(event, metadata);
 }

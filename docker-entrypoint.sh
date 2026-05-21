@@ -35,10 +35,10 @@ EOF
 write_config_value VITE_API_BASE_URL "${VITE_API_BASE_URL:-}"
 write_config_value VITE_API_TIMEOUT "${VITE_API_TIMEOUT:-}"
 write_config_value VITE_API_IMAGE_PROCESSING_TIMEOUT "${VITE_API_IMAGE_PROCESSING_TIMEOUT:-}"
-write_config_value VITE_PUBLIC_POSTHOG_KEY "${VITE_PUBLIC_POSTHOG_KEY:-}"
-write_config_value VITE_PUBLIC_POSTHOG_HOST "${VITE_PUBLIC_POSTHOG_HOST:-}"
+write_config_value VITE_UMAMI_SRC "${VITE_UMAMI_SRC:-}"
+write_config_value VITE_UMAMI_WEBSITE_ID "${VITE_UMAMI_WEBSITE_ID:-}"
 write_config_value VITE_AUTH_MODE "${VITE_AUTH_MODE:-}"
-write_config_value VITE_ENABLE_POSTHOG_IN_DEV "${VITE_ENABLE_POSTHOG_IN_DEV:-}" ""
+write_config_value VITE_ENABLE_UMAMI_IN_DEV "${VITE_ENABLE_UMAMI_IN_DEV:-}" ""
 
 cat >> "$CONFIG_FILE" <<'EOF'
 };
@@ -50,17 +50,24 @@ origin_from_url() {
 }
 
 API_ORIGIN=$(origin_from_url "${VITE_API_BASE_URL:-https://api.myhoma.ir}")
-POSTHOG_ORIGIN=$(origin_from_url "${VITE_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}")
+# Umami needs its origin in script-src (to load script.js) AND connect-src
+# (the tracker POSTs collected data to {origin}/api/send).
+UMAMI_ORIGIN=$(origin_from_url "${VITE_UMAMI_SRC:-https://analytics.myhoma.ir}")
 
 CONNECT_SRC="'self'"
 if [ -n "$API_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $API_ORIGIN"
 fi
-if [ -n "$POSTHOG_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $POSTHOG_ORIGIN"
+if [ -n "$UMAMI_ORIGIN" ]; then
+  CONNECT_SRC="$CONNECT_SRC $UMAMI_ORIGIN"
+fi
+
+SCRIPT_SRC="'self' 'unsafe-inline'"
+if [ -n "$UMAMI_ORIGIN" ]; then
+  SCRIPT_SRC="$SCRIPT_SRC $UMAMI_ORIGIN"
 fi
 
 cat > "$CSP_FILE" <<EOF
 # Runtime CSP generated from public environment variables.
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src $CONNECT_SRC; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self';" always;
+add_header Content-Security-Policy "default-src 'self'; script-src $SCRIPT_SRC; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src $CONNECT_SRC; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self';" always;
 EOF

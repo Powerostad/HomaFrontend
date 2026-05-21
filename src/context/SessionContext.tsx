@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useMemo } from "react";
-import { posthog } from "@/utils/posthog";
+import { umamiTrack } from "@/utils/umami";
 
 const STORAGE_KEY = 'homa_session_id';
 
@@ -42,7 +42,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const trackKPI = (event: string, metadata?: Record<string, unknown>) => {
     console.log(`[KPI] ${event}`, { sessionId, ...metadata });
-    posthog.capture(event, { session_id: sessionId, ...metadata });
+    // umamiTrack injects session_id into every payload automatically.
+    umamiTrack(event, metadata);
   };
 
   return (

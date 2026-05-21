@@ -2,10 +2,10 @@ type RuntimeConfig = Partial<{
   VITE_API_BASE_URL: string;
   VITE_API_TIMEOUT: string;
   VITE_API_IMAGE_PROCESSING_TIMEOUT: string;
-  VITE_PUBLIC_POSTHOG_KEY: string;
-  VITE_PUBLIC_POSTHOG_HOST: string;
+  VITE_UMAMI_SRC: string;
+  VITE_UMAMI_WEBSITE_ID: string;
   VITE_AUTH_MODE: string;
-  VITE_ENABLE_POSTHOG_IN_DEV: string;
+  VITE_ENABLE_UMAMI_IN_DEV: string;
 }>;
 
 declare global {
@@ -47,11 +47,8 @@ export const appConfig = {
   apiBaseUrl: getString('VITE_API_BASE_URL', 'http://localhost:8000'),
   apiTimeout: getNumber('VITE_API_TIMEOUT', 30000),
   apiImageProcessingTimeout: getNumber('VITE_API_IMAGE_PROCESSING_TIMEOUT', 180000),
-  publicPosthogKey: getString(
-    'VITE_PUBLIC_POSTHOG_KEY',
-    '',
-  ),
-  publicPosthogHost: getString('VITE_PUBLIC_POSTHOG_HOST'),
+  umamiSrc: getString('VITE_UMAMI_SRC', ''),
+  umamiWebsiteId: getString('VITE_UMAMI_WEBSITE_ID', ''),
   authMode: getString('VITE_AUTH_MODE', 'password'),
-  enablePosthogInDev: getString('VITE_ENABLE_POSTHOG_IN_DEV') === 'true',
+  enableUmamiInDev: getString('VITE_ENABLE_UMAMI_IN_DEV') === 'true',
 };
