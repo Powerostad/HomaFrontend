@@ -143,15 +143,20 @@ export default function GalleryDetailPage() {
     loadItem();
   }, [loadItem]);
 
-  // Check if before/customer image exists
+  // Check if before/customer image exists. Probe with an <img> loader (no
+  // CORS needed, unlike fetch) so the before/after slider only shows when the
+  // customer image is actually available.
   useEffect(() => {
     if (!item?.customerImageUrl) {
       setHasBeforeImage(false);
       return;
     }
-    fetchAuthenticatedImage(item.customerImageUrl)
-      .then(() => setHasBeforeImage(true))
-      .catch(() => setHasBeforeImage(false));
+    let cancelled = false;
+    const probe = new Image();
+    probe.onload = () => { if (!cancelled) setHasBeforeImage(true); };
+    probe.onerror = () => { if (!cancelled) setHasBeforeImage(false); };
+    probe.src = item.customerImageUrl;
+    return () => { cancelled = true; };
   }, [item?.customerImageUrl]);
 
   // ==========================================================================

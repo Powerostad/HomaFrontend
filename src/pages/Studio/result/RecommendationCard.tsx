@@ -90,6 +90,20 @@ export function RecommendationCard({
   const [sheetProduct, setSheetProduct] = useState<Product | null>(null);
   const [showGuidance, setShowGuidance] = useState(false);
 
+  const handleShare = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareTitle = group.categoryDisplay || 'پیشنهاد طراحی';
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title: shareTitle, url: shareUrl });
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+    } catch {
+      /* user cancelled or unsupported */
+    }
+  };
+
   const heroProduct = group.products[0] || null;
   const alternativeProducts = group.products.slice(1, 5);
   const hasProduct = group.actionStatus === 'available' && !!heroProduct;
@@ -583,10 +597,10 @@ export function RecommendationCard({
             )}
 
             <div className="flex items-stretch" style={{ gap: 'var(--spacing-xs)' }}>
-              <button onClick={onToggleAccepted} className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]" style={{ height: '40px', fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)', letterSpacing: '0.04em', backgroundColor: isAccepted ? 'transparent' : 'var(--editorial-charcoal)', color: isAccepted ? 'var(--editorial-charcoal)' : 'var(--btn-dark-text)', border: '1px solid var(--editorial-charcoal)', borderRadius: '0px' }} aria-label={isAccepted ? 'لغو درخواست مشاوره' : 'درخواست مشاوره'}>
+              <button onClick={() => onToggleAccepted?.()} className="flex-1 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]" style={{ height: '40px', fontFamily: FONT, fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)', letterSpacing: '0.04em', backgroundColor: isAccepted ? 'transparent' : 'var(--editorial-charcoal)', color: isAccepted ? 'var(--editorial-charcoal)' : 'var(--btn-dark-text)', border: '1px solid var(--editorial-charcoal)', borderRadius: '0px' }} aria-label={isAccepted ? 'لغو درخواست مشاوره' : 'درخواست مشاوره'}>
                 {isAccepted ? (<><Check size={14} strokeWidth={2} /><span>ثبت شد — در انتظار مشاوره</span></>) : (<><Phone size={14} strokeWidth={2} /><span>درخواست مشاوره</span></>)}
               </button>
-              <button className="flex items-center justify-center transition-all active:scale-95" style={{ width: '40px', height: '40px', border: '1px solid var(--editorial-hairline)', borderRadius: '0px', color: 'var(--editorial-charcoal)', background: 'transparent' }} aria-label="اشتراک‌گذاری">
+              <button onClick={handleShare} className="flex items-center justify-center transition-all active:scale-95" style={{ width: '40px', height: '40px', border: '1px solid var(--editorial-hairline)', borderRadius: '0px', color: 'var(--editorial-charcoal)', background: 'transparent' }} aria-label="اشتراک‌گذاری">
                 <Share2 size={18} strokeWidth={1} />
               </button>
             </div>
@@ -776,6 +790,20 @@ function AlternativeBottomSheet({
 }) {
   const [isFav, setIsFav] = useState(false);
   if (!product) return null;
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareTitle = product.name || 'محصول جایگزین';
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title: shareTitle, url: shareUrl });
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+    } catch {
+      /* user cancelled or unsupported */
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -1016,6 +1044,7 @@ function AlternativeBottomSheet({
               </button>
 
               <button
+                onClick={handleShare}
                 className="flex items-center justify-center transition-all active:scale-95"
                 style={{
                   width: 'var(--btn-dark-h-mobile)',

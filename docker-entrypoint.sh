@@ -33,6 +33,8 @@ window.__APP_CONFIG__ = {
 EOF
 
 write_config_value VITE_API_BASE_URL "${VITE_API_BASE_URL:-}"
+write_config_value VITE_PUBLIC_MEDIA_BASE_URL "${VITE_PUBLIC_MEDIA_BASE_URL:-}"
+write_config_value VITE_PUBLIC_MEDIA_BUCKET "${VITE_PUBLIC_MEDIA_BUCKET:-}"
 write_config_value VITE_API_TIMEOUT "${VITE_API_TIMEOUT:-}"
 write_config_value VITE_API_IMAGE_PROCESSING_TIMEOUT "${VITE_API_IMAGE_PROCESSING_TIMEOUT:-}"
 write_config_value VITE_UMAMI_SRC "${VITE_UMAMI_SRC:-}"
@@ -53,6 +55,10 @@ API_ORIGIN=$(origin_from_url "${VITE_API_BASE_URL:-https://api.myhoma.ir}")
 # Umami needs its origin in script-src (to load script.js) AND connect-src
 # (the tracker POSTs collected data to {origin}/api/send).
 UMAMI_ORIGIN=$(origin_from_url "${VITE_UMAMI_SRC:-https://analytics.myhoma.ir}")
+# Media origins — image download/share fetch() bytes from the CDN (public) and
+# the direct-MinIO host (presigned private), so both need to be in connect-src.
+PUBLIC_MEDIA_ORIGIN=$(origin_from_url "${VITE_PUBLIC_MEDIA_BASE_URL:-}")
+PRIVATE_MEDIA_ORIGIN=$(origin_from_url "${VITE_PRIVATE_MEDIA_BASE_URL:-}")
 
 CONNECT_SRC="'self'"
 if [ -n "$API_ORIGIN" ]; then
@@ -60,6 +66,12 @@ if [ -n "$API_ORIGIN" ]; then
 fi
 if [ -n "$UMAMI_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $UMAMI_ORIGIN"
+fi
+if [ -n "$PUBLIC_MEDIA_ORIGIN" ]; then
+  CONNECT_SRC="$CONNECT_SRC $PUBLIC_MEDIA_ORIGIN"
+fi
+if [ -n "$PRIVATE_MEDIA_ORIGIN" ]; then
+  CONNECT_SRC="$CONNECT_SRC $PRIVATE_MEDIA_ORIGIN"
 fi
 
 SCRIPT_SRC="'self' 'unsafe-inline'"

@@ -41,7 +41,7 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
         {/* Badge */}
         <div className="absolute top-4 right-4 z-10">
           <div className="px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
-            <span className="text-[10px] font-bold text-white uppercase tracking-wider">{result.type === 'studio' ? 'استودیو' : 'Try-On'}</span>
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">{result.type === 'studio' ? 'استودیو' : 'تری‌آن'}</span>
           </div>
         </div>
 

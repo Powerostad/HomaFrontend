@@ -271,16 +271,19 @@ export interface MatchedProduct {
 // =============================================================================
 
 /**
- * Get full URL for session images (room or redesigned)
+ * Get the URL for a session image (room or redesigned).
  *
- * Handles both relative paths and full URLs from backend:
- * - Relative paths: Constructs URL using frontend's apiConfig.baseURL
- * - Full URLs with /api/products/images/: Extracts path and uses frontend's apiConfig.baseURL
- *   (fixes port mismatch between backend CDN_BASE_URL and actual API server)
+ * Session images are private and the backend returns a SigV4 presigned URL.
+ * A presigned URL MUST be used verbatim — reparsing or rewriting it (host,
+ * path, query) breaks the signature. This function is therefore a passthrough:
+ * a full URL is returned unchanged; only a bare object path (legacy responses)
+ * is turned into a URL.
+ *
+ * The `options` argument is accepted for backward compatibility but ignored.
  */
 export function getSessionImageUrl(
   imagePath: string | null | undefined,
-  options?: {
+  _options?: {
     width?: number;
     height?: number;
     quality?: number;
@@ -288,31 +291,13 @@ export function getSessionImageUrl(
 ): string | null {
   if (!imagePath) return null;
 
-  let path = imagePath;
-
-  // If it's a full URL, extract the path portion after /api/products/images/
-  // This fixes port mismatch when backend CDN_BASE_URL differs from actual API port
+  // Presigned / full URL — return verbatim, never rewrite (would break SigV4).
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    const imagePathMarker = '/api/products/images/';
-    const markerIndex = imagePath.indexOf(imagePathMarker);
-    if (markerIndex !== -1) {
-      // Extract path after the marker (e.g., "products/20/uuid.jpg" or "sessions/redesign/uuid.jpg")
-      path = imagePath.substring(markerIndex + imagePathMarker.length);
-    } else {
-      // Not an image serving URL - return as-is (e.g., external URLs)
-      return imagePath;
-    }
+    return imagePath;
   }
 
-  const params = new URLSearchParams();
-  if (options?.width) params.set('w', String(options.width));
-  if (options?.height) params.set('h', String(options.height));
-  if (options?.quality) params.set('q', String(options.quality));
-
-  const base = `${apiConfig.baseURL}/products/images/${path}`;
-  const queryString = params.toString();
-
-  return queryString ? `${base}?${queryString}` : base;
+  // Legacy bare object path — fall back to the deprecated Django image route.
+  return `${apiConfig.baseURL}/products/images/${imagePath}`;
 }
 
 /**

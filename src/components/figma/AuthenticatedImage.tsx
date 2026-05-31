@@ -1,156 +1,71 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { fetchAuthenticatedImage } from '../../utils/apiClient';
 
 const ERROR_IMG_SRC =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
 
-// Module-level cache: URL (with size params) -> blob URL
-// Prevents duplicate fetches when same image is used in multiple components
-const blobUrlCache = new Map<string, string>();
-
-/**
- * Build cache key from src and size parameters
- */
-function buildCacheKey(src: string, width?: number, height?: number, quality?: number): string {
-  const parts = [src];
-  if (width) parts.push(`w=${width}`);
-  if (height) parts.push(`h=${height}`);
-  if (quality) parts.push(`q=${quality}`);
-  return parts.join('|');
-}
-
-/**
- * Build fetch URL with size parameters
- */
-function buildFetchUrl(src: string, width?: number, height?: number, quality?: number): string {
-  if (!width && !height && !quality) {
-    return src;
-  }
-
-  try {
-    const url = new URL(src, window.location.origin);
-    if (width) url.searchParams.set('w', String(width));
-    if (height) url.searchParams.set('h', String(height));
-    if (quality) url.searchParams.set('q', String(quality));
-    return url.toString();
-  } catch {
-    // If URL parsing fails, return original src
-    return src;
-  }
-}
-
 interface AuthenticatedImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src' | 'width' | 'height'> {
-  /** The image URL that requires authentication */
+  /** The image URL — a public CDN URL or a presigned URL. */
   src: string;
-  /** Optional fallback image URL for unauthenticated fallback */
+  /** Optional fallback image URL shown if the image fails to load. */
   fallbackSrc?: string;
-  /** Whether to skip authentication (use regular img loading) */
+  /** @deprecated No longer used — images load directly via <img>. */
   skipAuth?: boolean;
-  /** Requested image width (for backend optimization) */
+  /** @deprecated No-op — resizing is server-side (eager variants). */
   imageWidth?: number;
-  /** Requested image height (for backend optimization) */
+  /** @deprecated No-op — resizing is server-side (eager variants). */
   imageHeight?: number;
-  /** Requested image quality 1-100 (for backend optimization) */
+  /** @deprecated No-op — resizing is server-side (eager variants). */
   imageQuality?: number;
 }
 
 /**
  * AuthenticatedImage component
  *
- * Fetches images from protected API endpoints using JWT authentication.
- * Regular <img> tags don't send Authorization headers, so this component
- * uses fetch() with headers and converts the response to a blob URL.
- *
- * Features:
- * - Module-level caching to prevent duplicate fetches
- * - Size parameters for backend image optimization
- * - Automatic cleanup of blob URLs
- * - Supports ref forwarding for direct image element access
+ * Renders an image with a plain <img> tag. Images are served directly from the
+ * CDN (public) or via presigned URLs (private) — no Authorization header is
+ * needed, so no fetch()/blob indirection. Kept as a thin wrapper purely so the
+ * many existing call sites (and their loading/error UX) stay unchanged.
  */
 export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImageProps>(function AuthenticatedImage({
   src,
   fallbackSrc,
-  skipAuth = false,
-  imageWidth,
-  imageHeight,
-  imageQuality,
+  // Deprecated props — destructured so they are not spread onto the DOM node.
+  skipAuth: _skipAuth,
+  imageWidth: _imageWidth,
+  imageHeight: _imageHeight,
+  imageQuality: _imageQuality,
   alt,
   style,
   className,
   ...rest
 }, ref) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [didError, setDidError] = useState(false);
 
+  // Reset load/error state whenever the source changes.
   useEffect(() => {
-    // Reset state when src changes
-    setBlobUrl(null);
     setIsLoading(true);
     setDidError(false);
+  }, [src]);
 
-    if (!src) {
-      setIsLoading(false);
-      setDidError(true);
-      return;
+  // Missing src — show the error placeholder.
+  if (!src || didError) {
+    if (fallbackSrc && !didError) {
+      // (fallbackSrc with no error is unreachable, kept for clarity)
     }
-
-    // If skipAuth, we don't need to fetch with headers
-    if (skipAuth) {
-      setBlobUrl(src);
-      setIsLoading(false);
-      return;
+    const resolvedSrc = didError && fallbackSrc ? fallbackSrc : null;
+    if (resolvedSrc) {
+      return (
+        <img
+          ref={ref}
+          src={resolvedSrc}
+          alt={alt}
+          className={className}
+          style={style}
+          {...rest}
+        />
+      );
     }
-
-    // Check cache first
-    const cacheKey = buildCacheKey(src, imageWidth, imageHeight, imageQuality);
-    if (blobUrlCache.has(cacheKey)) {
-      setBlobUrl(blobUrlCache.get(cacheKey)!);
-      setIsLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    let objectUrl: string | null = null;
-
-    const loadImage = async () => {
-      try {
-        // Build URL with size parameters
-        const fetchUrl = buildFetchUrl(src, imageWidth, imageHeight, imageQuality);
-        objectUrl = await fetchAuthenticatedImage(fetchUrl);
-
-        if (isMounted) {
-          // Cache the blob URL
-          blobUrlCache.set(cacheKey, objectUrl);
-          setBlobUrl(objectUrl);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('[AuthenticatedImage] Failed to load:', src, error);
-        if (isMounted) {
-          // Try fallback if available
-          if (fallbackSrc) {
-            setBlobUrl(fallbackSrc);
-          }
-          setDidError(true);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadImage();
-
-    // Cleanup: Don't revoke blob URLs since they're cached and shared
-    return () => {
-      isMounted = false;
-      // Note: We don't revoke blob URLs here because they're cached
-      // and may be used by other components. Memory cleanup happens
-      // naturally when the page is refreshed.
-    };
-  }, [src, skipAuth, fallbackSrc, imageWidth, imageHeight, imageQuality]);
-
-  // Error state
-  if (didError && !blobUrl) {
     return (
       <div
         className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
@@ -163,28 +78,29 @@ export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImag
     );
   }
 
-  // Loading state - show placeholder with same dimensions
-  if (isLoading) {
-    return (
-      <div
-        className={`inline-block image-loading ${className ?? ''}`}
-        style={style}
-        role="img"
-        aria-label={alt || 'در حال بارگذاری...'}
-      />
-    );
-  }
-
-  // Success state
   return (
-    <img
-      ref={ref}
-      src={blobUrl || undefined}
-      alt={alt}
-      className={className}
-      style={style}
-      {...rest}
-      onError={() => setDidError(true)}
-    />
+    <>
+      {isLoading && (
+        <div
+          className={`inline-block image-loading ${className ?? ''}`}
+          style={style}
+          role="img"
+          aria-label={alt || 'در حال بارگذاری...'}
+        />
+      )}
+      <img
+        ref={ref}
+        src={src}
+        alt={alt}
+        className={className}
+        style={isLoading ? { ...style, display: 'none' } : style}
+        {...rest}
+        onLoad={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setDidError(true);
+        }}
+      />
+    </>
   );
 });

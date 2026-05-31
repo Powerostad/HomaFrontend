@@ -1001,27 +1001,38 @@ export async function apiDelete<T>(
 // =============================================================================
 
 /**
- * Fetch an image URL with authentication headers and return a blob URL
- * This is needed because <img> tags don't send Authorization headers
+ * Fetch an image URL and return a blob URL.
  *
- * @param imageUrl - The API URL for the image (can be full URL or relative path)
- * @returns Object URL (blob:...) that can be used in <img src>
+ * Images are now served directly from the CDN (public) or via presigned URLs
+ * (private), so a plain <img> needs no auth. This helper is only for the cases
+ * that genuinely need the bytes in JS — sharing a File and downloading.
+ *
+ * Auth headers are attached ONLY when the request targets our own API (the
+ * deprecated Django image route). For presigned/CDN URLs, sending an
+ * Authorization header would break SigV4 signature validation, so no custom
+ * headers are sent. Cross-origin fetches require MinIO/CDN CORS to allow the
+ * frontend origin (see backend/docs/cdn-config.md).
+ *
+ * @param imageUrl - A presigned/CDN image URL, or a deprecated API image URL.
+ * @returns Object URL (blob:...) that can be used in <img src> or downloaded.
  */
 export async function fetchAuthenticatedImage(imageUrl: string): Promise<string> {
-  const tokens = getStoredTokens();
   const headers: Record<string, string> = {};
 
-  if (tokens?.access) {
-    headers['Authorization'] = `Bearer ${tokens.access}`;
-  }
-
-  try {
-    const sessionId = localStorage.getItem('homa_session_id');
-    if (sessionId) {
-      headers['X-Homa-Session'] = sessionId;
+  // Only our own API needs the JWT; presigned/CDN URLs are self-authenticating.
+  if (imageUrl.startsWith(appConfig.apiBaseUrl)) {
+    const tokens = getStoredTokens();
+    if (tokens?.access) {
+      headers['Authorization'] = `Bearer ${tokens.access}`;
     }
-  } catch {
-    // localStorage unavailable
+    try {
+      const sessionId = localStorage.getItem('homa_session_id');
+      if (sessionId) {
+        headers['X-Homa-Session'] = sessionId;
+      }
+    } catch {
+      // localStorage unavailable
+    }
   }
 
   const response = await fetch(imageUrl, { headers });

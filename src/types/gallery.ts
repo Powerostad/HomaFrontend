@@ -70,6 +70,10 @@ export interface BackendGalleryItem {
   product_image_path: string | null;
   customer_image_path: string;
   result_image_path: string;
+  // Fully-formed URLs from backend: product = public CDN, customer/result = presigned.
+  product_image_url?: string | null;
+  customer_image_url?: string | null;
+  result_image_url?: string | null;
   score: 1 | 2 | 3 | null; // 1=Good, 2=Neutral, 3=Bad
   created_at: string;
   claimed_at: string | null;
@@ -226,12 +230,21 @@ export const GALLERY_STORAGE_KEYS = {
 // =============================================================================
 
 /**
- * Get full image URL from path
- * Uses the backend image serving endpoint with optional resize
+ * Resolve a gallery image URL.
+ *
+ * The backend now returns fully-formed URLs (public CDN or presigned). This
+ * helper is passthrough-tolerant: a full URL is returned verbatim — never
+ * rewritten, since rewriting a presigned URL breaks its signature. A bare
+ * object path (legacy responses) falls back to the deprecated Django route.
+ *
+ * The `width` argument is accepted for backward compatibility but ignored.
  */
-export function getImageUrl(path: string, width?: number): string {
-  const base = `${apiConfig.baseURL}/products/images/${path}`;
-  return width ? `${base}?w=${width}` : base;
+export function getImageUrl(path: string, _width?: number): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  return `${apiConfig.baseURL}/products/images/${path}`;
 }
 
 /**
@@ -302,9 +315,14 @@ export function transformBackendGalleryItem(
     productId: backendItem.product_id != null ? String(backendItem.product_id) : null,
     productName: backendItem.product_name,
     productCategory: backendItem.product_category,
-    productImageUrl: backendItem.product_image_path ? getImageUrl(backendItem.product_image_path) : null,
-    customerImageUrl: getImageUrl(backendItem.customer_image_path),
-    resultImageUrl: getImageUrl(backendItem.result_image_path),
+    // Prefer the fully-formed URLs from the backend; fall back to building from
+    // the bare object path for older responses.
+    productImageUrl: backendItem.product_image_url
+      ?? (backendItem.product_image_path ? getImageUrl(backendItem.product_image_path) : null),
+    customerImageUrl: backendItem.customer_image_url
+      ?? getImageUrl(backendItem.customer_image_path),
+    resultImageUrl: backendItem.result_image_url
+      ?? getImageUrl(backendItem.result_image_path),
     score: backendItem.score,
     createdAt: backendItem.created_at,
     claimedAt: backendItem.claimed_at,

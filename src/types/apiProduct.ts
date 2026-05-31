@@ -7,8 +7,11 @@
  * This file contains types that match the actual backend API responses.
  */
 
-import { apiConfig } from '@/utils/apiClient';
+import { appConfig } from '@/config/appConfig';
 import type { Product } from './product';
+
+/** MinIO bucket name for path-style public CDN URLs. */
+const PUBLIC_MEDIA_BUCKET = appConfig.publicMediaBucket;
 
 // =============================================================================
 // Backend Response Types
@@ -33,6 +36,16 @@ export interface BackendProductVariant {
   is_default: boolean;
 }
 
+/**
+ * Public CDN URLs for the eagerly-generated product image variants.
+ * Use `card` for grid/thumbnails, `detail` for product pages.
+ */
+export interface ProductImageUrls {
+  card: string | null;
+  detail: string | null;
+  original: string | null;
+}
+
 export interface BackendProduct {
   id: number;
   name: string;
@@ -41,7 +54,8 @@ export interface BackendProduct {
   price: number;
   image_path: string;
   image_version?: number;
-  image_url: string;  // Full URL from backend
+  image_url: string;  // Full public CDN URL from backend (detail variant)
+  image_urls?: ProductImageUrls;  // Variant URL map: { card, detail, original }
   unique_link: string;
   shop_name: string;
   shop_slug: string;
@@ -105,6 +119,7 @@ export interface APIProduct {
   categoryDisplay: string;
   price: number;
   imageUrl: string;
+  imageUrls?: ProductImageUrls;
   imagePath: string;
   uniqueLink: string;
   shopName: string;
@@ -178,20 +193,20 @@ export interface ProductDetailResult {
 /**
  * Get full URL for product image with optional resize parameters
  *
- * @param imagePath - The image_path from backend (e.g., "products/2024/01/15/abc123.jpg")
- * @param options - Resize options (width, height, quality)
+ * Product images are now served directly from the CDN. The backend returns a
+ * fully-formed `image_url`, so prefer that. This helper is a passthrough-tolerant
+ * fallback: a value that is already a full URL is returned unchanged; a bare
+ * MinIO object path is turned into a public CDN URL.
+ *
+ * The `options` argument is accepted for backward compatibility but ignored —
+ * resizing is done server-side via fixed variants (see ProductImageUrls).
+ *
+ * @param imagePath - A full image URL, or a bare object path ("products/uuid.jpg")
  * @returns Full URL to the image
- *
- * @example
- * getProductImageUrl("products/uuid.jpg")
- * // => "http://localhost:8000/api/products/images/products/uuid.jpg"
- *
- * getProductImageUrl("products/uuid.jpg", { width: 300 })
- * // => "http://localhost:8000/api/products/images/products/uuid.jpg?w=300"
  */
 export function getProductImageUrl(
   imagePath: string,
-  options?: {
+  _options?: {
     width?: number;
     height?: number;
     quality?: number;
@@ -203,16 +218,14 @@ export function getProductImageUrl(
     return '';
   }
 
-  const params = new URLSearchParams();
+  // Already a full URL (CDN or presigned) — never rewrite it.
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
 
-  if (options?.width) params.set('w', String(options.width));
-  if (options?.height) params.set('h', String(options.height));
-  if (options?.quality) params.set('q', String(options.quality));
-
-  const base = `${apiConfig.baseURL}/products/images/${imagePath}`;
-  const queryString = params.toString();
-
-  return queryString ? `${base}?${queryString}` : base;
+  // Bare object path → build a public CDN URL (path-style, bucket included).
+  const base = appConfig.publicMediaBaseUrl.replace(/\/$/, '');
+  return `${base}/${PUBLIC_MEDIA_BUCKET}/${imagePath}`;
 }
 
 /**
@@ -245,7 +258,10 @@ export function transformBackendProduct(backendProduct: BackendProduct): APIProd
     category: backendProduct.category,
     categoryDisplay: backendProduct.category_display,
     price: backendProduct.price,
-    imageUrl: getProductImageUrl(backendProduct.image_path),  // Use image serving endpoint
+    // Prefer the fully-formed CDN URL from the backend; fall back to building
+    // one from the bare object path for older responses.
+    imageUrl: backendProduct.image_url || getProductImageUrl(backendProduct.image_path),
+    imageUrls: backendProduct.image_urls,
     imagePath: backendProduct.image_path,
     uniqueLink: backendProduct.unique_link,
     shopName: backendProduct.shop_name,
