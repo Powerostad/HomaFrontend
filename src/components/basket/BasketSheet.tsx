@@ -29,7 +29,8 @@ import { Button } from '../ui/button';
 import { useBasket } from '../../context/AppProviders';
 import { formatPriceFromRial, toPersianDigits } from '../../utils/formatters';
 import { CheckoutConfirmModal } from './CheckoutConfirmModal';
-import type { BasketItem, CheckoutResult } from '../../types/basket';
+import { CheckoutReviewModal } from './CheckoutReviewModal';
+import type { BasketItem, CheckoutChange, CheckoutResult } from '../../types/basket';
 
 function BasketLine({
   item,
@@ -159,13 +160,30 @@ export function BasketSheet() {
     null
   );
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // Review step (price/availability drift since add) — remembers which shop
+  // scope to re-run once the user confirms.
+  const [reviewChanges, setReviewChanges] = useState<CheckoutChange[]>([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewShopId, setReviewShopId] = useState<number | undefined>(undefined);
 
-  const runCheckout = async (shopId?: number) => {
-    const result = await checkout(undefined, shopId);
-    if (result && result.total_items > 0) {
+  const runCheckout = async (shopId?: number, acceptChanges = false) => {
+    const result = await checkout(undefined, shopId, acceptChanges);
+    if (!result) return;
+    if (result.requires_review) {
+      setReviewChanges(result.changes);
+      setReviewShopId(shopId);
+      setReviewOpen(true);
+      return;
+    }
+    if (result.total_items > 0) {
       setCheckoutResult(result);
       setCheckoutOpen(true);
     }
+  };
+
+  const handleConfirmReview = async () => {
+    setReviewOpen(false);
+    await runCheckout(reviewShopId, true);
   };
 
   const isEmpty = itemCount === 0;
@@ -259,6 +277,14 @@ export function BasketSheet() {
           )}
         </SheetContent>
       </Sheet>
+
+      <CheckoutReviewModal
+        changes={reviewChanges}
+        open={reviewOpen}
+        busy={isMutating}
+        onClose={() => setReviewOpen(false)}
+        onConfirm={() => void handleConfirmReview()}
+      />
 
       <CheckoutConfirmModal
         result={checkoutResult}

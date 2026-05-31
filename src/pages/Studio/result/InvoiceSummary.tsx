@@ -8,7 +8,7 @@
  * Uses design tokens from globals.css throughout.
  */
 import React, { useMemo } from 'react';
-import { ShoppingBag, Check, Minus, Plus, Star, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Check, Minus, Plus, Star, ArrowLeft, Loader2 } from 'lucide-react';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import type { CategoryGroup } from './types';
 import type { Product } from '../components/ProductDetailSheet';
@@ -35,6 +35,7 @@ interface InvoiceSummaryProps {
   onToggleAccepted?: (itemId: number) => void;
   onToggleBasketProduct?: (productId: string) => void;
   onFinalize?: () => void;
+  isFinalizing?: boolean;
   onUpdateQuantity?: (itemId: number, newQuantity: number) => void;
   onUpdateProductQuantity?: (productId: string, newQuantity: number) => void;
   productQuantityOverrides?: Map<string, number>;
@@ -45,6 +46,7 @@ export function InvoiceSummary({
   basketProductIds,
   onToggleBasketProduct,
   onFinalize,
+  isFinalizing = false,
   onUpdateQuantity,
   onUpdateProductQuantity,
   productQuantityOverrides = new Map(),
@@ -462,7 +464,8 @@ export function InvoiceSummary({
       {hasItems && onFinalize && (
         <button
           onClick={onFinalize}
-          className="w-full flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 active:scale-[0.98]"
+          disabled={isFinalizing}
+          className="w-full flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-80"
           style={{
             height: 'var(--btn-dark-h-mobile)',
             marginTop: 'var(--spacing-md)',
@@ -470,6 +473,7 @@ export function InvoiceSummary({
             color: 'var(--btn-dark-text)',
             border: 'none',
             borderRadius: '0px',
+            cursor: isFinalizing ? 'wait' : 'pointer',
             fontFamily: FONT,
             fontSize: 'var(--text-label-size)',
             fontWeight: 'var(--font-weight-semibold)',
@@ -486,8 +490,17 @@ export function InvoiceSummary({
           }}
           aria-label="ادامه به پرداخت"
         >
-          <span>ادامه به پرداخت</span>
-          <ArrowLeft size={16} strokeWidth={2} />
+          {isFinalizing ? (
+            <>
+              <span>در حال آماده‌سازی…</span>
+              <Loader2 size={16} strokeWidth={2} className="animate-spin" />
+            </>
+          ) : (
+            <>
+              <span>ادامه به پرداخت</span>
+              <ArrowLeft size={16} strokeWidth={2} />
+            </>
+          )}
         </button>
       )}
     </section>

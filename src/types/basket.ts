@@ -79,10 +79,23 @@ export interface CheckoutShopGroup {
   items: CheckoutLine[];
 }
 
+/** A price/availability change (vs. the source site's last crawl) the user
+ *  must confirm before checkout proceeds. */
+export interface CheckoutChange {
+  basket_item_id: string;
+  product_name: string;
+  change_type: 'price' | 'unavailable';
+  old_price_rial: number;
+  new_price_rial: number | null;
+}
+
 export interface CheckoutResult {
   shops: CheckoutShopGroup[];
   total_items: number;
   total_shops: number;
+  /** When true, no links were generated — `changes` need confirmation. */
+  requires_review: boolean;
+  changes: CheckoutChange[];
 }
 
 /** Origin pointers passed when adding an item, for conversion attribution. */

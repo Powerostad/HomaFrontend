@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useStudio } from '@/context/StudioContext';
 import { useAuth } from '@/context/AuthContext';
 import { useUpload } from '@/context/AppProviders';
+import { useBasket } from '@/context/BasketContext';
 import { toast } from 'sonner';
 import {
   prepareDownload,
@@ -25,7 +26,6 @@ import {
   type PreparedDownload,
 } from '@/utils/downloadUtils';
 // formatPriceFromRial available for consumers: import from '@/utils/formatters'
-import { apiPost, apiConfig } from '@/utils/apiClient';
 import {
   trackStudioResultViewed,
   trackStudioResultAction,
@@ -141,6 +141,7 @@ export interface UseStudioResultReturn {
   handleConfirmDownload: () => Promise<void>;
   handleCancelDownload: () => void;
   handleFinalize: () => void;
+  isFinalizing: boolean;
   handleProductClick: (product: Product) => void;
   handleRequestRedesignCredit: () => Promise<void>;
   isRequestingRedesignCredit: boolean;
@@ -177,6 +178,13 @@ export function useStudioResult(): UseStudioResultReturn {
     clearActiveSession,
   } = useStudio();
   const { selectedFile } = useUpload();
+  const {
+    basket,
+    addItem: addToServerBasket,
+    removeItem: removeFromServerBasket,
+    updateQuantity: updateServerQuantity,
+    openBasket,
+  } = useBasket();
 
   // =========================================================================
   // Core State
@@ -185,6 +193,9 @@ export function useStudioResult(): UseStudioResultReturn {
   const [phase, setPhase] = useState<ResultPhase>('analysis');
   const [acceptedItems, setAcceptedItems] = useState<Set<number>>(new Set());
   const [basketProductIds, setBasketProductIds] = useState<Set<string>>(new Set());
+  // Mirror for reading the latest selection synchronously inside callbacks.
+  const basketProductIdsRef = useRef(basketProductIds);
+  basketProductIdsRef.current = basketProductIds;
   const [quantityOverrides, setQuantityOverrides] = useState<Map<number, number>>(new Map());
   const [productQuantityOverrides, setProductQuantityOverrides] = useState<Map<string, number>>(new Map());
   const [checklistCheckedIds, setChecklistCheckedIds] = useState<Set<number>>(new Set());
@@ -205,11 +216,11 @@ export function useStudioResult(): UseStudioResultReturn {
   const [showExitDecision, setShowExitDecision] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRequestingRedesignCredit, setIsRequestingRedesignCredit] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [topPickUrls, setTopPickUrls] = useState<Record<string, string>>({});
-
-  // Track which product IDs have already been fetched to avoid duplicate requests
-  const fetchedTrackingUrls = useRef<Set<string>>(new Set());
+  // Guards against double-submit — the add endpoint increments quantity, so a
+  // second concurrent finalize would double-count.
+  const finalizingRef = useRef(false);
 
   // Card-level UI toggle state
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
@@ -264,6 +275,10 @@ export function useStudioResult(): UseStudioResultReturn {
     });
   }, []);
 
+  // Local selection only — drives the studio collection/invoice summary UI.
+  // The server-authoritative basket is reconciled once, at checkout
+  // (handleFinalize), so we never double-count via the idempotent-increment
+  // add endpoint and never push items the user hasn't committed to buying.
   const toggleBasketProduct = useCallback((productId: string) => {
     setBasketProductIds(prev => {
       const next = new Set(prev);
@@ -610,53 +625,6 @@ export function useStudioResult(): UseStudioResultReturn {
     }
   }, [selectedFile, activeSession?.roomImageUrl]);
 
-  // Pre-fetch tracking URLs for top pick products (with deduplication)
-  useEffect(() => {
-    if (categoryGroups.length === 0) return;
-
-    const fetchUrls = async () => {
-      const urls: Record<string, string> = {};
-      const currentSessionId = activeSessionId || sessionId || '';
-
-      // Filter to only products not yet fetched
-      const productsToFetch = categoryGroups
-        .map(g => g.products[0])
-        .filter(p => p?.uniqueLink && !fetchedTrackingUrls.current.has(p.id));
-
-      if (productsToFetch.length === 0) return;
-
-      await Promise.all(
-        productsToFetch.map(async (topPick) => {
-          if (!topPick?.uniqueLink) return;
-
-          try {
-            const response = await apiPost<{
-              click_id: string | null;
-              tracking_url: string | null;
-            }>('/tracking/clicks/', {
-              product_id: topPick.uniqueLink,
-              source_context: 'studio',
-              redesign_session_id: currentSessionId || null,
-            });
-
-            if (response.success && response.data?.click_id) {
-              urls[topPick.id] = `${apiConfig.baseURL}/tracking/go/${response.data.click_id}/`;
-              fetchedTrackingUrls.current.add(topPick.id);
-            }
-          } catch {
-            // Will fall back to product.link in handleFinalize
-          }
-        })
-      );
-
-      if (Object.keys(urls).length > 0) {
-        setTopPickUrls(prev => ({ ...prev, ...urls }));
-      }
-    };
-
-    fetchUrls();
-  }, [categoryGroups, sessionId, activeSessionId]);
-
   // =========================================================================
   // Handlers
   // =========================================================================
@@ -739,20 +707,78 @@ export function useStudioResult(): UseStudioResultReturn {
   }, [preparedDownloadData]);
 
   // Finalize: open product pages for all accepted items with basket products
-  const handleFinalize = useCallback(() => {
+  const handleFinalize = useCallback(async () => {
+    if (finalizingRef.current) return;
     const currentSessionId = sessionId || activeSessionId || '';
     trackStudioResultAction({ action: 'finalize', session_id: currentSessionId });
 
-    categoryGroups
-      .filter(g => g.actionStatus === 'available' && g.products.length > 0)
-      .forEach(group => {
-        // Open the main product or first basket product for this group
-        const mainProd = group.products[0];
-        if (!mainProd) return;
-        const url = topPickUrls[mainProd.id] || mainProd.link;
-        if (url) window.open(url, '_blank', 'noopener,noreferrer');
-      });
-  }, [categoryGroups, topPickUrls, sessionId, activeSessionId]);
+    // Reconcile the local studio selection into the server-authoritative basket,
+    // then open the BasketSheet to check out. We commit here (not on every
+    // toggle) so the add endpoint — which increments quantity — is hit exactly
+    // once per product, and so we never push items the user hasn't committed to.
+    finalizingRef.current = true;
+    setIsFinalizing(true);
+    try {
+      // Desired selection: unique_link -> quantity.
+      const desired = new Map<string, number>();
+      for (const group of categoryGroupsRef.current) {
+        if (group.actionStatus !== 'available' || group.products.length === 0) continue;
+        group.products.forEach((p, i) => {
+          if (!basketProductIdsRef.current.has(p.id) || !p.uniqueLink) return;
+          const qty = i === 0
+            ? (group.quantity || 1)
+            : (productQuantityOverrides.get(p.id) ?? group.quantity ?? 1);
+          desired.set(p.uniqueLink, qty);
+        });
+      }
+
+      // Current studio-sourced server items: unique_link -> { id, qty }.
+      const serverStudioItems = new Map<string, { id: string; qty: number }>();
+      for (const g of basket.shop_groups) {
+        for (const it of g.items) {
+          if (it.source_context === 'studio') {
+            serverStudioItems.set(it.product_unique_link, { id: it.id, qty: it.quantity });
+          }
+        }
+      }
+
+      const ops: Promise<unknown>[] = [];
+      // Add new / fix quantity for selected items.
+      for (const [uniqueLink, qty] of desired) {
+        const existing = serverStudioItems.get(uniqueLink);
+        if (!existing) {
+          ops.push(addToServerBasket({
+            product_unique_link: uniqueLink,
+            source_context: 'studio',
+            redesign_session_id: currentSessionId || undefined,
+            quantity: qty,
+          }));
+        } else if (existing.qty !== qty) {
+          ops.push(updateServerQuantity(existing.id, qty));
+        }
+      }
+      // Drop studio items the user deselected (leaves items from other flows).
+      for (const [uniqueLink, { id }] of serverStudioItems) {
+        if (!desired.has(uniqueLink)) ops.push(removeFromServerBasket(id));
+      }
+
+      await Promise.all(ops);
+    } finally {
+      finalizingRef.current = false;
+      setIsFinalizing(false);
+    }
+
+    openBasket();
+  }, [
+    openBasket,
+    addToServerBasket,
+    removeFromServerBasket,
+    updateServerQuantity,
+    basket,
+    sessionId,
+    activeSessionId,
+    productQuantityOverrides,
+  ]);
 
   // Product click: enrich with category-level AI reasoning
   const handleProductClick = useCallback(
@@ -904,6 +930,7 @@ export function useStudioResult(): UseStudioResultReturn {
     handleConfirmDownload,
     handleCancelDownload,
     handleFinalize,
+    isFinalizing,
     handleProductClick,
     handleRequestRedesignCredit,
     isRequestingRedesignCredit,

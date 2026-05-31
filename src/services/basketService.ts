@@ -101,11 +101,13 @@ export async function mergeAnonymousBasket(
 /** POST /api/basket/checkout/ — build per-item tracking URLs grouped by shop. */
 export async function checkout(
   itemIds?: string[],
-  shopId?: number
+  shopId?: number,
+  acceptChanges = false
 ): Promise<ServiceResult<CheckoutResult>> {
   const body: Record<string, unknown> = {};
   if (itemIds && itemIds.length) body.item_ids = itemIds;
   if (shopId != null) body.shop_id = shopId;
+  if (acceptChanges) body.accept_changes = true;
   const res = await apiPost<CheckoutResult>('/basket/checkout/', body);
   return res.success
     ? { success: true, data: res.data }

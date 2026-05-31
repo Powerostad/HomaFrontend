@@ -48,7 +48,7 @@ interface BasketContextValue {
   removeItem: (itemId: string) => Promise<void>;
   clear: () => Promise<void>;
   mergeAfterLogin: (sessionId: string) => Promise<void>;
-  checkout: (itemIds?: string[], shopId?: number) => Promise<CheckoutResult | null>;
+  checkout: (itemIds?: string[], shopId?: number, acceptChanges?: boolean) => Promise<CheckoutResult | null>;
   confirmCheckout: () => Promise<void>;
 }
 
@@ -203,20 +203,26 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   );
 
   const checkout = useCallback(
-    (itemIds?: string[], shopId?: number): Promise<CheckoutResult | null> =>
+    (itemIds?: string[], shopId?: number, acceptChanges = false): Promise<CheckoutResult | null> =>
       runExclusive(async () => {
-        const res = await basketService.checkout(itemIds, shopId);
+        const res = await basketService.checkout(itemIds, shopId, acceptChanges);
         if (res.success && res.data) {
-          trackEvent('basket_checkout_initiated', {
-            shop_count: res.data.total_shops,
-            item_count: res.data.total_items,
-          });
+          // A review-required result re-reads the basket so the price/availability
+          // banners reflect the freshly-detected changes.
+          if (res.data.requires_review) {
+            await refresh();
+          } else {
+            trackEvent('basket_checkout_initiated', {
+              shop_count: res.data.total_shops,
+              item_count: res.data.total_items,
+            });
+          }
           return res.data;
         }
         toast.error(res.error || 'خطا در نهایی کردن خرید');
         return null;
       }),
-    [runExclusive]
+    [runExclusive, refresh]
   );
 
   const confirmCheckout = useCallback(

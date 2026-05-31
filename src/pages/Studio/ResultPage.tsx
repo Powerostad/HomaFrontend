@@ -398,6 +398,7 @@ export function StudioResultPage() {
           onToggleAccepted={state.toggleAcceptedItem}
           onToggleBasketProduct={state.toggleBasketProduct}
           onFinalize={state.handleFinalize}
+          isFinalizing={state.isFinalizing}
           onUpdateQuantity={state.updateItemQuantity}
           onUpdateProductQuantity={state.updateProductQuantity}
           productQuantityOverrides={state.productQuantityOverrides}
@@ -435,20 +436,22 @@ export function StudioResultPage() {
       dir="rtl"
       style={{ fontFamily: FONT, background: 'var(--editorial-stone)' }}
     >
-      {/* Mobile Header + Context */}
+      {/* Site Header (all breakpoints) + mobile-only Context lock */}
       {!state.isFullScreen && (
-        <div className="md:hidden">
+        <>
           <Header />
-          <ContextLock
-            projectName={state.projectName || 'پروژه طراحی'}
-            targetStyle={state.targetStyle}
-            variant="mobile"
-          />
-        </div>
+          <div className="md:hidden">
+            <ContextLock
+              projectName={state.projectName || 'پروژه طراحی'}
+              targetStyle={state.targetStyle}
+              variant="mobile"
+            />
+          </div>
+        </>
       )}
 
-      {/* Main Layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      {/* Main Layout — offset below the fixed site Header on desktop */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative md:pt-[var(--header-height)]">
         {/* Desktop Right Panel */}
         <div
           className="hidden md:flex flex-col h-full z-50 relative"
