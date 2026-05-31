@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { ProductVisualization } from "../../components/ProductVisualization";
 import { ProductDetailsModal } from "../../components/ProductDetailsModal";
@@ -27,6 +27,18 @@ export function VisualizationPage() {
   
   const [showDetails, setShowDetails] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+
+  // Build the local preview URL once per file (not every render) and revoke it
+  // on change/unmount so the blob doesn't leak.
+  const userObjectUrl = useMemo(
+    () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
+    [selectedFile]
+  );
+  useEffect(() => {
+    return () => {
+      if (userObjectUrl) URL.revokeObjectURL(userObjectUrl);
+    };
+  }, [userObjectUrl]);
 
   if (!product || !selectedFile) {
     setTimeout(() => navigate("/"), 0);
@@ -142,7 +154,7 @@ export function VisualizationPage() {
     <>
       <ProductVisualization
         product={product}
-        userImage={visualizedImageUrl || URL.createObjectURL(selectedFile)}
+        userImage={visualizedImageUrl || userObjectUrl || ''}
         fileName={selectedFile.name}
         placementSuccess={placementSuccess}
         onSave={() => handleActionClick("save")}

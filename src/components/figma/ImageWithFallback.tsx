@@ -15,7 +15,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
     setIsLoaded(true)
   }
 
-  const { src, alt, style, className, ...rest } = props
+  // Lazy + async-decode by default so off-screen grid images don't block.
+  // Above-fold/LCP callers override with loading="eager" / fetchPriority="high".
+  const { src, alt, style, className, loading = 'lazy', decoding = 'async', ...rest } = props
 
   if (didError) {
     return (
@@ -38,6 +40,8 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
       <img
         src={src}
         alt={alt}
+        loading={loading}
+        decoding={decoding}
         className={`${className ?? ''} transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={style}
         {...rest}

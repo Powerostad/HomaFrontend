@@ -74,6 +74,8 @@ export interface BackendGalleryItem {
   product_image_url?: string | null;
   customer_image_url?: string | null;
   result_image_url?: string | null;
+  // Per-tier presigned URLs for the result image { card, detail, original }.
+  result_image_urls?: { card: string | null; detail: string | null; original: string | null } | null;
   score: 1 | 2 | 3 | null; // 1=Good, 2=Neutral, 3=Bad
   created_at: string;
   claimed_at: string | null;
@@ -162,7 +164,8 @@ export interface GalleryItem {
   productCategory: string;
   productImageUrl: string | null;
   customerImageUrl: string;
-  resultImageUrl: string;
+  resultImageUrl: string;          // detail tier (~800px) for full / before-after view
+  resultThumbnailUrl: string;      // card tier (~400px) for grid cover
   score: 1 | 2 | 3 | null;
   createdAt: string;
   claimedAt: string | null;
@@ -321,7 +324,13 @@ export function transformBackendGalleryItem(
       ?? (backendItem.product_image_path ? getImageUrl(backendItem.product_image_path) : null),
     customerImageUrl: backendItem.customer_image_url
       ?? getImageUrl(backendItem.customer_image_path),
-    resultImageUrl: backendItem.result_image_url
+    // Detail tier for full view, card tier for grid; fall back to the single
+    // original URL then the bare object path for older backends.
+    resultImageUrl: backendItem.result_image_urls?.detail
+      ?? backendItem.result_image_url
+      ?? getImageUrl(backendItem.result_image_path),
+    resultThumbnailUrl: backendItem.result_image_urls?.card
+      ?? backendItem.result_image_url
       ?? getImageUrl(backendItem.result_image_path),
     score: backendItem.score,
     createdAt: backendItem.created_at,
@@ -342,7 +351,7 @@ export function toResultCardData(
   return {
     id: item.id,
     type: item.type,
-    coverImage: item.resultImageUrl,
+    coverImage: item.resultThumbnailUrl,
     productName: item.productName ?? (item.type === 'studio' ? 'طراحی استودیو' : ''),
     storeName: item.productCategory, // Using category as store name for now
     timestamp: formatTimestamp(item.createdAt),

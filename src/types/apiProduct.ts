@@ -10,9 +10,6 @@
 import { appConfig } from '@/config/appConfig';
 import type { Product } from './product';
 
-/** MinIO bucket name for path-style public CDN URLs. */
-const PUBLIC_MEDIA_BUCKET = appConfig.publicMediaBucket;
-
 // =============================================================================
 // Backend Response Types
 // =============================================================================
@@ -223,9 +220,11 @@ export function getProductImageUrl(
     return imagePath;
   }
 
-  // Bare object path → build a public CDN URL (path-style, bucket included).
-  const base = appConfig.publicMediaBaseUrl.replace(/\/$/, '');
-  return `${base}/${PUBLIC_MEDIA_BUCKET}/${imagePath}`;
+  // Bare object path (backend should normally return a full image_url; this is a
+  // safety fallback). Route through the backend image endpoint — depends only on
+  // the API base, never on frontend MinIO/CDN env, so it can't emit a wrong host.
+  const apiBase = appConfig.apiBaseUrl.replace(/\/$/, '');
+  return `${apiBase}/products/images/${imagePath}`;
 }
 
 /**
@@ -300,8 +299,10 @@ export function apiProductToProduct(apiProduct: APIProduct): Product {
     name: apiProduct.name,
     price: apiProduct.price,
     category: apiProduct.categoryDisplay,
-    images: [apiProduct.imageUrl],  // Convert single imageUrl to images array
-    thumbnail: apiProduct.imageUrl,
+    // Grids read `thumbnail` (card ≈400px), detail pages read `images[0]` (detail ≈800px).
+    images: [apiProduct.imageUrls?.detail ?? apiProduct.imageUrl],
+    thumbnail: apiProduct.imageUrls?.card ?? apiProduct.imageUrl,
+    imageUrls: apiProduct.imageUrls,
     brand: apiProduct.shopName,
     description: apiProduct.description,
     currency: 'تومان',

@@ -32,6 +32,13 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [error, setError] = useState(false);
 
+  // The webp/-mobile.webp sibling convention only exists for local static
+  // assets in public/. Remote/CDN URLs (and any URL with a query string, e.g.
+  // ?v= cache-bust or a presigned signature) have their variants elsewhere —
+  // munging the extension would point at a non-existent object (404 + wasted
+  // fetch), so serve those as a plain <img>.
+  const isRemote = /^https?:\/\//.test(src) || src.includes('?');
+
   // Extract base path and extension
   const lastDot = src.lastIndexOf('.');
   const basePath = lastDot > 0 ? src.substring(0, lastDot) : src;
@@ -40,7 +47,7 @@ export function OptimizedImage({
   const webpSrc = `${basePath}.webp`;
   const webpMobileSrc = `${basePath}-mobile.webp`;
 
-  if (error) {
+  if (isRemote || error) {
     // Fallback to original format if WebP fails
     return (
       <img
@@ -49,6 +56,7 @@ export function OptimizedImage({
         className={className}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
+        fetchPriority={priority ? 'high' : undefined}
         draggable={false}
       />
     );

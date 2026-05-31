@@ -48,7 +48,9 @@ export function OutputShowcase({
                     name: p.name,
                     category: p.category_display,
                     price: formatPriceFromRial(p.price, false),
-                    image: getProductImageUrl(p.image_path, { width: 300 }),
+                    // Prefer the backend-built CDN URL; only fall back to building
+                    // from the bare path for older responses.
+                    image: p.image_urls?.card ?? p.image_url ?? getProductImageUrl(p.image_path),
                 }));
                 setProducts(displayProducts);
             } else {

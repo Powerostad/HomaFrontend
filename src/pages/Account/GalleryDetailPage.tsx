@@ -251,6 +251,7 @@ export default function GalleryDetailPage() {
         // Try sharing with image file for Stories support
         const response = await fetchAuthenticatedImage(item.resultImageUrl);
         const blob = await fetch(response).then((r) => r.blob());
+        URL.revokeObjectURL(response); // release the blob URL once its bytes are read
         const file = new File([blob], `homa-${item.id}.jpg`, { type: 'image/jpeg' });
 
         if (navigator.canShare({ files: [file] })) {

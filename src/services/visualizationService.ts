@@ -43,6 +43,9 @@ export interface TaskStatusResponse {
   created_at: string;
   started_at?: string;
   image_path?: string;
+  // Backend-built presigned URLs — prefer these over building from image_path.
+  image_url?: string;
+  image_urls?: { card: string | null; detail: string | null; original: string | null } | null;
   image_id?: number;
   processing_time_ms?: number;
   error_code?: string;
@@ -287,7 +290,8 @@ export async function pollTaskStatus(
       return {
         success: true,
         data: {
-          imageUrl: getResultImageUrl(task.image_path!),
+          // Prefer the backend-built presigned URL; fall back to the proxy route.
+          imageUrl: task.image_url ?? getResultImageUrl(task.image_path!),
           imageId: task.image_id!,
           imagePath: task.image_path!,
         },

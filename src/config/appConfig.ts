@@ -1,7 +1,5 @@
 type RuntimeConfig = Partial<{
   VITE_API_BASE_URL: string;
-  VITE_PUBLIC_MEDIA_BASE_URL: string;
-  VITE_PUBLIC_MEDIA_BUCKET: string;
   VITE_API_TIMEOUT: string;
   VITE_API_IMAGE_PROCESSING_TIMEOUT: string;
   VITE_UMAMI_SRC: string;
@@ -47,11 +45,10 @@ function getNumber(key: keyof RuntimeConfig, fallback: number): number {
  */
 export const appConfig = {
   apiBaseUrl: getString('VITE_API_BASE_URL', 'http://localhost:8000'),
-  // Caching CDN host serving public product/shop images directly from MinIO.
-  // Backend now returns fully-formed image URLs, so these are only a fallback
-  // for any code path that still builds URLs from a bare object path.
-  publicMediaBaseUrl: getString('VITE_PUBLIC_MEDIA_BASE_URL', 'http://localhost:9000'),
-  publicMediaBucket: getString('VITE_PUBLIC_MEDIA_BUCKET', 'product-visualizer'),
+  // NOTE: media URLs come fully-formed from the backend (image_url/image_urls/
+  // presigned). The frontend never builds them from object paths or env, so
+  // there are no VITE_PUBLIC_MEDIA_* settings — any bare-path fallback routes
+  // through apiBaseUrl + /products/images/.
   apiTimeout: getNumber('VITE_API_TIMEOUT', 30000),
   apiImageProcessingTimeout: getNumber('VITE_API_IMAGE_PROCESSING_TIMEOUT', 180000),
   umamiSrc: getString('VITE_UMAMI_SRC', ''),

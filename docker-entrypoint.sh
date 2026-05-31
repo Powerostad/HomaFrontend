@@ -33,8 +33,9 @@ window.__APP_CONFIG__ = {
 EOF
 
 write_config_value VITE_API_BASE_URL "${VITE_API_BASE_URL:-}"
-write_config_value VITE_PUBLIC_MEDIA_BASE_URL "${VITE_PUBLIC_MEDIA_BASE_URL:-}"
-write_config_value VITE_PUBLIC_MEDIA_BUCKET "${VITE_PUBLIC_MEDIA_BUCKET:-}"
+# VITE_PUBLIC_MEDIA_* no longer feed the app (backend returns full media URLs);
+# VITE_PUBLIC_MEDIA_BASE_URL / VITE_PRIVATE_MEDIA_BASE_URL are still read below
+# for the CSP connect-src (download/share blob fetch), straight from the env.
 write_config_value VITE_API_TIMEOUT "${VITE_API_TIMEOUT:-}"
 write_config_value VITE_API_IMAGE_PROCESSING_TIMEOUT "${VITE_API_IMAGE_PROCESSING_TIMEOUT:-}"
 write_config_value VITE_UMAMI_SRC "${VITE_UMAMI_SRC:-}"

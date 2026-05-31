@@ -1,10 +1,13 @@
 // Product data types for Instagram-sourced products
 
+import type { ProductImageUrls } from './apiProduct';
+
 export interface Product {
   id: string;
   name: string;
   nameEn?: string;
   thumbnail: string;
+  imageUrls?: ProductImageUrls;  // Variant URL map { card, detail, original } from backend
   price?: number;
   priceRange?: {
     min: number;
