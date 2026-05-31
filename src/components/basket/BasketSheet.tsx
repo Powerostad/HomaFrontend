@@ -191,7 +191,12 @@ export function BasketSheet() {
   return (
     <>
       <Sheet open={isOpen} onOpenChange={(o) => !o && closeBasket()}>
-        <SheetContent side="left" className="w-full sm:max-w-md flex flex-col p-0" dir="rtl">
+        <SheetContent
+          side="left"
+          className="w-full sm:max-w-md flex flex-col p-0 z-modal"
+          overlayClassName="z-modal-backdrop"
+          dir="rtl"
+        >
           <SheetHeader className="px-5 py-4 border-b border-subtle">
             <SheetTitle className="flex items-center gap-2">
               <ShoppingBag size={18} />

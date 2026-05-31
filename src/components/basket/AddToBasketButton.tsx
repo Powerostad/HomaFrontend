@@ -28,8 +28,6 @@ interface AddToBasketButtonProps extends AddToBasketOriginRefs {
   variant?: 'default' | 'outline' | 'ghost' | 'secondary';
   size?: 'default' | 'sm' | 'lg';
   className?: string;
-  /** Open the basket sheet right after a successful add. */
-  openOnAdd?: boolean;
 }
 
 export function AddToBasketButton({
@@ -39,11 +37,10 @@ export function AddToBasketButton({
   variant = 'default',
   size = 'default',
   className = '',
-  openOnAdd = false,
   ...originRefs
 }: AddToBasketButtonProps) {
   const { t } = useTranslation();
-  const { basket, addItem, updateQuantity, openBasket } = useBasket();
+  const { basket, addItem, updateQuantity } = useBasket();
   const [isAdding, setIsAdding] = useState(false);
   // Optimistic flag: the button shows the stepper the instant it is tapped,
   // before the server round-trip resolves. Cleared on failure, and once the
@@ -80,7 +77,6 @@ export function AddToBasketButton({
         source_context: sourceContext,
         ...originRefs,
       });
-      if (ok && openOnAdd) openBasket();
       if (!ok) setOptimistic(false); // server rejected — revert to add button
     } finally {
       setIsAdding(false);

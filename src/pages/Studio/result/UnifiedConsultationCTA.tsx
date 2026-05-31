@@ -457,7 +457,7 @@ function UnifiedConsultationSheet({
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="fixed bottom-0 left-0 right-0 z-[9999] flex flex-col transition-transform duration-300"
+        className="fixed bottom-0 left-0 right-0 z-fixed flex flex-col transition-transform duration-300"
         style={{
           background: 'var(--surface)',
           borderTopLeftRadius: '16px',

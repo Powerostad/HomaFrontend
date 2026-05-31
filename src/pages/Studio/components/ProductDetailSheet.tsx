@@ -604,7 +604,6 @@ export function ProductDetailSheet({ product, isOpen, onClose, onReplace, altern
                     productUniqueLink={product.uniqueLink}
                     sourceContext="studio"
                     redesign_session_id={redesignSessionId || undefined}
-                    openOnAdd
                     className="flex-[2] h-[44px] rounded-full text-[12px] font-bold tracking-tight"
                   />
                 )}

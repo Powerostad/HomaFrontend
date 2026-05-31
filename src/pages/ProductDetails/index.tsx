@@ -277,7 +277,6 @@ export function ProductDetailsPage() {
                         sourceContext="product_page"
                         variant="outline"
                         size="lg"
-                        openOnAdd
                         className="flex-1 h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest"
                       />
                     )}

@@ -462,7 +462,6 @@ export function TryOnResultPage() {
                   processed_image_id={resultImageId || undefined}
                   variant="outline"
                   size="lg"
-                  openOnAdd
                   className="w-full py-5 font-bold uppercase tracking-wider text-[13px]"
                />
             )}
