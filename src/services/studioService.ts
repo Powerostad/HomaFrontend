@@ -413,6 +413,26 @@ function transformSessionListItem(apiSession: APIRedesignSession): SessionListIt
 // =============================================================================
 
 /**
+ * Read an image file's pixel dimensions. Returns null if it can't be decoded
+ * (server-side guard still applies).
+ */
+function getImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+/**
  * Create a new redesign session
  *
  * Uploads the room photo and starts AI processing.
@@ -482,6 +502,15 @@ export async function createRedesignSession(
     return {
       success: false,
       error: 'حجم تصویر بیش از ۱۰ مگابایت است.',
+    };
+  }
+
+  // Max 8000px per side — mirrors backend upload guard (SEC-3)
+  const dimensions = await getImageDimensions(convertedImage);
+  if (dimensions && (dimensions.width > 8000 || dimensions.height > 8000)) {
+    return {
+      success: false,
+      error: 'ابعاد تصویر بیش از حد مجاز است (حداکثر ۸۰۰۰ پیکسل در هر بعد).',
     };
   }
 
