@@ -75,6 +75,12 @@ export function toPersianDigits(value: number | string): string {
  * formatPriceFromRial(0) // '۰ تومان' (fa)
  */
 export function formatPriceFromRial(priceInRials: number, showCurrency = true): string {
+  // Unpriced products are unbuyable on an aggregator — show a price-inquiry
+  // fallback instead of a misleading "۰ تومان" (FE-3).
+  if (priceInRials == null || priceInRials <= 0) {
+    return i18n.t('common.priceInquiry', 'استعلام قیمت');
+  }
+
   const locale = getCurrentLocale();
   const bcp47Locale = LOCALE_MAP[locale] || 'fa-IR';
 

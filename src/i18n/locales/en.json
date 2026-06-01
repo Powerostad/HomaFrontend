@@ -58,7 +58,8 @@
     "seeLess": "See less",
     "comingSoon": "Coming soon",
     "user": "User",
-    "toman": "Toman"
+    "toman": "Toman",
+    "priceInquiry": "Price inquiry"
   },
   "auth": {
     "login": "Login",

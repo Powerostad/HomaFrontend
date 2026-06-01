@@ -58,7 +58,8 @@
     "seeLess": "عرض أقل",
     "comingSoon": "قريباً",
     "user": "مستخدم",
-    "toman": "تومان"
+    "toman": "تومان",
+    "priceInquiry": "الاستعلام عن السعر"
   },
   "auth": {
     "login": "تسجيل الدخول",
