@@ -29,11 +29,19 @@ RUN echo "=== Build output ===" && \
 # Production stage with Nginx
 FROM docker.arvancloud.ir/nginx:alpine AS production
 
+# Node runtime for the crawler meta-injection sidecar (render-bot.mjs).
+# No npm needed — the sidecar has zero dependencies (built-in http + fetch).
+RUN apk add --no-cache nodejs
+
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application from builder stage (Vite outputs to dist/)
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Crawler meta-injection sidecar + its launcher (started before nginx).
+COPY render-bot.mjs /render-bot.mjs
+COPY render-bot-entrypoint.sh /docker-entrypoint.d/45-render-bot.sh
 
 # Generate /config.js from runtime container environment before Nginx starts.
 # This keeps one built image deployable across Dokploy environments.
@@ -42,7 +50,8 @@ COPY docker-entrypoint.sh /docker-entrypoint.d/40-runtime-config.sh
 # Create a non-root user for the application files
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup && \
-    chmod +x /docker-entrypoint.d/40-runtime-config.sh
+    chmod +x /docker-entrypoint.d/40-runtime-config.sh \
+            /docker-entrypoint.d/45-render-bot.sh
 
 # Change ownership of application files
 RUN chown -R appuser:appgroup /usr/share/nginx/html
