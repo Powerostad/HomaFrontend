@@ -2,8 +2,13 @@ import { motion } from "motion/react";
 import { Phone, ShieldCheck, MessageCircle, Send } from "lucide-react";
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
+import { useSeo } from "@/hooks/useSeo";
 
 export function ContactPage() {
+  useSeo({
+    title: 'تماس با ما',
+    description: 'راه‌های ارتباط با تیم HOMA.',
+  });
   const contactMethods = [
     {
       icon: <Phone className="w-6 h-6" />,

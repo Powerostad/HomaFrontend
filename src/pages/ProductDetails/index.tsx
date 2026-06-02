@@ -26,6 +26,7 @@ import { apiProductToProduct } from '../../types/apiProduct';
 import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
+import { useSeo } from '@/hooks/useSeo';
 
 export function ProductDetailsPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
@@ -40,6 +41,17 @@ export function ProductDetailsPage() {
   const [productError, setProductError] = useState<string | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
+
+  useSeo({
+    title: product ? `${product.name}${store?.name ? ' - ' + store.name : ''}` : undefined,
+    description: product?.description
+      ? product.description.slice(0, 160)
+      : product?.name
+        ? `${product.name} را با هوش مصنوعی HOMA در فضای خود ببینید.`
+        : undefined,
+    image: product?.images?.[0] || product?.thumbnail || undefined,
+    type: 'product',
+  });
 
   // Derived state from shop context
   const shopError = slug ? getShopError(slug) : null;

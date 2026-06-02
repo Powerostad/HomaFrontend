@@ -3,6 +3,7 @@ import { FileText } from "lucide-react";
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { useTranslation } from "react-i18next";
+import { useSeo } from "@/hooks/useSeo";
 
 interface TermsSection {
   title: string;
@@ -72,6 +73,10 @@ const termsData: TermsSection[] = [
 ];
 
 export function TermsPage() {
+  useSeo({
+    title: 'قوانین و مقررات',
+    description: 'قوانین و مقررات استفاده از پلتفرم HOMA.',
+  });
   const { t } = useTranslation();
 
   return (

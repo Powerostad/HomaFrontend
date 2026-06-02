@@ -4,6 +4,7 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { useTranslation } from "react-i18next";
+import { useSeo } from "@/hooks/useSeo";
 
 interface FAQItem {
   question: string;
@@ -83,6 +84,10 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
 }
 
 export function FAQPage() {
+  useSeo({
+    title: 'سوالات متداول',
+    description: 'پاسخ پرسش‌های رایج درباره HOMA و نحوه استفاده از آن.',
+  });
   const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 

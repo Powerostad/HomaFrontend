@@ -4,8 +4,13 @@ import { ProductGallery } from "../../components/ProductGallery";
 import { useApp } from "../../context/AppContext";
 import { fetchAllProducts, fetchProduct, validateProduct } from "../../utils/productLoader";
 import { HomaLoader } from "../../components/HomaLoader";
+import { useSeo } from "@/hooks/useSeo";
 
 export function GalleryPage() {
+  useSeo({
+    title: 'گالری الهام‌بخش',
+    description: 'نمونه‌های واقعی محصولات در فضای کاربران HOMA برای الهام گرفتن.',
+  });
   const navigate = useRouterNavigate();
   const { allProducts, setAllProducts, setProduct, setProductVariant, trackKPI } = useApp();
   const [isLoading, setIsLoading] = useState(allProducts.length === 0);

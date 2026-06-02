@@ -19,6 +19,7 @@ import { formatPriceFromRial } from '../../utils/formatters';
 import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
+import { useSeo } from '@/hooks/useSeo';
 
 /**
  * Convert APIProduct to the legacy Product type for existing components
@@ -61,6 +62,14 @@ export function StorePage() {
   const [_activeTab, _setActiveTab] = useState<'all' | 'popular' | 'new'>('all'); // TODO: Implement tab filtering
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+
+  useSeo({
+    title: shop?.name,
+    description: shop?.name
+      ? `محصولات فروشگاه ${shop.name} در HOMA — مشاهده در فضای شما با هوش مصنوعی.`
+      : undefined,
+    image: shop?.logoUrl || undefined,
+  });
 
   // Track if initial load is done to prevent showing loader on cached data
   const initialLoadDone = useRef(false);

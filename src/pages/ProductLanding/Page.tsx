@@ -22,8 +22,12 @@ const ComparisonSection = lazy(() => import("./components/ComparisonSection").th
 const ShoppingPropSection = lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
 
 import { HomaLoader } from "../../components/HomaLoader";
+import { useSeo } from "@/hooks/useSeo";
 
 export function ProductLandingPage() {
+  useSeo({
+    description: "با هوش مصنوعی HOMA محصولات را قبل از خرید در فضای خانه خود ببینید.",
+  });
   const navigate = useRouterNavigate();
   const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();
   const [isLoading, setIsLoading] = useState(true);

@@ -15,6 +15,7 @@ import { ContextBar } from '../../components/ContextBar';
 import { Header } from '../../components/Header';
 import { fetchShops } from '../../services/shopService';
 import { type Shop } from '../../types/shop';
+import { useSeo } from '@/hooks/useSeo';
 
 // --- Categories ---
 // Note: Labels are set dynamically using t() in the component
@@ -121,6 +122,10 @@ function EmptyState({ searchTerm }: { searchTerm?: string }) {
 // =============================================================================
 
 export function ExplorePage() {
+  useSeo({
+    title: 'فروشگاه‌ها و محصولات',
+    description: 'مرور فروشگاه‌ها و محصولات HOMA و مشاهده آن‌ها در فضای شما با هوش مصنوعی.',
+  });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('all');

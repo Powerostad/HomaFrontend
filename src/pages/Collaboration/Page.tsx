@@ -6,8 +6,13 @@ import { Header } from '../../components/Header';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { apiPost } from '../../utils/apiClient';
 import { toast } from 'sonner';
+import { useSeo } from '@/hooks/useSeo';
 
 export function CollaborationPage() {
+  useSeo({
+    title: 'همکاری با ما',
+    description: 'فرم همکاری فروشگاه‌ها و برندها با HOMA.',
+  });
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
