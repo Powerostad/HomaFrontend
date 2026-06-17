@@ -36,6 +36,9 @@ import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
 import { TryOnProgressPage } from "./pages/TryOn/ProgressPage";
 import { TryOnResultPage } from "./pages/TryOn/ResultPage";
 
+// Room Redesign Flow (conversational recommendations - UI only, mock data)
+import { RoomRedesignPage } from "./pages/RoomRedesign/RoomRedesignPage";
+
 // Account & Gallery
 import AccountGalleryPage from "./pages/Account/GalleryPage";
 import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
@@ -77,6 +80,9 @@ export default function App() {
 
               {/* Shared gallery items (public, no auth) */}
               <RouterRoute path="s/:token" element={<SharedPage />} />
+
+              {/* Room Redesign Flow (conversational recommendations - UI only) */}
+              <RouterRoute path="redesign" element={<RoomRedesignPage />} />
 
               {/* Studio Flow (Complex/Dark) */}
               <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />

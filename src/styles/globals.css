@@ -363,6 +363,15 @@ body.auth-modal-open .studio-upload-action-bar {
   .font-display {
     font-family: var(--font-family-display);
   }
+
+  /* Hide scrollbars while keeping scroll behaviour (mobile carousels, sheets) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ========================================
