@@ -29,6 +29,9 @@ export interface AnnotationPin {
 
 export type ChatRole = 'user' | 'assistant';
 
+/** Severity of a system event message (drives icon + colour of the centered pill). */
+export type ChatEventKind = 'info' | 'success' | 'error';
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -37,6 +40,14 @@ export interface ChatMessage {
   imageUrl?: string;
   /** Optional timestamp label, e.g. "10:30" (desktop chat). */
   time?: string;
+  /**
+   * 'event' → centered system pill (status/error, not هما's voice).
+   * Absent or 'message' → a normal conversational bubble (back-compat for
+   * hydrated sessions that persisted plain assistant text).
+   */
+  kind?: 'message' | 'event';
+  /** Only meaningful when kind === 'event'; selects icon + severity tokens. */
+  eventKind?: ChatEventKind;
 }
 
 /** A checklisted "here's the plan" assistant message (desktop chat). */

@@ -86,13 +86,22 @@ export function FileUpload({
     <div className="w-full max-w-xl mx-auto">
       <div
         className={`
-          relative overflow-hidden rounded-[var(--radius-card)] border-2 border-dashed transition-all duration-300
-          ${isDragging 
-            ? "border-[var(--primary)] bg-[var(--primary)]/5 scale-[1.02]" 
+          relative overflow-hidden rounded-[var(--radius-card)] border-2 border-dashed transition-all duration-300 cursor-pointer
+          ${isDragging
+            ? "border-[var(--primary)] bg-[var(--primary)]/5 scale-[1.02]"
             : "border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)]/30"
           }
           ${error ? "border-[var(--destructive)]/50 bg-[var(--destructive)]/5" : ""}
         `}
+        role="button"
+        tabIndex={0}
+        onClick={triggerFileInput}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            triggerFileInput();
+          }
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -127,7 +136,10 @@ export function FileUpload({
           </p>
 
           <SimpleButton
-            onClick={triggerFileInput}
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerFileInput();
+            }}
             className="min-w-[160px]"
             variant={error ? "destructive" : "default"}
           >

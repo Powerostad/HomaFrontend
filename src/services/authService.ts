@@ -3,7 +3,7 @@
  * مدیریت OTP، توکن‌ها و پروفایل کاربر
  */
 
-import { apiPost, apiGet, apiPut, setStoredTokens, clearAuthData, setAccessToken, getRefreshToken } from '@/utils/apiClient';
+import { apiPost, apiGet, apiPut, setStoredTokens, clearAuthData, getRefreshToken, refreshAccessToken } from '@/utils/apiClient';
 import {
   AUTH_STORAGE_KEYS,
   transformBackendUser,
@@ -494,51 +494,14 @@ export async function resetPassword(
  * Refresh access token
  */
 export async function refreshToken(): Promise<string | null> {
-  const refreshTokenValue = getRefreshToken();
-
-  if (!refreshTokenValue) {
-    return null;
-  }
-
-  try {
-    const response = await apiPost<{ access: string; refresh?: string }>(
-      '/users/refresh/',
-      { refresh: refreshTokenValue },
-      { skipAuth: true, skipRetryOn401: true }
-    );
-
-    if (response.success && response.data?.access) {
-      const newAccessToken = response.data.access;
-      const newRefreshToken = response.data.refresh;
-
-      // Store new tokens (backend rotates refresh tokens, so we must save the new one)
-      if (newRefreshToken) {
-        setStoredTokens({ access: newAccessToken, refresh: newRefreshToken });
-      } else {
-        setAccessToken(newAccessToken);
-      }
-
-      // Update expiry in stored state
-      const state = getStoredAuthState();
-      if (state) {
-        state.tokens.access = newAccessToken;
-        if (newRefreshToken) {
-          state.tokens.refresh = newRefreshToken;
-        }
-        state.expiresAt = Date.now() + ACCESS_TOKEN_EXPIRY_MS;
-        localStorage.setItem(AUTH_STORAGE_KEYS.AUTH_STATE, JSON.stringify(state));
-      }
-
-      return newAccessToken;
-    }
-
-    // Refresh failed - clear auth
-    clearAuthData();
-    return null;
-  } catch {
-    clearAuthData();
-    return null;
-  }
+  // Delegate to apiClient's single-flight refresh. Having a second, independent
+  // refresh implementation here caused concurrent refreshes (e.g. AuthContext
+  // init + a 401 retry) to each consume the single-use (rotated) refresh token;
+  // the loser then cleared the auth that the winner had just refreshed, leaving
+  // every following request unauthenticated (401 loop). One shared refresh
+  // (which also stores tokens + AUTH_STATE expiry and clears auth on failure)
+  // removes that race.
+  return refreshAccessToken();
 }
 
 // =============================================================================

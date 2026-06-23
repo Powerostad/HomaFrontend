@@ -10,22 +10,21 @@ import type { ReactNode } from 'react';
 import { Eye, ShoppingBag, ArrowLeft, ChevronLeft, Droplet, Sparkles, ShoppingCart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { RD } from '../theme';
-import { ChatBubble, ChipRow, MessageInput, HeaderBadge, SheetHandle } from './chat';
-import { ImpactRow, ProductCarousel, SelectedCarousel, SelectedProductCard } from './products';
+import { ChatBubble, ChipRow, MessageInput, HeaderBadge, ChatThread, inputPlaceholder } from './chat';
+import { SelectedCarousel, SelectedProductCard } from './products';
+import { CategoryPlan } from './categories';
 import { formatPriceFromRial } from '@/utils/formatters';
 import {
-  ANALYSIS_MESSAGES,
-  ANALYSIS_CHIP_GROUPS,
-  SUGGESTION_FILTERS,
   SUGGESTION_SUMMARY,
-  IMPACT_ITEMS,
-  SUGGESTION_PRODUCTS,
+  EMPTY_PRODUCTS_HINT,
   PREVIEW_MESSAGE,
   PREVIEW_QUICK_EDITS,
   PREVIEW_PRODUCTS,
   BASKET_COPY,
 } from '../data/mockData';
-import type { RedesignProduct } from '../types';
+import type { RedesignProduct, ChatMessage, ChipGroup, Chip } from '../types';
+import type { RedesignCategory, RoomFinding } from '../services/transformers';
+import { IntakeForm } from './IntakeForm';
 
 const TAP = { scale: 0.97 };
 const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
@@ -86,84 +85,156 @@ function OutlineButton({ children, icon, onClick, className = '' }: { children: 
   );
 }
 
+/**
+ * Panel content shell. NOT independently scrollable — it flows inside the single
+ * MobileSheet scroll container (avoids nested-scroll jitter). The footer sticks to
+ * the viewport bottom so the input/CTA stays reachable while content scrolls.
+ */
 function PanelShell({ body, footer }: { body: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: RD.sheet }}>
-      <SheetHandle />
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-5 pb-3">{body}</div>
-      {footer && <div className="shrink-0 px-5 pt-4 pb-3">{footer}</div>}
+    <div className="flex flex-col" style={{ backgroundColor: RD.sheet }}>
+      <div className="px-5 pb-3">{body}</div>
+      {footer && (
+        <div
+          className="sticky bottom-0 z-20 px-5 pt-3"
+          style={{
+            backgroundColor: RD.sheet,
+            paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+            boxShadow: RD.footerShadow,
+          }}
+        >
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
 
 // ── تحلیل فضا · INTAKE ──────────────────────────────────────────────
 export function AnalysisPanel({
+  messages,
+  chipGroups,
+  onSelectChip,
+  busy,
+  rendering,
+  findings,
+  showIntake,
+  intakeImage,
+  onPickImage,
+  onRemoveImage,
+  scopeChips,
+  scopeSelected,
+  onToggleScope,
   inputValue,
   onInputChange,
   onSend,
-  selected,
-  onSelectChip,
 }: {
+  messages: ChatMessage[];
+  chipGroups: ChipGroup[];
+  onSelectChip: (groupId: string, chipId: string) => void;
+  busy: boolean;
+  rendering: boolean;
+  findings: RoomFinding[];
+  showIntake: boolean;
+  intakeImage: string | null;
+  onPickImage: (file: File) => void;
+  onRemoveImage: () => void;
+  scopeChips: Chip[];
+  scopeSelected: Set<string>;
+  onToggleScope: (chipId: string) => void;
   inputValue: string;
   onInputChange: (v: string) => void;
   onSend: () => void;
-  selected: Record<string, string>;
-  onSelectChip: (groupId: string, chipId: string) => void;
 }) {
   return (
     <PanelShell
       body={
         <div className="space-y-4 pt-1">
           <PanelHeader title="بازطراحی هما" subtitle="تحلیل اختصاصی" right={<HeaderBadge icon={Droplet} />} />
-          <div className="space-y-2">
-            {ANALYSIS_MESSAGES.map((m) => (
-              <ChatBubble key={m.id} message={m} />
-            ))}
-          </div>
-          {ANALYSIS_CHIP_GROUPS.map((g) => (
-            <ChipRow
-              key={g.id}
-              group={g}
-              selectedId={selected[g.id]}
-              onSelect={(chipId) => onSelectChip(g.id, chipId)}
+          {showIntake ? (
+            <IntakeForm
+              image={intakeImage}
+              onPickImage={onPickImage}
+              onRemoveImage={onRemoveImage}
+              scopeChips={scopeChips}
+              scopeSelected={scopeSelected}
+              onToggleScope={onToggleScope}
+              variant="mobile"
             />
-          ))}
+          ) : (
+            <ChatThread
+              messages={messages}
+              chipGroups={chipGroups}
+              onSelectChip={onSelectChip}
+              busy={busy}
+              rendering={rendering}
+              findings={findings}
+              chipLayout="scroll"
+            />
+          )}
         </div>
       }
-      footer={<MessageInput placeholder="پیامت رو بنویس..." value={inputValue} onChange={onInputChange} onSend={onSend} />}
+      footer={
+        <MessageInput
+          placeholder={inputPlaceholder(busy, rendering)}
+          value={inputValue}
+          onChange={onInputChange}
+          onSend={onSend}
+          disabled={busy}
+        />
+      }
     />
   );
 }
 
-// ── محصولات · suggestions + products ────────────────────────────────
+// ── پیشنهادها · guided shopping plan (grouped by design category) ────
 export function SuggestionsPanel({
+  categories,
+  hasResult,
+  summary,
   onPreview,
   onAddAll,
   onAdd,
+  onAddCategory,
+  onPreviewCategory,
 }: {
+  categories: RedesignCategory[];
+  hasResult: boolean;
+  summary?: string;
   onPreview: () => void;
   onAddAll: () => void;
   onAdd?: (p: RedesignProduct) => void;
+  onAddCategory: (c: RedesignCategory) => void;
+  onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
+  if (!hasResult) {
+    return (
+      <PanelShell
+        body={
+          <div className="min-h-[45dvh] flex items-center justify-center text-center px-6" style={{ fontFamily: 'Vazirmatn' }}>
+            <p className="text-[13px] leading-[1.8]" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+          </div>
+        }
+      />
+    );
+  }
+
   return (
     <PanelShell
       body={
         <div className="space-y-4 pt-1">
-          <PanelHeader title="پیشنهادهای هما" subtitle="محصولات مناسب برای این فضا" right={<HeaderBadge icon={Sparkles} />} />
-          <ChipRow group={SUGGESTION_FILTERS} />
+          <PanelHeader title="پیشنهادهای هما" subtitle="برنامهٔ خرید بر اساس اولویت" right={<HeaderBadge icon={Sparkles} />} />
           <div style={{ borderBottom: `1px solid ${RD.line}`, paddingBottom: '14px' }}>
             <p className="text-[13px] leading-[1.8]" style={{ color: RD.inkSoft, fontFamily: 'Vazirmatn' }}>
-              {SUGGESTION_SUMMARY}
+              {summary ?? SUGGESTION_SUMMARY}
             </p>
           </div>
-          <div>
-            {IMPACT_ITEMS.map((item, i) => (
-              <div key={item.id} style={i > 0 ? { borderTop: `1px solid ${RD.lineSoft}` } : undefined}>
-                <ImpactRow item={item} />
-              </div>
-            ))}
-          </div>
-          <ProductCarousel products={SUGGESTION_PRODUCTS} onAdd={onAdd} />
+          <CategoryPlan
+            categories={categories}
+            onAdd={(p) => onAdd?.(p)}
+            onAddCategory={onAddCategory}
+            onPreviewCategory={onPreviewCategory}
+          />
         </div>
       }
       footer={
@@ -235,7 +306,7 @@ export function PreviewPanel({
             subtitle="این نسخه بر اساس انتخاب‌ها و بازخوردت ساخته شده."
             right={<VersionNav onPrev={onPrevVersion} onNext={onNextVersion} />}
           />
-          <ChatBubble message={PREVIEW_MESSAGE} showAvatar />
+          <ChatBubble message={PREVIEW_MESSAGE} />
           <ChipRow group={PREVIEW_QUICK_EDITS} />
           <MessageInput placeholder="بازخوردت رو اینجا بنویس..." value={inputValue} onChange={onInputChange} onSend={onSend} />
           <div className="space-y-2">
@@ -284,7 +355,7 @@ export function BasketPanel({
     <PanelShell
       body={
         empty ? (
-          <div className="h-full flex flex-col items-center justify-center text-center gap-3 px-6" style={{ fontFamily: 'Vazirmatn' }}>
+          <div className="min-h-[45dvh] flex flex-col items-center justify-center text-center gap-3 px-6" style={{ fontFamily: 'Vazirmatn' }}>
             <span className="w-16 h-16 rounded-none flex items-center justify-center" style={{ backgroundColor: RD.greenTintBg }}>
               <ShoppingCart size={30} strokeWidth={1.5} style={{ color: RD.greenMid }} />
             </span>

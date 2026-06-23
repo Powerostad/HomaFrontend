@@ -21,7 +21,7 @@ const COST_META: Record<CostLevel, { label: string; color: string }> = {
   high: { label: 'زیاد', color: RD.danger },
 };
 
-function ImpactBars({ value }: { value: number }) {
+export function ImpactBars({ value }: { value: number }) {
   const heights = [5, 7, 9, 11, 13];
   return (
     <span className="flex items-end gap-[2px] h-3.5">
@@ -29,7 +29,7 @@ function ImpactBars({ value }: { value: number }) {
         <span
           key={i}
           className="w-[4px] rounded-full"
-          style={{ height: h, backgroundColor: i < value ? RD.greenMid : '#D8DAD3' }}
+          style={{ height: h, backgroundColor: i < value ? RD.greenMid : RD.impactBarEmpty }}
         />
       ))}
     </span>
@@ -73,7 +73,7 @@ export function ImpactRow({ item }: { item: ImpactItem }) {
 export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAdd?: () => void }) {
   return (
     <div
-      className="w-[140px] shrink-0 overflow-hidden"
+      className="w-full min-w-0 overflow-hidden"
       style={{ backgroundColor: RD.card, border: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}
     >
       <div className="relative w-full aspect-[4/5]" style={{ backgroundColor: 'var(--editorial-product-bg)' }}>
@@ -96,12 +96,12 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
           {product.name}
         </h4>
         <p className="text-[11px] mt-0.5" style={{ color: RD.inkMuted }}>{product.subtitle}</p>
-        <div className="flex items-center justify-between mt-2">
-          <span className="flex items-baseline gap-1">
-            <span className="text-[14px] font-normal tabular-nums" style={{ color: RD.inkSoft }}>
+        <div className="mt-2 space-y-2">
+          <span className="flex items-baseline gap-1 min-w-0">
+            <span className="text-[14px] font-normal tabular-nums truncate" style={{ color: RD.inkSoft }}>
               {formatPriceFromRial(product.priceRial, false)}
             </span>
-            <span className="text-[11px]" style={{ color: RD.inkMuted }}>تومان</span>
+            <span className="text-[11px] shrink-0" style={{ color: RD.inkMuted }}>تومان</span>
           </span>
           <motion.button
             type="button"
@@ -109,10 +109,9 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
             onClick={onAdd}
             whileTap={TAP}
             transition={SPRING}
-            className="flex items-center justify-center shrink-0"
+            className="w-full flex items-center justify-center"
             style={{
-              height: '32px',
-              padding: '0 12px',
+              height: '34px',
               backgroundColor: RD.green,
               color: '#fff',
               fontSize: '12px',
@@ -132,7 +131,9 @@ export function ProductCarousel({ products, onAdd }: { products: RedesignProduct
   return (
     <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-3">
       {products.map((p) => (
-        <ProductCard key={p.id} product={p} onAdd={() => onAdd?.(p)} />
+        <div key={p.id} className="w-[150px] shrink-0">
+          <ProductCard product={p} onAdd={() => onAdd?.(p)} />
+        </div>
       ))}
     </div>
   );

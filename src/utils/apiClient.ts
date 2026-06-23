@@ -166,10 +166,62 @@ export function clearAuthData(dispatchEvent: boolean = false): void {
 // =============================================================================
 
 /**
- * Refresh access token using refresh token
- * Returns new access token or null if refresh failed
+ * Access token lifetime (mirrors backend SIMPLE_JWT ACCESS_TOKEN_LIFETIME).
+ * Used to keep AUTH_STATE.expiresAt in sync after a refresh so isTokenExpired()
+ * doesn't immediately re-trigger another refresh.
+ */
+const ACCESS_TOKEN_EXPIRY_MS = 30 * 60 * 1000;
+
+/**
+ * Single-flight guard: at most ONE refresh request is ever in flight app-wide.
+ * Refresh tokens are single-use (backend rotates them), so concurrent callers
+ * (a 401 retry + AuthContext init, etc.) MUST share the same refresh — otherwise
+ * the second caller spends an already-consumed refresh token, fails, and clears
+ * the auth that the first caller just refreshed.
+ */
+let refreshPromise: Promise<string | null> | null = null;
+
+/**
+ * Keep AUTH_STATE (used by AuthContext / isTokenExpired) in sync with the
+ * freshly refreshed tokens stored under the individual token keys.
+ */
+function syncAuthStateTokens(access: string, refresh?: string): void {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEYS.AUTH_STATE);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (state?.tokens) {
+      state.tokens.access = access;
+      if (refresh) state.tokens.refresh = refresh;
+      state.expiresAt = Date.now() + ACCESS_TOKEN_EXPIRY_MS;
+      localStorage.setItem(AUTH_STORAGE_KEYS.AUTH_STATE, JSON.stringify(state));
+    }
+  } catch {
+    // localStorage unavailable or malformed state — ignore
+  }
+}
+
+/**
+ * Refresh access token using refresh token.
+ * Single-flight: concurrent callers share one in-flight request and result.
+ * Returns new access token or null if refresh failed.
  */
 async function refreshAccessToken(): Promise<string | null> {
+  if (refreshPromise) {
+    console.log('[Auth] Refresh already in flight, awaiting shared result');
+    return refreshPromise;
+  }
+  refreshPromise = performTokenRefresh().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
+/**
+ * Actual refresh network call. Never call directly — go through
+ * refreshAccessToken() so the single-flight guard applies.
+ */
+async function performTokenRefresh(): Promise<string | null> {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
@@ -206,10 +258,12 @@ async function refreshAccessToken(): Promise<string | null> {
       // Must store both to prevent blacklisted token issues on next refresh
       if (data.refresh) {
         setStoredTokens({ access: data.access, refresh: data.refresh });
+        syncAuthStateTokens(data.access, data.refresh);
         console.log('[Auth] Token refreshed successfully (with new refresh token)');
       } else {
         // Fallback: only access token returned (non-rotating config)
         setAccessToken(data.access);
+        syncAuthStateTokens(data.access);
         console.log('[Auth] Token refreshed successfully');
       }
       return data.access;

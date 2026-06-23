@@ -36,8 +36,10 @@ import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
 import { TryOnProgressPage } from "./pages/TryOn/ProgressPage";
 import { TryOnResultPage } from "./pages/TryOn/ResultPage";
 
-// Room Redesign Flow (conversational recommendations - UI only, mock data)
+// Room Redesign Flow (conversational recommendations - live chat backend)
 import { RoomRedesignPage } from "./pages/RoomRedesign/RoomRedesignPage";
+// Pre-analysis intake flow (photo + optional context) — entry point before /redesign
+import { HomaIntakeFlow } from "./pages/RoomRedesign/intake/HomaIntakeFlow";
 
 // Account & Gallery
 import AccountGalleryPage from "./pages/Account/GalleryPage";
@@ -81,8 +83,18 @@ export default function App() {
               {/* Shared gallery items (public, no auth) */}
               <RouterRoute path="s/:token" element={<SharedPage />} />
 
-              {/* Room Redesign Flow (conversational recommendations - UI only) */}
-              <RouterRoute path="redesign" element={<RoomRedesignPage />} />
+              {/* Room Redesign Flow (conversational recommendations - live chat backend, requires auth) */}
+              {/* Pre-analysis intake (photo + optional context) is the entry point; /redesign is the destination after intake */}
+              <RouterRoute path="redesign/intake" element={
+                <ProtectedRoute fallback="modal">
+                  <HomaIntakeFlow />
+                </ProtectedRoute>
+              } />
+              <RouterRoute path="redesign" element={
+                <ProtectedRoute fallback="modal">
+                  <RoomRedesignPage />
+                </ProtectedRoute>
+              } />
 
               {/* Studio Flow (Complex/Dark) */}
               <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />

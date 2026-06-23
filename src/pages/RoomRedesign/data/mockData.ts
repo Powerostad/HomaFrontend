@@ -189,12 +189,23 @@ export const DESKTOP_PINS: AnnotationPin[] = [
   { id: 'd5', label: 'فرش کوچک', status: 'bad', x: 44, y: 78, description: 'ابعاد فرش متناسب با فضا نیست' },
 ];
 
+// Ordered as a left-to-right workflow (RTL: تحلیل فضا read first): analysis →
+// suggestions → preview. `products` keeps its id (the tab still shows product
+// recommendations); only the label reads as the workflow step "پیشنهادها".
 export const DESKTOP_TABS = [
   { id: 'analysis', label: 'تحلیل فضا' },
-  { id: 'suggestions', label: 'پیشنهادها' },
-  { id: 'products', label: 'محصولات' },
+  { id: 'products', label: 'پیشنهادها' },
   { id: 'preview', label: 'پیش‌نمایش' },
 ] as const;
+
+// Static quick-edit suggestions surfaced under هما's reply once a preview exists.
+// Tapping one sends it as the next follow-up turn (common redesign requests).
+export const DESKTOP_QUICK_EDITS: { id: string; label: string }[] = [
+  { id: 'q-light', label: 'نور را طبیعی‌تر کن' },
+  { id: 'q-rug', label: 'فرش را عوض کن' },
+  { id: 'q-less', label: 'اکسسوری کمتر' },
+  { id: 'q-warm', label: 'چیدمان را گرم‌تر کن' },
+];
 
 export const EXIT_LABEL = 'خروج از تحلیل';
 export const CHAT_INPUT_PLACEHOLDER = 'پیام خود را بنویسید...';
@@ -232,12 +243,6 @@ export const DESKTOP_PLAN: ChatPlan = {
   ],
 };
 
-export const CHAT_QUICK_REPLIES: Chip[] = [
-  { id: 'modern-warm', label: 'سبک مدرن گرم' },
-  { id: 'warmer-colors', label: 'رنگ‌های گرم‌تر' },
-  { id: 'curtains', label: 'پرده‌های مناسب' },
-];
-
 // ── Basket Tab (سبد) — not in any design image; editorial-consistent ─
 export const BASKET_PRODUCTS: RedesignProduct[] = SUGGESTION_PRODUCTS.slice(0, 3);
 
@@ -250,3 +255,21 @@ export const BASKET_COPY = {
   totalLabel: 'جمع کل',
   checkoutCta: 'ادامه و پرداخت',
 } as const;
+
+// ── Intake (upload + need + optional category scope) ────────────────
+export const REDESIGN_SCOPE_CHIPS: Chip[] = [
+  { id: 'sofa', label: 'مبل', icon: 'sofa' },
+  { id: 'rug', label: 'فرش', icon: 'grid' },
+  { id: 'bedspread', label: 'روتختی', icon: 'image' },
+  { id: 'curtain', label: 'پرده', icon: 'curtain' },
+  { id: 'cushion', label: 'کوسن', icon: 'heart' },
+  { id: 'lighting', label: 'نورپردازی', icon: 'sun' },
+  { id: 'decor', label: 'دکوری', icon: 'leaf' },
+];
+
+export const INTAKE_WELCOME =
+  'سلام! من دستیار طراحی داخلی هما هستم. یک عکس از اتاقت بفرست تا فضا رو تحلیل کنم و پیشنهاد بدم.';
+export const INTAKE_HINT = 'می‌تونی توضیح بدی چه تغییری می‌خوای (اختیاری).';
+export const INTAKE_SCOPE_TITLE = 'می‌خوای روی چه چیزی تمرکز کنم؟ (اختیاری)';
+export const EMPTY_PRODUCTS_HINT = 'ابتدا عکس اتاقت رو بفرست تا پیشنهادها اینجا ظاهر بشن.';
+export const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده. گفتگو رو ادامه بده.';

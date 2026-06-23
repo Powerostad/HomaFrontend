@@ -1,58 +1,51 @@
 /**
- * Desktop (lg+) workspace for the Room Redesign flow.
+ * Desktop (lg+) workspace for the Room Redesign flow — "warm editorial" skin.
  *
- * A full-window 3-column layout (RTL): persistent chat assistant on the right,
- * the annotated room canvas in the center, the preview-history rail on the
- * left — under a top bar + 4-tab row. Editorial monochrome skin with a single
- * green accent (matches the desktop design). Reuses ImpactRow / ProductCard /
- * Chip / formatters; the mobile components are left untouched.
+ * A full-window 3-column layout (RTL): persistent هما assistant on the right,
+ * the framed design-preview canvas in the center, the labelled preview-history
+ * panel on the left — under a single header that carries the workflow tabs
+ * (تحلیل فضا → پیشنهادها → پیش‌نمایش) plus the quiet exit / new-chat actions.
+ *
+ * Signature move: the render floats as a white-matted print (FRAME) on a warm
+ * radial-beige canvas (RD.canvas). The mat + shadow live on the <img> itself
+ * (PinnedImage `imageStyle`) so annotation pins, siblings of the img, overhang
+ * the mat and are never clipped.
+ *
+ * Image chrome (caption / toolbar / modals / quick-edit chips) is shared with
+ * the mobile sheet via components/workspace.tsx — both surfaces stay identical.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Droplet,
-  Download,
-  Upload,
-  Share2,
   X,
   Plus,
-  Paperclip,
-  Send,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Sun,
+  RotateCcw,
   Check,
   Palette,
   Wallet,
   ShoppingBag,
   Eye,
+  ChevronRight,
+  ChevronLeft,
+  ImageOff,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toPersianDigits } from '@/utils/formatters';
-import { RD } from '../theme';
-import { ImpactRow, ProductCard } from './products';
-import type { AnnotationPin, ChatMessage, RedesignProduct } from '../types';
-import {
-  ANALYSIS_IMAGE,
-  PREVIEW_IMAGE,
-  DESKTOP_PINS,
-  PREVIEW_PINS,
-  DESKTOP_TABS,
-  DESKTOP_MESSAGES,
-  DESKTOP_PLAN,
-  CHAT_QUICK_REPLIES,
-  IMPACT_ITEMS,
-  SUGGESTION_SUMMARY,
-  SUGGESTION_PRODUCTS,
-  ROOM_VERSIONS,
-  EXIT_LABEL,
-  CHAT_INPUT_PLACEHOLDER,
-  ASSISTANT_TAGLINE,
-} from '../data/mockData';
+import { RD, FRAME } from '../theme';
+import { ChatThread, MessageInput, inputPlaceholder } from './chat';
+import { PinnedImage } from './shell';
+import { CanvasCaption, ImageToolbar, QuickEditChips, useImageActions } from './workspace';
+import { CategoryCard } from './categories';
+import type { RoomFinding, RedesignCategory } from '../services/transformers';
+import type { AnnotationPin as AnnotationPinType, ChatMessage, RedesignProduct, Chip, ChipGroup, RoomVersion } from '../types';
+import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../data/mockData';
+import { IntakeForm } from './IntakeForm';
 
-export type DeskTab = 'analysis' | 'suggestions' | 'products' | 'preview';
-const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
+const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده';
+const EMPTY_PRODUCTS_HINT = 'پس از تحلیل فضا، محصولات پیشنهادی اینجا نمایش داده می‌شوند.';
+
+export type DeskTab = 'analysis' | 'products' | 'preview';
 
 export interface DesktopWorkspaceProps {
   cart: RedesignProduct[];
@@ -64,6 +57,35 @@ export interface DesktopWorkspaceProps {
   deskTab: DeskTab;
   onTabChange: (t: DeskTab) => void;
   onExit: () => void;
+  onNewSession: () => void;
+  onRender: () => void;
+  // live chat
+  messages: ChatMessage[];
+  chipGroups: ChipGroup[];
+  onSelectChip: (groupId: string, chipId: string) => void;
+  busy: boolean;
+  rendering: boolean;
+  onSend: () => void;
+  onQuickEdit: (text: string) => void;
+  onAddCategory: (c: RedesignCategory) => void;
+  onPreviewCategory?: (c: RedesignCategory) => void;
+  // live results
+  products: RedesignProduct[];
+  categories: RedesignCategory[];
+  hasResult: boolean;
+  previewImage: string | null;
+  originalImage: string | null;
+  pins: AnnotationPinType[];
+  findings: RoomFinding[];
+  versions: RoomVersion[];
+  // intake (shown in chat panel when messages.length === 0)
+  showIntake: boolean;
+  intakeImage: string | null;
+  onPickImage: (file: File) => void;
+  onRemoveImage: () => void;
+  scopeChips: Chip[];
+  scopeSelected: Set<string>;
+  onToggleScope: (chipId: string) => void;
 }
 
 // ── Brand mark ──────────────────────────────────────────────────────
@@ -81,47 +103,14 @@ function BrandMark() {
   );
 }
 
-// ── Top bar ─────────────────────────────────────────────────────────
-function DesktopTopBar({ onExit }: { onExit: () => void }) {
-  const iconBtn = 'w-9 h-9 flex items-center justify-center rounded-md transition hover:bg-black/[0.04]';
-  return (
-    <header
-      className="shrink-0 flex items-center justify-between px-6 h-14"
-      style={{ backgroundColor: RD.cream, borderBottom: `1px solid ${RD.line}` }}
-    >
-      <BrandMark />
-      <div className="flex items-center gap-2" dir="ltr">
-        <button type="button" aria-label="دانلود" className={iconBtn}>
-          <Download size={18} strokeWidth={1.75} style={{ color: RD.inkSoft }} />
-        </button>
-        <button type="button" aria-label="ذخیره" className={iconBtn}>
-          <Upload size={18} strokeWidth={1.75} style={{ color: RD.inkSoft }} />
-        </button>
-        <button type="button" aria-label="اشتراک‌گذاری" className={iconBtn}>
-          <Share2 size={17} strokeWidth={1.75} style={{ color: RD.inkSoft }} />
-        </button>
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex items-center gap-1.5 rounded-full px-4 h-9 text-[13px] font-medium transition hover:bg-black/[0.02]"
-          style={{ border: `1px solid ${RD.line}`, color: RD.ink, backgroundColor: '#fff', fontFamily: 'Vazirmatn' }}
-        >
-          <X size={15} strokeWidth={2} />
-          {EXIT_LABEL}
-        </button>
-      </div>
-    </header>
-  );
-}
-
-// ── Tab row ─────────────────────────────────────────────────────────
-function DesktopTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: DeskTab) => void }) {
+// ── Workflow tabs (segmented pill) ──────────────────────────────────
+function WorkflowTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: DeskTab) => void }) {
   return (
     <div
       role="tablist"
-      aria-label="بخش‌های طراحی"
-      className="shrink-0 flex items-center justify-center gap-9 h-12"
-      style={{ backgroundColor: RD.cream, borderBottom: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}
+      aria-label="مراحل طراحی"
+      className="inline-flex items-center"
+      style={{ background: RD.tabTrackBg, borderRadius: 999, padding: 4, gap: 2, fontFamily: 'Vazirmatn' }}
     >
       {DESKTOP_TABS.map((t) => {
         const isActive = t.id === active;
@@ -132,11 +121,15 @@ function DesktopTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: Desk
             role="tab"
             aria-selected={isActive}
             onClick={() => onSelect(t.id as DeskTab)}
-            className="relative h-full flex items-center text-[14px] transition"
+            className="transition"
             style={{
+              borderRadius: 999,
+              padding: '7px 16px',
+              fontSize: 13.5,
               color: isActive ? RD.ink : RD.inkSoft,
               fontWeight: isActive ? 600 : 400,
-              borderBottom: `2px solid ${isActive ? RD.accentGreen : 'transparent'}`,
+              background: isActive ? '#FFFFFF' : 'transparent',
+              boxShadow: isActive ? RD.activePillShadow : 'none',
             }}
           >
             {t.label}
@@ -147,217 +140,308 @@ function DesktopTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: Desk
   );
 }
 
-// ── History rail (left) ─────────────────────────────────────────────
-function HistoryColumn({ active, onSelect }: { active: number; onSelect: (n: number) => void }) {
-  const ordered = [...ROOM_VERSIONS].sort((a, b) => b.index - a.index);
-  return (
-    <aside
-      className="hidden lg:flex w-44 shrink-0 flex-col px-3 py-4 overflow-y-auto scrollbar-hide"
-      style={{ backgroundColor: RD.cream, borderRight: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}
-    >
-      <h3 className="text-[12px] font-semibold mb-3 px-1" style={{ color: RD.inkSoft }}>تاریخچه پیش‌نمایش‌ها</h3>
-      <div className="flex flex-col gap-2.5">
-        {ordered.map((v) => {
-          const isActive = v.index === active;
-          return (
-            <button
-              key={v.id}
-              type="button"
-              aria-label={`نسخه ${toPersianDigits(v.index)}${isActive ? ' — فعال' : ''}`}
-              onClick={() => onSelect(v.index)}
-              className="relative w-full aspect-[4/3] overflow-hidden rounded-md transition"
-              style={{ boxShadow: isActive ? `0 0 0 2px ${RD.accentGreen}` : `0 0 0 1px ${RD.line}` }}
-            >
-              <ImageWithFallback src={v.thumbUrl} alt={`نسخه ${v.index}`} className="w-full h-full object-cover" />
-              <span
-                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold text-white"
-                style={{ backgroundColor: isActive ? RD.accentGreen : 'rgba(28,28,26,0.55)' }}
-              >
-                {toPersianDigits(v.index)}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <button
-        type="button"
-        className="mt-3 w-full flex flex-col items-center justify-center gap-1.5 py-5 rounded-md text-[12px] transition hover:bg-black/[0.02]"
-        style={{ border: `1.5px dashed ${RD.line}`, color: RD.inkSoft }}
-      >
-        <Plus size={18} strokeWidth={2} />
-        ایجاد پیش‌نمایش جدید
-      </button>
-    </aside>
-  );
-}
-
-// ── Annotation pin card (center) ────────────────────────────────────
-function PinCard({ pin }: { pin: AnnotationPin }) {
-  const good = pin.status === 'good';
-  const dot = good ? RD.accentGreen : RD.danger;
-  return (
-    <div
-      className="absolute z-20 w-52 pointer-events-none"
-      style={{ left: `${pin.x}%`, top: `${pin.y}%`, transform: 'translate(-50%, -50%)', fontFamily: 'Vazirmatn' }}
-    >
-      <div className="rounded-lg bg-white px-3.5 py-2.5 shadow-[0_6px_22px_rgba(28,28,26,0.14)]" style={{ border: `1px solid ${RD.line}` }}>
-        <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: dot }}>
-            {good ? <Check size={12} strokeWidth={3} color="#fff" /> : <span className="text-[12px] font-bold text-white leading-none">!</span>}
-          </span>
-          <span className="text-[13px] font-semibold leading-tight" style={{ color: RD.ink }}>{pin.label}</span>
-        </div>
-        {pin.description && <p className="text-[11px] leading-[1.7] mt-1.5" style={{ color: RD.inkSoft }}>{pin.description}</p>}
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="w-px h-4" style={{ backgroundColor: dot }} />
-        <span className="w-2 h-2 rounded-full border-2 border-white" style={{ backgroundColor: dot }} />
-      </div>
-    </div>
-  );
-}
-
-// ── Zoom / brightness dock (center) ─────────────────────────────────
-function ZoomDock({
-  onZoomIn,
-  onZoomOut,
-  onReset,
-  onBrightness,
+// ── Header (brand · workflow tabs · quiet actions) ──────────────────
+function DesktopTopBar({
+  deskTab,
+  onTabChange,
+  onExit,
+  onNewSession,
 }: {
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset: () => void;
-  onBrightness: () => void;
+  deskTab: DeskTab;
+  onTabChange: (t: DeskTab) => void;
+  onExit: () => void;
+  onNewSession: () => void;
 }) {
-  const btn = 'w-9 h-9 flex items-center justify-center rounded-full transition hover:bg-black/[0.05]';
+  const link = 'flex items-center gap-1.5 text-[13px] font-medium transition px-2 h-9 rounded-md hover:bg-black/[0.03]';
   return (
-    <div
-      className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-1.5 rounded-full"
-      dir="ltr"
-      style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 4px 18px rgba(0,0,0,0.12)' }}
+    <header
+      className="relative shrink-0 flex items-center justify-between px-6 h-14"
+      style={{ backgroundColor: RD.cream, borderBottom: `1px solid ${RD.line}` }}
     >
-      <button type="button" aria-label="بزرگ‌نمایی" className={btn} onClick={onZoomIn}>
-        <ZoomIn size={18} strokeWidth={1.9} style={{ color: RD.ink }} />
-      </button>
-      <button type="button" aria-label="کوچک‌نمایی" className={btn} onClick={onZoomOut}>
-        <ZoomOut size={18} strokeWidth={1.9} style={{ color: RD.ink }} />
-      </button>
-      <button type="button" aria-label="بازنشانی" className={btn} onClick={onReset}>
-        <Maximize size={17} strokeWidth={1.9} style={{ color: RD.ink }} />
-      </button>
-      <span className="w-px h-5 mx-0.5" style={{ backgroundColor: RD.line }} />
-      <button type="button" aria-label="روشنایی" className={btn} onClick={onBrightness}>
-        <Sun size={18} strokeWidth={1.9} style={{ color: RD.ink }} />
-      </button>
-    </div>
+      <BrandMark />
+
+      {/* Workflow tabs — centered so they read as the focal step row (RTL-safe) */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto">
+          <WorkflowTabs active={deskTab} onSelect={onTabChange} />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1" dir="rtl" style={{ fontFamily: 'Vazirmatn' }}>
+        <button type="button" onClick={onNewSession} className={link} style={{ color: RD.inkSoft }}>
+          <RotateCcw size={14} strokeWidth={2} />
+          گفتگوی جدید
+        </button>
+        <span className="w-px h-4" style={{ backgroundColor: RD.line }} />
+        <button type="button" onClick={onExit} className={link} style={{ color: RD.inkSoft }}>
+          <X size={15} strokeWidth={2} />
+          {EXIT_LABEL}
+        </button>
+      </div>
+    </header>
   );
 }
 
 // ── Center canvas ───────────────────────────────────────────────────
-function CenterCanvas({
+const CANVAS_MAX_H = 'calc(100dvh - 248px)';
+
+function DesignPreviewCanvas({
   deskTab,
-  cart,
-  addToCart,
+  rendering,
+  image,
+  pins,
+  originalImage,
+  activeVersion,
+  hasVersions,
 }: {
   deskTab: DeskTab;
+  rendering: boolean;
+  image: string | null;
+  pins: AnnotationPinType[];
+  originalImage: string | null;
+  activeVersion: number;
+  hasVersions: boolean;
+}) {
+  const isPreview = deskTab === 'preview';
+  const actions = useImageActions({ image, originalImage, activeVersion, isPreview });
+
+  const kicker = isPreview ? 'پیش‌نمایش طراحی' : 'تحلیل فضا';
+  const title = isPreview ? (hasVersions ? `نسخه ${toPersianDigits(activeVersion)}` : 'پیش‌نمایش') : 'عکس اصلی شما';
+
+  return (
+    <div
+      className="relative flex-1 min-w-0 flex flex-col items-center justify-center"
+      style={{ background: RD.canvas, padding: '32px 56px 28px' }}
+    >
+      {/* Caption — hidden in the empty state */}
+      {(image || rendering) && (
+        <div className="w-full mb-3.5">
+          <CanvasCaption kicker={rendering ? 'در حال ساخت…' : kicker} title={title} />
+        </div>
+      )}
+
+      {/* Frame row */}
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center">
+        {rendering ? (
+          <div style={{ ...FRAME, width: 'min(70%, 720px)', aspectRatio: '4 / 3', overflow: 'hidden' }}>
+            <Skeleton className="w-full h-full" style={{ borderRadius: 8, backgroundColor: '#EDE8DF' }} />
+          </div>
+        ) : image ? (
+          <PinnedImage src={image} pins={pins} maxHeight={CANVAS_MAX_H} imageStyle={FRAME} />
+        ) : (
+          <div className="flex flex-col items-center gap-3" style={{ fontFamily: 'Vazirmatn' }}>
+            <span
+              className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: '#FFFFFF', border: `1px solid ${RD.line}` }}
+            >
+              <ImageOff size={26} strokeWidth={1.5} style={{ color: RD.inkSoft }} />
+            </span>
+            <span className="text-[13.5px]" style={{ color: RD.inkSoft }}>{EMPTY_PREVIEW_HINT}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Toolbar — only when a real image is shown */}
+      {image && !rendering && (
+        <div className="shrink-0 self-center mt-4">
+          <ImageToolbar
+            canCompare={actions.canCompare}
+            onDownload={actions.onDownload}
+            onShare={actions.onShare}
+            onCompare={actions.onCompare}
+            onZoom={actions.onZoom}
+          />
+        </div>
+      )}
+
+      {actions.modals}
+    </div>
+  );
+}
+
+// ── Products canvas — guided shopping plan (grouped by design category) ──
+function ProductsCanvas({
+  cart,
+  addToCart,
+  categories,
+  hasResult,
+  onAddCategory,
+  onPreviewCategory,
+}: {
   cart: RedesignProduct[];
   addToCart: (p: RedesignProduct) => void;
+  categories: RedesignCategory[];
+  hasResult: boolean;
+  onAddCategory: (c: RedesignCategory) => void;
+  onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
-  const [scale, setScale] = useState(1);
-  const [bright, setBright] = useState(false);
-
-  if (deskTab === 'analysis' || deskTab === 'preview') {
-    const image = deskTab === 'preview' ? PREVIEW_IMAGE : ANALYSIS_IMAGE;
-    const pins = deskTab === 'preview' ? PREVIEW_PINS : DESKTOP_PINS;
-    return (
-      <div className="relative flex-1 min-w-0 overflow-hidden" style={{ backgroundColor: '#0c0c0c' }}>
-        <div className="absolute inset-0 transition-transform duration-300" style={{ transform: `scale(${scale})`, filter: bright ? 'brightness(1.15)' : 'none' }}>
-          <ImageWithFallback src={image} alt="اتاق" className="w-full h-full object-cover" />
-        </div>
-        {pins.map((p) => (
-          <PinCard key={p.id} pin={p} />
-        ))}
-        <ZoomDock
-          onZoomIn={() => setScale((s) => Math.min(2, s + 0.15))}
-          onZoomOut={() => setScale((s) => Math.max(1, s - 0.15))}
-          onReset={() => setScale(1)}
-          onBrightness={() => setBright((b) => !b)}
-        />
-      </div>
-    );
-  }
-
-  if (deskTab === 'suggestions') {
-    return (
-      <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ backgroundColor: RD.cream }}>
-        <div className="max-w-3xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }}>
-          <h2 className="text-[24px] font-medium" style={{ color: RD.ink }}>پیشنهادهای هما</h2>
-          <p className="text-[13px] mt-2 leading-[1.8]" style={{ color: RD.inkSoft }}>{SUGGESTION_SUMMARY}</p>
-          <div className="mt-6" style={{ borderTop: `1px solid ${RD.line}` }}>
-            {IMPACT_ITEMS.map((item, i) => (
-              <div key={item.id} style={i > 0 ? { borderTop: `1px solid ${RD.line}` } : undefined}>
-                <ImpactRow item={item} />
-              </div>
-            ))}
-          </div>
-          <h3 className="text-[15px] font-medium mt-8 mb-4" style={{ color: RD.ink }}>محصولات پیشنهادی</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {SUGGESTION_PRODUCTS.map((p) => (
-              <ProductCard key={p.id} product={p} onAdd={() => addToCart(p)} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // products
   return (
-    <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ backgroundColor: RD.cream }}>
-      <div className="max-w-4xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }}>
-        <div className="flex items-baseline justify-between mb-5">
-          <h2 className="text-[24px] font-medium" style={{ color: RD.ink }}>محصولات مناسب این فضا</h2>
-          <span className="text-[13px]" style={{ color: RD.inkSoft }}>{toPersianDigits(cart.length)} مورد در سبد</span>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          {SUGGESTION_PRODUCTS.map((p) => (
-            <ProductCard key={p.id} product={p} onAdd={() => addToCart(p)} />
-          ))}
-        </div>
+    <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ background: RD.canvas }}>
+      <div className="max-w-5xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }} dir="rtl">
+        {!hasResult ? (
+          <p className="text-[14px] text-center py-20" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+        ) : (
+          <>
+            <div className="flex items-baseline justify-between mb-1.5">
+              <h2 className="text-[24px] font-medium" style={{ color: RD.ink }}>برنامهٔ خرید برای این فضا</h2>
+              <span className="text-[13px]" style={{ color: RD.inkSoft }}>{toPersianDigits(cart.length)} مورد در سبد</span>
+            </div>
+            <p className="text-[13px] mb-6" style={{ color: RD.inkSoft }}>
+              دسته‌ها به ترتیب اولویت چیده شده‌اند؛ از بالا شروع کن.
+            </p>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+              {categories.map((c) => (
+                <CategoryCard
+                  key={c.id}
+                  category={c}
+                  onAdd={addToCart}
+                  onAddCategory={onAddCategory}
+                  onPreviewCategory={onPreviewCategory}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-// ── Chat panel (right) ──────────────────────────────────────────────
-function DesktopBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === 'user';
+// ── Preview-history panel (left, collapsible, labelled cards) ───────
+function PreviewHistoryPanel({
+  versions,
+  active,
+  onSelect,
+  onRender,
+  busy,
+}: {
+  versions: RoomVersion[];
+  active: number;
+  onSelect: (n: number) => void;
+  onRender: () => void;
+  busy: boolean;
+}) {
+  const [open, setOpen] = useState(true);
+  const ordered = [...versions].sort((a, b) => a.index - b.index); // oldest on top, newest at bottom
+
   return (
-    <div className="flex flex-col" style={{ fontFamily: 'Vazirmatn' }}>
-      <div
-        className={`px-3.5 py-2.5 ${isUser ? 'rounded-2xl rounded-tr-sm self-start' : 'rounded-2xl rounded-tl-sm self-end'}`}
-        style={
-          isUser
-            ? { backgroundColor: RD.accentGreenBg, color: RD.ink, maxWidth: '92%' }
-            : { backgroundColor: '#fff', border: `1px solid ${RD.line}`, color: RD.ink, maxWidth: '94%' }
-        }
-      >
-        <p className="text-[12.5px] leading-[1.85]">{message.text}</p>
+    <aside
+      className="hidden lg:flex shrink-0 flex-col overflow-hidden"
+      style={{
+        width: open ? 240 : 64,
+        transition: 'width 200ms ease',
+        backgroundColor: RD.cream,
+        borderRight: `1px solid ${RD.line}`,
+        fontFamily: 'Vazirmatn',
+      }}
+    >
+      {/* Header + collapse toggle. Panel sits on the visual LEFT (RTL) → collapse
+          arrow points further left, expand arrow points back toward the canvas. */}
+      <div className="shrink-0 flex items-center justify-between px-3 h-12" style={{ borderBottom: `1px solid ${RD.line}` }}>
+        {open && <h3 className="text-[12.5px] font-semibold" style={{ color: RD.inkSoft }}>تاریخچه پیش‌نمایش‌ها</h3>}
+        <button
+          type="button"
+          aria-label={open ? 'جمع کردن' : 'باز کردن'}
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="w-8 h-8 rounded-md flex items-center justify-center transition hover:bg-black/[0.04] mx-auto"
+        >
+          {open ? (
+            <ChevronLeft size={17} strokeWidth={2} style={{ color: RD.inkSoft }} />
+          ) : (
+            <ChevronRight size={17} strokeWidth={2} style={{ color: RD.inkSoft }} />
+          )}
+        </button>
       </div>
-      {message.time && (
-        <span className={`text-[10px] mt-1 ${isUser ? 'self-start' : 'self-end'}`} style={{ color: RD.inkMuted }}>
-          {message.time}
-        </span>
-      )}
-    </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3">
+        {ordered.length === 0 ? (
+          open && (
+            <p className="text-[12px] text-center leading-[1.9] px-1 py-6" style={{ color: RD.inkSoft }}>
+              {EMPTY_PREVIEW_HINT}؛ از دکمهٔ زیر شروع کن.
+            </p>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {ordered.map((v) => {
+              const isActive = v.index === active;
+              if (!open) {
+                // collapsed rail → rounded thumb only
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    aria-label={`پیش‌نمایش ${toPersianDigits(v.index)}`}
+                    onClick={() => onSelect(v.index)}
+                    className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden transition"
+                    style={{ boxShadow: isActive ? `0 0 0 2px ${RD.accentGreen}` : `0 0 0 1px ${RD.line}` }}
+                  >
+                    <ImageWithFallback src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
+                  </button>
+                );
+              }
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  aria-label={`پیش‌نمایش ${toPersianDigits(v.index)}${isActive ? ' — فعال' : ''}`}
+                  onClick={() => onSelect(v.index)}
+                  className="text-right rounded-xl p-2 transition"
+                  style={{
+                    border: `1.5px solid ${isActive ? RD.accentGreen : 'transparent'}`,
+                    backgroundColor: isActive ? RD.accentGreenBg : 'transparent',
+                  }}
+                >
+                  <div
+                    className="w-full aspect-[4/3] rounded-[10px] overflow-hidden"
+                    style={{ border: RD.miniMatBorder, boxShadow: RD.thumbShadow }}
+                  >
+                    <ImageWithFallback src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5 px-0.5">
+                    <span className="text-[12.5px] font-medium" style={{ color: RD.ink }}>
+                      پیش‌نمایش {toPersianDigits(v.index)}
+                    </span>
+                    {isActive && (
+                      <span
+                        className="w-4 h-4 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: RD.accentGreen }}
+                      >
+                        <Check size={10} strokeWidth={3} color="#fff" />
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* New preview CTA */}
+      <div className="shrink-0 p-3" style={{ borderTop: `1px solid ${RD.line}` }}>
+        <button
+          type="button"
+          onClick={onRender}
+          disabled={busy}
+          aria-label="ایجاد پیش‌نمایش جدید"
+          className="w-full flex items-center justify-center gap-1.5 rounded-lg transition hover:bg-black/[0.02] disabled:opacity-50"
+          style={{ border: `1.5px dashed ${RD.line}`, color: RD.inkSoft, padding: open ? '12px' : '12px 0', fontSize: 12 }}
+        >
+          <Plus size={17} strokeWidth={2} />
+          {open && (busy ? 'در حال ساخت…' : 'ایجاد پیش‌نمایش جدید')}
+        </button>
+      </div>
+    </aside>
   );
 }
 
+// ── Assistant panel (right) ─────────────────────────────────────────
 const PLAN_ICONS: Record<string, typeof Eye> = { palette: Palette, coins: Wallet, bag: ShoppingBag, eye: Eye };
 
 function ChatChecklist() {
   return (
-    <div className="rounded-xl bg-white px-3.5 py-3" style={{ border: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}>
+    <div className="rounded-xl px-3.5 py-3" style={{ backgroundColor: '#FFFFFF', border: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}>
       <p className="text-[12.5px] font-medium mb-2.5" style={{ color: RD.ink }}>{DESKTOP_PLAN.title}</p>
       <div className="space-y-2.5">
         {DESKTOP_PLAN.items.map((it) => {
@@ -377,94 +461,111 @@ function ChatChecklist() {
   );
 }
 
-function TypingDots() {
-  return (
-    <div role="status" aria-label="هما در حال تایپ است" className="self-end rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1" style={{ backgroundColor: '#fff', border: `1px solid ${RD.line}` }}>
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: RD.inkMuted }}
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ChatPanel({
+function AssistantPanel({
+  messages,
+  chipGroups,
+  onSelectChip,
+  busy,
+  rendering,
+  findings,
   input,
   setInput,
   onSend,
+  onQuickEdit,
+  hasResult,
+  showIntake,
+  intakeImage,
+  onPickImage,
+  onRemoveImage,
+  scopeChips,
+  scopeSelected,
+  onToggleScope,
 }: {
+  messages: ChatMessage[];
+  chipGroups: ChipGroup[];
+  onSelectChip: (groupId: string, chipId: string) => void;
+  busy: boolean;
+  rendering: boolean;
+  findings: RoomFinding[];
   input: string;
   setInput: (v: string) => void;
   onSend: () => void;
+  onQuickEdit: (text: string) => void;
+  hasResult: boolean;
+  showIntake: boolean;
+  intakeImage: string | null;
+  onPickImage: (file: File) => void;
+  onRemoveImage: () => void;
+  scopeChips: Chip[];
+  scopeSelected: Set<string>;
+  onToggleScope: (chipId: string) => void;
 }) {
+  const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages.length, busy, chipGroups.length]);
+
+  const showQuickEdits = hasResult && !showIntake && !busy && !rendering;
+
   return (
-    <aside className="w-72 lg:w-[340px] shrink-0 flex flex-col h-full" style={{ backgroundColor: RD.sheet, borderLeft: `1px solid ${RD.line}` }}>
-      <div className="shrink-0 flex items-center gap-2.5 px-4 h-16" style={{ borderBottom: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}>
+    <aside
+      className="w-[340px] lg:w-[380px] xl:w-[400px] shrink-0 flex flex-col h-full"
+      style={{ backgroundColor: RD.panel, borderLeft: `1px solid ${RD.line}` }}
+    >
+      {/* Identity — unboxed */}
+      <div className="shrink-0 flex items-center gap-2.5 px-[18px] pt-4 pb-3" style={{ fontFamily: 'Vazirmatn' }}>
         <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: RD.ink }}>
           <Droplet size={16} strokeWidth={2} color="#fff" />
         </span>
         <div className="leading-tight">
-          <p className="text-[14px] font-bold" style={{ color: RD.ink }}>هما</p>
-          <p className="text-[11px]" style={{ color: RD.inkMuted }}>{ASSISTANT_TAGLINE}</p>
+          <p className="text-[15px] font-semibold flex items-center gap-1.5" style={{ color: RD.ink }}>
+            هما
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: RD.accentGreen }} />
+          </p>
+          <p className="text-[12px]" style={{ color: RD.inkSoft }}>{ASSISTANT_TAGLINE}</p>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-4 py-4 flex flex-col gap-3.5" style={{ backgroundColor: RD.cream }}>
-        <DesktopBubble message={DESKTOP_MESSAGES[0]} />
-        <ChatChecklist />
-        <DesktopBubble message={DESKTOP_MESSAGES[1]} />
-        <DesktopBubble message={DESKTOP_MESSAGES[2]} />
-        <TypingDots />
-      </div>
-
-      <div className="shrink-0 flex gap-2 px-4 py-2.5 overflow-x-auto scrollbar-hide" style={{ fontFamily: 'Vazirmatn' }}>
-        {CHAT_QUICK_REPLIES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className="shrink-0 rounded-full px-3.5 py-1.5 text-[12px] whitespace-nowrap transition hover:bg-black/[0.03]"
-            style={{ border: `1px solid ${RD.line}`, color: RD.inkSoft, backgroundColor: '#fff' }}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="shrink-0 flex items-center gap-2 px-4 py-3" style={{ borderTop: `1px solid ${RD.line}` }}>
-        <button type="button" aria-label="افزودن" className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ border: `1px solid ${RD.line}`, color: RD.inkSoft }}>
-          <Plus size={16} strokeWidth={2} />
-        </button>
-        <div className="flex-1 flex items-center gap-2 rounded-full px-3 py-2" style={{ border: `1px solid ${RD.line}`, backgroundColor: '#fff' }}>
-          <input
-            type="text"
-            aria-label="پیام"
-            value={input}
-            placeholder={CHAT_INPUT_PLACEHOLDER}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') onSend(); }}
-            className="flex-1 bg-transparent outline-none text-[13px] text-right"
-            style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-4 py-3 flex flex-col gap-3.5">
+        {showIntake ? (
+          <IntakeForm
+            variant="desktop"
+            image={intakeImage}
+            onPickImage={onPickImage}
+            onRemoveImage={onRemoveImage}
+            scopeChips={scopeChips}
+            scopeSelected={scopeSelected}
+            onToggleScope={onToggleScope}
           />
-          <button type="button" aria-label="پیوست فایل" className="shrink-0 flex items-center justify-center">
-            <Paperclip size={16} strokeWidth={1.75} style={{ color: RD.inkMuted }} />
-          </button>
+        ) : (
+          <ChatThread
+            messages={messages}
+            chipGroups={chipGroups}
+            onSelectChip={onSelectChip}
+            busy={busy}
+            rendering={rendering}
+            findings={findings}
+            chipLayout="wrap"
+            leading={<ChatChecklist />}
+            endRef={endRef}
+          />
+        )}
+      </div>
+
+      {showQuickEdits && (
+        <div className="px-4 pb-2.5">
+          <QuickEditChips onPick={onQuickEdit} disabled={busy} />
         </div>
-        <motion.button
-          type="button"
-          aria-label="ارسال"
-          onClick={onSend}
-          whileTap={{ scale: 0.95 }}
-          transition={SPRING}
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-          style={{ backgroundColor: RD.accentGreen }}
-        >
-          <Send size={16} strokeWidth={2} color="#fff" style={{ transform: 'scaleX(-1)' }} />
-        </motion.button>
+      )}
+
+      <div className="shrink-0 px-4 pb-4 pt-1">
+        <MessageInput
+          placeholder={inputPlaceholder(busy, rendering)}
+          value={input}
+          onChange={setInput}
+          onSend={onSend}
+          disabled={busy}
+        />
       </div>
     </aside>
   );
@@ -481,15 +582,84 @@ export function DesktopWorkspace({
   deskTab,
   onTabChange,
   onExit,
+  onNewSession,
+  onRender,
+  messages,
+  chipGroups,
+  onSelectChip,
+  busy,
+  rendering,
+  onSend,
+  onQuickEdit,
+  onAddCategory,
+  onPreviewCategory,
+  categories,
+  hasResult,
+  previewImage,
+  originalImage,
+  pins,
+  findings,
+  versions,
+  showIntake,
+  intakeImage,
+  onPickImage,
+  onRemoveImage,
+  scopeChips,
+  scopeSelected,
+  onToggleScope,
 }: DesktopWorkspaceProps) {
+  const versionImage = versions.find((v) => v.index === activeVersion)?.imageUrl ?? previewImage;
+  // Analysis tab shows the user's original photo (with annotation pins); the
+  // preview tab shows the selected render. Products tab swaps the canvas entirely.
+  const canvasImage = deskTab === 'preview' ? versionImage : originalImage ?? versionImage;
+
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden" style={{ backgroundColor: RD.cream }} dir="rtl">
-      <DesktopTopBar onExit={onExit} />
-      <DesktopTabs active={deskTab} onSelect={onTabChange} />
+      <DesktopTopBar deskTab={deskTab} onTabChange={onTabChange} onExit={onExit} onNewSession={onNewSession} />
       <div className="flex-1 min-h-0 flex">
-        <ChatPanel input={input} setInput={setInput} onSend={() => setInput('')} />
-        <CenterCanvas deskTab={deskTab} cart={cart} addToCart={addToCart} />
-        <HistoryColumn active={activeVersion} onSelect={setActiveVersion} />
+        <AssistantPanel
+          messages={messages}
+          chipGroups={chipGroups}
+          onSelectChip={onSelectChip}
+          busy={busy}
+          rendering={rendering}
+          findings={findings}
+          input={input}
+          setInput={setInput}
+          onSend={onSend}
+          onQuickEdit={onQuickEdit}
+          hasResult={hasResult}
+          showIntake={showIntake}
+          intakeImage={intakeImage}
+          onPickImage={onPickImage}
+          onRemoveImage={onRemoveImage}
+          scopeChips={scopeChips}
+          scopeSelected={scopeSelected}
+          onToggleScope={onToggleScope}
+        />
+
+        {deskTab === 'products' ? (
+          <ProductsCanvas
+            cart={cart}
+            addToCart={addToCart}
+            categories={categories}
+            hasResult={hasResult}
+            onAddCategory={onAddCategory}
+            onPreviewCategory={onPreviewCategory}
+          />
+        ) : (
+          <DesignPreviewCanvas
+            deskTab={deskTab}
+            rendering={rendering}
+            image={canvasImage}
+            pins={pins}
+            originalImage={originalImage}
+            activeVersion={activeVersion}
+            hasVersions={versions.length > 0}
+          />
+        )}
+
+        <PreviewHistoryPanel versions={versions} active={activeVersion} onSelect={setActiveVersion} onRender={onRender} busy={busy} />
       </div>
     </div>
   );
