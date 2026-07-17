@@ -207,12 +207,13 @@ export function SuggestionsPanel({
   onAddCategory: (c: RedesignCategory) => void;
   onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
-  if (!hasResult) {
+  if (!hasResult || categories.length === 0) {
     return (
       <PanelShell
         body={
-          <div className="min-h-[45dvh] flex items-center justify-center text-center px-6" style={{ fontFamily: 'Vazirmatn' }}>
-            <p className="text-[13px] leading-[1.8]" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+          <div className="min-h-[45dvh] flex flex-col items-center justify-center text-center gap-2 px-6" style={{ fontFamily: 'Vazirmatn' }}>
+            <h2 className="text-[16px] font-bold" style={{ color: RD.ink }}>محصولات هنوز فعال نشده</h2>
+            <p className="text-[13px] leading-[1.8] max-w-[280px]" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
           </div>
         }
       />

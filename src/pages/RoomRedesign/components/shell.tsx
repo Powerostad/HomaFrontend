@@ -249,12 +249,10 @@ export function PinnedImage({
           width: 'auto',
           height: 'auto',
           ...imageStyle,
-          ...(loaded ? {} : { minWidth: 'min(78vw, 560px)', minHeight: 300 }),
-          opacity: loaded ? 1 : 0,
           transition: 'opacity 300ms ease',
         }}
       />
-      {pins.map((p, i) => (
+      {loaded && pins.map((p, i) => (
         <AnnotationPin
           key={p.id}
           pin={p}

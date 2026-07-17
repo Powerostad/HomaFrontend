@@ -43,7 +43,7 @@ import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../da
 import { IntakeForm } from './IntakeForm';
 
 const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده';
-const EMPTY_PRODUCTS_HINT = 'پس از تحلیل فضا، محصولات پیشنهادی اینجا نمایش داده می‌شوند.';
+const EMPTY_PRODUCTS_HINT = 'محصولی هنوز انتخاب نشده. اول تحلیل فضا رو ببین؛ هر وقت خواستی، از هما بخواه پیشنهاد محصول بده.';
 
 export type DeskTab = 'analysis' | 'products' | 'preview';
 
@@ -278,8 +278,11 @@ function ProductsCanvas({
   return (
     <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ background: RD.canvas }}>
       <div className="max-w-5xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }} dir="rtl">
-        {!hasResult ? (
-          <p className="text-[14px] text-center py-20" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+        {!hasResult || categories.length === 0 ? (
+          <div className="text-center py-20 space-y-2">
+            <p className="text-[15px] font-semibold" style={{ color: RD.ink }}>محصولات هنوز فعال نشده</p>
+            <p className="text-[13px] leading-[1.8] max-w-[420px] mx-auto" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+          </div>
         ) : (
           <>
             <div className="flex items-baseline justify-between mb-1.5">
@@ -505,7 +508,7 @@ function AssistantPanel({
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, busy, chipGroups.length]);
 
-  const showQuickEdits = hasResult && !showIntake && !busy && !rendering;
+  const showQuickEdits = hasResult && chipGroups.length === 0 && !showIntake && !busy && !rendering;
 
   return (
     <aside

@@ -334,6 +334,7 @@ function isPlaced(x: number, y: number): boolean {
   return x > 0 || y > 0;
 }
 
+
 /**
  * Collect the room's gaps + goods for the active scene from the existing analysis:
  *  - GAPs from room_analysis issues — label_fa caption, evidence_fa detail.
@@ -354,8 +355,8 @@ export function findingsFromResult(result: ResultEvent, activeSceneId: string | 
   const issueGroups: BackendRoomIssue[][] = [
     ra.layout_issues || [],
     ra.harmony_conflicts || [],
-    ra.function_issues || ra.functional_issues || [],
-    ra.surface_issues || ra.surface_finish_issues || [],
+    [...(ra.function_issues || []), ...(ra.functional_issues || [])],
+    [...(ra.surface_issues || []), ...(ra.surface_finish_issues || [])],
   ];
   const seen = new Set<string>();
   for (const group of issueGroups) {
