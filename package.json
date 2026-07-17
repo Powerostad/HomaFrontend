@@ -13,7 +13,8 @@
     "clean": "rm -rf node_modules/.vite dist .cache",
     "clean:all": "rm -rf node_modules/.vite dist .cache node_modules && npm install",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -79,11 +80,13 @@
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.35",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.3.3",
     "vite": "^5.1.4",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.10"
   },
   "keywords": [
     "homa",

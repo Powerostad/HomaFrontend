@@ -7,6 +7,7 @@ import { FeedbackProvider } from "./FeedbackContext";
 import { SessionProvider } from "./SessionContext";
 import { ShopProvider } from "./ShopContext";
 import { BasketProvider } from "./BasketContext";
+import { RealtimeProvider } from "./RealtimeContext";
 
 /**
  * AppProviders - Combines all context providers
@@ -21,7 +22,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <AuthProvider>
-        <BasketProvider>
+          <RealtimeProvider>
+          <BasketProvider>
           <ShopProvider>
             <ProductProvider>
               <UploadProvider>
@@ -33,8 +35,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
               </UploadProvider>
             </ProductProvider>
           </ShopProvider>
-        </BasketProvider>
-      </AuthProvider>
+          </BasketProvider>
+          </RealtimeProvider>
+        </AuthProvider>
     </SessionProvider>
   );
 }
@@ -48,6 +51,7 @@ export { useStudio } from "./StudioContext";
 export { useFeedback } from "./FeedbackContext";
 export { useSession } from "./SessionContext";
 export { useBasket } from "./BasketContext";
+export { useRealtime } from "./RealtimeContext";
 
 // Re-export types
 export type { User } from "./AuthContext";

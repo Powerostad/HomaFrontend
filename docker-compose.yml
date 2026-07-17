@@ -17,6 +17,7 @@ services:
       - VITE_UMAMI_SRC=${VITE_UMAMI_SRC:-https://analytics.myhoma.ir/script.js}
       - VITE_UMAMI_WEBSITE_ID=${VITE_UMAMI_WEBSITE_ID:-bbf04a62-584f-4b2e-97b3-6a177ddf093b}
       - VITE_AUTH_MODE=${VITE_AUTH_MODE:-otp}
+      - VITE_ENABLE_REALTIME=${VITE_ENABLE_REALTIME:-true}
     networks:
       - homav-network
     labels:

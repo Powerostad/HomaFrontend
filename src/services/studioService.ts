@@ -11,6 +11,7 @@
 
 import { apiGet, apiPost, apiUpload, apiDelete, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
+import { realtimeClient } from '@/services/realtimeClient';
 
 // =============================================================================
 // Types - Backend Response Formats
@@ -170,6 +171,7 @@ export interface SessionListResponse {
  */
 export interface TryOnResponse {
   success: boolean;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
   tryon_image_url?: string;
   message?: string;
 }
@@ -725,8 +727,12 @@ export async function pollSessionStatus(
       };
     }
 
-    // Continue polling - wait 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // WebSocket events are the fast path; REST remains the source of truth.
+    if (realtimeClient.isConnected()) {
+      await realtimeClient.waitForEvent('redesign_session', sessionId, 5000);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
     return poll();
   };
 
@@ -791,6 +797,7 @@ export async function tryProductOnItem(
   selectedSize?: string
 ): Promise<{
   success: boolean;
+  pending?: boolean;
   data?: { tryonImageUrl: string };
   error?: string;
 }> {
@@ -802,7 +809,11 @@ export async function tryProductOnItem(
     }
   );
 
-  if (response.success && response.data?.success && response.data?.tryon_image_url) {
+  if (response.success && response.data?.status === 'pending') {
+    return { success: true, pending: true };
+  }
+
+  if (response.success && response.data?.tryon_image_url) {
     return {
       success: true,
       data: {

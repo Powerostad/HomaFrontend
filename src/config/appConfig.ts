@@ -6,6 +6,7 @@ type RuntimeConfig = Partial<{
   VITE_UMAMI_WEBSITE_ID: string;
   VITE_AUTH_MODE: string;
   VITE_ENABLE_UMAMI_IN_DEV: string;
+  VITE_ENABLE_REALTIME: string;
 }>;
 
 declare global {
@@ -55,4 +56,5 @@ export const appConfig = {
   umamiWebsiteId: getString('VITE_UMAMI_WEBSITE_ID', ''),
   authMode: getString('VITE_AUTH_MODE', 'password'),
   enableUmamiInDev: getString('VITE_ENABLE_UMAMI_IN_DEV') === 'true',
+  enableRealtime: getString('VITE_ENABLE_REALTIME', 'true') !== 'false',
 };

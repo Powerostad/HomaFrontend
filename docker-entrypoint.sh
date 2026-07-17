@@ -41,7 +41,8 @@ write_config_value VITE_API_IMAGE_PROCESSING_TIMEOUT "${VITE_API_IMAGE_PROCESSIN
 write_config_value VITE_UMAMI_SRC "${VITE_UMAMI_SRC:-}"
 write_config_value VITE_UMAMI_WEBSITE_ID "${VITE_UMAMI_WEBSITE_ID:-}"
 write_config_value VITE_AUTH_MODE "${VITE_AUTH_MODE:-}"
-write_config_value VITE_ENABLE_UMAMI_IN_DEV "${VITE_ENABLE_UMAMI_IN_DEV:-}" ""
+write_config_value VITE_ENABLE_UMAMI_IN_DEV "${VITE_ENABLE_UMAMI_IN_DEV:-}"
+write_config_value VITE_ENABLE_REALTIME "${VITE_ENABLE_REALTIME:-true}" ""
 
 cat >> "$CONFIG_FILE" <<'EOF'
 };
@@ -53,6 +54,11 @@ origin_from_url() {
 }
 
 API_ORIGIN=$(origin_from_url "${VITE_API_BASE_URL:-https://api.myhoma.ir}")
+case "$API_ORIGIN" in
+  https://*) WS_ORIGIN="wss://${API_ORIGIN#https://}" ;;
+  http://*) WS_ORIGIN="ws://${API_ORIGIN#http://}" ;;
+  *) WS_ORIGIN='' ;;
+esac
 # Umami needs its origin in script-src (to load script.js) AND connect-src
 # (the tracker POSTs collected data to {origin}/api/send).
 UMAMI_ORIGIN=$(origin_from_url "${VITE_UMAMI_SRC:-https://analytics.myhoma.ir}")
@@ -64,6 +70,9 @@ PRIVATE_MEDIA_ORIGIN=$(origin_from_url "${VITE_PRIVATE_MEDIA_BASE_URL:-}")
 CONNECT_SRC="'self'"
 if [ -n "$API_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $API_ORIGIN"
+fi
+if [ -n "$WS_ORIGIN" ]; then
+  CONNECT_SRC="$CONNECT_SRC $WS_ORIGIN"
 fi
 if [ -n "$UMAMI_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $UMAMI_ORIGIN"

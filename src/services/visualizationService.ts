@@ -14,6 +14,7 @@
 
 import { apiUpload, apiGet, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
+import { realtimeClient } from '@/services/realtimeClient';
 
 // =============================================================================
 // Types
@@ -305,8 +306,12 @@ export async function pollTaskStatus(
       };
     }
 
-    // Continue polling - wait 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // WebSocket events are the fast path; REST remains the source of truth.
+    if (realtimeClient.isConnected()) {
+      await realtimeClient.waitForEvent('try_on', taskId, 5000);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
     return poll();
   };
 
