@@ -1,7 +1,7 @@
 /**
  * Persian copy for the intake flow — single source of truth.
  *
- * The Room Redesign flow uses inlined Persian constants (see data/mockData.ts)
+ * The Room Redesign flow uses inlined Persian constants for stable UI copy.
  * rather than i18n keys; this module follows that local convention so all
  * intake strings live in one typed object.
  */

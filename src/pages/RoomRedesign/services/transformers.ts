@@ -263,7 +263,19 @@ export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
     return {
       id: groupId,
       question: q.text_fa,
-      chips: (q.chips || []).map((label, i) => ({ id: `${groupId}:${i}`, label })),
+      chips: [
+        ...(q.chips || []).slice(0, 3).map((label, i) => ({
+          id: `${groupId}:${i}`,
+          label,
+          icon: q.recommended_chip === label ? 'check' : undefined,
+        })),
+        ...(q.allow_open_chat === false ? [] : [{
+          id: `${groupId}:open-chat`,
+          label: q.open_chat_label_fa || 'ایده‌ی دیگری دارم',
+          icon: 'sparkles',
+        }]),
+      ],
+      selectedId: q.recommended_chip ? `${groupId}:${q.chips.indexOf(q.recommended_chip)}` : undefined,
     };
   });
 }

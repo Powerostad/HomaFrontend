@@ -26,7 +26,7 @@ import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
 import { SimpleDialog } from '@/components/SimpleDialog';
 import { downloadImage } from '@/utils/downloadUtils';
 import { RD } from '../theme';
-import { DESKTOP_QUICK_EDITS } from '../data/mockData';
+import { DESKTOP_QUICK_EDITS } from '../data/uiCopy';
 
 // ── CanvasCaption ───────────────────────────────────────────────────
 export function CanvasCaption({ kicker, title, align = 'right' }: { kicker: string; title: string; align?: 'right' | 'center' }) {

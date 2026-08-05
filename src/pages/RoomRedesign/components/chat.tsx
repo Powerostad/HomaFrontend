@@ -31,7 +31,7 @@ import {
   ImageDown,
   AlertCircle,
 } from 'lucide-react';
-import { type ReactNode, type Ref } from 'react';
+import { useEffect, useRef, type ReactNode, type Ref } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { RD } from '../theme';
@@ -372,6 +372,12 @@ export function MessageInput({
   onSend: () => void;
   disabled?: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const focus = () => inputRef.current?.focus();
+    window.addEventListener('homa-redesign-focus-composer', focus);
+    return () => window.removeEventListener('homa-redesign-focus-composer', focus);
+  }, []);
   return (
     <div
       className="flex items-center gap-2 rounded-full pl-1 pr-4 py-2"
@@ -382,6 +388,7 @@ export function MessageInput({
       }}
     >
       <input
+        ref={inputRef}
         type="text"
         aria-label="پیام"
         value={value}

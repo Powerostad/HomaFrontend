@@ -10,6 +10,7 @@
  * aborted on unmount / `reset()`.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { trackEvent } from '@/utils/analytics';
 import {
   createChatSession,
   streamChatTurn,
@@ -222,7 +223,12 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
         await delay(2000, controller.signal);
         if (controller.signal.aborted) return;
         const load = await loadChatSession(sid);
-        if (!load.success) continue;
+        if (!load.success) {
+          setStatusBoth('error');
+          evt('این گفت‌وگو منقضی شده یا دیگر در دسترس نیست.', 'error');
+          trackEvent('redesign_failure', { error_type: 'expired_session' });
+          return;
+        }
         const payload = load.data as SessionPayload;
         const imgs = extractRenderImages(payload);
         if (imgs.length > baseline) {
@@ -363,6 +369,10 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       const s = statusRef.current;
       if (s === 'creating' || s === 'streaming' || s === 'rendering') return;
       const trimmed = (text || '').trim();
+      const turnStartedAt = performance.now();
+      if (images.length) {
+        trackEvent('redesign_intake_submitted', { image_count: images.length });
+      }
 
       const userId = nextId('u');
       setMessages((prev) => [
@@ -400,7 +410,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       let sawQuestions = false;
       let sawRenderPending = false;
       await streamChatTurn(
-        { sessionId: sid, text: trimmed, images },
+        { sessionId: sid, text: trimmed, images, idempotencyKey: nextId('turn') },
         {
           onSay: (delta) => {
             sawSay = true;
@@ -410,6 +420,9 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
           onQuestions: (e: QuestionsEvent) => {
             sawQuestions = true;
             applyChipGroups(chipGroupsFromQuestions(e));
+            trackEvent('redesign_choice_seen', {
+              choice_count: e.questions?.[0]?.chips?.length ?? 0,
+            });
           },
           onResult: (e: ResultEvent) => {
             sawResult = true;
@@ -422,10 +435,15 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
             setPins(pinsFromResult(e, sceneId));
             setFindings(findingsFromResult(e, sceneId));
             setHasResult(true);
+            trackEvent('redesign_recommendation_seen', {
+              product_count: e.items?.reduce((count, item) => count + (item.products?.length ?? 0), 0) ?? 0,
+              category_count: e.items?.length ?? 0,
+            });
           },
           onImage: (e: ImageEvent) => {
             sawImage = true;
             pushVersion(e.url, e.scene_id ?? null);
+            trackEvent('redesign_render_ready', { duration_ms: Math.round(performance.now() - turnStartedAt) });
           },
           onRenderPending: () => {
             // Server is rendering a scene async (Celery). Poll the DB-backed session
@@ -445,6 +463,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
             setError(msg);
             setStatusBoth('error');
             pushEvent(msg, 'error');
+            trackEvent('redesign_failure', { error_type: 'stream' });
           },
           onDone: () => {
             if (statusRef.current === 'error') return;
@@ -480,6 +499,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
 
       setError(null);
       setStatusBoth('rendering');
+      trackEvent('redesign_render_requested', { has_instructions: Boolean(instructions?.trim()) });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -493,10 +513,16 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
         sessionId: sid,
         sceneId: lastSceneIdRef.current,
         instructions,
+        idempotencyKey: nextId('render'),
       });
       if (!res.success) {
         setStatusBoth('error');
         pushEvent(res.error || 'خطا در ساخت تصویر', 'error');
+        return;
+      }
+      if (res.operationStatus === 'succeeded') {
+        await reconcileFromSession(sid, controller, true);
+        setStatusBoth('idle');
         return;
       }
       await pollForNewImage(sid, baseline, controller);
@@ -507,6 +533,12 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
   const selectChip = useCallback(
     (groupId: string, chipId: string) => {
       const group = chipGroupsRef.current.find((g) => g.id === groupId);
+      if (chipId.endsWith(':open-chat')) {
+        trackEvent('redesign_choice_answered', { open_chat: true });
+        window.dispatchEvent(new Event('homa-redesign-focus-composer'));
+        return;
+      }
+      trackEvent('redesign_choice_answered', { open_chat: false });
       const label = group?.chips.find((c) => c.id === chipId)?.label;
       if (label) void sendTurn({ text: label, images: [] });
     },

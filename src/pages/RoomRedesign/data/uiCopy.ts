@@ -1,12 +1,7 @@
 /**
- * Mock data for the Room Redesign flow UI.
- *
- * Persian copy is taken verbatim from the design spec (Design-frontend/).
- * Prices are stored in Rial (Toman × 10) so they render through the shared
- * formatPriceFromRial() helper, per project price convention. Image URLs are
- * stable Unsplash links — ImageWithFallback handles any that fail to load.
- *
- * Replaced by real backend chat API responses in a later step.
+ * Stable UI copy and design-time defaults for the Room Redesign flow.
+ * Dynamic analysis, recommendations, renders, and basket data come from the
+ * live chat/catalog/basket services.
  */
 import type {
   AnnotationPin,

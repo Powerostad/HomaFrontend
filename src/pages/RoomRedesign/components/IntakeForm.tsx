@@ -20,7 +20,7 @@ import { IMAGE_ACCEPT_STRING } from '@/utils/imageConversion';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { HeaderBadge, Chip } from './chat';
 import { RD } from '../theme';
-import { INTAKE_WELCOME, INTAKE_SCOPE_TITLE } from '../data/mockData';
+import { INTAKE_WELCOME, INTAKE_SCOPE_TITLE } from '../data/uiCopy';
 import type { Chip as ChipType } from '../types';
 
 export interface IntakeFormProps {

@@ -29,6 +29,9 @@ export interface BackendQuestion {
   id: string;
   text_fa: string;
   chips: string[];
+  recommended_chip?: string;
+  allow_open_chat?: boolean;
+  open_chat_label_fa?: string;
 }
 
 export interface QuestionsEvent {
@@ -171,6 +174,7 @@ export interface StreamTurnParams {
   text: string;
   images: string[];
   prefsUpdate?: unknown;
+  idempotencyKey: string;
 }
 
 // --------------------------------------------------------------------------- //
@@ -206,6 +210,21 @@ export async function loadChatSession(sessionId: string): Promise<LoadSessionRes
   return { success: false, error: res.error || 'خطا در بارگذاری گفتگو' };
 }
 
+export async function selectChatProduct(params: {
+  sessionId: string;
+  category: string;
+  productId: number;
+}): Promise<{ success: boolean; error?: string }> {
+  const res = await apiPost<{ ok: boolean }>('/recommendations/chat/select/', {
+    session_id: params.sessionId,
+    category: params.category,
+    product_id: params.productId,
+  });
+  return res.success && res.data?.ok
+    ? { success: true }
+    : { success: false, error: res.error || 'خطا در ذخیره انتخاب محصول' };
+}
+
 // --------------------------------------------------------------------------- //
 // Explicit async render (Celery): POST returns 202 immediately (no gunicorn
 // thread blocked); the worker generates + persists to the session in DB. The
@@ -214,6 +233,7 @@ export async function loadChatSession(sessionId: string): Promise<LoadSessionRes
 export interface RenderResult {
   success: boolean;
   status?: string;
+  operationStatus?: string;
   error?: string;
 }
 
@@ -221,16 +241,22 @@ export async function requestRender(params: {
   sessionId: string;
   sceneId?: string | null;
   instructions?: string | null;
+  idempotencyKey: string;
 }): Promise<RenderResult> {
-  const res = await apiPost<{ session_id: string; status: string }>(
+  const res = await apiPost<{ session_id: string; status: string; operation_status?: string }>(
     '/recommendations/chat/render/',
     {
       session_id: params.sessionId,
       scene_id: params.sceneId ?? null,
       instructions: params.instructions ?? null,
+      idempotency_key: params.idempotencyKey,
     },
   );
-  if (res.success) return { success: true, status: res.data?.status };
+  if (res.success) return {
+    success: true,
+    status: res.data?.status,
+    operationStatus: res.data?.operation_status,
+  };
   return { success: false, error: res.error || 'خطا در شروع ساخت تصویر' };
 }
 
@@ -324,6 +350,7 @@ export async function streamChatTurn(
       text: params.text,
       images: params.images,
       prefs_update: params.prefsUpdate ?? null,
+      idempotency_key: params.idempotencyKey,
     },
     signal,
     onEvent,

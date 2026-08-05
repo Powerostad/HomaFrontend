@@ -3,8 +3,7 @@
  *
  * These mirror the shapes of the backend chat API (apps/recommendations/chat)
  * loosely — just enough to render the UI. The flow is conversational, moving
- * through phases: analysis → suggestions → preview/feedback. Backend wiring
- * comes in a later step; for now the page is driven by mock data.
+ * through phases: analysis → suggestions → preview/feedback.
  */
 
 export type NavTab = 'analysis' | 'products' | 'basket';

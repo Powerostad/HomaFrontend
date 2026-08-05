@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 
 import { basketService } from '@/services/basketService';
+import { useAuth } from './AuthContext';
 import { trackEvent } from '@/utils/analytics';
 import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
 import {
@@ -55,6 +56,7 @@ interface BasketContextValue {
 const BasketContext = createContext<BasketContextValue | undefined>(undefined);
 
 export function BasketProvider({ children }: { children: ReactNode }) {
+  const { isInitialized, isLoggedIn } = useAuth();
   const [basket, setBasketState] = useState<Basket>(EMPTY_BASKET);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
@@ -92,12 +94,18 @@ export function BasketProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, [setBasket]);
 
-  // Hydrate once on mount.
+  // Hydrate only after auth is known; unauthenticated intake should not issue
+  // an API request that can produce a noisy expected 401/network error.
   useEffect(() => {
+    if (!isInitialized) return;
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      return;
+    }
     if (loadedRef.current) return;
     loadedRef.current = true;
     void refresh();
-  }, [refresh]);
+  }, [isInitialized, isLoggedIn, refresh]);
 
   const openBasket = useCallback(() => setIsOpen(true), []);
   const closeBasket = useCallback(() => setIsOpen(false), []);
@@ -256,7 +264,9 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       }
     };
     const handleLogout = () => {
-      void refresh();
+      loadedRef.current = false;
+      setBasket(EMPTY_BASKET);
+      setIsLoading(false);
     };
     window.addEventListener(AUTH_LOGIN_EVENT, handleLogin);
     window.addEventListener(AUTH_LOGOUT_EVENT, handleLogout);

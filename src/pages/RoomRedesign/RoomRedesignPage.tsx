@@ -19,16 +19,18 @@ import { toast } from 'sonner';
 import { RD } from './theme';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useRedesignChat } from './hooks/useRedesignChat';
+import { useBasket } from '@/context/BasketContext';
 import { RoomCanvas, BottomNav } from './components/shell';
 import { DesktopWorkspace, type DeskTab } from './components/desktop';
 import { AnalysisPanel, SuggestionsPanel, BasketPanel } from './components/panels';
 import { MobileSheet } from './components/BottomSheet';
 import { ImageToolbar, useImageActions } from './components/workspace';
-import { REDESIGN_SCOPE_CHIPS } from './data/mockData';
+import { REDESIGN_SCOPE_CHIPS } from './data/uiCopy';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
 import { toPersianDigits } from '@/utils/formatters';
 import { AnalysisLoadingScreen } from './intake/AnalysisLoadingScreen';
 import { composeIntakeText } from './intake/composeIntakeText';
+import { selectChatProduct } from './services/redesignChatService';
 import type { RedesignLocationState } from './intake/intakeTypes';
 import type { RedesignCategory } from './services/transformers';
 import type { NavTab, RedesignProduct } from './types';
@@ -107,9 +109,7 @@ export function RoomRedesignPage() {
   const [input, setInput] = useState('');
   const [intakeImage, setIntakeImage] = useState<string | null>(null);
   const [scopeSelected, setScopeSelected] = useState<Set<string>>(new Set());
-  // Local mirror of products added this session (for the سبد tab UI). The real
-  // basket lives in BasketContext; we push there too when a unique_link exists.
-  const [localCart, setLocalCart] = useState<RedesignProduct[]>([]);
+  const { basket, addItem, removeItem } = useBasket();
   const [navDir, setNavDir] = useState<1 | -1>(1);
   // Mobile: the single scroll container; we scroll it to the top to refocus the photo.
   const sheetScrollRef = useRef<HTMLDivElement>(null);
@@ -245,19 +245,45 @@ export function RoomRedesignPage() {
     setInput('');
   };
 
-  // ── Basket (client-side only for now — no backend) ────────────────
-  const addToCart = (p: RedesignProduct) => {
-    setLocalCart((c) => (c.some((x) => x.id === p.id) ? c : [...c, p]));
+  const basketProducts = useMemo<RedesignProduct[]>(
+    () => basket.shop_groups.flatMap((group) => group.items.map((item) => ({
+      id: item.id,
+      name: item.product_name,
+      subtitle: item.shop_name,
+      priceRial: item.current_price_rial ?? item.snapshot_price_rial,
+      imageUrl: item.product_image_url,
+    }))),
+    [basket.shop_groups],
+  );
+  const addToCart = async (p: RedesignProduct & { uniqueLink?: string; productId?: number }) => {
+    const source = chat.products.find((product) => product.id === p.id || product.productId === p.productId);
+    if (!source?.uniqueLink) {
+      toast.error('این محصول در حال حاضر قابل افزودن به سبد نیست');
+      return;
+    }
+    const added = await addItem({
+      product_unique_link: source.uniqueLink,
+      source_context: 'try_on_result',
+      redesign_session_id: chat.sessionId,
+    });
+    if (added && chat.sessionId && source.categoryCode) {
+      const selected = await selectChatProduct({
+        sessionId: chat.sessionId,
+        category: source.categoryCode,
+        productId: source.productId,
+      });
+      if (!selected.success) toast.error(selected.error || 'انتخاب محصول ذخیره نشد');
+    }
   };
-  const removeFromCart = (id: string) => setLocalCart((c) => c.filter((x) => x.id !== id));
-  const addAll = () => {
-    chat.products.forEach(addToCart);
+  const removeFromCart = (id: string) => void removeItem(id);
+  const addAll = async () => {
+    await Promise.all(chat.products.map((product) => addToCart(product)));
     toast.success('محصولات به سبد اضافه شد');
     goTab('basket');
   };
   // Add every product of one design category to the basket at once.
   const onAddCategory = (cat: RedesignCategory) => {
-    cat.products.forEach(addToCart);
+    void Promise.all(cat.products.map((product) => addToCart(product)));
     toast.success(`محصولات «${cat.title}» به سبد اضافه شد`);
   };
   // Preview just this category's change (instruction-scoped render of the scene).
@@ -285,7 +311,6 @@ export function RoomRedesignPage() {
     setIntakeImage(null);
     setScopeSelected(new Set());
     setInput('');
-    setLocalCart([]);
     setAnalyzing(false);
     const next = new URLSearchParams(searchParams);
     next.delete('s');
@@ -364,7 +389,7 @@ export function RoomRedesignPage() {
       <>
         {analysisOverlay}
         <DesktopWorkspace
-        cart={localCart}
+        cart={basketProducts}
         addToCart={addToCart}
         input={input}
         setInput={setInput}
@@ -461,7 +486,7 @@ export function RoomRedesignPage() {
 
         {/* Nav sticks to the top of the sheet as the user scrolls into content. */}
         <div className="sticky top-0 z-30 px-5 pt-1 pb-2.5" style={{ backgroundColor: RD.sheet }}>
-          <BottomNav active={navTab} onChange={goTab} itemCount={localCart.length} />
+          <BottomNav active={navTab} onChange={goTab} itemCount={basket.item_count} />
         </div>
 
         {/* Panel content with tab transitions (flows in the page scroll). */}
@@ -511,7 +536,7 @@ export function RoomRedesignPage() {
                 )}
                 {navTab === 'basket' && (
                   <BasketPanel
-                    items={localCart}
+                    items={basketProducts}
                     onRemove={removeFromCart}
                     onCheckout={onCheckout}
                     onGoProducts={() => goTab('products')}

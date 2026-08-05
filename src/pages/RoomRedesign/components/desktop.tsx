@@ -39,7 +39,7 @@ import { CanvasCaption, ImageToolbar, QuickEditChips, useImageActions } from './
 import { CategoryCard } from './categories';
 import type { RoomFinding, RedesignCategory } from '../services/transformers';
 import type { AnnotationPin as AnnotationPinType, ChatMessage, RedesignProduct, Chip, ChipGroup, RoomVersion } from '../types';
-import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../data/mockData';
+import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../data/uiCopy';
 import { IntakeForm } from './IntakeForm';
 
 const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده';

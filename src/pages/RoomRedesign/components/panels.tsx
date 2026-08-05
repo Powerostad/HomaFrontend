@@ -7,21 +7,17 @@
  *   - BasketPanel      (سبد: selected products + checkout)
  */
 import type { ReactNode } from 'react';
-import { Eye, ShoppingBag, ArrowLeft, ChevronLeft, Droplet, Sparkles, ShoppingCart, ExternalLink } from 'lucide-react';
+import { Eye, ShoppingBag, ArrowLeft, Droplet, Sparkles, ShoppingCart, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { RD } from '../theme';
-import { ChatBubble, ChipRow, MessageInput, HeaderBadge, ChatThread, inputPlaceholder } from './chat';
-import { SelectedCarousel, SelectedProductCard } from './products';
+import { MessageInput, HeaderBadge, ChatThread, inputPlaceholder } from './chat';
+import { SelectedProductCard } from './products';
 import { CategoryPlan } from './categories';
 import { formatPriceFromRial } from '@/utils/formatters';
 import {
-  SUGGESTION_SUMMARY,
   EMPTY_PRODUCTS_HINT,
-  PREVIEW_MESSAGE,
-  PREVIEW_QUICK_EDITS,
-  PREVIEW_PRODUCTS,
   BASKET_COPY,
-} from '../data/mockData';
+} from '../data/uiCopy';
 import type { RedesignProduct, ChatMessage, ChipGroup, Chip } from '../types';
 import type { RedesignCategory, RoomFinding } from '../services/transformers';
 import { IntakeForm } from './IntakeForm';
@@ -227,7 +223,7 @@ export function SuggestionsPanel({
           <PanelHeader title="پیشنهادهای هما" subtitle="برنامهٔ خرید بر اساس اولویت" right={<HeaderBadge icon={Sparkles} />} />
           <div style={{ borderBottom: `1px solid ${RD.line}`, paddingBottom: '14px' }}>
             <p className="text-[13px] leading-[1.8]" style={{ color: RD.inkSoft, fontFamily: 'Vazirmatn' }}>
-              {summary ?? SUGGESTION_SUMMARY}
+              {summary ?? 'دسته‌ها بر اساس نیازهای دیده‌شده در عکس و انتخاب‌های تو مرتب شده‌اند.'}
             </p>
           </div>
           <CategoryPlan
@@ -245,91 +241,6 @@ export function SuggestionsPanel({
           </OutlineButton>
           <PrimaryButton className="flex-1" icon={<ShoppingBag size={16} strokeWidth={2} color="#fff" />} onClick={onAddAll}>
             افزودن همه به سبد
-          </PrimaryButton>
-        </div>
-      }
-    />
-  );
-}
-
-// ── تحلیل فضا · REVIEW (preview + feedback) ─────────────────────────
-function VersionNav({ onPrev, onNext }: { onPrev: () => void; onNext: () => void }) {
-  return (
-    <div className="flex items-center gap-1.5" style={{ fontFamily: 'Vazirmatn' }}>
-      <motion.button
-        type="button"
-        onClick={onNext}
-        whileTap={{ scale: 0.95 }}
-        transition={SPRING}
-        className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
-        style={{ backgroundColor: RD.green }}
-      >
-        <ArrowLeft size={12} strokeWidth={2.5} />
-        بعد
-      </motion.button>
-      <motion.button
-        type="button"
-        onClick={onPrev}
-        whileTap={{ scale: 0.95 }}
-        transition={SPRING}
-        className="rounded-full px-2.5 py-1 text-[11px] font-medium"
-        style={{ backgroundColor: '#fff', border: `1px solid ${RD.line}`, color: RD.inkSoft }}
-      >
-        قبل
-      </motion.button>
-    </div>
-  );
-}
-
-export function PreviewPanel({
-  inputValue,
-  onInputChange,
-  onSend,
-  onContinue,
-  onViewProducts,
-  onPrevVersion,
-  onNextVersion,
-}: {
-  inputValue: string;
-  onInputChange: (v: string) => void;
-  onSend: () => void;
-  onContinue: () => void;
-  onViewProducts: () => void;
-  onPrevVersion: () => void;
-  onNextVersion: () => void;
-}) {
-  return (
-    <PanelShell
-      body={
-        <div className="space-y-4 pt-1">
-          <PanelHeader
-            title="پیش‌نمایش و بازخورد"
-            subtitle="این نسخه بر اساس انتخاب‌ها و بازخوردت ساخته شده."
-            right={<VersionNav onPrev={onPrevVersion} onNext={onNextVersion} />}
-          />
-          <ChatBubble message={PREVIEW_MESSAGE} />
-          <ChipRow group={PREVIEW_QUICK_EDITS} />
-          <MessageInput placeholder="بازخوردت رو اینجا بنویس..." value={inputValue} onChange={onInputChange} onSend={onSend} />
-          <div className="space-y-2">
-            <h3 className="text-[13px] font-semibold text-right" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>
-              محصولات انتخاب‌شده در این نسخه
-            </h3>
-            <div className="flex items-center gap-1.5">
-              <SelectedCarousel products={PREVIEW_PRODUCTS} />
-              <span className="w-8 h-8 rounded-full bg-white shrink-0 flex items-center justify-center shadow-sm">
-                <ChevronLeft size={15} strokeWidth={2} style={{ color: RD.inkSoft }} />
-              </span>
-            </div>
-          </div>
-        </div>
-      }
-      footer={
-        <div className="flex gap-2.5">
-          <OutlineButton className="flex-1" onClick={onViewProducts}>
-            دیدن محصولات این نسخه
-          </OutlineButton>
-          <PrimaryButton className="flex-1" onClick={onContinue}>
-            ادامه ویرایش
           </PrimaryButton>
         </div>
       }
