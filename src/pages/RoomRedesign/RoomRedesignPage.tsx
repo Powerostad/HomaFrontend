@@ -255,7 +255,7 @@ export function RoomRedesignPage() {
     }))),
     [basket.shop_groups],
   );
-  const addToCart = async (p: RedesignProduct & { uniqueLink?: string; productId?: number }) => {
+  const addToCart = async (p: RedesignProduct) => {
     const source = chat.products.find((product) => product.id === p.id || product.productId === p.productId);
     if (!source?.uniqueLink) {
       toast.error('این محصول در حال حاضر قابل افزودن به سبد نیست');

@@ -89,6 +89,10 @@ export interface RedesignProduct {
   priceRial: number; // stored in Rial; rendered via formatPriceFromRial
   imageUrl: string;
   liked?: boolean;
+  /** Backend unique link for product detail page redirect. */
+  uniqueLink?: string;
+  /** Backend numeric product ID for basket selection API. */
+  productId?: number;
 }
 
 /** One generated render version of the room (≈ backend render_history entry). */
