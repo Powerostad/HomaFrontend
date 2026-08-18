@@ -12,7 +12,7 @@
  */
 import { apiGet, apiPost } from '@/utils/apiClient';
 import { appConfig } from '@/config/appConfig';
-import { runSseStream, type SseEvent } from './sseClient';
+import { runSseStream, type SseEvent, type SseErrorKind } from './sseClient';
 
 // --------------------------------------------------------------------------- //
 // Backend event payload shapes
@@ -163,8 +163,9 @@ export interface StreamTurnHandlers {
   onRenderPending?: (e: RenderPendingEvent) => void;
   /** Live backend phase label (Persian) for the analysis loading screen. */
   onStage?: (e: StageEvent) => void;
-  /** Localized (Persian) error message. */
-  onError?: (message: string) => void;
+  /** Localized (Persian) error message. `kind` classifies transport failures
+   *  (`network`/`http`/`auth`) so the caller can recover vs. surface. */
+  onError?: (message: string, kind?: SseErrorKind) => void;
   /** Stream closed (success or handled error). Not called on abort. */
   onDone?: () => void;
 }
@@ -359,12 +360,16 @@ export async function streamChatTurn(
   if (result.aborted) return; // silent — navigation / unmount
 
   if (!result.ok) {
-    if (result.status === 401) {
-      handlers.onError?.('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.');
+    if (result.errorKind === 'auth' || result.status === 401) {
+      handlers.onError?.('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.', 'auth');
+    } else if (result.errorKind === 'network') {
+      // The client's connection dropped (e.g. ERR_NETWORK_CHANGED) — not the
+      // server's fault. The caller may recover by reconciling the DB-backed session.
+      handlers.onError?.('ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن.', 'network');
     } else {
       // Keep a Persian backend message if present; otherwise a generic one.
       const isPersian = !!result.error && /[؀-ۿ]/.test(result.error);
-      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور');
+      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور', 'http');
     }
   }
   handlers.onDone?.();

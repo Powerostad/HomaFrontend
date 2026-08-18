@@ -257,6 +257,53 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
     [applySessionView, setStatusBoth],
   );
 
+  /**
+   * Recover a turn whose SSE stream dropped (e.g. ERR_NETWORK_CHANGED). The
+   * backend keeps running the turn after the client disconnects and persists the
+   * full result, so poll the DB-backed session briefly and adopt whatever landed
+   * instead of surfacing a transient network error. Falls back to an error only
+   * if the turn failed server-side, the session is unreachable, or it times out.
+   */
+  const recoverFromNetworkDrop = useCallback(
+    async (sid: string, baselineTurns: number, controller: AbortController) => {
+      const evt = pushEventRef.current;
+      for (let i = 0; i < 45; i++) {
+        // ~90s at 2s
+        await delay(2000, controller.signal);
+        if (controller.signal.aborted || abortRef.current !== controller) return;
+        const load = await loadChatSession(sid);
+        if (!load.success) break; // session unreachable → surface the network error
+        const payload = load.data as SessionPayload;
+        if (payload.status === 'failed') {
+          setStatusBoth('error');
+          evt('پردازش ناموفق بود. دوباره تلاش کن.', 'error');
+          trackEvent('redesign_failure', { error_type: 'recover_turn_failed' });
+          return;
+        }
+        if ((payload.turns || []).length > baselineTurns) {
+          // The turn landed. Reconcile (replacing messages, since the live thread
+          // may hold only a partial assistant delta from the dropped stream), then
+          // hand off to render polling if a render was auto-enqueued.
+          applySessionView(rebuildSessionView(payload), { focusLatest: true, replaceMessages: true });
+          if (payload.status === 'rendering') {
+            const baseline = extractRenderImages(payload).length;
+            setStatusBoth('rendering');
+            await pollForNewImage(sid, baseline, controller);
+          } else {
+            setStatusBoth('idle');
+            evt('پاسخ آماده شد', 'success');
+          }
+          return;
+        }
+      }
+      // Timed out or unreachable — surface the (accurate) network error.
+      setStatusBoth('error');
+      evt('ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن.', 'error');
+      trackEvent('redesign_failure', { error_type: 'recover_timeout' });
+    },
+    [applySessionView, pollForNewImage, setStatusBoth],
+  );
+
   // Abort any in-flight stream/poll when the consumer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -396,6 +443,10 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       }
       if (controller.signal.aborted) return;
 
+      // Capture the DB turn count so a network drop can tell whether the turn landed.
+      const preLoad = await loadChatSession(sid);
+      const baselineTurns = preLoad.success ? (preLoad.data as SessionPayload).turns.length : 0;
+
       setStatusBoth('streaming');
       // Seed the uploaded photo as version 1 (the "before") on the very first
       // turn so the user can track before→after in the version rail.
@@ -409,6 +460,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       let sawImage = false;
       let sawQuestions = false;
       let sawRenderPending = false;
+      let recovering = false;
       await streamChatTurn(
         { sessionId: sid, text: trimmed, images, idempotencyKey: nextId('turn') },
         {
@@ -459,7 +511,17 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
               await pollForNewImage(sid, baseline, controller);
             })();
           },
-          onError: (msg) => {
+          onError: (msg, kind) => {
+            // A render is already in flight (render_pending arrived before the
+            // drop); pollForNewImage owns recovery/status, so ignore the stream error.
+            if (sawRenderPending) return;
+            if (kind === 'network') {
+              // The backend keeps running the turn after a client disconnect and
+              // persists the result — reconcile it once it lands instead of failing.
+              recovering = true;
+              void recoverFromNetworkDrop(sid, baselineTurns, controller);
+              return;
+            }
             setError(msg);
             setStatusBoth('error');
             pushEvent(msg, 'error');
@@ -477,7 +539,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
             }
             // A wow render is in flight (pollForNewImage owns status until it
             // lands); don't drop back to idle and cancel the rendering state.
-            if (sawRenderPending) return;
+            if (sawRenderPending || recovering) return;
             setStatusBoth('idle');
             // Reconcile from the DB (source of truth): the live SSE is optimistic,
             // so adopt anything it missed — the live tab now matches a fresh tab.
@@ -487,7 +549,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
         controller.signal,
       );
     },
-    [appendAssistantDelta, applyChipGroups, ensureSession, pollForNewImage, pushAssistantMessage, pushEvent, pushVersion, reconcileFromSession, setStatusBoth],
+    [appendAssistantDelta, applyChipGroups, ensureSession, pollForNewImage, pushAssistantMessage, pushEvent, pushVersion, reconcileFromSession, recoverFromNetworkDrop, setStatusBoth],
   );
 
   const renderScene = useCallback(

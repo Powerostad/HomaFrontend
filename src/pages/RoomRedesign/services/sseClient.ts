@@ -27,6 +27,9 @@ export interface SseRunOptions {
   onEvent: (e: SseEvent) => void;
 }
 
+/** Why a non-ok result failed, so callers can show the right user message. */
+export type SseErrorKind = 'network' | 'http' | 'auth';
+
 export interface SseRunResult {
   ok: boolean;
   /** HTTP status (0 for network/abort failures before a response). */
@@ -35,6 +38,8 @@ export interface SseRunResult {
   error?: string;
   /** True when the caller aborted — no error should be surfaced. */
   aborted?: boolean;
+  /** Categorizes a non-ok result. `network` = client connection dropped (no server fault). */
+  errorKind?: SseErrorKind;
 }
 
 /** Mirror of apiClient.buildHeaders, inlined for the streaming fetch. */
@@ -85,24 +90,62 @@ function isAbort(signal: AbortSignal, err: unknown): boolean {
   return signal.aborted || (err instanceof DOMException && err.name === 'AbortError');
 }
 
+/** Abortable sleep (resolves early on abort so a retry never outlives navigation). */
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const t = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(t);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
 export async function runSseStream(opts: SseRunOptions): Promise<SseRunResult> {
   const { url, body, signal, onEvent } = opts;
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: buildSseHeaders(),
-      body: JSON.stringify(body),
-      signal,
-    });
-  } catch (err) {
-    if (isAbort(signal, err)) return { ok: false, status: 0, aborted: true };
-    return { ok: false, status: 0, error: err instanceof Error ? err.message : 'network error' };
+  // Retry the initial connection on transient network failures (before any bytes
+  // are read). Re-sending the same body — including the idempotency key — is safe:
+  // the backend serializes turns per session, so a retry either replays an
+  // already-completed turn or starts it fresh if the first request never arrived.
+  // Mid-stream drops are NOT retried here; the caller reconciles the DB-backed
+  // session instead (the turn keeps running server-side after a disconnect).
+  const MAX_CONNECT_ATTEMPTS = 3;
+
+  let response: Response | undefined;
+  let lastError = 'network error';
+  for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: buildSseHeaders(),
+        body: JSON.stringify(body),
+        signal,
+      });
+      break;
+    } catch (err) {
+      if (isAbort(signal, err)) return { ok: false, status: 0, aborted: true };
+      lastError = err instanceof Error ? err.message : 'network error';
+      if (attempt < MAX_CONNECT_ATTEMPTS) {
+        // Exponential backoff (1s, 2s) before the next attempt.
+        await sleep(Math.min(1000 * 2 ** (attempt - 1), 4000), signal);
+        if (signal.aborted) return { ok: false, status: 0, aborted: true };
+      }
+    }
+  }
+
+  if (!response) {
+    // fetch() rejected on every attempt: the request never reached the server
+    // (e.g. ERR_NETWORK_CHANGED, DNS failure). A client-side connection problem.
+    return { ok: false, status: 0, error: lastError, errorKind: 'network' };
   }
 
   // 401 is handled by the caller (no silent refresh on a raw streaming fetch).
-  if (response.status === 401) return { ok: false, status: 401 };
+  if (response.status === 401) return { ok: false, status: 401, errorKind: 'auth' };
   if (!response.ok || !response.body) {
     let detail = '';
     try {
@@ -110,7 +153,7 @@ export async function runSseStream(opts: SseRunOptions): Promise<SseRunResult> {
     } catch {
       /* ignore */
     }
-    return { ok: false, status: response.status, error: detail || `HTTP ${response.status}` };
+    return { ok: false, status: response.status, error: detail || `HTTP ${response.status}`, errorKind: 'http' };
   }
 
   const reader = response.body.getReader();
@@ -140,7 +183,9 @@ export async function runSseStream(opts: SseRunOptions): Promise<SseRunResult> {
     return { ok: true, status: response.status };
   } catch (err) {
     if (isAbort(signal, err)) return { ok: false, status: 0, aborted: true };
-    return { ok: false, status: 0, error: err instanceof Error ? err.message : 'stream error' };
+    // The stream dropped mid-read (e.g. ERR_NETWORK_CHANGED while events were
+    // flowing). Same class as the fetch rejection: client connection problem.
+    return { ok: false, status: 0, error: err instanceof Error ? err.message : 'stream error', errorKind: 'network' };
   } finally {
     try {
       reader.releaseLock();
