@@ -3,16 +3,20 @@
 # (vite-plugin-pwa -> workbox-build@7, glob@11).
 FROM docker.arvancloud.ir/node:24-alpine AS builder
 
+# Use Liara's Iranian npm mirror for JavaScript dependencies
+ENV NPM_CONFIG_REGISTRY=https://package-mirror.liara.ir/repository/npm/
+
 # Set working directory
 WORKDIR /app
+
+# Use ArvanCloud's Iranian Alpine mirrors for system packages
+RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \
+    printf 'http://mirror.arvancloud.ir/alpine/v%s/main\nhttp://mirror.arvancloud.ir/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
 
 # Copy package files
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-# Use Runflare npm mirror for reliable access from Iran
-#RUN #npm config set registry https://mirror-npm.runflare.com && \
-#    npm ci
 RUN npm ci
 
 # Copy source code
@@ -28,6 +32,10 @@ RUN echo "=== Build output ===" && \
 
 # Production stage with Nginx
 FROM docker.arvancloud.ir/nginx:alpine AS production
+
+# Use ArvanCloud's Iranian Alpine mirror for system packages
+RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \
+    printf 'http://mirror.arvancloud.ir/alpine/v%s/main\nhttp://mirror.arvancloud.ir/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
 
 # Node runtime for the crawler meta-injection sidecar (render-bot.mjs).
 # No npm needed — the sidecar has zero dependencies (built-in http + fetch).
