@@ -17,6 +17,7 @@ services:
       - VITE_ENABLE_REALTIME=${VITE_ENABLE_REALTIME:-true}
     networks:
       - homav-network
+      - dokploy-network
     labels:
       - "dokploy.app.name=homav-frontend"
       - "dokploy.app.description=HomaV React Frontend Application"
@@ -26,3 +27,5 @@ networks:
   homav-network:
     driver: bridge
     name: homav-network
+  dokploy-network:
+    external: true
