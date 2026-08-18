@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
+import type { ImagePlacementMarker } from '@/services/studioService';
+
+export type { ImagePlacementMarker } from '@/services/studioService';
 
 // --- i18n wrapper (compatible with friend's useSimpleTranslation API) ---
 export function useSimpleTranslation() {
@@ -117,6 +120,7 @@ export interface CategoryGroup {
   recommendedSize: string;
   quantity: number;
   placements: string[];
+  positionInImage: ImagePlacementMarker | null;
   products: (Product & { store?: string; matchScore?: number })[];
   actionStatus: ActionStatus;
   interventionTier: InterventionTier;

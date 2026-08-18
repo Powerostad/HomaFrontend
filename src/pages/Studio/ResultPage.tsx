@@ -1,29 +1,15 @@
-/**
- * Studio Result Page — Editorial / Decision-Oriented Orchestrator
- *
- * Two-panel layout:
- *   - Right sidebar (520px on desktop): Editorial content scroll
- *   - Left panel: Full-bleed hero image
- *   - Floating glass capsule at bottom: phase navigation
- *
- * Phase-aware: analysis → recommendations → basket
- * Bottom capsule is a frosted-glass pill with three tabs only.
- *
- * Uses design tokens from globals.css throughout.
- */
 import { AnimatePresence } from 'motion/react';
-import { Loader2, Download as DownloadIcon, Bookmark } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { Bookmark, Download as DownloadIcon, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from '@/components/Header';
-import { ContextLock } from '@/components/studio/ContextLock';
-import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
+import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { useSimpleTranslation } from './result/types';
+import type { DiagnosisAction } from './result/DiagnosisActionCard';
+import type { CompletionChecklistItem } from './result/types';
 import { useStudioResult } from './result/useStudioResult';
 import { ImpactProgressCard } from './result/ImpactProgressCard';
 import { SpatialDiagnosis } from './result/SpatialDiagnosis';
-import type { DetectedContext } from './result/SpatialDiagnosis';
-import type { DiagnosisAction } from './result/DiagnosisActionCard';
 import { TierSection } from './result/TierSection';
 import { CollectionSummary } from './result/CollectionSummary';
 import { InvoiceSummary } from './result/InvoiceSummary';
@@ -33,8 +19,8 @@ import { ExitDecisionModal } from './result/ExitDecisionModal';
 import { DownloadReadyModal } from './result/DownloadReadyModal';
 import { CompletionChecklist } from './result/CompletionChecklist';
 import { UnifiedConsultationCTA } from './result/UnifiedConsultationCTA';
-import { toLocalizedDigits } from '@/utils/formatters';
-import type { CompletionChecklistItem } from './result/types';
+import { trackStudioResultAction } from '@/analytics/events';
+import './result/studio-result.css';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
@@ -43,39 +29,30 @@ const FONT = 'var(--font-family-vazirmatn)';
 export function StudioResultPage() {
   const { t } = useSimpleTranslation();
   const state = useStudioResult();
+  const [activePhase, setActivePhase] = useState<Phase>('analysis');
+  const [isBasketVisible, setIsBasketVisible] = useState(false);
+  const basketSectionRef = useRef<HTMLDivElement>(null);
 
-  /* ── Detected context metadata ── */
-  const roomTypeDisplay = state.projectName || state.categoryGroups[0]?.categoryDisplay || '';
-  const detectedContext: DetectedContext | undefined = roomTypeDisplay
-    ? {
-        roomType: roomTypeDisplay,
-        targetStyle: state.targetStyle || '',
-        naturalLight: '',
-        dominantSurfaces: '',
-      }
-    : undefined;
-
-  /* ── Diagnosis Actions — built from real AI category groups ── */
-  const diagnosisActions: DiagnosisAction[] = (() => {
-    return state.categoryGroups.map((group) => ({
+  const diagnosisActions = useMemo<DiagnosisAction[]>(
+    () => state.categoryGroups.map((group) => ({
       id: group.itemId,
-      status:
-        group.impactLevel === 'high'
-          ? ('critical' as const)
-          : group.impactLevel === 'medium'
-            ? ('warning' as const)
-            : ('good' as const),
+      status: group.impactLevel === 'high'
+        ? 'critical'
+        : group.impactLevel === 'medium'
+          ? 'warning'
+          : 'good',
       title: group.categoryDisplay,
-      diagnosis: group.recommendationReasonFa || '',
-      solution: group.designRationaleFa || '',
-      ctaText: '',
+      diagnosis: group.recommendationReasonFa || t('studio.result.v2.diagnosis.defaultProblem', 'این بخش از فضا به توجه بیشتری نیاز دارد.'),
+      solution: group.designRationaleFa || t('studio.result.v2.diagnosis.defaultSolution', 'یک تغییر هماهنگ با سبک و مقیاس فضا.'),
+      ctaText: t('studio.result.v2.card.viewRecommendation', 'مشاهده پیشنهاد'),
       linkedItemId: group.itemId,
       harmonyImpact: group.impactLevel === 'high' ? 80 : group.impactLevel === 'medium' ? 50 : 30,
-      iconType: 'default' as const,
-    }));
-  })();
+      iconType: 'default',
+      placements: group.placements,
+    })),
+    [state.categoryGroups, t],
+  );
 
-  /* ── Compute step numbering across all tiers ── */
   const tierStepOffsets: number[] = [];
   let runningStep = 0;
   for (const { items } of state.tierGroups) {
@@ -83,438 +60,315 @@ export function StudioResultPage() {
     runningStep += items.length;
   }
 
-  /* ── Counts ── */
   const purchasableCount = state.categoryGroups.filter(
-    (g) => g.actionStatus === 'available' && g.products.length > 0,
+    (group) => group.actionStatus === 'available' && group.products.length > 0,
   ).length;
 
-  /* ── Map CategoryGroup[] → CompletionChecklistItem[] for checklist/consultation ── */
-  const checklistItems: CompletionChecklistItem[] = state.completionChecklistItems.map(g => ({
-    id: g.itemId,
-    name: g.categoryDisplay,
-    category: g.category,
-    imageUrl: g.products[0]?.image || '',
-    aiReasoning: g.recommendationReasonFa || g.designRationaleFa,
+  const checklistItems: CompletionChecklistItem[] = state.completionChecklistItems.map((group) => ({
+    id: group.itemId,
+    name: group.categoryDisplay,
+    category: group.category,
+    imageUrl: group.products[0]?.image || '',
+    aiReasoning: group.recommendationReasonFa || group.designRationaleFa,
   }));
 
-  /* ── Phase tracking (scroll-aware) ── */
-  const [activePhase, setActivePhase] = useState<Phase>('analysis');
-  const desktopScrollRef = useRef<HTMLDivElement>(null);
-  const mobileScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const updateScrollState = () => {
+      const basket = basketSectionRef.current;
+      if (!basket) return;
 
-  const scrollToSection = useCallback((sectionId: string) => {
-    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-    const container = isDesktop ? desktopScrollRef.current : mobileScrollRef.current;
-    if (!container) return;
-    const target = container.querySelector(`#${sectionId}`) as HTMLElement | null;
-    if (target) {
-      const offset = target.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
-    }
-  }, []);
+      const basketTop = basket.getBoundingClientRect().top;
+      const viewportThreshold = window.innerHeight * 0.42;
+      setIsBasketVisible(basketTop <= viewportThreshold && basket.getBoundingClientRect().bottom > 0);
+
+      const recommendationSection = document.getElementById('section-products');
+      if (basketTop <= viewportThreshold) {
+        setActivePhase('basket');
+      } else if (recommendationSection && recommendationSection.getBoundingClientRect().top <= viewportThreshold) {
+        setActivePhase('recommendations');
+      } else {
+        setActivePhase('analysis');
+      }
+    };
+
+    updateScrollState();
+    window.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      window.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [state.isInitialized, state.categoryGroups.length]);
 
   const handlePhaseClick = useCallback((phase: Phase) => {
     setActivePhase(phase);
-    const map: Record<Phase, string> = {
-      analysis: 'section-analysis',
-      recommendations: 'section-products',
-      basket: 'section-basket',
-    };
-    scrollToSection(map[phase]);
-  }, [scrollToSection]);
+    trackStudioResultAction({
+      action: 'phase_navigation',
+      session_id: state.sessionId || state.activeSessionId || '',
+      phase,
+    });
+    document.getElementById(`section-${phase === 'recommendations' ? 'products' : phase}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [state.activeSessionId, state.sessionId]);
 
-  /* ── Track active phase on scroll ── */
-  useEffect(() => {
-    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-    const container = isDesktop ? desktopScrollRef.current : mobileScrollRef.current;
-    if (!container) return;
+  const handleMarkerClick = useCallback((itemId: number) => {
+    setActivePhase('recommendations');
+    state.handleImageMarkerClick(itemId);
+  }, [state.handleImageMarkerClick]);
 
-    const handleScroll = () => {
-      const containerRect = container.getBoundingClientRect();
-      const threshold = containerRect.top + containerRect.height * 0.4;
-      const basketEl = container.querySelector('#section-basket') as HTMLElement | null;
-      const productsEl = container.querySelector('#section-products') as HTMLElement | null;
-
-      if (basketEl && basketEl.getBoundingClientRect().top < threshold) {
-        setActivePhase('basket'); return;
-      }
-      if (productsEl && productsEl.getBoundingClientRect().top < threshold) {
-        setActivePhase('recommendations'); return;
-      }
-      setActivePhase('analysis');
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [state.isInitialized]);
-
-  /* ── Shared bottom dock props ── */
-  const dockProps = {
-    activePhase,
-    onNavigateToPhase: handlePhaseClick,
-    selectedPrice: state.selectedPrice,
-    selectedCount: state.selectedCount,
-    totalCount: purchasableCount,
-    totalPrice: state.totalPrice,
-    totalRecommendations: state.categoryGroups.length,
-    harmonyScore: state.harmonyScore,
-    projectedScore: state.projectedScore,
-    liveProjectedScore: state.liveProjectedScore,
-    onFinalize: state.handleFinalize,
-  };
-
-  /* ── scrollToAnalysis helper for cards ── */
-  const scrollToAnalysis = useCallback(() => {
-    handlePhaseClick('analysis');
-  }, [handlePhaseClick]);
-
-  /* ── InsightContent: shared between mobile & desktop ── */
-  const InsightContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
-    <div
-      className="flex flex-col"
-      style={{
-        fontFamily: FONT,
-        padding: isDesktop ? '0 var(--spacing-xl)' : '0 var(--spacing-md)',
-        paddingBottom: 'var(--spacing-xl)',
-      }}
-    >
-      {/* ── Desktop Minimal Header ── */}
-      {isDesktop && (
-        <div
-          className="flex items-center justify-between"
-          style={{
-            paddingBottom: 'var(--spacing-sm)',
-            marginBottom: 'var(--spacing-sm)',
-          }}
-        >
-          {/* Right: title + subtitle */}
-          <div className="flex flex-col" style={{ gap: '2px' }}>
-            <h1
-              style={{
-                fontSize: 'var(--text-label-size)',
-                fontWeight: 'var(--font-weight-semibold)',
-                fontFamily: FONT,
-                color: 'var(--editorial-charcoal)',
-                lineHeight: 1.4,
-              }}
-            >
-              {state.projectName || 'نتیجه طراحی'}
-              {state.targetStyle && (
-                <span
-                  style={{
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--editorial-taupe)',
-                    marginRight: '6px',
-                  }}
-                >
-                  ({state.targetStyle})
-                </span>
-              )}
-            </h1>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 'var(--font-weight-regular)',
-                fontFamily: FONT,
-                color: 'var(--editorial-taupe)',
-              }}
-            >
-              تحلیل اختصاصی
-            </span>
-          </div>
-
-          {/* Left: action icons */}
-          <div className="flex items-center" style={{ gap: '6px' }}>
-            <button
-              onClick={() => state.setIsSaved(!state.isSaved)}
-              className="flex items-center justify-center transition-all duration-200"
-              style={{
-                width: '32px', height: '32px', borderRadius: 'var(--radius-full)',
-                background: state.isSaved ? 'rgba(0,0,0,0.04)' : 'transparent',
-                border: 'none', cursor: 'pointer',
-                color: state.isSaved ? 'var(--editorial-charcoal)' : 'var(--editorial-taupe)',
-              }}
-              aria-label={state.isSaved ? 'ذخیره شده' : 'ذخیره'}
-            >
-              <Bookmark size={16} strokeWidth={1.5} fill={state.isSaved ? 'currentColor' : 'none'} />
-            </button>
-            {!state.isNoImageResult && (
-              <button
-                onClick={state.handleDownload}
-                disabled={state.isDownloading}
-                className="flex items-center justify-center transition-all duration-200"
-                style={{
-                  width: '32px', height: '32px', borderRadius: 'var(--radius-full)',
-                  background: 'transparent', border: 'none',
-                  cursor: state.isDownloading ? 'not-allowed' : 'pointer',
-                  color: 'var(--editorial-taupe)',
-                  opacity: state.isDownloading ? 0.4 : 1,
-                }}
-                aria-label="دانلود"
-              >
-                {state.isDownloading
-                  ? <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
-                  : <DownloadIcon size={16} strokeWidth={1.5} />}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Phase 1: Analysis (Decision Dashboard) ── */}
-      <div id="section-analysis">
-        {state.isNoImageResult && (
-          <div
-            style={{
-              padding: '12px 14px',
-              marginBottom: 'var(--spacing-md)',
-              border: '1px solid var(--editorial-hairline)',
-              background: 'rgba(255,255,255,0.55)',
-              color: 'var(--editorial-charcoal)',
-              fontSize: '12px',
-              lineHeight: 1.8,
-            }}
-          >
-            <p>این نتیجه بدون تولید تصویر بازطراحی آماده شده است. پیشنهادها بر اساس تحلیل همین فضا هستند.</p>
-            <button
-              onClick={state.handleRequestRedesignCredit}
-              disabled={state.isRequestingRedesignCredit}
-              style={{
-                marginTop: '10px',
-                height: '36px',
-                padding: '0 14px',
-                background: 'var(--editorial-charcoal)',
-                color: 'var(--editorial-stone)',
-                fontSize: '12px',
-                fontFamily: FONT,
-                fontWeight: 'var(--font-weight-semibold)',
-                opacity: state.isRequestingRedesignCredit ? 0.6 : 1,
-              }}
-            >
-              {state.isRequestingRedesignCredit
-                ? 'در حال ثبت درخواست...'
-                : 'درخواست تولید تصویر بازطراحی برای این طراحی'}
-            </button>
-          </div>
-        )}
-
-        {/* Harmony Score Gauge */}
-        <ImpactProgressCard
-          currentScore={state.harmonyScore}
-          liveProjectedScore={state.liveProjectedScore}
-          maxProjectedScore={state.projectedScore}
-          acceptedCount={state.acceptedItems.size}
-          totalCount={state.categoryGroups.length}
-        />
-
-        <SpatialDiagnosis
-          harmonyScore={state.harmonyScore}
-          projectedScore={state.projectedScore}
-          totalPrice={state.totalPrice}
-          selectedPrice={state.selectedPrice}
-          selectedCount={state.selectedCount}
-          diagnosisDetail={state.diagnosisDetail}
-          diagnosisExpanded={state.diagnosisExpanded}
-          onToggleDiagnosis={() => state.setDiagnosisExpanded(!state.diagnosisExpanded)}
-          detectedContext={detectedContext}
-          diagnosisActions={diagnosisActions}
-        />
-      </div>
-
-      {/* Divider */}
-      <div style={{
-        width: '100%', height: '1px',
-        background: 'var(--editorial-hairline)', marginBottom: 'var(--spacing-xl)',
-      }} />
-
-      {/* ── Phase 2: Recommendations ── */}
-      <div
-        id="section-products"
-        className="flex justify-between items-center"
-        style={{ marginBottom: 'var(--spacing-lg)' }}
-      >
-        <h2 style={{
-          fontSize: '18px', fontWeight: 'var(--font-weight-semibold)',
-          fontFamily: FONT, color: 'var(--editorial-charcoal)',
-        }}>
-          پیشنهادهای ما برای شما
-        </h2>
-        <span style={{
-          fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
-          fontFamily: FONT, color: 'var(--editorial-taupe)',
-        }}>
-          {toLocalizedDigits(state.categoryGroups.length)} مرحله
-        </span>
-      </div>
-
-      {state.tierGroups.map(({ tier, items }, tierIdx) => (
-        <TierSection
-          key={tier} tier={tier} items={items}
-          allCategoryGroups={state.categoryGroups}
-          stepStartIndex={tierStepOffsets[tierIdx] || 0}
-          priorityRankedIds={state.priorityRankedIds}
-          expandedWhyGroups={state.expandedWhyGroups}
-          acceptedItems={state.acceptedItems}
-          basketProductIds={state.basketProductIds}
-          isSaved={state.isSaved}
-          sessionId={state.sessionId ?? state.activeSessionId ?? undefined}
-          onToggleWhy={state.toggleWhyExpanded}
-          onProductClick={state.handleProductClick}
-          onToggleSaved={() => state.setIsSaved(!state.isSaved)}
-          onToggleAccepted={state.toggleAcceptedItem}
-          onToggleBasketProduct={state.toggleBasketProduct}
-          onScrollToAnalysis={scrollToAnalysis}
-          onUpdateQuantity={state.updateItemQuantity}
-        />
-      ))}
-
-      {/* ── Completion Checklist — AI suggestions NOT in Huma's store ── */}
-      <CompletionChecklist
-        items={checklistItems}
-        checkedIds={state.checklistCheckedIds}
-        onToggleItem={state.toggleChecklistItem}
-      />
-
-      {/* ── Unified Consultation CTA — single button for all action items ── */}
-      <UnifiedConsultationCTA
-        serviceItems={state.categoryGroups.filter(
-          g => g.actionStatus === 'custom_order' || g.actionStatus === 'architectural'
-        )}
-        acceptedServiceIds={state.acceptedItems}
-        sourcingItems={checklistItems}
-        checkedSourcingIds={state.checklistCheckedIds}
-      />
-
-      {/* ── Phase 3: Basket ── */}
-      <div id="section-basket">
-        <InvoiceSummary
-          categoryGroups={state.categoryGroups}
-          acceptedItems={state.acceptedItems}
-          basketProductIds={state.basketProductIds}
-          selectedPrice={state.selectedPrice}
-          harmonyScore={state.harmonyScore}
-          projectedScore={state.projectedScore}
-          liveProjectedScore={state.liveProjectedScore}
-          onToggleAccepted={state.toggleAcceptedItem}
-          onToggleBasketProduct={state.toggleBasketProduct}
-          onFinalize={state.handleFinalize}
-          isFinalizing={state.isFinalizing}
-          onUpdateQuantity={state.updateItemQuantity}
-          onUpdateProductQuantity={state.updateProductQuantity}
-          productQuantityOverrides={state.productQuantityOverrides}
-        />
-      </div>
-
-      {/* Feedback */}
-      <div style={{ paddingTop: 'var(--spacing-sm)', paddingBottom: 'var(--spacing-sm)' }}>
-        <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />
-      </div>
-
-      {/* Spacer for bottom dock */}
-      <div style={{ height: '80px' }} />
-    </div>
+  const markers = useMemo(
+    () => state.categoryGroups.map((group, index) => ({
+      itemId: group.itemId,
+      label: group.categoryDisplay,
+      marker: group.positionInImage,
+      number: index + 1,
+    })),
+    [state.categoryGroups],
   );
 
-  /* ── Hero Props ── */
   const heroProps = {
-    resultImage: state.resultImage, originalImage: state.originalImage,
-    showOriginal: state.showOriginal, isSaved: state.isSaved,
+    resultImage: state.resultImage,
+    originalImage: state.originalImage,
+    showOriginal: state.showOriginal,
+    isSaved: state.isSaved,
     isDownloading: state.isDownloading,
-    isNoImageResult: state.isNoImageResult,
+    analysisOnly: state.analysisOnly,
     sessionId: state.sessionId ?? state.activeSessionId ?? undefined,
-    totalPrice: state.totalPrice,
+    markers,
     onToggleOriginal: state.setShowOriginal,
     onToggleSaved: () => state.setIsSaved(!state.isSaved),
     onDownload: state.handleDownload,
-    onFullscreen: () => !state.isNoImageResult && state.setIsFullScreen(true),
+    onFullscreen: () => !state.analysisOnly && state.setIsFullScreen(true),
     onExit: () => state.setShowExitDecision(true),
+    onMarkerClick: handleMarkerClick,
   };
 
   return (
     <div
-      className="h-screen w-full relative overflow-hidden flex flex-col select-none"
+      className="studio-result-page"
       dir="rtl"
-      style={{ fontFamily: FONT, background: 'var(--editorial-stone)' }}
+      style={{ fontFamily: FONT }}
     >
-      {/* Site Header (all breakpoints) + mobile-only Context lock */}
-      {!state.isFullScreen && (
-        <>
-          <Header />
-          <div className="md:hidden">
-            <ContextLock
-              projectName={state.projectName || 'پروژه طراحی'}
-              targetStyle={state.targetStyle}
-              variant="mobile"
-            />
-          </div>
-        </>
-      )}
+      {!state.isFullScreen && <Header />}
 
-      {/* Main Layout — offset below the fixed site Header on desktop */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative md:pt-[var(--header-height)]">
-        {/* Desktop Right Panel */}
-        <div
-          className="hidden md:flex flex-col h-full z-50 relative"
-          style={{ width: '520px', background: 'var(--editorial-stone)', borderLeft: '1px solid var(--editorial-hairline)' }}
-        >
-          <div className="flex-1 overflow-y-auto scrollbar-hide" style={{ paddingTop: 'var(--spacing-xl)' }} ref={desktopScrollRef}>
-            <InsightContent isDesktop />
-          </div>
-          <CollectionSummary {...dockProps} />
-        </div>
+      <main className="studio-result-main" dir="ltr">
+        <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
+          <DesktopHeroPanel {...heroProps} />
+          <MobileHeroSection {...heroProps} />
+        </section>
 
-        {/* Desktop Left Panel (Hero) */}
-        <DesktopHeroPanel {...heroProps} />
-
-        {/* Mobile Layout */}
-        <div className="md:hidden absolute inset-0 flex flex-col z-0" style={{ background: 'var(--editorial-stone)' }}>
-          <div ref={mobileScrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
-            <MobileHeroSection {...heroProps} />
-            <div
-              className="relative z-30 min-h-[50vh]"
-              style={{
-                marginTop: '-24px', background: 'var(--editorial-stone)',
-                borderRadius: 'var(--radius-3xl) var(--radius-3xl) 0 0',
-                paddingTop: 'var(--spacing-md)', paddingBottom: 'var(--spacing-md)',
-                boxShadow: '0 -8px 32px rgba(0,0,0,0.06)',
-              }}
-            >
-              <div className="mx-auto" style={{
-                width: '36px', height: '4px', borderRadius: 'var(--radius-full)',
-                background: 'var(--editorial-charcoal)', opacity: 0.08, marginBottom: '12px',
-              }} />
-              <InsightContent />
+        <section className="studio-result-content" dir="rtl">
+          <div className="studio-result-heading">
+            <div>
+              <p className="studio-result-eyebrow">
+                {state.analysisOnly
+                  ? t('studio.result.v2.analysisOnly.label', 'تحلیل اولیه فضا')
+                  : t('studio.result.v2.title', 'نتیجه طراحی')}
+              </p>
+              <h1>
+                {state.projectName || t('studio.result.v2.roomFallback', 'فضای شما')}
+                {state.targetStyle && <span className="studio-result-heading-style">، {state.targetStyle}</span>}
+              </h1>
+              <p className="studio-result-heading-description">
+                {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
+              </p>
+            </div>
+            <div className="studio-result-heading-actions" aria-label={t('studio.result.v2.actions', 'اقدامات نتیجه')}>
+              <button
+                type="button"
+                className="studio-icon-button"
+                onClick={() => state.setIsSaved(!state.isSaved)}
+                aria-label={state.isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}
+                aria-pressed={state.isSaved}
+              >
+                <Bookmark size={18} fill={state.isSaved ? 'currentColor' : 'none'} />
+              </button>
+              {!state.analysisOnly && (
+                <button
+                  type="button"
+                  className="studio-icon-button"
+                  onClick={state.handleDownload}
+                  disabled={state.isDownloading}
+                  aria-label={t('common.download', 'دانلود')}
+                >
+                  {state.isDownloading ? <Loader2 size={18} className="animate-spin" /> : <DownloadIcon size={18} />}
+                </button>
+              )}
             </div>
           </div>
-          <CollectionSummary {...dockProps} />
-        </div>
-      </div>
 
-      {/* Fullscreen Overlay */}
+          <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title">
+            <h2 id="analysis-title" className="sr-only">
+              {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
+            </h2>
+
+            {state.analysisOnly && (
+              <div className="studio-analysis-only-callout" role="status">
+                <div>
+                  <strong>{t('studio.result.v2.analysisOnly.title', 'این نتیجه، تحلیل اولیه فضای شماست')}</strong>
+                  <p>{t('studio.result.v2.analysisOnly.description', 'برای این جلسه تصویر بازطراحی تولید نشده؛ پیشنهادها همچنان بر اساس عکس اصلی و تشخیص فضای شما ارائه شده‌اند.')}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={state.handleRequestRedesignCredit}
+                  disabled={state.isRequestingRedesignCredit}
+                  className="studio-secondary-button"
+                >
+                  {state.isRequestingRedesignCredit
+                    ? t('studio.result.v2.analysisOnly.requesting', 'در حال ثبت درخواست...')
+                    : t('studio.result.v2.analysisOnly.request', 'درخواست تولید تصویر بازطراحی')}
+                </button>
+              </div>
+            )}
+
+            <ImpactProgressCard
+              currentScore={state.harmonyScore}
+              liveProjectedScore={state.liveProjectedScore}
+              maxProjectedScore={state.projectedScore}
+              acceptedCount={state.acceptedItems.size}
+              totalCount={state.categoryGroups.length}
+            />
+
+            <SpatialDiagnosis
+              harmonyScore={state.harmonyScore}
+              projectedScore={state.projectedScore}
+              totalPrice={state.recommendedTotalPrice}
+              selectedPrice={state.selectedPrice}
+              selectedCount={state.selectedCount}
+              totalRecommendations={state.categoryGroups.length}
+              diagnosisDetail={state.diagnosisDetail}
+              diagnosisExpanded={state.diagnosisExpanded}
+              onToggleDiagnosis={() => state.setDiagnosisExpanded(!state.diagnosisExpanded)}
+              detectedContext={{
+                roomType: state.projectName,
+                targetStyle: state.targetStyle,
+                naturalLight: '',
+                dominantSurfaces: '',
+              }}
+              diagnosisActions={diagnosisActions}
+              onScrollToStep={state.scrollToCard}
+              onNavigateToRecommendations={() => handlePhaseClick('recommendations')}
+            />
+          </section>
+
+          <section id="section-products" className="studio-result-section" aria-labelledby="products-title">
+            <div className="studio-section-heading">
+              <div>
+                <p className="studio-result-eyebrow">{t('studio.result.v2.phase.recommendations', 'پیشنهادها')}</p>
+                <h2 id="products-title">{t('studio.result.v2.recommendationsTitle', 'سه تغییر برای شروع')}</h2>
+              </div>
+              <span className="studio-count-badge">{state.categoryGroups.length} {t('studio.result.v2.changeCount', 'تغییر')}</span>
+            </div>
+
+            {state.tierGroups.map(({ tier, items }, tierIndex) => (
+              <TierSection
+                key={tier}
+                tier={tier}
+                items={items}
+                allCategoryGroups={state.categoryGroups}
+                stepStartIndex={tierStepOffsets[tierIndex] || 0}
+                priorityRankedIds={state.priorityRankedIds}
+                expandedWhyGroups={state.expandedWhyGroups}
+                acceptedItems={state.acceptedItems}
+                basketProductIds={state.basketProductIds}
+                isSaved={state.isSaved}
+                sessionId={state.sessionId ?? state.activeSessionId ?? undefined}
+                onToggleWhy={state.toggleWhyExpanded}
+                onProductClick={state.handleProductClick}
+                onToggleSaved={() => state.setIsSaved(!state.isSaved)}
+                onToggleAccepted={state.toggleAcceptedItem}
+                onToggleBasketProduct={state.toggleBasketProduct}
+                onScrollToAnalysis={() => handlePhaseClick('analysis')}
+                onUpdateQuantity={(itemId, quantity) => state.updateItemQuantity(itemId, quantity)}
+              />
+            ))}
+
+            {state.tierGroups.length === 0 && (
+              <div className="studio-empty-state">
+                <p>{t('studio.result.v2.noRecommendations', 'هنوز پیشنهادی برای این جلسه آماده نشده است.')}</p>
+              </div>
+            )}
+
+            <CompletionChecklist
+              items={checklistItems}
+              checkedIds={state.checklistCheckedIds}
+              onToggleItem={state.toggleChecklistItem}
+            />
+
+            <UnifiedConsultationCTA
+              serviceItems={state.categoryGroups.filter(
+                (group) => group.actionStatus === 'custom_order' || group.actionStatus === 'architectural',
+              )}
+              acceptedServiceIds={state.acceptedItems}
+              sourcingItems={checklistItems}
+              checkedSourcingIds={state.checklistCheckedIds}
+            />
+          </section>
+
+          <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section">
+            <InvoiceSummary
+              categoryGroups={state.categoryGroups}
+              acceptedItems={state.acceptedItems}
+              basketProductIds={state.basketProductIds}
+              selectedPrice={state.selectedPrice}
+              onToggleAccepted={state.toggleAcceptedItem}
+              onToggleBasketProduct={state.toggleBasketProduct}
+              onFinalize={state.handleFinalize}
+              isFinalizing={state.isFinalizing}
+              onUpdateQuantity={state.updateItemQuantity}
+              onUpdateProductQuantity={state.updateProductQuantity}
+              productQuantityOverrides={state.productQuantityOverrides}
+            />
+
+            <div id="section-feedback" className="studio-result-feedback">
+              <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <CollectionSummary
+        activePhase={activePhase}
+        onNavigateToPhase={handlePhaseClick}
+        selectedPrice={state.selectedPrice}
+        selectedCount={state.selectedCount}
+        totalCount={purchasableCount}
+        totalRecommendations={state.categoryGroups.length}
+        isAtBasket={isBasketVisible}
+      />
+
       <AnimatePresence>
-        {state.isFullScreen && (
-          !state.isNoImageResult && (
+        {state.isFullScreen && !state.analysisOnly && (
           <FullscreenOverlay
-            resultImage={state.resultImage} originalImage={state.originalImage}
-            showOriginal={state.showOriginal} isSaved={state.isSaved} isDownloading={state.isDownloading}
-            onClose={() => state.setIsFullScreen(false)} onToggleOriginal={state.setShowOriginal}
-            onToggleSaved={() => state.setIsSaved(!state.isSaved)} onDownload={state.handleDownload}
+            resultImage={state.resultImage}
+            originalImage={state.originalImage}
+            showOriginal={state.showOriginal}
+            isSaved={state.isSaved}
+            isDownloading={state.isDownloading}
+            onClose={() => state.setIsFullScreen(false)}
+            onToggleOriginal={state.setShowOriginal}
+            onToggleSaved={() => state.setIsSaved(!state.isSaved)}
+            onDownload={state.handleDownload}
           />
-          )
         )}
       </AnimatePresence>
 
-      {/* Product Detail */}
       {state.selectedProduct && (
         <ProductDetailSheet
-          product={state.selectedProduct} isOpen={!!state.selectedProduct}
-          onClose={() => state.setSelectedProduct(null)} onReplace={() => {}}
+          product={state.selectedProduct}
+          isOpen
+          onClose={() => state.setSelectedProduct(null)}
+          onReplace={() => undefined}
           alternatives={state.productAlternatives}
           redesignSessionId={state.activeSessionId ?? state.sessionId}
+          isInBasket={state.basketProductIds.has(state.selectedProduct.id)}
+          onToggleBasket={() => state.toggleBasketProduct(state.selectedProduct!.id)}
+          onSelectProduct={state.handleProductClick}
         />
       )}
 
-      {/* Exit Decision */}
       <AnimatePresence>
         {state.showExitDecision && (
           <ExitDecisionModal
@@ -524,22 +378,15 @@ export function StudioResultPage() {
         )}
       </AnimatePresence>
 
-      {/* Loading Overlay */}
       <AnimatePresence>
         {state.isLoading && (
-          <div className="fixed inset-0 z-[2000] flex items-center justify-center"
-            style={{ background: 'rgba(250,249,246,0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="animate-spin" size={32} style={{ color: 'var(--editorial-charcoal)', opacity: 0.3 }} />
-              <span style={{ fontSize: '13px', fontFamily: FONT, fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-taupe)' }}>
-                {t('common.loading', 'در حال بارگذاری...')}
-              </span>
-            </div>
+          <div className="studio-loading-overlay" role="status" aria-live="polite">
+            <Loader2 className="animate-spin" size={32} />
+            <span>{t('common.loading', 'در حال بارگذاری...')}</span>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Download Ready */}
       <AnimatePresence>
         {state.showDownloadReady && (
           <DownloadReadyModal onConfirm={state.handleConfirmDownload} onCancel={state.handleCancelDownload} />

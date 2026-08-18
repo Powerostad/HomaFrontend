@@ -1,15 +1,7 @@
-/**
- * TierSection — Zara Home Editorial Feed
- *
- * Clean vertical feed with generous whitespace.
- * Tier headers are minimal — just a quiet label when needed.
- */
-import { toLocalizedDigits } from '@/utils/formatters';
+import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
 import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 import { RecommendationCard } from './RecommendationCard';
-
-const FONT = 'var(--font-family-vazirmatn)';
 
 interface TierSectionProps {
   tier: InterventionTier;
@@ -49,85 +41,43 @@ export function TierSection({
   onScrollToAnalysis,
   onUpdateQuantity,
 }: TierSectionProps) {
-  const cfg = TIER_CONFIG[tier];
-
-  if (!items || items.length === 0) return null;
+  const { t } = useTranslation();
+  const config = TIER_CONFIG[tier];
+  if (items.length === 0) return null;
 
   return (
-    <div
-      style={{
-        fontFamily: FONT,
-        marginBottom: 'var(--spacing-xl)',
-      }}
-    >
-      {/* Tier label — quiet, editorial */}
-      {tier !== 'quick_win' && (
-        <div
-          className="flex items-center justify-between"
-          style={{
-            marginBottom: 'var(--spacing-md)',
-            paddingBottom: 'var(--spacing-xs)',
-            borderBottom: '1px solid var(--editorial-hairline)',
-          }}
-        >
-          <span
-            style={{
-              fontSize: 'var(--text-label-size)',
-              fontWeight: 'var(--font-weight-bold)',
-              fontFamily: FONT,
-              color: 'var(--editorial-charcoal)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {cfg.label}
-          </span>
-          <span
-            style={{
-              fontSize: 'var(--text-caption-size)',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              opacity: 0.5,
-            }}
-          >
-            {toLocalizedDigits(items.length)} گزینه
-          </span>
+    <section className="studio-tier-section" aria-label={config.label}>
+      <div className="studio-tier-heading">
+        <div>
+          <p className="studio-result-eyebrow">{t(`studio.result.v2.tier.${tier === 'quick_win' ? 'quickWin' : tier}`, config.label)}</p>
+          <h3>{config.label}</h3>
         </div>
-      )}
-
-      {/* Vertical product feed */}
-      <div className="flex flex-col" style={{ gap: 'var(--spacing-2xl)' }}>
-        {items.map((group, idx) => {
-          const priorityRank = priorityRankedIds.indexOf(group.itemId) + 1;
-          const isTopPriority = priorityRankedIds[0] === group.itemId;
-          const isLast = idx === items.length - 1;
-          const stepNumber = stepStartIndex + idx + 1;
-
-          return (
-            <RecommendationCard
-              key={group.itemId}
-              group={group}
-              tier={tier}
-              isTopPriority={isTopPriority}
-              priorityRank={priorityRank}
-              stepNumber={stepNumber}
-              isWhyExpanded={expandedWhyGroups.has(group.itemId)}
-              isSaved={isSaved}
-              isAccepted={acceptedItems.has(group.itemId)}
-              sessionId={sessionId}
-              basketProductIds={basketProductIds}
-              onToggleWhy={() => onToggleWhy(group.itemId)}
-              onProductClick={onProductClick}
-              onToggleSaved={onToggleSaved}
-              onToggleAccepted={() => onToggleAccepted(group.itemId)}
-              onToggleBasketProduct={onToggleBasketProduct}
-              onScrollToAnalysis={onScrollToAnalysis}
-              onUpdateQuantity={onUpdateQuantity ? (qty) => onUpdateQuantity(group.itemId, qty) : undefined}
-              isLast={isLast}
-            />
-          );
-        })}
+        <span>{items.length} {t('studio.result.v2.card.options', 'گزینه')}</span>
       </div>
-    </div>
+      <div>
+        {items.map((group, index) => (
+          <RecommendationCard
+            key={group.itemId}
+            group={group}
+            tier={tier}
+            isTopPriority={priorityRankedIds[0] === group.itemId}
+            priorityRank={priorityRankedIds.indexOf(group.itemId) + 1}
+            stepNumber={stepStartIndex + index + 1}
+            isWhyExpanded={expandedWhyGroups.has(group.itemId)}
+            isSaved={isSaved}
+            isAccepted={acceptedItems.has(group.itemId)}
+            sessionId={sessionId}
+            basketProductIds={basketProductIds}
+            onToggleWhy={() => onToggleWhy(group.itemId)}
+            onProductClick={onProductClick}
+            onToggleSaved={onToggleSaved}
+            onToggleAccepted={() => onToggleAccepted(group.itemId)}
+            onToggleBasketProduct={onToggleBasketProduct}
+            onScrollToAnalysis={onScrollToAnalysis}
+            onUpdateQuantity={onUpdateQuantity ? (quantity) => onUpdateQuantity(group.itemId, quantity) : undefined}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

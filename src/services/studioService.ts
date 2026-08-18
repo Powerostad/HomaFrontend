@@ -12,6 +12,13 @@
 import { apiGet, apiPost, apiUpload, apiDelete, apiConfig, getStoredTokens } from '@/utils/apiClient';
 import { convertHeicToJpeg } from '@/utils/imageConversion';
 import { realtimeClient } from '@/services/realtimeClient';
+import {
+  normalizeImagePlacementMarker,
+  type ImagePlacementMarker,
+} from './placementMarkers';
+
+export { normalizeImagePlacementMarker } from './placementMarkers';
+export type { ImagePlacementMarker } from './placementMarkers';
 
 // =============================================================================
 // Types - Backend Response Formats
@@ -77,6 +84,7 @@ export interface APISessionItem {
   recommended_size?: string;
   quantity?: number;
   placements?: string[];
+  position_in_image?: ImagePlacementMarker | null;
   matched_products: APIMatchedProduct[];
   tryon_status: 'pending' | 'processing' | 'completed' | 'failed';
   tryon_image_url: string | null;
@@ -225,6 +233,7 @@ export interface SessionItem {
   recommendedSize: string;
   quantity: number;
   placements: string[];
+  positionInImage: ImagePlacementMarker | null;
   matchedProducts: MatchedProduct[];
   tryonStatus: 'pending' | 'processing' | 'completed' | 'failed';
   tryonImageUrl: string | null;
@@ -349,6 +358,7 @@ function transformSessionItem(apiItem: APISessionItem): SessionItem {
     recommendedSize: apiItem.recommended_size || '',
     quantity: apiItem.quantity ?? 1,
     placements: apiItem.placements || [],
+    positionInImage: normalizeImagePlacementMarker(apiItem.position_in_image),
     matchedProducts: (apiItem.matched_products || []).map(transformMatchedProduct),
     tryonStatus: apiItem.tryon_status,
     tryonImageUrl: getSessionImageUrl(apiItem.tryon_image_url),

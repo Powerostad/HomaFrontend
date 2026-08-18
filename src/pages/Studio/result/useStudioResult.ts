@@ -39,6 +39,13 @@ import {
   type TierGroup,
   matchedProductToUIProduct,
 } from './types';
+import {
+  calculateRecommendedTotalPrice,
+  calculateSelectedPrice,
+  countSelectedProducts,
+  getResultImage,
+  isAnalysisOnlyResult,
+} from './resultState';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,7 +72,7 @@ export interface UseStudioResultReturn {
   activeSession: RedesignSession | null;
   resultImage: string;
   originalImage: string | null;
-  isNoImageResult: boolean;
+  analysisOnly: boolean;
   showOriginal: boolean;
   setShowOriginal: (show: boolean) => void;
 
@@ -124,7 +131,7 @@ export interface UseStudioResultReturn {
   categoryGroups: CategoryGroup[];
   tierGroups: TierGroup[];
   displayProducts: Product[];
-  totalPrice: number;
+  recommendedTotalPrice: number;
   selectedPrice: number;
   selectedCount: number;
   harmonyScore: number;
@@ -143,6 +150,7 @@ export interface UseStudioResultReturn {
   handleFinalize: () => void;
   isFinalizing: boolean;
   handleProductClick: (product: Product) => void;
+  handleImageMarkerClick: (itemId: number) => void;
   handleRequestRedesignCredit: () => Promise<void>;
   isRequestingRedesignCredit: boolean;
   handleExit: () => void;
@@ -269,11 +277,17 @@ export function useStudioResult(): UseStudioResultReturn {
   const toggleAcceptedItem = useCallback((itemId: number) => {
     setAcceptedItems(prev => {
       const next = new Set(prev);
-      if (next.has(itemId)) next.delete(itemId);
+      const wasAccepted = next.has(itemId);
+      if (wasAccepted) next.delete(itemId);
       else next.add(itemId);
+      trackStudioResultAction({
+        action: wasAccepted ? 'recommendation_rejected' : 'recommendation_accepted',
+        session_id: sessionId || activeSessionId || '',
+        item_id: itemId,
+      });
       return next;
     });
-  }, []);
+  }, [sessionId, activeSessionId]);
 
   // Local selection only — drives the studio collection/invoice summary UI.
   // The server-authoritative basket is reconciled once, at checkout
@@ -282,11 +296,17 @@ export function useStudioResult(): UseStudioResultReturn {
   const toggleBasketProduct = useCallback((productId: string) => {
     setBasketProductIds(prev => {
       const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
+      const wasSelected = next.has(productId);
+      if (wasSelected) next.delete(productId);
       else next.add(productId);
+      trackStudioResultAction({
+        action: wasSelected ? 'product_removed_local' : 'product_added_local',
+        session_id: sessionId || activeSessionId || '',
+        product_id: productId,
+      });
       return next;
     });
-  }, []);
+  }, [sessionId, activeSessionId]);
 
   const toggleChecklistItem = useCallback((itemId: number) => {
     setChecklistCheckedIds(prev => {
@@ -370,8 +390,8 @@ export function useStudioResult(): UseStudioResultReturn {
   // Computed Values
   // =========================================================================
 
-  const isNoImageResult = !!activeSession && (activeSession.skipImageGeneration || !activeSession.redesignedImageUrl);
-  const resultImage = activeSession?.redesignedImageUrl || activeSession?.roomImageUrl || '';
+  const analysisOnly = isAnalysisOnlyResult(activeSession);
+  const resultImage = getResultImage(activeSession);
 
   // Build category groups from session items
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
@@ -386,6 +406,7 @@ export function useStudioResult(): UseStudioResultReturn {
         recommendedSize: item.recommendedSize || '',
         quantity: quantityOverrides.get(item.id) ?? item.quantity ?? 1,
         placements: item.placements || [],
+        positionInImage: item.positionInImage,
         products: item.matchedProducts.map((p, i) => matchedProductToUIProduct(p, i)),
         actionStatus: item.actionStatus || (item.matchedProducts.length > 0 ? 'available' : 'custom_order'),
         interventionTier: (item.interventionTier ||
@@ -431,42 +452,23 @@ export function useStudioResult(): UseStudioResultReturn {
   }, [categoryGroups]);
 
   // Total price: sum of main (AI pick) products * quantity for purchasable categories
-  const totalPrice = useMemo(() => {
-    return categoryGroups
-      .filter(g => g.actionStatus === 'available' && g.products.length > 0)
-      .reduce((acc, group) => {
-        const mainProduct = group.products[0];
-        const qty = group.quantity || 1;
-        return acc + (mainProduct?.price || 0) * qty;
-      }, 0);
-  }, [categoryGroups]);
+  const recommendedTotalPrice = useMemo(
+    () => calculateRecommendedTotalPrice(categoryGroups),
+    [categoryGroups],
+  );
 
-  // Selected price: basket-aware calculation
-  // Main products use group qty, alternatives use per-product qty
-  const selectedPrice = useMemo(() => {
-    let total = 0;
-    for (const group of categoryGroups) {
-      if (group.actionStatus !== 'available' || group.products.length === 0) continue;
-      if (!acceptedItems.has(group.itemId)) continue;
-      for (let i = 0; i < group.products.length; i++) {
-        const product = group.products[i];
-        if (!basketProductIds.has(product.id)) continue;
-        const isMain = i === 0;
-        const qty = isMain
-          ? (group.quantity || 1)
-          : (productQuantityOverrides.get(product.id) ?? group.quantity ?? 1);
-        total += (product.price || 0) * qty;
-      }
-    }
-    return total;
-  }, [categoryGroups, acceptedItems, basketProductIds, productQuantityOverrides]);
+  // Selected price: only explicit local product selections count.
+  // Recommendation acceptance remains an independent design decision.
+  const selectedPrice = useMemo(
+    () => calculateSelectedPrice(categoryGroups, basketProductIds, productQuantityOverrides),
+    [categoryGroups, basketProductIds, productQuantityOverrides],
+  );
 
-  // Count of accepted item categories
-  const selectedCount = useMemo(() => {
-    return categoryGroups
-      .filter(g => g.actionStatus === 'available' && g.products.length > 0 && acceptedItems.has(g.itemId))
-      .length;
-  }, [categoryGroups, acceptedItems]);
+  // Count of explicitly selected products (not accepted recommendations).
+  const selectedCount = useMemo(
+    () => countSelectedProducts(categoryGroups, basketProductIds),
+    [categoryGroups, basketProductIds],
+  );
 
   // Harmony score from diagnosis or fallback from match scores
   const harmonyScore = useMemo(() => {
@@ -592,27 +594,14 @@ export function useStudioResult(): UseStudioResultReturn {
     }
   }, [isLoggedIn, authInitialized]);
 
-  // Auto-accept all purchasable items and add main products to basket on first load
+  // Selection is intentionally empty on first load. Recommendations and basket
+  // products are previews until the user takes each action explicitly.
   useEffect(() => {
-    if (categoryGroups.length === 0) return;
-
-    setAcceptedItems(prev => {
-      if (prev.size > 0) return prev;
-      const purchasableIds = categoryGroups
-        .filter(g => g.actionStatus === 'available' && g.products.length > 0)
-        .map(g => g.itemId);
-      return purchasableIds.length > 0 ? new Set(purchasableIds) : prev;
-    });
-
-    setBasketProductIds(prev => {
-      if (prev.size > 0) return prev;
-      const mainProductIds = categoryGroups
-        .filter(g => g.actionStatus === 'available' && g.products.length > 0)
-        .map(g => g.products[0]?.id)
-        .filter((id): id is string => !!id);
-      return mainProductIds.length > 0 ? new Set(mainProductIds) : prev;
-    });
-  }, [categoryGroups]);
+    setAcceptedItems(new Set());
+    setBasketProductIds(new Set());
+    setQuantityOverrides(new Map());
+    setProductQuantityOverrides(new Map());
+  }, [sessionId]);
 
   // Load original image from upload or session
   useEffect(() => {
@@ -631,7 +620,7 @@ export function useStudioResult(): UseStudioResultReturn {
 
   // Download: Phase 1 - prepare (async fetch, no user gesture needed)
   const handleDownload = useCallback(async () => {
-    const imageUrl = activeSession?.redesignedImageUrl;
+    const imageUrl = activeSession?.skipImageGeneration ? null : activeSession?.redesignedImageUrl;
     if (!imageUrl) {
       toast.error(t('studio.result.noImageDownload', '\u062A\u0635\u0648\u06CC\u0631\u06CC \u0628\u0631\u0627\u06CC \u062F\u0627\u0646\u0644\u0648\u062F \u0645\u0648\u062C\u0648\u062F \u0646\u06CC\u0633\u062A'));
       return;
@@ -655,13 +644,17 @@ export function useStudioResult(): UseStudioResultReturn {
       setDownloadState('idle');
       toast.error(getDownloadErrorMessage(result.error));
     }
-  }, [activeSession?.redesignedImageUrl, sessionId, activeSessionId, t]);
+  }, [activeSession?.redesignedImageUrl, activeSession?.skipImageGeneration, sessionId, activeSessionId, t]);
 
   const handleRequestRedesignCredit = useCallback(async () => {
     const currentSessionId = sessionId || activeSessionId;
     if (!currentSessionId) return;
 
     setIsRequestingRedesignCredit(true);
+    trackStudioResultAction({
+      action: 'redesign_credit_request_clicked',
+      session_id: currentSessionId,
+    });
     try {
       const result = await createImageCreditRequest({
         source: 'web',
@@ -706,7 +699,7 @@ export function useStudioResult(): UseStudioResultReturn {
     setShowDownloadReady(false);
   }, [preparedDownloadData]);
 
-  // Finalize: open product pages for all accepted items with basket products
+  // Finalize: reconcile the explicit local basket into the server basket.
   const handleFinalize = useCallback(async () => {
     if (finalizingRef.current) return;
     const currentSessionId = sessionId || activeSessionId || '';
@@ -805,6 +798,18 @@ export function useStudioResult(): UseStudioResultReturn {
     [categoryGroups, sessionId, activeSessionId]
   );
 
+  const handleImageMarkerClick = useCallback((itemId: number) => {
+    trackStudioResultAction({
+      action: 'image_marker_clicked',
+      session_id: sessionId || activeSessionId || '',
+      item_id: itemId,
+    });
+    scrollToCard(itemId);
+    window.setTimeout(() => {
+      document.getElementById(`recommendation-${itemId}`)?.focus({ preventScroll: true });
+    }, 180);
+  }, [sessionId, activeSessionId, scrollToCard]);
+
   // Exit handler: save & navigate back to studio
   const handleExit = useCallback(() => {
     setIsSaved(true);
@@ -854,7 +859,7 @@ export function useStudioResult(): UseStudioResultReturn {
     activeSession,
     resultImage,
     originalImage,
-    isNoImageResult,
+    analysisOnly,
     showOriginal,
     setShowOriginal,
 
@@ -913,7 +918,7 @@ export function useStudioResult(): UseStudioResultReturn {
     categoryGroups,
     tierGroups,
     displayProducts,
-    totalPrice,
+    recommendedTotalPrice,
     selectedPrice,
     selectedCount,
     harmonyScore,
@@ -932,6 +937,7 @@ export function useStudioResult(): UseStudioResultReturn {
     handleFinalize,
     isFinalizing,
     handleProductClick,
+    handleImageMarkerClick,
     handleRequestRedesignCredit,
     isRequestingRedesignCredit,
     handleExit,

@@ -1,32 +1,10 @@
-/**
- * SpatialDiagnosis — Decision Dashboard (Teaser Mode)
- *
- * UX principles applied:
- *   ✅ NO per-issue CTA buttons (eliminates ping-pong / click fatigue)
- *   ✅ NO warning triangles (replaced with descriptive category icons)
- *   ✅ NO abstract +80 impact badges (removes confusing gamification)
- *   ✅ Reads as a flowing, inspiring narrative — builds desire
- *   ✅ Budget-only card — score removed for clarity
- *
- * Structure (above fold):
- *   1. Benefit-oriented headline + short detail + inline budget estimate
- *   2. Issues list with descriptive icons — pure reading flow
- *   3. Trust metadata (collapsed)
- *
- * All styling from CSS variables. Fonts: Vazirmatn + Serif.
- */
-
-import { useState } from 'react';
-import {
-  ChevronDown,
-  CheckCircle2,
-} from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronLeft, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import { type DiagnosisAction, getDescriptiveIcon } from './DiagnosisActionCard';
+import type { DiagnosisAction } from './DiagnosisActionCard';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
-/* ── Public Types ── */
 export interface DetectedContext {
   roomType: string;
   targetStyle: string;
@@ -40,6 +18,7 @@ interface SpatialDiagnosisProps {
   totalPrice: number;
   selectedPrice: number;
   selectedCount: number;
+  totalRecommendations: number;
   diagnosisDetail: string;
   diagnosisExpanded: boolean;
   onToggleDiagnosis: () => void;
@@ -49,323 +28,123 @@ interface SpatialDiagnosisProps {
   onNavigateToRecommendations?: () => void;
 }
 
-/* ── Icon color per category — warm, editorial, non-threatening ── */
-function getIconColor(status: string): string {
-  switch (status) {
-    case 'good':
-      return 'var(--feedback-good)';
-    case 'critical':
-      return 'var(--accent)';
-    default:
-      // All warning-level items get a warm editorial charcoal — no alarming colors
-      return 'var(--editorial-charcoal)';
-  }
+function impactLabel(level: DiagnosisAction['status'], t: (key: string, fallback: string) => string) {
+  if (level === 'critical') return t('studio.result.v2.impact.high', 'اثر بالا');
+  if (level === 'warning') return t('studio.result.v2.impact.medium', 'اثر متوسط');
+  return t('studio.result.v2.impact.low', 'اثر کم');
 }
 
-/* ═══════════════════════════════════════════════
-   Main Component — Decision Dashboard
-   ═══════════════════════════════════════════════ */
 export function SpatialDiagnosis({
   harmonyScore,
+  projectedScore,
   totalPrice,
   selectedPrice,
+  selectedCount,
+  totalRecommendations,
   diagnosisDetail,
+  diagnosisExpanded,
+  onToggleDiagnosis,
   detectedContext,
   diagnosisActions = [],
+  onScrollToStep,
+  onNavigateToRecommendations,
 }: SpatialDiagnosisProps) {
-  const [trustOpen, setTrustOpen] = useState(false);
-
-  /* Split actions: issues vs good */
-  const issues = diagnosisActions.filter((a) => a.status !== 'good');
-  const goods = diagnosisActions.filter((a) => a.status === 'good');
-
-  /* Use selectedPrice for display — matches the bottom bar for consistency */
-  const displayPrice = selectedPrice > 0 ? selectedPrice : totalPrice;
-  const purchasableCount = issues.length;
-
-  /* Issues sorted by priority (critical first, then warning) */
-  const sortedIssues = [...issues].sort((a, b) => {
-    const order = { critical: 0, warning: 1, good: 2 };
-    return (order[a.status] ?? 1) - (order[b.status] ?? 1);
-  });
+  const { t } = useTranslation();
+  const headline = harmonyScore >= 75
+    ? t('studio.result.v2.diagnosis.headlineGood', 'فضای شما پایه‌ی هماهنگی خوبی دارد')
+    : t('studio.result.v2.diagnosis.headlinePotential', 'فضای شما ظرفیت زیادی برای یک تغییر حساب‌شده دارد');
+  const detail = diagnosisDetail || t('studio.result.v2.diagnosis.defaultDetail', 'با تمرکز روی چند نقطه کلیدی، می‌شود بدون شلوغ کردن فضا، تعادل و کاربرد آن را بهتر کرد.');
 
   return (
-    <section
-      aria-label="تحلیل فضا"
-      className="w-full"
-      style={{
-        fontFamily: FONT,
-        paddingTop: 'var(--spacing-sm)',
-        paddingBottom: 'var(--spacing-md)',
-      }}
-    >
-      {/* ═══ Benefit headline + budget estimate + detail ═══ */}
-      <div
-        style={{ marginBottom: 'var(--spacing-lg)' }}
-      >
-        {/* 1. Title */}
-        <h1
-          style={{
-            fontSize: '20px',
-            fontWeight: 'var(--font-weight-regular)',
-            fontFamily: FONT,
-            color: 'var(--editorial-charcoal)',
-            lineHeight: 1.5,
-            marginBottom: 'var(--spacing-sm)',
-          }}
-        >
-          {harmonyScore >= 75
-            ? 'با چند تغییر هدفمند، فضا کامل‌تر می‌شه'
-            : 'فضای شما پتانسیل بالایی داره'}
-        </h1>
-
-        {/* 2. Budget estimate — right after title */}
-        <div className="flex items-baseline flex-wrap" style={{ gap: '6px', marginBottom: 'var(--spacing-sm)' }}>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              lineHeight: 1,
-            }}
-          >
-            تخمین بودجه برای {toLocalizedDigits(purchasableCount)} اقدام:
-          </span>
-          <span
-            className="tabular-nums"
-            style={{
-              fontSize: 'var(--text-h2-size)',
-              fontWeight: 'var(--font-weight-bold)',
-              fontFamily: FONT,
-              color: 'var(--editorial-charcoal)',
-              lineHeight: 1,
-              transition: 'all 0.3s ease',
-            }}
-          >
-            {formatPriceFromRial(displayPrice, false)}
-          </span>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              lineHeight: 1,
-            }}
-          >
-            تومان
-          </span>
+    <section className="studio-diagnosis" aria-label={t('studio.result.v2.diagnosis.label', 'تحلیل فضا')} style={{ fontFamily: FONT }}>
+      <div className="studio-diagnosis-intro">
+        <div>
+          <p className="studio-result-eyebrow">{t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}</p>
+          <h2>{headline}</h2>
+          <p>{detail}</p>
         </div>
-
-        {/* 3. Analytical detail text */}
-        <p
-          style={{
-            fontSize: 'var(--text-caption-size)',
-            fontWeight: 'var(--font-weight-regular)',
-            fontFamily: FONT,
-            color: 'var(--editorial-taupe)',
-            lineHeight: 1.7,
-          }}
-        >
-          {diagnosisDetail ||
-            'بر اساس تحلیل فضای شما، مهم‌ترین فرصت‌های بهبود رو شناسایی کردیم.'}
-        </p>
+        <button type="button" className="studio-text-button" onClick={onNavigateToRecommendations}>
+          {t('studio.result.v2.diagnosis.seeChanges', 'دیدن تغییرها')}
+          <ChevronLeft size={17} />
+        </button>
       </div>
 
-      {/* ═══ Issues list — pure reading flow, no CTAs ═══ */}
-      {sortedIssues.length > 0 && (
-        <div
-          className="flex flex-col"
-          style={{ gap: '0', marginBottom: 'var(--spacing-lg)' }}
-        >
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 'var(--font-weight-semibold)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              letterSpacing: '0.06em',
-              marginBottom: 'var(--spacing-sm)',
-            }}
-          >
-            فرصت‌های بهبود
-          </span>
-
-          {sortedIssues.map((issue, idx) => {
-            const IconComponent = getDescriptiveIcon(issue.status, issue.iconType);
-            const iconColor = getIconColor(issue.status);
-
-            return (
-              <div
-                key={issue.id}
-                className="flex items-start"
-                style={{
-                  padding: '14px 0',
-                  borderBottom:
-                    idx < sortedIssues.length - 1
-                      ? '1px solid var(--editorial-hairline)'
-                      : 'none',
-                  gap: '12px',
-                }}
-              >
-                {/* Descriptive category icon */}
-                <div
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: 'var(--radius-full)',
-                    background: issue.status === 'critical'
-                      ? 'rgba(41, 128, 185, 0.06)'
-                      : 'var(--muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: '1px',
-                  }}
-                >
-                  <IconComponent
-                    size={14}
-                    strokeWidth={1.5}
-                    style={{ color: iconColor, opacity: 0.75 }}
-                  />
-                </div>
-
-                {/* Content — diagnosis + solution, flowing text */}
-                <div className="flex flex-col flex-1" style={{ gap: '4px', minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontSize: 'var(--text-caption-size)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      fontFamily: FONT,
-                      color: 'var(--editorial-charcoal)',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {issue.title}
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 'var(--font-weight-regular)',
-                      fontFamily: FONT,
-                      color: 'var(--editorial-taupe)',
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    {issue.solution || issue.diagnosis}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+      <div className="studio-diagnosis-metrics" aria-label={t('studio.result.v2.diagnosis.metrics', 'خلاصه عددی تحلیل')}>
+        <div className="studio-diagnosis-metric">
+          <span>{t('studio.result.v2.diagnosis.harmonyScore', 'امتیاز هماهنگی')}</span>
+          <strong dir="ltr">{toLocalizedDigits(harmonyScore)}<small>/۱۰۰</small></strong>
+          <em>{t('studio.result.v2.diagnosis.scoreMethod', 'ترکیب رنگ، سبک و تناسب')}</em>
         </div>
-      )}
-
-      {/* ═══ Good items (collapsed) ═══ */}
-      {goods.length > 0 && (
-        <div
-          className="flex items-center"
-          style={{ gap: '6px', marginBottom: 'var(--spacing-md)' }}
-        >
-          <CheckCircle2
-            size={13}
-            strokeWidth={1.5}
-            style={{ color: 'var(--feedback-good)', opacity: 0.7 }}
-          />
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-            }}
-          >
-            {goods.map((g) => g.title).join('، ')} — وضعیت خوبه
-          </span>
+        <div className="studio-diagnosis-metric">
+          <span>{t('studio.result.v2.diagnosis.changeCount', 'تغییر پیشنهادی')}</span>
+          <strong>{toLocalizedDigits(totalRecommendations)}</strong>
+          <em>{t('studio.result.v2.diagnosis.changeHint', 'قابل بررسی جداگانه')}</em>
         </div>
-      )}
+        <div className="studio-diagnosis-metric">
+          <span>{t('studio.result.v2.diagnosis.recommendedTotal', 'هزینه همه پیشنهادها')}</span>
+          <strong className="studio-price" dir="ltr">{formatPriceFromRial(totalPrice, false)}</strong>
+          <em>{t('common.toman', 'تومان')} · {t('studio.result.v2.diagnosis.estimated', 'تخمینی')}</em>
+        </div>
+        <div className="studio-diagnosis-metric studio-diagnosis-metric-selected">
+          <span>{t('studio.result.v2.diagnosis.selectedTotal', 'انتخاب فعلی')}</span>
+          <strong className="studio-price" dir="ltr">{formatPriceFromRial(selectedPrice, false)}</strong>
+          <em>{toLocalizedDigits(selectedCount)} {t('studio.result.v2.diagnosis.selectedProducts', 'محصول انتخاب شده')}</em>
+        </div>
+      </div>
 
-      {/* ═══ Trust metadata (collapsed) ═══ */}
-      {detectedContext && (
-        <div
-          style={{ marginTop: 'var(--spacing-xs)' }}
-        >
-          <button
-            onClick={() => setTrustOpen(!trustOpen)}
-            className="flex items-center gap-1.5 transition-colors duration-200"
-            style={{ padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer' }}
-            aria-label={trustOpen ? 'بستن جزئیات تشخیص' : 'جزئیات تشخیص'}
-          >
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 'var(--font-weight-regular)',
-                color: 'var(--editorial-taupe)',
-                fontFamily: FONT,
-              }}
-            >
-              جزئیات تشخیص
-            </span>
-            <ChevronDown
-              size={11}
-              className="transition-transform duration-300"
-              style={{
-                color: 'var(--editorial-taupe)',
-                opacity: 0.4,
-                transform: trustOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              }}
-              strokeWidth={1.5}
-            />
-          </button>
-
-          <div
-            style={{
-              height: trustOpen ? 'auto' : 0,
-              overflow: 'hidden',
-              opacity: trustOpen ? 1 : 0,
-              transition: 'all 0.3s ease',
-            }}
-          >
-             <div
-                className="overflow-hidden"
-              >
-                <div
-                  className="flex flex-wrap gap-2"
-                  style={{ paddingTop: '10px', paddingBottom: '4px' }}
-                >
-                  {[
-                    { label: 'فضا', value: detectedContext.roomType },
-                    { label: 'سبک', value: detectedContext.targetStyle },
-                    { label: 'نور طبیعی', value: detectedContext.naturalLight },
-                    { label: 'سطوح', value: detectedContext.dominantSurfaces },
-                  ].filter((item) => item.value).map((item) => (
-                    <span
-                      key={item.label}
-                      className="flex items-center gap-1"
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--editorial-charcoal)',
-                        fontFamily: FONT,
-                        padding: '4px 10px',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'var(--muted)',
-                      }}
-                    >
-                      <span style={{ color: 'var(--editorial-taupe)', fontSize: '10px' }}>
-                        {item.label}:
-                      </span>
-                      {item.value}
-                    </span>
-                  ))}
-                </div>
+      <div className="studio-diagnosis-actions">
+        <div className="studio-subsection-heading">
+          <h3>{t('studio.result.v2.diagnosis.improvementTitle', 'سه فرصت بهبود')}</h3>
+          <span>{t('studio.result.v2.diagnosis.linkHint', 'هر مورد به پیشنهاد متناظر وصل است')}</span>
+        </div>
+        {diagnosisActions.slice(0, 3).map((action, index) => (
+          <article key={action.id} className="studio-diagnosis-action">
+            <div className="studio-diagnosis-action-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</div>
+            <div className="studio-diagnosis-action-copy">
+              <div className="studio-diagnosis-action-heading">
+                <h4>{action.title}</h4>
+                <span>{impactLabel(action.status, t)}</span>
               </div>
+              <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {action.diagnosis}</p>
+              <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {action.solution}</p>
+              <p><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}:</strong> {t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر و خوانایی بهتر فضا')}</p>
+              {action.placements && action.placements.length > 0 && (
+                <div className="studio-placement-list">
+                  {action.placements.map((placement) => <span key={placement}>{placement}</span>)}
+                </div>
+              )}
+              <button type="button" className="studio-inline-link" onClick={() => action.linkedItemId && onScrollToStep?.(action.linkedItemId)}>
+                {t('studio.result.v2.card.viewRecommendation', 'مشاهده پیشنهاد')}
+                <ChevronLeft size={15} />
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="studio-diagnosis-details">
+        <button type="button" className="studio-details-toggle" onClick={onToggleDiagnosis} aria-expanded={diagnosisExpanded}>
+          <span><Sparkles size={16} />{t('studio.result.v2.diagnosis.detailToggle', 'جزئیات تشخیص')}</span>
+          <ChevronDown className={diagnosisExpanded ? 'is-open' : ''} size={17} />
+        </button>
+        {diagnosisExpanded && (
+          <div className="studio-details-content">
+            {detectedContext && (
+              <div className="studio-context-pills">
+                {detectedContext.roomType && <span>{t('studio.result.v2.diagnosis.roomType', 'نوع فضا')}: {detectedContext.roomType}</span>}
+                {detectedContext.targetStyle && <span>{t('studio.result.v2.diagnosis.style', 'سبک هدف')}: {detectedContext.targetStyle}</span>}
+                {detectedContext.naturalLight && <span>{t('studio.result.v2.diagnosis.light', 'نور')}: {detectedContext.naturalLight}</span>}
+                {detectedContext.dominantSurfaces && <span>{t('studio.result.v2.diagnosis.surfaces', 'سطوح غالب')}: {detectedContext.dominantSurfaces}</span>}
+              </div>
+            )}
+            <p>{detail}</p>
+            <div className="studio-score-explanation">
+              <CheckCircle2 size={16} />
+              <span>{t('studio.result.v2.diagnosis.projectedExplanation', 'اگر همه تغییرها اعمال شوند، امتیاز پیش‌بینی‌شده به')} <strong>{toLocalizedDigits(projectedScore)}</strong> {t('studio.result.v2.diagnosis.outOf', 'از ۱۰۰ می‌رسد.')}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }

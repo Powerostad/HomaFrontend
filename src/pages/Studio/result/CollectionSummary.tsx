@@ -1,18 +1,7 @@
-/**
- * CollectionSummary — Commit Bar (Floating Glass Capsule)
- *
- * Navigation bar + live price indicator:
- *   - In analysis phase: 3 navigation tabs only
- *   - In recommendations / basket phase: 3 navigation tabs + live total price
- *
- * The "ادامه به پرداخت" CTA lives inside InvoiceSummary,
- * keeping this dock compact and consistent across phases.
- *
- * Uses CSS transitions for tab pill indicator.
- * Uses design tokens from globals.css throughout.
- */
-import { useState, useEffect } from 'react';
-import { formatPriceFromRial } from '@/utils/formatters';
+import { useEffect, useRef, useState } from 'react';
+import { ShoppingBag } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
@@ -21,149 +10,89 @@ interface CollectionSummaryProps {
   onNavigateToPhase?: (phase: Phase) => void;
   selectedCount: number;
   totalRecommendations: number;
-  onFinalize?: () => void;
   selectedPrice?: number;
   totalCount?: number;
-  totalPrice?: number;
-  harmonyScore?: number;
-  projectedScore?: number;
-  liveProjectedScore?: number;
+  isAtBasket?: boolean;
 }
 
 export function CollectionSummary({
   activePhase = 'analysis',
-  selectedPrice = 0,
   onNavigateToPhase,
+  selectedCount,
+  totalRecommendations,
+  selectedPrice = 0,
+  isAtBasket = false,
 }: CollectionSummaryProps) {
-  /* Tabs defined inside function body to guarantee availability */
+  const { t } = useTranslation();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const summaryRef = useRef<HTMLElement>(null);
   const tabs: { id: Phase; label: string }[] = [
-    { id: 'analysis', label: 'تحلیل فضا' },
-    { id: 'recommendations', label: 'محصولات' },
-    { id: 'basket', label: 'سبد' },
+    { id: 'analysis', label: t('studio.result.v2.phase.analysis', 'تحلیل فضا') },
+    { id: 'recommendations', label: t('studio.result.v2.phase.recommendations', 'پیشنهادها') },
+    { id: 'basket', label: t('studio.result.v2.phase.basket', 'سبد خرید') },
   ];
 
-  const hasPrice = selectedPrice > 0;
-  const isAnalysisPhase = activePhase === 'analysis';
-
-  /* Hide when bottom sheet is open */
-  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const handleSheetToggle = (event: Event) => {
+      setSheetOpen((event as CustomEvent<{ open: boolean }>).detail.open);
+    };
+    window.addEventListener('homa:sheet-toggle', handleSheetToggle);
+    return () => window.removeEventListener('homa:sheet-toggle', handleSheetToggle);
+  }, []);
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ open: boolean }>).detail;
-      setHidden(detail.open);
+    const summary = summaryRef.current;
+    if (!summary || typeof ResizeObserver === 'undefined') return;
+
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--studio-summary-height', `${summary.getBoundingClientRect().height}px`);
     };
-    window.addEventListener('homa:sheet-toggle', handler);
-    return () => window.removeEventListener('homa:sheet-toggle', handler);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(summary);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--studio-summary-height');
+    };
   }, []);
 
   return (
-    <div
-      className="sticky bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none"
-      style={{
-        paddingBottom: 'max(var(--spacing-xs), env(safe-area-inset-bottom, var(--spacing-xs)))',
-        paddingLeft: 'var(--spacing-sm)',
-        paddingRight: 'var(--spacing-sm)',
-        opacity: hidden ? 0 : 1,
-        transform: hidden ? 'translateY(20px)' : 'translateY(0)',
-        transition: 'opacity 0.25s ease, transform 0.25s ease',
-        pointerEvents: hidden ? 'none' : undefined,
-      }}
+    <aside
+      ref={summaryRef}
+      className={`studio-summary ${isAtBasket ? 'is-inline' : ''} ${sheetOpen ? 'is-hidden' : ''}`}
+      aria-label={t('studio.result.v2.summary.label', 'خلاصه انتخاب‌ها')}
     >
-      <div
-        className="pointer-events-auto flex items-center"
-        style={{
-          fontFamily: 'var(--font-family-vazirmatn)',
-          background: 'var(--glass-light)',
-          backdropFilter: 'blur(var(--blur-lg))',
-          WebkitBackdropFilter: 'blur(var(--blur-lg))',
-          borderRadius: 'var(--radius-full)',
-          padding: '4px',
-          gap: '2px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
-        }}
-      >
-        {/* Navigation tabs */}
-        <nav
-          aria-label="مراحل طراحی"
-          className="flex items-center relative"
-          style={{ gap: '2px' }}
-        >
-          {tabs.map((tab) => {
-            const isActive = tab.id === activePhase;
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onNavigateToPhase?.(tab.id)}
-                className="relative flex items-center justify-center transition-all duration-200"
-                style={{
-                  padding: '8px 14px',
-                  background: isActive ? 'var(--surface)' : 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--radius-full)',
-                  whiteSpace: 'nowrap',
-                  boxShadow: isActive ? 'var(--elevation-sm)' : 'none',
-                  transition: 'all 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
-                }}
-                aria-current={isActive ? 'step' : undefined}
-              >
-                <span
-                  style={{
-                    fontSize: 'var(--text-caption-size)',
-                    fontWeight: isActive
-                      ? 'var(--font-weight-semibold)'
-                      : 'var(--font-weight-regular)',
-                    fontFamily: 'var(--font-family-vazirmatn)',
-                    color: isActive
-                      ? 'var(--editorial-charcoal)'
-                      : 'var(--editorial-taupe)',
-                    transition: 'color 0.25s ease, font-weight 0.25s ease',
-                  }}
-                >
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+      <div className="studio-summary-inner">
+        <nav className="studio-summary-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
+          {tabs.map((tab) => (
+            <button
+              type="button"
+              key={tab.id}
+              onClick={() => onNavigateToPhase?.(tab.id)}
+              aria-current={tab.id === activePhase ? 'step' : undefined}
+              className={tab.id === activePhase ? 'is-active' : ''}
+            >
+              {tab.label}
+            </button>
+          ))}
         </nav>
 
-        {/* Divider + Price */}
-        {!isAnalysisPhase && hasPrice ? (
-          <div className="flex items-center">
-            {/* Vertical divider */}
-            <div
-              style={{
-                width: '1px',
-                height: '20px',
-                background: 'var(--editorial-hairline)',
-                marginLeft: '4px',
-                marginRight: '4px',
-                flexShrink: 0,
-              }}
-            />
-
-            {/* Live total price */}
-            <span
-              className="tabular-nums"
-              dir="ltr"
-              style={{
-                fontSize: 'var(--text-caption-size)',
-                fontWeight: 'var(--font-weight-semibold)',
-                fontFamily: 'var(--font-family-vazirmatn)',
-                color: 'var(--editorial-charcoal)',
-                letterSpacing: '0.02em',
-                paddingLeft: '6px',
-                paddingRight: '6px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatPriceFromRial(selectedPrice, true)}
-            </span>
+        <div className="studio-summary-info">
+          <div className="studio-summary-count">
+            <ShoppingBag size={17} />
+            <span>{toLocalizedDigits(selectedCount)} {t('studio.result.v2.summary.selectedProducts', 'محصول انتخاب شده')}</span>
+            <small>{t('studio.result.v2.summary.ofRecommendations', 'از {{count}} پیشنهاد', { count: totalRecommendations })}</small>
           </div>
-        ) : null}
+          <span className="studio-summary-price" dir="ltr">{formatPriceFromRial(selectedPrice, true)}</span>
+          <button
+            type="button"
+            className="studio-summary-cta"
+            onClick={() => onNavigateToPhase?.('basket')}
+          >
+            {t('studio.result.v2.summary.viewBasket', 'مشاهده سبد')}
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }

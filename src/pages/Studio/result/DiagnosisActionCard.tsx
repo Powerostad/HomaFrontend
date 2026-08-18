@@ -34,6 +34,7 @@ export interface DiagnosisAction {
   linkedItemId?: number;
   harmonyImpact?: number;
   iconType?: IconType;
+  placements?: string[];
 }
 
 const ICON_MAP: Record<IconType, LucideIcon> = {

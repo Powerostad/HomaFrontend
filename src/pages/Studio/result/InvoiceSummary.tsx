@@ -1,26 +1,18 @@
-/**
- * InvoiceSummary — Shopping List Design Basket
- *
- * Shows all products in the basket (main + alternatives).
- * Main products are grouped by category; alternatives show individually.
- * Interactive checkboxes for toggling items.
- *
- * Uses design tokens from globals.css throughout.
- */
-import React, { useMemo } from 'react';
-import { ShoppingBag, Check, Minus, Plus, Star, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import type { CategoryGroup } from './types';
 import type { Product } from '../components/ProductDetailSheet';
+import type { CategoryGroup } from './types';
 
 const FONT = 'var(--font-family-vazirmatn)';
-const FONT_SERIF = 'var(--font-family-serif)';
 
 interface BasketItem {
   product: Product & { store?: string; matchScore?: number };
   group: CategoryGroup;
   isMain: boolean;
-  qty: number;
+  quantity: number;
   lineTotal: number;
 }
 
@@ -29,9 +21,6 @@ interface InvoiceSummaryProps {
   acceptedItems: Set<number>;
   basketProductIds: Set<string>;
   selectedPrice: number;
-  harmonyScore?: number;
-  projectedScore?: number;
-  liveProjectedScore?: number;
   onToggleAccepted?: (itemId: number) => void;
   onToggleBasketProduct?: (productId: string) => void;
   onFinalize?: () => void;
@@ -44,6 +33,7 @@ interface InvoiceSummaryProps {
 export function InvoiceSummary({
   categoryGroups,
   basketProductIds,
+  selectedPrice,
   onToggleBasketProduct,
   onFinalize,
   isFinalizing = false,
@@ -51,456 +41,111 @@ export function InvoiceSummary({
   onUpdateProductQuantity,
   productQuantityOverrides = new Map(),
 }: InvoiceSummaryProps) {
-  // Build flat list of all products in the basket
+  const { t } = useTranslation();
   const basketItems = useMemo<BasketItem[]>(() => {
     const items: BasketItem[] = [];
     for (const group of categoryGroups) {
-      if (group.actionStatus !== 'available' || group.products.length === 0) continue;
-      for (let i = 0; i < group.products.length; i++) {
-        const product = group.products[i];
-        if (!basketProductIds.has(product.id)) continue;
-        const isMain = i === 0;
-        const qty = isMain
-          ? (group.quantity || 1)
-          : (productQuantityOverrides.get(product.id) ?? group.quantity ?? 1);
-        items.push({
-          product,
-          group,
-          isMain,
-          qty,
-          lineTotal: product.price * qty,
-        });
-      }
+      if (group.actionStatus !== 'available') continue;
+      group.products.forEach((product, index) => {
+        if (!basketProductIds.has(product.id)) return;
+        const isMain = index === 0;
+        const quantity = isMain
+          ? group.quantity || 1
+          : productQuantityOverrides.get(product.id) ?? group.quantity ?? 1;
+        items.push({ product, group, isMain, quantity, lineTotal: product.price * quantity });
+      });
     }
     return items;
-  }, [categoryGroups, basketProductIds, productQuantityOverrides]);
-
-  // Total price of basket items
-  const basketTotal = useMemo(() => {
-    return basketItems.reduce((acc, item) => acc + item.lineTotal, 0);
-  }, [basketItems]);
-
-  const hasItems = basketItems.length > 0;
+  }, [basketProductIds, categoryGroups, productQuantityOverrides]);
 
   return (
-    <section
-      aria-label="لیست خرید شما"
-      style={{
-        fontFamily: FONT,
-        marginTop: 'var(--spacing-xl)',
-        marginBottom: 'var(--spacing-lg)',
-      }}
-    >
-      {/* Divider */}
-      <div
-        style={{
-          width: '100%',
-          height: '1px',
-          background: 'var(--editorial-hairline)',
-          marginBottom: 'var(--spacing-lg)',
-        }}
-      />
-
-      {/* Header */}
-      <div
-        className="flex items-center justify-between"
-        style={{ marginBottom: 'var(--spacing-md)' }}
-      >
-        <div className="flex items-center gap-2">
-          <ShoppingBag
-            size={14}
-            strokeWidth={1.3}
-            style={{ color: 'var(--editorial-taupe)', opacity: 0.7 }}
-          />
-          <h3
-            style={{
-              fontSize: 'var(--text-h4-size)',
-              fontWeight: 'var(--font-weight-semibold)',
-              fontFamily: FONT,
-              color: 'var(--editorial-charcoal)',
-            }}
-          >
-            لیست خرید شما
-          </h3>
+    <section className="studio-invoice" aria-label={t('studio.result.v2.basket.title', 'سبد انتخاب‌های شما')} style={{ fontFamily: FONT }}>
+      <div className="studio-invoice-heading">
+        <div>
+          <p className="studio-result-eyebrow">{t('studio.result.v2.phase.basket', 'سبد خرید')}</p>
+          <h2>{t('studio.result.v2.basket.title', 'انتخاب‌های شما')}</h2>
+          <p>{t('studio.result.v2.basket.description', 'محصولات انتخاب‌شده را بررسی کنید؛ فقط در مرحله نهایی به سبد اصلی منتقل می‌شوند.')}</p>
         </div>
-        {hasItems && (
-          <span
-            style={{
-              fontSize: 'var(--text-caption-size)',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-            }}
-          >
-            {toLocalizedDigits(basketItems.length)} محصول
-          </span>
-        )}
+        <ShoppingBag size={24} aria-hidden="true" />
       </div>
 
-      {/* Items / Empty state */}
-      {!hasItems ? (
-        <div
-          className="flex flex-col items-center justify-center"
-          style={{
-            padding: 'var(--spacing-lg) var(--spacing-md)',
-            borderRadius: 'var(--radius-card)',
-            border: '1px dashed var(--editorial-hairline)',
-            background: 'rgba(0,0,0,0.01)',
-          }}
-        >
-          <ShoppingBag
-            size={24}
-            strokeWidth={1}
-            style={{
-              color: 'var(--editorial-taupe)',
-              opacity: 0.3,
-              marginBottom: '12px',
-            }}
-          />
-          <p
-            style={{
-              fontSize: 'var(--text-caption-size)',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              textAlign: 'center',
-              lineHeight: 1.7,
-            }}
-          >
-            هنوز محصولی انتخاب نکردید
-          </p>
-          <p
-            style={{
-              fontSize: '11px',
-              fontWeight: 'var(--font-weight-regular)',
-              fontFamily: FONT,
-              color: 'var(--editorial-taupe)',
-              textAlign: 'center',
-              opacity: 0.6,
-              marginTop: '4px',
-            }}
-          >
-            با زدن «افزودن به لیست خرید» روی هر محصول، اینجا نمایش داده می‌شه
-          </p>
+      {basketItems.length === 0 ? (
+        <div className="studio-invoice-empty">
+          <ShoppingBag size={32} />
+          <strong>{t('studio.result.v2.basket.empty', 'هنوز محصولی به سبد انتخابی اضافه نشده است')}</strong>
+          <span>{t('studio.result.v2.basket.emptyHint', 'از کارت‌های پیشنهاد، محصول مورد نظر خود را جداگانه انتخاب کنید.')}</span>
         </div>
       ) : (
-        <div
-          className="flex flex-col"
-          style={{ gap: '0' }}
-        >
-          {/* ═══ Line Items ═══ */}
-          {basketItems.map((item, idx) => {
-            const { product, group, isMain, qty, lineTotal } = item;
-
-            return (
-              <div
-                key={product.id}
-                className="flex items-center justify-between"
-                style={{
-                  padding: '12px 0',
-                  borderBottom:
-                    idx < basketItems.length - 1
-                      ? '1px solid var(--editorial-hairline)'
-                      : 'none',
-                }}
-              >
-                {/* Left: remove button + category + product name */}
-                <div
-                  className="flex items-center gap-3"
-                  style={{ flex: 1, minWidth: 0 }}
-                >
-                  {/* Remove from basket button */}
-                  <button
-                    onClick={() => onToggleBasketProduct?.(product.id)}
-                    className="flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '6px',
-                      background: 'var(--feedback-good)',
-                      border: '2px solid var(--feedback-good)',
-                      padding: 0,
-                    }}
-                    aria-label={`حذف ${product.name} از لیست خرید`}
-                    role="checkbox"
-                    aria-checked={true}
-                  >
-                    <Check
-                      size={13}
-                      strokeWidth={3}
-                      style={{ color: '#FFFFFF' }}
-                    />
-                  </button>
-
-                  <div
-                    className="flex flex-col"
-                    style={{ minWidth: 0, flex: 1 }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontFamily: FONT,
-                          color: 'var(--editorial-taupe)',
-                        }}
-                      >
-                        {group.categoryDisplay}
-                      </span>
-                      {isMain && (
-                        <div
-                          className="flex items-center gap-0.5"
-                          style={{
-                            padding: '1px 5px',
-                            borderRadius: 'var(--radius-full)',
-                            background: 'rgba(0,49,45,0.06)',
-                            fontSize: '9px',
-                            fontWeight: 'var(--font-weight-semibold)',
-                            fontFamily: FONT,
-                            color: 'var(--feedback-good)',
-                          }}
-                        >
-                          <Star size={7} strokeWidth={2} fill="currentColor" />
-                          پیشنهاد ما
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-baseline gap-1" style={{ minWidth: 0 }}>
-                      <span
-                        className="truncate"
-                        style={{
-                          fontSize: 'var(--text-caption-size)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontFamily: FONT,
-                          color: 'var(--editorial-charcoal)',
-                        }}
-                      >
-                        {product.name}
-                      </span>
-                      {qty > 1 && !(isMain ? onUpdateQuantity : onUpdateProductQuantity) && (
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 'var(--font-weight-semibold)',
-                            fontFamily: FONT,
-                            color: 'var(--editorial-charcoal)',
-                            flexShrink: 0,
-                            opacity: 0.7,
-                          }}
-                        >
-                          × {toLocalizedDigits(qty)}
-                        </span>
-                      )}
-                    </div>
-                    {/* Inline mini stepper for quantity-adjustable items (main + alternatives) */}
-                    {(() => {
-                      const canAdjust = isMain ? !!onUpdateQuantity : !!onUpdateProductQuantity;
-                      if (!canAdjust || qty <= 0) return null;
-                      const handleDecrease = (e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        if (isMain) onUpdateQuantity!(group.itemId, qty - 1);
-                        else onUpdateProductQuantity!(product.id, qty - 1);
-                      };
-                      const handleIncrease = (e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        if (isMain) onUpdateQuantity!(group.itemId, qty + 1);
-                        else onUpdateProductQuantity!(product.id, qty + 1);
-                      };
-                      return (
-                        <div className="flex items-center" style={{ gap: '0', marginTop: '4px' }}>
-                          <button
-                            onClick={handleDecrease}
-                            disabled={qty <= 1}
-                            className="flex items-center justify-center cursor-pointer transition-all duration-200"
-                            style={{
-                              width: '22px',
-                              height: '22px',
-                              borderRadius: 'var(--radius-full)',
-                              background: qty <= 1 ? 'transparent' : 'var(--card)',
-                              border: qty <= 1 ? '1px solid var(--editorial-hairline)' : '1px solid var(--border)',
-                              color: qty <= 1 ? 'var(--editorial-hairline)' : 'var(--editorial-charcoal)',
-                              padding: 0,
-                              opacity: qty <= 1 ? 0.3 : 1,
-                            }}
-                            aria-label="کاهش تعداد"
-                          >
-                            <Minus size={10} strokeWidth={2} />
-                          </button>
-                          <span
-                            className="tabular-nums"
-                            style={{
-                              minWidth: '28px',
-                              textAlign: 'center',
-                              fontSize: 'var(--text-caption-size)',
-                              fontWeight: 'var(--font-weight-semibold)',
-                              fontFamily: FONT,
-                              color: 'var(--editorial-charcoal)',
-                              display: 'inline-block',
-                            }}
-                          >
-                            {toLocalizedDigits(qty)}
-                          </span>
-                          <button
-                            onClick={handleIncrease}
-                            disabled={qty >= 99}
-                            className="flex items-center justify-center cursor-pointer transition-all duration-200"
-                            style={{
-                              width: '22px',
-                              height: '22px',
-                              borderRadius: 'var(--radius-full)',
-                              background: 'var(--card)',
-                              border: '1px solid var(--border)',
-                              color: 'var(--editorial-charcoal)',
-                              padding: 0,
-                            }}
-                            aria-label="افزایش تعداد"
-                          >
-                            <Plus size={10} strokeWidth={2} />
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </div>
+        <div className="studio-invoice-list">
+          {basketItems.map((item) => (
+            <article key={item.product.id} className="studio-invoice-item">
+              <ImageWithFallback src={item.product.image} alt={item.product.name} className="studio-invoice-image" />
+              <div className="studio-invoice-item-copy">
+                <span className="studio-invoice-category">{item.group.categoryDisplay}</span>
+                <strong>{item.product.name}</strong>
+                <div className="studio-invoice-item-meta">
+                  <span>{item.isMain ? t('studio.result.v2.basket.recommended', 'پیشنهاد اصلی') : t('studio.result.v2.basket.alternative', 'جایگزین')}</span>
+                  {item.group.recommendedSize && <span>{item.group.recommendedSize}</span>}
                 </div>
-
-                {/* Right: price */}
-                <span
-                  className="tabular-nums shrink-0"
-                  dir="ltr"
-                  style={{
-                    fontFamily: FONT_SERIF,
-                    fontSize: 'var(--text-caption-size)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--editorial-charcoal)',
-                    letterSpacing: '0.02em',
-                    marginRight: '4px',
-                  }}
-                >
-                  {lineTotal > 0 ? formatPriceFromRial(lineTotal, false) : '—'}
-                </span>
+                <div className="studio-invoice-quantity" dir="ltr">
+                  <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
+                  <button
+                    type="button"
+                    onClick={() => item.isMain
+                      ? onUpdateQuantity?.(item.group.itemId, Math.max(1, item.quantity - 1))
+                      : onUpdateProductQuantity?.(item.product.id, Math.max(1, item.quantity - 1))}
+                    disabled={item.quantity <= 1}
+                    aria-label={t('basket.decrease', 'کاهش تعداد')}
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span>{toLocalizedDigits(item.quantity)}</span>
+                  <button
+                    type="button"
+                    onClick={() => item.isMain
+                      ? onUpdateQuantity?.(item.group.itemId, Math.min(99, item.quantity + 1))
+                      : onUpdateProductQuantity?.(item.product.id, Math.min(99, item.quantity + 1))}
+                    disabled={item.quantity >= 99}
+                    aria-label={t('basket.increase', 'افزایش تعداد')}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               </div>
-            );
-          })}
-
-          {/* Total */}
-          <div
-            className="flex items-center justify-between"
-            style={{
-              marginTop: 'var(--spacing-sm)',
-              paddingTop: 'var(--spacing-sm)',
-              borderTop: '2px solid var(--editorial-charcoal)',
-            }}
-          >
-            <div className="flex items-center" style={{ gap: '6px' }}>
-              <span
-                style={{
-                  fontSize: 'var(--text-label-size)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  fontFamily: FONT,
-                  color: 'var(--editorial-charcoal)',
-                }}
-              >
-                جمع لیست خرید
-              </span>
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 'var(--font-weight-regular)',
-                  fontFamily: FONT,
-                  color: 'var(--editorial-taupe)',
-                  padding: '1px 6px',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--editorial-hairline)',
-                }}
-              >
-                تخمینی
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span
-                className="tabular-nums"
-                dir="ltr"
-                style={{
-                  fontFamily: FONT_SERIF,
-                  fontSize: 'var(--text-h3-size)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--editorial-charcoal)',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {formatPriceFromRial(basketTotal, false)}
-              </span>
-              <span
-                style={{
-                  fontSize: 'var(--text-caption-size)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  fontFamily: FONT,
-                  color: 'var(--editorial-taupe)',
-                }}
-              >
-                تومان
-              </span>
-            </div>
-          </div>
+              <div className="studio-invoice-item-price">
+                <strong dir="ltr">{formatPriceFromRial(item.lineTotal, false)}</strong>
+                <span>{t('common.toman', 'تومان')}</span>
+                <button
+                  type="button"
+                  onClick={() => onToggleBasketProduct?.(item.product.id)}
+                  aria-pressed={true}
+                  aria-label={`${t('basket.remove', 'حذف')} ${item.product.name}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
 
-      {/* Note */}
-      <p
-        style={{
-          fontSize: '11px',
-          fontWeight: 'var(--font-weight-regular)',
-          fontFamily: FONT,
-          color: 'var(--editorial-taupe)',
-          marginTop: 'var(--spacing-sm)',
-          lineHeight: 1.6,
-        }}
-      >
-        قیمت‌ها تخمینی‌اند و شامل محصولات انتخاب‌شده می‌شن. هزینه اجرا و نصب جداگانه محاسبه
-        می‌شه.
+      <div className="studio-invoice-total">
+        <div>
+          <span>{t('studio.result.v2.basket.selectedTotal', 'جمع انتخاب‌ها')}</span>
+          <small>{t('studio.result.v2.basket.estimated', 'هزینه محصولات تخمینی است')}</small>
+        </div>
+        <strong dir="ltr">{formatPriceFromRial(selectedPrice, true)}</strong>
+      </div>
+
+      <p className="studio-invoice-note">
+        {t('studio.result.v2.basket.installationNote', 'هزینه ارسال، اجرا و نصب جداگانه محاسبه می‌شود و در این مبلغ نیامده است.')}
       </p>
 
-      {/* ═══ Finalize CTA — only when basket has items ═══ */}
-      {hasItems && onFinalize && (
-        <button
-          onClick={onFinalize}
-          disabled={isFinalizing}
-          className="w-full flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] disabled:cursor-wait disabled:opacity-80"
-          style={{
-            height: 'var(--btn-dark-h-mobile)',
-            marginTop: 'var(--spacing-md)',
-            background: 'var(--btn-dark-bg)',
-            color: 'var(--btn-dark-text)',
-            border: 'none',
-            borderRadius: '0px',
-            cursor: isFinalizing ? 'wait' : 'pointer',
-            fontFamily: FONT,
-            fontSize: 'var(--text-label-size)',
-            fontWeight: 'var(--font-weight-semibold)',
-            letterSpacing: '0.04em',
-            boxShadow: 'var(--btn-dark-shadow)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--btn-dark-hover)';
-            e.currentTarget.style.boxShadow = 'var(--btn-dark-shadow-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--btn-dark-bg)';
-            e.currentTarget.style.boxShadow = 'var(--btn-dark-shadow)';
-          }}
-          aria-label="ادامه به پرداخت"
-        >
-          {isFinalizing ? (
-            <>
-              <span>در حال آماده‌سازی…</span>
-              <Loader2 size={16} strokeWidth={2} className="animate-spin" />
-            </>
-          ) : (
-            <>
-              <span>ادامه به پرداخت</span>
-              <ArrowLeft size={16} strokeWidth={2} />
-            </>
-          )}
+      {onFinalize && (
+        <button type="button" className="studio-primary-button studio-invoice-finalize" onClick={onFinalize} disabled={basketItems.length === 0 || isFinalizing}>
+          {isFinalizing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+          {isFinalizing ? t('studio.result.v2.basket.finalizing', 'در حال آماده‌سازی سبد...') : t('studio.result.v2.basket.finalize', 'مشاهده سبد و ادامه به پرداخت')}
+          {!isFinalizing && <ArrowLeft size={18} />}
         </button>
       )}
     </section>

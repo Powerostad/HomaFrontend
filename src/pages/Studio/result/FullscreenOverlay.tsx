@@ -40,7 +40,7 @@ export function FullscreenOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-modal flex items-center justify-center overflow-hidden"
       style={{ background: 'var(--editorial-charcoal)' }}
       onClick={onClose}
     >

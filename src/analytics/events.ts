@@ -185,7 +185,7 @@ export function trackStudioResultViewed(props: { session_id: string; product_cou
   umamiTrack('studio_result_viewed', props);
 }
 
-export function trackStudioResultAction(props: { action: string; session_id: string }) {
+export function trackStudioResultAction(props: { action: string; session_id: string; [key: string]: unknown }) {
   umamiTrack('studio_result_action', props);
 }
 
