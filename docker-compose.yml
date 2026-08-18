@@ -1,14 +1,11 @@
-version: '3.8'
-
 services:
   homav-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: homav-frontend
     restart: unless-stopped
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     environment:
       - NODE_ENV=production
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-https://api.myhoma.ir}
