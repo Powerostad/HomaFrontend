@@ -1,6 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { StudioProject } from "../types/studio";
-import type { SessionStatus, RedesignSession, SessionListItem } from "@/services/studioService";
+import type {
+  CreateRedesignSessionOptions,
+  SessionStatus,
+  RedesignSession,
+  SessionListItem,
+} from "@/services/studioService";
 import {
   createRedesignSession,
   fetchSessionStatus,
@@ -38,7 +43,8 @@ interface StudioContextType {
   // Session actions (NEW)
   startSession: (
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    options?: Pick<CreateRedesignSessionOptions, 'skipImageGeneration'>
   ) => Promise<{
     success: boolean;
     sessionId?: string;
@@ -123,7 +129,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
    */
   const startSession = useCallback(async (
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    options?: Pick<CreateRedesignSessionOptions, 'skipImageGeneration'>
   ): Promise<{
     success: boolean;
     sessionId?: string;
@@ -137,7 +144,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setActiveSession(null);
     setSessionStatus(null);
 
-    const result = await createRedesignSession(file, undefined, onProgress);
+    const result = await createRedesignSession(file, options, onProgress);
 
     if (result.success && result.data) {
       setActiveSessionId(result.data.sessionId);

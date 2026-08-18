@@ -300,8 +300,13 @@ export function StudioProgressPage() {
     setError(null);
     setIsPolling(true);
 
-    // Create a NEW session with the same image
-    const createResult = await startSession(file);
+    // Create a NEW session with the same image, preserving the user's choice
+    // to continue without generating a redesigned image.
+    const createResult = await startSession(
+      file,
+      undefined,
+      isNoImageSession ? { skipImageGeneration: true } : undefined,
+    );
 
     if (!createResult.success || !createResult.sessionId) {
       setIsPolling(false);

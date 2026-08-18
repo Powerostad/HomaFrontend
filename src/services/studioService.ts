@@ -162,6 +162,14 @@ export interface NoImageResumeResponse {
   skip_image_generation: true;
 }
 
+export interface CreateRedesignSessionOptions {
+  roomType?: string;
+  preferredStyle?: string;
+  preferredColors?: string[];
+  userNotes?: string;
+  skipImageGeneration?: boolean;
+}
+
 /**
  * Session list response
  * GET /recommendations/sessions/list/
@@ -467,12 +475,7 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
  */
 export async function createRedesignSession(
   roomImage: File,
-  options?: {
-    roomType?: string;
-    preferredStyle?: string;
-    preferredColors?: string[];
-    userNotes?: string;
-  },
+  options?: CreateRedesignSessionOptions,
   onProgress?: (progress: number) => void
 ): Promise<{
   success: boolean;
@@ -532,6 +535,7 @@ export async function createRedesignSession(
   if (options?.preferredStyle) additionalData['preferred_style'] = options.preferredStyle;
   if (options?.preferredColors) additionalData['preferred_colors'] = JSON.stringify(options.preferredColors);
   if (options?.userNotes) additionalData['user_notes'] = options.userNotes;
+  if (options?.skipImageGeneration) additionalData['skip_image_generation'] = 'true';
 
   const response = await apiUpload<CreateSessionResponse | CreditRequiredResponse>(
     '/recommendations/sessions/',
