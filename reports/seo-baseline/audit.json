@@ -1,0 +1,980 @@
+{
+  "base": "https://myhoma.ir",
+  "recordedAt": "2026-09-10T12:38:51.967Z",
+  "mode": "production-indexable",
+  "checks": [
+    {
+      "route": "/sitemap.xml",
+      "check": "Complete XML sitemap available",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "urls": 1449
+      },
+      "verifiedAt": "2026-09-10T12:38:45.256Z"
+    },
+    {
+      "route": "/",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 194
+      },
+      "verifiedAt": "2026-09-10T12:38:45.453Z"
+    },
+    {
+      "route": "/",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:45.453Z"
+    },
+    {
+      "route": "/",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:45.453Z"
+    },
+    {
+      "route": "/",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:45.453Z"
+    },
+    {
+      "route": "/",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:45.566Z"
+    },
+    {
+      "route": "/",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:45.671Z"
+    },
+    {
+      "route": "/",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:45.788Z"
+    },
+    {
+      "route": "/",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:45.888Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 115
+      },
+      "verifiedAt": "2026-09-10T12:38:46.004Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:46.004Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:46.004Z"
+    },
+    {
+      "route": "/explore",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:46.004Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.065Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.168Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.268Z"
+    },
+    {
+      "route": "/explore",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.350Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 75
+      },
+      "verifiedAt": "2026-09-10T12:38:46.425Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:46.425Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:46.425Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:46.425Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.508Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.590Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.686Z"
+    },
+    {
+      "route": "/gallery",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.764Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 79
+      },
+      "verifiedAt": "2026-09-10T12:38:46.844Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:46.844Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:46.844Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:46.844Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:46.951Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.083Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.172Z"
+    },
+    {
+      "route": "/ai-interior-design",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.239Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 61
+      },
+      "verifiedAt": "2026-09-10T12:38:47.301Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:47.301Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:47.301Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:47.301Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.406Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.480Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.563Z"
+    },
+    {
+      "route": "/virtual-product-preview",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.626Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 80
+      },
+      "verifiedAt": "2026-09-10T12:38:47.707Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:47.707Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:47.707Z"
+    },
+    {
+      "route": "/contact",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:47.707Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.803Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:47.896Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.014Z"
+    },
+    {
+      "route": "/contact",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.100Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 112
+      },
+      "verifiedAt": "2026-09-10T12:38:48.213Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:48.213Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:48.213Z"
+    },
+    {
+      "route": "/faq",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:48.213Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.340Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.434Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.552Z"
+    },
+    {
+      "route": "/faq",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.628Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 86
+      },
+      "verifiedAt": "2026-09-10T12:38:48.715Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:48.715Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:48.715Z"
+    },
+    {
+      "route": "/terms",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:48.715Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.793Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:48.890Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.023Z"
+    },
+    {
+      "route": "/terms",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.118Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 65
+      },
+      "verifiedAt": "2026-09-10T12:38:49.184Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:49.184Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:49.184Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:49.184Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.264Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.363Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.439Z"
+    },
+    {
+      "route": "/collaboration",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.516Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 60
+      },
+      "verifiedAt": "2026-09-10T12:38:49.577Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:49.577Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:49.577Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:49.577Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.778Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.880Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:49.958Z"
+    },
+    {
+      "route": "/store/parshook",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:50.080Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Successful semantic HTML without JavaScript",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "h1": [],
+        "mainCharacters": 0,
+        "httpElapsedMs": 73
+      },
+      "verifiedAt": "2026-09-10T12:38:50.154Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Initial metadata and crawlable navigation",
+      "status": "fail",
+      "evidence": {
+        "title": "HOMA - مشاهده محصول در فضای شما",
+        "linkCount": 0
+      },
+      "verifiedAt": "2026-09-10T12:38:50.154Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Environment indexing policy",
+      "status": "fail",
+      "evidence": null,
+      "verifiedAt": "2026-09-10T12:38:50.154Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "JSON-LD parses",
+      "status": "fail",
+      "evidence": [],
+      "verifiedAt": "2026-09-10T12:38:50.154Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Equivalent public content: Googlebot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:50.520Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Equivalent public content: bingbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:50.586Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Equivalent public content: Twitterbot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:50.666Z"
+    },
+    {
+      "route": "/store/parshook/product/5a104af5-96c0-457a-b850-6590eb0c59e0",
+      "check": "Equivalent public content: OAI-SearchBot",
+      "status": "pass",
+      "evidence": {
+        "status": 200,
+        "title": "HOMA - مشاهده محصول در فضای شما"
+      },
+      "verifiedAt": "2026-09-10T12:38:50.764Z"
+    },
+    {
+      "route": "/seo-audit-not-found-92841",
+      "check": "Real 404",
+      "status": "fail",
+      "evidence": {
+        "status": 200
+      },
+      "verifiedAt": "2026-09-10T12:38:50.857Z"
+    },
+    {
+      "route": "/store/seo-missing-store",
+      "check": "Real 404",
+      "status": "fail",
+      "evidence": {
+        "status": 200
+      },
+      "verifiedAt": "2026-09-10T12:38:50.945Z"
+    },
+    {
+      "route": "/store/seo-missing-store/product/seo-missing-product",
+      "check": "Real 404",
+      "status": "fail",
+      "evidence": {
+        "status": 200
+      },
+      "verifiedAt": "2026-09-10T12:38:51.019Z"
+    },
+    {
+      "route": "/account/unknown",
+      "check": "Real 404",
+      "status": "fail",
+      "evidence": {
+        "status": 200
+      },
+      "verifiedAt": "2026-09-10T12:38:51.100Z"
+    },
+    {
+      "route": "/gallery?page=999999",
+      "check": "Real 404",
+      "status": "fail",
+      "evidence": {
+        "status": 200
+      },
+      "verifiedAt": "2026-09-10T12:38:51.186Z"
+    },
+    {
+      "route": "/basket",
+      "check": "Private route initial noindex",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "robots": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.284Z"
+    },
+    {
+      "route": "/account/gallery",
+      "check": "Private route initial noindex",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "robots": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.348Z"
+    },
+    {
+      "route": "/studio/upload",
+      "check": "Private route initial noindex",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "robots": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.417Z"
+    },
+    {
+      "route": "/try-on/sample/upload",
+      "check": "Private route initial noindex",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "robots": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.499Z"
+    },
+    {
+      "route": "/s/private-token",
+      "check": "Private route initial noindex",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "robots": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.621Z"
+    },
+    {
+      "route": "/shop",
+      "check": "Permanent alias redirect",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "target": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.751Z"
+    },
+    {
+      "route": "/studio",
+      "check": "Permanent alias redirect",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "target": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.860Z"
+    },
+    {
+      "route": "/gallery?page=1",
+      "check": "Permanent alias redirect",
+      "status": "fail",
+      "evidence": {
+        "status": 200,
+        "target": null
+      },
+      "verifiedAt": "2026-09-10T12:38:51.967Z"
+    }
+  ],
+  "passed": 45,
+  "failed": 57
+}
