@@ -56,7 +56,10 @@ export function OptimizedImage({
         className={className}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
-        fetchPriority={priority ? 'high' : undefined}
+        // Lowercase: React 18 treats camelCase `fetchPriority` as an unknown
+        // DOM prop and warns on every SSR render; the lowercase attribute is
+        // passed through to HTML in both React 18 and 19.
+        {...(priority ? { fetchpriority: 'high' } : {})}
         draggable={false}
       />
     );
@@ -82,7 +85,7 @@ export function OptimizedImage({
         className={className}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
-        fetchPriority={priority ? 'high' : undefined}
+        {...(priority ? { fetchpriority: 'high' } : {})}
         onError={() => setError(true)}
         draggable={false}
       />

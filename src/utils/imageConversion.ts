@@ -3,8 +3,12 @@
  *
  * Handles conversion of unsupported image formats (HEIC/HEIF from iPhone)
  * to standard formats (JPEG) that can be processed by the backend.
+ *
+ * heic2any touches `window` and `Worker` at module top level, so it MUST be
+ * imported lazily (dynamic import below). A static import would crash the
+ * SSR server bundle on load and would otherwise be pulled into every static
+ * graph via studioService/UploadContext consumers.
  */
-import heic2any from 'heic2any';
 
 /**
  * Convert HEIC/HEIF images to JPEG
@@ -31,6 +35,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   console.log('[ImageConversion] Converting HEIC to JPEG:', file.name);
 
   try {
+    const { default: heic2any } = await import('heic2any');
     const blob = await heic2any({
       blob: file,
       toType: 'image/jpeg',
