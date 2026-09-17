@@ -7,7 +7,6 @@ import type {
   AnnotationPin,
   ChatMessage,
   ChatPlan,
-  Chip,
   ChipGroup,
   ImpactItem,
   RedesignProduct,
@@ -251,20 +250,5 @@ export const BASKET_COPY = {
   checkoutCta: 'ادامه و پرداخت',
 } as const;
 
-// ── Intake (upload + need + optional category scope) ────────────────
-export const REDESIGN_SCOPE_CHIPS: Chip[] = [
-  { id: 'sofa', label: 'مبل', icon: 'sofa' },
-  { id: 'rug', label: 'فرش', icon: 'grid' },
-  { id: 'bedspread', label: 'روتختی', icon: 'image' },
-  { id: 'curtain', label: 'پرده', icon: 'curtain' },
-  { id: 'cushion', label: 'کوسن', icon: 'heart' },
-  { id: 'lighting', label: 'نورپردازی', icon: 'sun' },
-  { id: 'decor', label: 'دکوری', icon: 'leaf' },
-];
-
-export const INTAKE_WELCOME =
-  'سلام! من دستیار طراحی داخلی هما هستم. یک عکس از اتاقت بفرست تا فضا رو تحلیل کنم و پیشنهاد بدم.';
-export const INTAKE_HINT = 'می‌تونی توضیح بدی چه تغییری می‌خوای (اختیاری).';
-export const INTAKE_SCOPE_TITLE = 'می‌خوای روی چه چیزی تمرکز کنم؟ (اختیاری)';
 export const EMPTY_PRODUCTS_HINT = 'محصولی هنوز انتخاب نشده. اول تحلیل فضا رو ببین؛ هر وقت خواستی، از هما بخواه پیشنهاد محصول بده.';
 export const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده. گفتگو رو ادامه بده.';

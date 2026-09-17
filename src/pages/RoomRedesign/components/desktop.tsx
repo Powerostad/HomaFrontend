@@ -38,9 +38,8 @@ import { PinnedImage } from './shell';
 import { CanvasCaption, ImageToolbar, QuickEditChips, useImageActions } from './workspace';
 import { CategoryCard } from './categories';
 import type { RoomFinding, RedesignCategory } from '../services/transformers';
-import type { AnnotationPin as AnnotationPinType, ChatMessage, RedesignProduct, Chip, ChipGroup, RoomVersion } from '../types';
+import type { AnnotationPin as AnnotationPinType, ChatMessage, RedesignProduct, ChipGroup, RoomVersion } from '../types';
 import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../data/uiCopy';
-import { IntakeForm } from './IntakeForm';
 
 const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده';
 const EMPTY_PRODUCTS_HINT = 'محصولی هنوز انتخاب نشده. اول تحلیل فضا رو ببین؛ هر وقت خواستی، از هما بخواه پیشنهاد محصول بده.';
@@ -78,14 +77,6 @@ export interface DesktopWorkspaceProps {
   pins: AnnotationPinType[];
   findings: RoomFinding[];
   versions: RoomVersion[];
-  // intake (shown in chat panel when messages.length === 0)
-  showIntake: boolean;
-  intakeImage: string | null;
-  onPickImage: (file: File) => void;
-  onRemoveImage: () => void;
-  scopeChips: Chip[];
-  scopeSelected: Set<string>;
-  onToggleScope: (chipId: string) => void;
 }
 
 // ── Brand mark ──────────────────────────────────────────────────────
@@ -476,13 +467,6 @@ function AssistantPanel({
   onSend,
   onQuickEdit,
   hasResult,
-  showIntake,
-  intakeImage,
-  onPickImage,
-  onRemoveImage,
-  scopeChips,
-  scopeSelected,
-  onToggleScope,
 }: {
   messages: ChatMessage[];
   chipGroups: ChipGroup[];
@@ -495,20 +479,13 @@ function AssistantPanel({
   onSend: () => void;
   onQuickEdit: (text: string) => void;
   hasResult: boolean;
-  showIntake: boolean;
-  intakeImage: string | null;
-  onPickImage: (file: File) => void;
-  onRemoveImage: () => void;
-  scopeChips: Chip[];
-  scopeSelected: Set<string>;
-  onToggleScope: (chipId: string) => void;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, busy, chipGroups.length]);
 
-  const showQuickEdits = hasResult && chipGroups.length === 0 && !showIntake && !busy && !rendering;
+  const showQuickEdits = hasResult && chipGroups.length === 0 && !busy && !rendering;
 
   return (
     <aside
@@ -530,29 +507,17 @@ function AssistantPanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-4 py-3 flex flex-col gap-3.5">
-        {showIntake ? (
-          <IntakeForm
-            variant="desktop"
-            image={intakeImage}
-            onPickImage={onPickImage}
-            onRemoveImage={onRemoveImage}
-            scopeChips={scopeChips}
-            scopeSelected={scopeSelected}
-            onToggleScope={onToggleScope}
-          />
-        ) : (
-          <ChatThread
-            messages={messages}
-            chipGroups={chipGroups}
-            onSelectChip={onSelectChip}
-            busy={busy}
-            rendering={rendering}
-            findings={findings}
-            chipLayout="wrap"
-            leading={<ChatChecklist />}
-            endRef={endRef}
-          />
-        )}
+        <ChatThread
+          messages={messages}
+          chipGroups={chipGroups}
+          onSelectChip={onSelectChip}
+          busy={busy}
+          rendering={rendering}
+          findings={findings}
+          chipLayout="wrap"
+          leading={<ChatChecklist />}
+          endRef={endRef}
+        />
       </div>
 
       {showQuickEdits && (
@@ -603,13 +568,6 @@ export function DesktopWorkspace({
   pins,
   findings,
   versions,
-  showIntake,
-  intakeImage,
-  onPickImage,
-  onRemoveImage,
-  scopeChips,
-  scopeSelected,
-  onToggleScope,
 }: DesktopWorkspaceProps) {
   const versionImage = versions.find((v) => v.index === activeVersion)?.imageUrl ?? previewImage;
   // Analysis tab shows the user's original photo (with annotation pins); the
@@ -632,13 +590,6 @@ export function DesktopWorkspace({
           onSend={onSend}
           onQuickEdit={onQuickEdit}
           hasResult={hasResult}
-          showIntake={showIntake}
-          intakeImage={intakeImage}
-          onPickImage={onPickImage}
-          onRemoveImage={onRemoveImage}
-          scopeChips={scopeChips}
-          scopeSelected={scopeSelected}
-          onToggleScope={onToggleScope}
         />
 
         {deskTab === 'products' ? (

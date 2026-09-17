@@ -6,28 +6,29 @@
  *   1. PhotoIntakeScreen        — capture/upload one room photo (required)
  *   2. PhotoReviewContextScreen — review the photo + add optional context
  *
- * On "start analysis" it builds a typed HomaIntakePayload and navigates to
- * `/redesign` with the payload in `location.state`. The loading + analysis
- * stages live on the destination (RoomRedesignPage owns the chat hook + SSE).
+ * On "start analysis" it builds a typed HomaIntakePayload and hands it to the
+ * owning redesign flow, which creates the canonical `/redesign/:sessionId` URL.
  *
  * The bad-photo warning is shown at the submit gate (not mid-pick), per the V1
  * product decision: warn on small/low-quality photos but always allow continue.
  */
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { toast } from 'sonner';
 import { RD } from '../theme';
 import { useIntakeFlow } from './useIntakeFlow';
 import { INTAKE_COPY } from './intakeCopy';
-import type { RedesignLocationState } from './intakeTypes';
+import type { HomaIntakePayload } from './intakeTypes';
 import { PhotoIntakeScreen } from './PhotoIntakeScreen';
 import { PhotoTipsBottomSheet } from './PhotoTipsBottomSheet';
 import { PhotoReviewContextScreen } from './PhotoReviewContextScreen';
 import { BadPhotoWarning } from './BadPhotoWarning';
 
-export function HomaIntakeFlow(): JSX.Element {
-  const navigate = useNavigate();
+export interface HomaIntakeFlowProps {
+  onStartAnalysis: (payload: HomaIntakePayload) => void;
+}
+
+export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.Element {
   const flow = useIntakeFlow();
   const reduce = useReducedMotion();
 
@@ -41,8 +42,7 @@ export function HomaIntakeFlow(): JSX.Element {
       toast.error(INTAKE_COPY.errors.noPhoto);
       return;
     }
-    const state: RedesignLocationState = { intake: payload };
-    navigate('/redesign', { state });
+    onStartAnalysis(payload);
   };
 
   const onSubmit = () => {

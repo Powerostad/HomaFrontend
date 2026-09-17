@@ -18,9 +18,8 @@ import {
   EMPTY_PRODUCTS_HINT,
   BASKET_COPY,
 } from '../data/uiCopy';
-import type { RedesignProduct, ChatMessage, ChipGroup, Chip } from '../types';
+import type { RedesignProduct, ChatMessage, ChipGroup } from '../types';
 import type { RedesignCategory, RoomFinding } from '../services/transformers';
-import { IntakeForm } from './IntakeForm';
 
 const TAP = { scale: 0.97 };
 const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
@@ -114,13 +113,6 @@ export function AnalysisPanel({
   busy,
   rendering,
   findings,
-  showIntake,
-  intakeImage,
-  onPickImage,
-  onRemoveImage,
-  scopeChips,
-  scopeSelected,
-  onToggleScope,
   inputValue,
   onInputChange,
   onSend,
@@ -131,13 +123,6 @@ export function AnalysisPanel({
   busy: boolean;
   rendering: boolean;
   findings: RoomFinding[];
-  showIntake: boolean;
-  intakeImage: string | null;
-  onPickImage: (file: File) => void;
-  onRemoveImage: () => void;
-  scopeChips: Chip[];
-  scopeSelected: Set<string>;
-  onToggleScope: (chipId: string) => void;
   inputValue: string;
   onInputChange: (v: string) => void;
   onSend: () => void;
@@ -147,27 +132,15 @@ export function AnalysisPanel({
       body={
         <div className="space-y-4 pt-1">
           <PanelHeader title="بازطراحی هما" subtitle="تحلیل اختصاصی" right={<HeaderBadge icon={Droplet} />} />
-          {showIntake ? (
-            <IntakeForm
-              image={intakeImage}
-              onPickImage={onPickImage}
-              onRemoveImage={onRemoveImage}
-              scopeChips={scopeChips}
-              scopeSelected={scopeSelected}
-              onToggleScope={onToggleScope}
-              variant="mobile"
-            />
-          ) : (
-            <ChatThread
-              messages={messages}
-              chipGroups={chipGroups}
-              onSelectChip={onSelectChip}
-              busy={busy}
-              rendering={rendering}
-              findings={findings}
-              chipLayout="scroll"
-            />
-          )}
+          <ChatThread
+            messages={messages}
+            chipGroups={chipGroups}
+            onSelectChip={onSelectChip}
+            busy={busy}
+            rendering={rendering}
+            findings={findings}
+            chipLayout="scroll"
+          />
         </div>
       }
       footer={

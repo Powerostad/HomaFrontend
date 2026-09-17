@@ -30,7 +30,7 @@ describe('public route contract', () => {
     const result = await page(path); expect(result.status).toBe(404);
     expect('data' in result && result.data.seo.robots).toContain('noindex');
   });
-  it.each(['/basket', '/account/gallery', '/studio/upload', '/studio/result/private-id', '/try-on/product/upload', '/s/private-token', '/redesign/intake'])('noindexes known private routes: %s', async (path) => {
+  it.each(['/basket', '/account/gallery', '/studio/upload', '/studio/result/private-id', '/try-on/product/upload', '/s/private-token', '/redesign', '/redesign/00000000-0000-4000-8000-000000000000'])('noindexes known private routes: %s', async (path) => {
     const result = await page(path); expect(result.status).toBe(200);
     expect('data' in result && result.data.kind).toBe('private');
     expect('data' in result && result.data.seo.robots).toContain('noindex');
@@ -59,12 +59,17 @@ describe('public route contract', () => {
     const unsupported: CatalogReader = async <T>() => ({ count: 20, next: 'next', results: [product] as T[] });
     expect((await page('/store/shop/product/product-id', unsupported)).status).toBe(503);
   });
+  it('treats each redesign conversation path as a private route', () => {
+    expect(matchRoute('/redesign/00000000-0000-4000-8000-000000000000').kind).toBe('private');
+  });
   it('preserves page 2 canonical and data', async () => {
     const read: CatalogReader = async <T>() => ({ count: 21, next: null, results: [product] as T[] });
     const result = await page('/gallery?page=2', read);
     expect('data' in result && result.data.seo.canonical).toBe('https://myhoma.ir/gallery?page=2');
   });
   it('does not treat arbitrary workflow suffixes as valid routes', () => {
+    expect(matchRoute('/redesign/intake').kind).toBe('missing');
+    expect(matchRoute('/redesign/session-id').kind).toBe('missing');
     expect(matchRoute('/studio/result/a/extra').kind).toBe('missing');
     expect(matchRoute('/store/%2Fprivate').kind).toBe('missing');
   });

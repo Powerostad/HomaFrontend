@@ -1,6 +1,6 @@
 export const STATIC_PATHS = ['/', '/explore', '/gallery', '/collaboration', '/contact', '/faq', '/terms', '/ai-interior-design', '/virtual-product-preview'] as const;
 const aliases: Record<string, string> = { '/shop': '/explore', '/studio': '/studio/upload', '/studio/start': '/studio/upload', '/try-on': '/explore', '/try-on/upload': '/explore', '/try-on/progress': '/explore', '/try-on/result': '/explore' };
-const privateRoutes = /^(?:\/(?:upload|precheck|processing|confirmation|result|error|product-not-found|basket|redesign)|\/redesign\/intake|\/s\/[^/]+|\/studio\/(?:upload|progress|projects)|\/studio\/(?:result|project)\/[^/]+|\/try-on\/[^/]+\/(?:upload|progress|result)|\/account\/(?:gallery|orders|settings)|\/account\/gallery\/[^/]+)$/;
+const privateRoutes = /^(?:\/(?:upload|precheck|processing|confirmation|result|error|product-not-found|basket)|\/redesign(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?|\/s\/[^/]+|\/studio\/(?:upload|progress|projects)|\/studio\/(?:result|project)\/[^/]+|\/try-on\/[^/]+\/(?:upload|progress|result)|\/account\/(?:gallery|orders|settings)|\/account\/gallery\/[^/]+)$/i;
 export type RouteMatch = { kind: 'static' | 'store' | 'product' | 'private' | 'missing'; slug?: string; productId?: string; redirect?: string; path: string };
 export function matchRoute(pathname: string): RouteMatch {
   const path = pathname.replace(/\/+$/, '') || '/';

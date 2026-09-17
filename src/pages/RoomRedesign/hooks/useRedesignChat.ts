@@ -69,7 +69,7 @@ export interface UseRedesignChat {
   error: string | null;
   /** True once a `result` has arrived (products/impacts are meaningful). */
   hasResult: boolean;
-  /** True while the initial session is being loaded from the DB (resume `?s=`). */
+  /** True while the initial session is being loaded from the DB (resume by path). */
   hydrating: boolean;
   /** True while creating a session or streaming a turn. */
   busy: boolean;
@@ -84,8 +84,8 @@ export interface UseRedesignChat {
 let seq = 0;
 const nextId = (p: string): string => `${p}:${Date.now().toString(36)}:${(seq++).toString(36)}`;
 
-// Persist the chat session id so a render in flight (Celery, server-side) can be
-// resumed after a frontend reload / reopen — the result lives in the DB.
+// Keep the current chat session as a convenience for background work and local
+// recovery. The canonical identity is the `/redesign/:sessionId` path.
 const SESSION_KEY = 'homa_redesign_session';
 
 /** setTimeout as an abortable promise (resolves early on abort). */
@@ -102,7 +102,7 @@ const delay = (ms: number, signal: AbortSignal): Promise<void> =>
     );
   });
 
-export function useRedesignChat(resumeId?: string): UseRedesignChat {
+export function useRedesignChat(sessionIdFromPath?: string): UseRedesignChat {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
@@ -119,9 +119,9 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
   const [stage, setStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
-  // Resume (`?s=`) starts in a loading state so the consumer shows a spinner
+  // A session path starts in a loading state so the consumer shows a spinner
   // instead of a blank/intake flash until the first DB load resolves.
-  const [hydrating, setHydrating] = useState(() => !!resumeId);
+  const [hydrating, setHydrating] = useState(() => !!sessionIdFromPath);
 
   const abortRef = useRef<AbortController | null>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -131,6 +131,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
   const versionsLenRef = useRef(0);
   const lastSceneIdRef = useRef<string | null>(null);
   const didHydrateRef = useRef(false);
+  const hydratedPathRef = useRef<string | null>(null);
 
   const setStatusBoth = useCallback((s: ChatStatus) => {
     statusRef.current = s;
@@ -141,6 +142,37 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
     chipGroupsRef.current = g;
     setChipGroups(g);
   }, []);
+
+  const clearLocalSession = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    sessionIdRef.current = null;
+    assistantIdRef.current = null;
+    versionsLenRef.current = 0;
+    lastSceneIdRef.current = null;
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch {
+      /* localStorage unavailable */
+    }
+    setSessionId(null);
+    setMessages([]);
+    applyChipGroups([]);
+    setProducts([]);
+    setCategories([]);
+    setImpacts([]);
+    setExistingIssues([]);
+    setPins([]);
+    setFindings([]);
+    setPreviewImage(null);
+    setVersions([]);
+    setActiveVersion(0);
+    setError(null);
+    setStage(null);
+    setHasResult(false);
+    setHydrating(false);
+    setStatusBoth('idle');
+  }, [applyChipGroups, setStatusBoth]);
 
   const pushAssistantMessageRef = useRef<(text: string) => void>(() => {});
   const pushEventRef = useRef<(text: string, k: ChatEventKind) => void>(() => {});
@@ -310,22 +342,29 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
   // Resume the FULL session from the DB on mount. The backend persists every
   // emitted event (`render_json`), so a reload / reopen restores the entire
   // conversation — messages, chips, products, impacts and rendered versions —
-  // not just the images. The session id comes ONLY from the URL (`?s=`, shareable /
-  // bookmarkable). If `?s=` is absent, start fresh and clear any stale stored session.
+  // not just the images. The session id comes from the canonical path. If the
+  // path has no session id, start fresh and clear any stale stored pointer.
   useEffect(() => {
-    if (didHydrateRef.current) return;
-    const sid: string | null = resumeId || null;
+    const sid: string | null = sessionIdFromPath || null;
+    // The root-to-session transition happens after createChatSession() and
+    // must keep the live SSE stream mounted. It already has the same session,
+    // so only the URL changed; do not clear or rehydrate it.
+    if (sid && sid === sessionIdRef.current && didHydrateRef.current) {
+      hydratedPathRef.current = sid;
+      return;
+    }
+    // React StrictMode re-runs effects for the same already-hydrated path.
+    if (didHydrateRef.current && hydratedPathRef.current === sid) return;
+
+    clearLocalSession();
     if (!sid) {
-      // No resumeId from URL — start fresh, clear stale stored session, mark hydrated
-      try {
-        localStorage.removeItem(SESSION_KEY);
-      } catch {
-        /* localStorage unavailable */
-      }
       didHydrateRef.current = true;
+      hydratedPathRef.current = null;
       setHydrating(false);
       return;
     }
+    didHydrateRef.current = false;
+    setHydrating(true);
     sessionIdRef.current = sid;
     setSessionId(sid);
     try {
@@ -343,6 +382,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       if (!load.success) {
         // A stale/invalid id (e.g. deleted session): drop it so the user starts fresh.
         didHydrateRef.current = true;
+        hydratedPathRef.current = sid;
         setHydrating(false);
         sessionIdRef.current = null;
         setSessionId(null);
@@ -355,6 +395,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
       }
       // Successful, non-aborted load — safe to mark hydrated so we don't refetch.
       didHydrateRef.current = true;
+      hydratedPathRef.current = sid;
       const payload = load.data as SessionPayload;
       applySessionView(rebuildSessionView(payload), { focusLatest: true, replaceMessages: true });
       setHydrating(false);
@@ -366,7 +407,7 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
         await pollForNewImage(sid, baseline, controller);
       }
     })();
-  }, [resumeId, applySessionView, pollForNewImage, setStatusBoth]);
+  }, [sessionIdFromPath, applySessionView, clearLocalSession, pollForNewImage, setStatusBoth]);
 
   const ensureSession = useCallback(async (): Promise<string | null> => {
     if (sessionIdRef.current) return sessionIdRef.current;
@@ -608,35 +649,8 @@ export function useRedesignChat(resumeId?: string): UseRedesignChat {
   );
 
   const reset = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    sessionIdRef.current = null;
-    assistantIdRef.current = null;
-    versionsLenRef.current = 0;
-    lastSceneIdRef.current = null;
-    try {
-      localStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* localStorage unavailable */
-    }
-    setSessionId(null);
-    setMessages([]);
-    applyChipGroups([]);
-    setProducts([]);
-    setCategories([]);
-    setImpacts([]);
-    setExistingIssues([]);
-    setPins([]);
-    setFindings([]);
-    setPreviewImage(null);
-    setVersions([]);
-    setActiveVersion(0);
-    setError(null);
-    setStage(null);
-    setHasResult(false);
-    setHydrating(false);
-    setStatusBoth('idle');
-  }, [applyChipGroups, setStatusBoth]);
+    clearLocalSession();
+  }, [clearLocalSession]);
 
   const busy = status === 'creating' || status === 'streaming' || status === 'rendering';
 

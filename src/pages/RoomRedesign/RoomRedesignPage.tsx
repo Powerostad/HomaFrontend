@@ -8,11 +8,10 @@
  * BasketContext; the سبد tab mirrors the session's selections.
  *
  * Mobile (<768): bottom-sheet with 3 tabs (analysis / products / basket).
- * Desktop (≥768): the DesktopWorkspace. Deep-link: ?tab=analysis|products|basket
- * (back-compat ?phase=analysis|suggestions|review|preview).
+ * Desktop (≥768): the DesktopWorkspace. Deep-link: ?tab=analysis|products|basket.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Droplet, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,22 +24,26 @@ import { DesktopWorkspace, type DeskTab } from './components/desktop';
 import { AnalysisPanel, SuggestionsPanel, BasketPanel } from './components/panels';
 import { MobileSheet } from './components/BottomSheet';
 import { ImageToolbar, useImageActions } from './components/workspace';
-import { REDESIGN_SCOPE_CHIPS } from './data/uiCopy';
-import { convertHeicToJpeg } from '@/utils/imageConversion';
 import { toPersianDigits } from '@/utils/formatters';
 import { AnalysisLoadingScreen } from './intake/AnalysisLoadingScreen';
 import { composeIntakeText } from './intake/composeIntakeText';
+import { HomaIntakeFlow } from './intake/HomaIntakeFlow';
+import {
+  isRedesignSessionId,
+  removeLegacyRedesignParams,
+  shouldCanonicalizeSessionPath,
+  shouldResetRedesignView,
+  shouldSeedIntake,
+} from './redesignRouteState';
 import { selectChatProduct } from './services/redesignChatService';
-import type { RedesignLocationState } from './intake/intakeTypes';
+import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { RedesignCategory } from './services/transformers';
 import type { NavTab, RedesignProduct } from './types';
 
 const TAB_ORDER: NavTab[] = ['analysis', 'products', 'basket'];
 
 function resolveInitTab(sp: URLSearchParams): NavTab {
-  const phase = sp.get('phase');
   const tab = sp.get('tab');
-  if (phase === 'suggestions') return 'products';
   if (tab === 'products') return 'products';
   if (tab === 'basket') return 'basket';
   return 'analysis';
@@ -51,16 +54,7 @@ function initialDeskTab(tab: NavTab): DeskTab {
   return 'analysis';
 }
 
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('read failed'));
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Full-screen loader shown while a shared `?s=` session hydrates from the DB. */
+/** Full-screen loader shown while a `/redesign/:sessionId` path hydrates. */
 function ResumeLoadingScreen() {
   return (
     <div
@@ -80,24 +74,21 @@ function ResumeLoadingScreen() {
 }
 
 export function RoomRedesignPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const { sessionId: rawRouteSessionId } = useParams<{ sessionId?: string }>();
+  const routeSessionId = isRedesignSessionId(rawRouteSessionId) ? rawRouteSessionId : undefined;
+  const hasInvalidSessionPath = Boolean(rawRouteSessionId && !routeSessionId);
   const navigate = useNavigate();
-  const location = useLocation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const initTab = useMemo(() => resolveInitTab(searchParams), [searchParams]);
 
-  // Resume a specific session from the URL (`?s=<id>`) — shareable / bookmarkable
-  // and survives a cleared localStorage. Read once on mount (the hook hydrates once).
-  const resumeId = useMemo(() => searchParams.get('s') || undefined, []);
-  const chat = useRedesignChat(resumeId);
-
-  // Payload handed from the pre-analysis intake flow (`/redesign/intake`). Captured
-  // once at first render so it survives re-renders even if the history state changes.
-  const intakePayloadRef = useRef<RedesignLocationState['intake']>(
-    (location.state as RedesignLocationState | null)?.intake,
-  );
-  const intakePayload = intakePayloadRef.current;
+  // A session path identifies the conversation resource. The root `/redesign`
+  // path is the new-session entry point and owns the intake phase locally until
+  // the first durable chat session is created.
+  const chat = useRedesignChat(routeSessionId);
+  const [intakePayload, setIntakePayload] = useState<HomaIntakePayload | null>(null);
   const didConsumeIntakeRef = useRef(false);
+  const [intakeAttempt, setIntakeAttempt] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
   // First turn finished (busy true→false) without producing any analysis content
   // and without an error — a silent/empty backend turn. Lets the overlay escape.
@@ -107,10 +98,9 @@ export function RoomRedesignPage() {
   const [navTab, setNavTab] = useState<NavTab>(initTab);
   const [deskTab, setDeskTab] = useState<DeskTab>(() => initialDeskTab(initTab));
   const [input, setInput] = useState('');
-  const [intakeImage, setIntakeImage] = useState<string | null>(null);
-  const [scopeSelected, setScopeSelected] = useState<Set<string>>(new Set());
   const { basket, addItem, removeItem } = useBasket();
   const [navDir, setNavDir] = useState<1 | -1>(1);
+  const previousRouteSessionIdRef = useRef(routeSessionId);
   // Mobile: the single scroll container; we scroll it to the top to refocus the photo.
   const sheetScrollRef = useRef<HTMLDivElement>(null);
   const prevVersionsRef = useRef(0);
@@ -119,7 +109,7 @@ export function RoomRedesignPage() {
   const reduce = useReducedMotion();
   const D = reduce ? 0 : 0.22;
 
-  const showIntake = chat.messages.length === 0;
+  const intakeImage = intakePayload?.image.dataUrl ?? null;
 
   // Image currently on the canvas (mobile): active render → preview → uploaded
   // photo. The mobile image chrome (caption + toolbar + zoom/compare modals)
@@ -139,15 +129,50 @@ export function RoomRedesignPage() {
     if (isDesktop && chat.previewImage) setDeskTab('preview');
   }, [isDesktop, chat.previewImage]);
 
-  // Reflect the live session id in the URL so the conversation is addressable
-  // (reload / share / reopen restores it). Replace, don't push — no history spam.
+  // Reflect the live session id in the path so the conversation is addressable
+  // (reload / share / reopen restores it). Replace so creating a session does
+  // not add an extra history entry before the first turn is visible.
   useEffect(() => {
-    if (!chat.sessionId) return;
-    if (searchParams.get('s') === chat.sessionId) return;
-    const next = new URLSearchParams(searchParams);
-    next.set('s', chat.sessionId);
-    setSearchParams(next, { replace: true });
-  }, [chat.sessionId, searchParams, setSearchParams]);
+    if (!shouldCanonicalizeSessionPath({
+      hasIntakePayload: Boolean(intakePayload),
+      routeSessionId,
+      chatSessionId: chat.sessionId,
+      previousRouteSessionId: previousRouteSessionIdRef.current,
+    })) return;
+    navigate(`/redesign/${chat.sessionId}`, { replace: true });
+  }, [chat.sessionId, intakePayload, routeSessionId, navigate]);
+
+  // A route change is a session boundary. Reset view-only state so opening one
+  // conversation cannot inherit another conversation's tab, composer text, or
+  // unsent intake image. Preserve the intake image only for the root→canonical
+  // transition of the session that just created it.
+  useEffect(() => {
+    if (!shouldResetRedesignView(previousRouteSessionIdRef.current, routeSessionId)) return;
+    previousRouteSessionIdRef.current = routeSessionId;
+    const isCurrentDraftSession = Boolean(routeSessionId && routeSessionId === chat.sessionId);
+    setNavTab(initTab);
+    setDeskTab(initialDeskTab(initTab));
+    setInput('');
+    setNavDir(1);
+    prevVersionsRef.current = 0;
+    prevMsgLenRef.current = 0;
+    if (!isCurrentDraftSession) {
+      setIntakePayload(null);
+      setAnalyzing(false);
+      setSilentFail(false);
+      didConsumeIntakeRef.current = false;
+      turnWasBusyRef.current = false;
+    }
+  }, [chat.sessionId, initTab, routeSessionId]);
+
+  // The current flow has no session or phase query parameters. Remove those
+  // retired values while preserving the supported view tab parameter.
+  useEffect(() => {
+    if (!searchParams.has('s') && !searchParams.has('phase')) return;
+    const cleaned = removeLegacyRedesignParams(searchParams).toString();
+    const pathname = routeSessionId ? `/redesign/${routeSessionId}` : '/redesign';
+    navigate(`${pathname}${cleaned ? `?${cleaned}` : ''}`, { replace: true });
+  }, [navigate, routeSessionId, searchParams]);
 
   // Mobile: when a NEW render lands, scroll the sheet back to the top so the
   // freshly generated photo is in focus (the sheet drops to its peek).
@@ -174,19 +199,21 @@ export function RoomRedesignPage() {
   }, [isDesktop, chat.messages.length, chat.versions.length, chat.busy, navTab, reduce]);
 
 
-  // Seed the conversation from the intake payload (came from `/redesign/intake`):
+  // Seed the conversation from the intake payload collected inside `/redesign`:
   // compose the first turn (photo + Persian context) and show the loading overlay
   // until هما's analysis starts streaming. Fired once, deferred a tick so the send
   // survives React StrictMode's dev mount→unmount→remount probe (which would
   // otherwise abort an in-flight stream started synchronously on mount).
   useEffect(() => {
-    if (didConsumeIntakeRef.current) return;
-    if (!intakePayload || resumeId) return;
-    if (chat.messages.length > 0) return;
+    if (!shouldSeedIntake({
+      didConsumeIntake: didConsumeIntakeRef.current,
+      hasIntakePayload: Boolean(intakePayload),
+      routeSessionId,
+      messageCount: chat.messages.length,
+    }) || !intakePayload) return;
     const t = setTimeout(() => {
       if (didConsumeIntakeRef.current) return;
       didConsumeIntakeRef.current = true;
-      setIntakeImage(intakePayload.image.dataUrl);
       setAnalyzing(true);
       void chat.sendTurn({
         text: composeIntakeText(intakePayload),
@@ -194,54 +221,13 @@ export function RoomRedesignPage() {
       });
     }, 0);
     return () => clearTimeout(t);
-  }, []);
+  }, [intakeAttempt, intakePayload, routeSessionId, chat.messages.length, chat.sendTurn]);
 
-  // No intake payload and no session to resume → the user opened `/redesign`
-  // directly. Intake is the entry point, so route them through it first.
-  useEffect(() => {
-    if (resumeId || intakePayload) return;
-    if (chat.messages.length > 0) return;
-    navigate('/redesign/intake', { replace: true });
-  }, []);
-
-  // ── Intake handlers ───────────────────────────────────────────────
-  const onPickImage = async (file: File) => {
-    try {
-      const jpeg = await convertHeicToJpeg(file);
-      const dataUrl = await fileToDataUrl(jpeg);
-      setIntakeImage(dataUrl);
-    } catch {
-      toast.error('خطا در بارگذاری تصویر');
-    }
-  };
-  const onRemoveImage = () => setIntakeImage(null);
-  const onToggleScope = (chipId: string) =>
-    setScopeSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(chipId)) next.delete(chipId);
-      else next.add(chipId);
-      return next;
-    });
-
-  const scopeInstruction = (): string => {
-    if (scopeSelected.size === 0) return '';
-    const labels = REDESIGN_SCOPE_CHIPS.filter((c) => scopeSelected.has(c.id)).map((c) => c.label);
-    return `\n\nلطفاً بازطراحی را فقط روی این موارد متمرکز کن: ${labels.join('، ')}.`;
-  };
-
-  // ── Send (first turn = photo + composed text; later = follow-up text) ─
+  // ── Send follow-up text turns ─────────────────────────────────────
   const onSend = () => {
     if (chat.busy) return;
-    if (showIntake) {
-      if (!intakeImage) {
-        toast.error('لطفاً ابتدا عکس اتاقت رو بفرست');
-        return;
-      }
-      void chat.sendTurn({ text: input.trim() + scopeInstruction(), images: [intakeImage] });
-    } else {
-      if (!input.trim()) return;
-      void chat.sendTurn({ text: input.trim(), images: [] });
-    }
+    if (!input.trim()) return;
+    void chat.sendTurn({ text: input.trim(), images: [] });
     setInput('');
   };
 
@@ -298,7 +284,7 @@ export function RoomRedesignPage() {
 
   // ── New session: abandon the current thread and start fresh ───────
   // The server-side session still persists; we only drop the local pointer
-  // (localStorage + `?s=` URL) and reset the view. Confirm if there's a
+  // (localStorage + current path) and reset the view. Confirm if there's a
   // conversation to lose. `chat.reset()` clears the hook state + localStorage.
   const onNewSession = () => {
     if (
@@ -308,17 +294,15 @@ export function RoomRedesignPage() {
       return;
     }
     chat.reset();
-    setIntakeImage(null);
-    setScopeSelected(new Set());
+    setIntakePayload(null);
+    setIntakeAttempt(0);
     setInput('');
     setAnalyzing(false);
-    const next = new URLSearchParams(searchParams);
-    next.delete('s');
-    setSearchParams(next, { replace: true });
     setNavTab('analysis');
     setDeskTab('analysis');
-    // Start a fresh analysis through the intake flow (the entry point).
-    navigate('/redesign/intake');
+    // Start a fresh analysis through the root redesign entry point. The old
+    // session remains addressable at its own `/redesign/:sessionId` path.
+    navigate('/redesign');
   };
 
   const goTab = (next: NavTab) => {
@@ -359,12 +343,13 @@ export function RoomRedesignPage() {
     if (!intakePayload) return;
     setSilentFail(false);
     turnWasBusyRef.current = false;
+    didConsumeIntakeRef.current = false;
+    setIntakeAttempt((attempt) => attempt + 1);
     chat.reset();
     setAnalyzing(true);
-    void chat.sendTurn({
-      text: composeIntakeText(intakePayload),
-      images: [intakePayload.image.dataUrl],
-    });
+    // Retry from the root entry path so the next durable session can receive
+    // its own canonical `/redesign/:sessionId` URL.
+    if (routeSessionId) navigate('/redesign', { replace: true });
   };
 
   const analysisOverlay =
@@ -377,10 +362,23 @@ export function RoomRedesignPage() {
       />
     ) : null;
 
-  // Resuming a shared session (`?s=`): hold a loading screen until the first DB
+  // Resuming a shared session (`/redesign/:sessionId`): hold a loading screen until the first DB
   // load resolves, so the user never sees a blank workspace or an intake flash.
   if (chat.hydrating) {
     return <ResumeLoadingScreen />;
+  }
+
+  // Session paths are UUIDs issued by the chat API. Invalid suffixes are not
+  // alternate redesign flows; return to the single current entry point.
+  if (hasInvalidSessionPath) {
+    return <Navigate to="/redesign" replace />;
+  }
+
+  // `/redesign` is the new-session entry point. Intake is a phase of this flow,
+  // not a second route, and hands its payload back to this page before the first
+  // chat session is created.
+  if (!routeSessionId && !intakePayload) {
+    return <HomaIntakeFlow onStartAnalysis={setIntakePayload} />;
   }
 
   // ── Desktop ───────────────────────────────────────────────────────
@@ -420,13 +418,6 @@ export function RoomRedesignPage() {
         pins={visiblePins}
         findings={chat.findings}
         versions={chat.versions}
-        showIntake={showIntake}
-        intakeImage={intakeImage}
-        onPickImage={onPickImage}
-        onRemoveImage={onRemoveImage}
-        scopeChips={REDESIGN_SCOPE_CHIPS}
-        scopeSelected={scopeSelected}
-        onToggleScope={onToggleScope}
         />
       </>
     );
@@ -508,13 +499,6 @@ export function RoomRedesignPage() {
                     busy={chat.busy}
                     rendering={chat.status === 'rendering'}
                     findings={chat.findings}
-                    showIntake={showIntake}
-                    intakeImage={intakeImage}
-                    onPickImage={onPickImage}
-                    onRemoveImage={onRemoveImage}
-                    scopeChips={REDESIGN_SCOPE_CHIPS}
-                    scopeSelected={scopeSelected}
-                    onToggleScope={onToggleScope}
                     inputValue={input}
                     onInputChange={setInput}
                     onSend={onSend}

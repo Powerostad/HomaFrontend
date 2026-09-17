@@ -50,14 +50,6 @@ export interface HomaIntakePayload {
   createdAt: string; // ISO 8601
 }
 
-/**
- * Shape of `location.state` when the intake flow navigates to `/redesign`.
- * RoomRedesignPage reads `intake` once and seeds the first chat turn from it.
- */
-export interface RedesignLocationState {
-  intake?: HomaIntakePayload;
-}
-
 export interface RoomTypeOption {
   value: RoomType;
   label: string;
