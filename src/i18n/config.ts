@@ -27,7 +27,8 @@ export const getLanguageConfig = (code: string) => {
   return languages.find((lang) => lang.code === code) || languages[0];
 };
 
-// Update document direction and language
+// Update document direction and language.
+// Only called in the browser (guarded below); never during SSR.
 export const updateDocumentLanguage = (lang: string) => {
   const config = getLanguageConfig(lang);
   document.documentElement.dir = config.dir;
@@ -38,39 +39,59 @@ export const updateDocumentLanguage = (lang: string) => {
   localStorage.setItem('i18nextLng', lang);
 };
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
+const i18nInstance = i18n;
+
+if (typeof document !== 'undefined') {
+  i18nInstance
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources: {
+        fa: { translation: fa },
+        ar: { translation: ar },
+        en: { translation: en },
+        tr: { translation: tr },
+      },
+      fallbackLng: 'fa', // Persian as fallback
+      supportedLngs: ['fa', 'ar', 'en', 'tr'],
+
+      detection: {
+        order: ['localStorage', 'htmlTag'],
+        caches: ['localStorage'],
+      },
+
+      interpolation: {
+        escapeValue: false, // React already escapes
+      },
+
+      react: {
+        useSuspense: false, // Avoid suspense issues
+      },
+    });
+} else {
+  // SSR / Node: no browser detection, no document access.
+  i18nInstance.use(initReactI18next).init({
     resources: {
       fa: { translation: fa },
       ar: { translation: ar },
       en: { translation: en },
       tr: { translation: tr },
     },
-    fallbackLng: 'fa', // Persian as fallback
+    fallbackLng: 'fa',
     supportedLngs: ['fa', 'ar', 'en', 'tr'],
-
-    detection: {
-      order: ['localStorage', 'htmlTag'],
-      caches: ['localStorage'],
-    },
-
-    interpolation: {
-      escapeValue: false, // React already escapes
-    },
-
-    react: {
-      useSuspense: false, // Avoid suspense issues
-    },
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
   });
+}
 
 // Set initial document direction based on detected/default language
-updateDocumentLanguage(i18n.language || 'fa');
+if (typeof document !== 'undefined') {
+  updateDocumentLanguage(i18n.language || 'fa');
 
-// Listen for language changes
-i18n.on('languageChanged', (lang) => {
-  updateDocumentLanguage(lang);
-});
+  // Listen for language changes
+  i18n.on('languageChanged', (lang) => {
+    updateDocumentLanguage(lang);
+  });
+}
 
 export default i18n;

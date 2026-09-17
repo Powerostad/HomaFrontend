@@ -1,11 +1,16 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { SSRFooter } from "../components/seo/SSRFooter";
-import { SeoProductLandingPage } from "../pages/ProductLanding/PublicPage";
-import { ExplorePage, type ExploreServerData } from "../pages/Explore";
-import { GalleryPage, type GalleryServerData } from "../pages/Gallery";
-import { StorePage, type StoreServerData } from "../pages/Store";
-import { ProductDetailsPage, type ProductDetailsServerData } from "../pages/ProductDetails";
-import { SeoInformationPage } from "../pages/PublicSeoPages";
+import {
+  SeoExplorePage,
+  SeoGalleryPage,
+  SeoHome,
+  SeoInformationPage,
+  SeoProductDetailsPage,
+  SeoStorePage,
+} from "../pages/PublicSeoPages";
+import { isRTL } from "../i18n/config";
+import "./public.css";
 import type { PublicPageData, PublicProduct } from "./types";
 
 type AppProviderComponent = ComponentType<{ children: ReactNode }>;
@@ -15,14 +20,37 @@ function UnavailablePage() {
 }
 
 /**
- * Route dispatcher. It selects the original public components and passes
- * server-rendered data when available. After hydration, the full interactive
- * components load with context providers.
+ * Crawlable shell header. Renders real <a> navigation with the language of
+ * the active i18n instance so crawlers see translated chrome; the interactive
+ * header loads client-side after hydration.
+ */
+function SeoHeader() {
+  const { t, i18n } = useTranslation();
+  return (
+    <header className="seo-header" lang={i18n.language} dir={isRTL(i18n.language) ? "rtl" : "ltr"}>
+      <a className="seo-brand" href="/" aria-label="HOMA">
+        HOMA<span>هُما</span>
+      </a>
+      <nav aria-label={t("seo.header.label", "راهبری اصلی")}>
+        <a href="/explore">{t("seo.header.explore", "فروشگاه‌ها")}</a>
+        <a href="/gallery">{t("seo.header.gallery", "محصولات")}</a>
+        <a href="/account/gallery">{t("seo.header.account", "حساب کاربری")}</a>
+        <a href="/basket">{t("seo.header.basket", "سبد خرید")}</a>
+      </nav>
+    </header>
+  );
+}
+
+/**
+ * Route dispatcher. It selects the crawler-safe public components that render
+ * complete content from server data (no router hooks, no browser globals).
+ * After hydration, the AppProvider enables the commerce slots on product pages
+ * and the full interactive chrome takes over client-side.
  */
 export function PublicPage({
   data,
-  renderBasketCommerce: _renderBasketCommerce,
-  renderBuyCommerce: _renderBuyCommerce,
+  renderBasketCommerce,
+  renderBuyCommerce,
 }: {
   data: PublicPageData;
   renderBasketCommerce?: (product: PublicProduct, variantId: number | null) => ReactNode;
@@ -38,79 +66,39 @@ export function PublicPage({
     return () => { active = false; };
   }, []);
 
-  const controllersEnabled = Boolean(AppProvider);
-  let page: ReactNode;
-
+  let content: ReactNode;
   if (data.kind === "home") {
-    // Home page: keep SeoProductLandingPage (already uses original sections)
-    page = <SeoProductLandingPage controllersEnabled={controllersEnabled} />;
+    content = <SeoHome />;
   } else if (data.kind === "explore") {
-    // Explore page: use original ExplorePage with server data
-    const serverData: ExploreServerData = {
-      shops: data.shops,
-      total: data.total,
-      page: data.page,
-      breadcrumbs: data.breadcrumbs,
-    };
-    page = (
-      <div className="min-h-screen bg-surface-page flex flex-col">
-        <ExplorePage serverData={serverData} />
-        <SSRFooter />
-      </div>
-    );
+    content = <SeoExplorePage data={data} />;
   } else if (data.kind === "gallery") {
-    // Gallery page: use original GalleryPage with server data
-    const serverData: GalleryServerData = {
-      products: data.products,
-      total: data.total,
-      page: data.page,
-      breadcrumbs: data.breadcrumbs,
-    };
-    page = (
-      <div className="min-h-screen bg-surface-page flex flex-col">
-        <GalleryPage serverData={serverData} />
-        <SSRFooter />
-      </div>
-    );
+    content = <SeoGalleryPage data={data} />;
   } else if (data.kind === "store") {
-    // Store page: use original StorePage with server data
-    const serverData: StoreServerData = {
-      shop: data.shop!,
-      products: data.products,
-      total: data.total,
-      page: data.page,
-      breadcrumbs: data.breadcrumbs,
-    };
-    page = (
-      <div className="min-h-screen bg-surface-page flex flex-col">
-        <StorePage serverData={serverData} />
-        <SSRFooter />
-      </div>
-    );
+    content = <SeoStorePage data={data} />;
   } else if (data.kind === "product") {
-    // Product page: use original ProductDetailsPage with server data
-    const serverData: ProductDetailsServerData = {
-      product: data.product!,
-      shop: data.shop!,
-      breadcrumbs: data.breadcrumbs,
-    };
-    page = (
-      <div className="min-h-screen bg-surface-page flex flex-col">
-        <ProductDetailsPage serverData={serverData} />
-        <SSRFooter />
-      </div>
+    content = (
+      <SeoProductDetailsPage
+        data={data}
+        renderBasketCommerce={renderBasketCommerce}
+        renderBuyCommerce={renderBuyCommerce}
+      />
     );
   } else if (data.kind === "article") {
-    // Article pages (FAQ, Terms, Contact, etc.): keep SeoInformationPage
-    page = (
-      <div className="min-h-screen bg-surface-page flex flex-col">
-        <SeoInformationPage data={data} />
-        <SSRFooter />
-      </div>
-    );
+    content = <SeoInformationPage data={data} />;
   } else {
-    page = <UnavailablePage />;
+    content = <UnavailablePage />;
   }
 
-  return AppProvider ? <AppProvider>{page}</AppProvider> : <>{page}</>;
+  const shell = (
+    <div className="seo-public" dir="rtl" lang="fa">
+      <a className="seo-skip" href="#seo-main">پرش به محتوای اصلی</a>
+      <SeoHeader />
+      <main id="seo-main" className="seo-main">
+        {content}
+      </main>
+      <SSRFooter />
+    </div>
+  );
+
+  return AppProvider ? <AppProvider>{shell}</AppProvider> : shell;
 }
