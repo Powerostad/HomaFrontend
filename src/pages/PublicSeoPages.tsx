@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
   FileText,
@@ -40,6 +41,52 @@ const tryOnHref = (product: PublicProduct) =>
   `/try-on/${encodeURIComponent(product.unique_link)}/upload`;
 const isSafeExternalUrl = (url?: string | null) =>
   Boolean(url && /^https:\/\//i.test(url));
+
+function formatDimension(value?: string | null): string {
+  if (!value) return '';
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toLocaleString('fa-IR') : value;
+}
+
+/** Static, browser-free homepage content for the SSR public document. */
+export function SeoHome() {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
+      <main className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
+        <div className="space-y-12 text-center">
+          <header className="space-y-5">
+            <p className="text-[11px] tracking-[0.2em] text-black/40">
+              {t('seo.home.eyebrow', 'طراحی و انتخاب با هوش مصنوعی')}
+            </p>
+            <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
+              {t('seo.home.title', 'دکوراسیون خانه با هوش مصنوعی')}
+            </h1>
+            <p className="text-[16px] md:text-lg opacity-60 leading-relaxed max-w-2xl mx-auto">
+              {t('seo.home.description', 'با عکس اتاق خود ایده‌های دکوراسیون را بررسی کنید؛ یا یک محصول را انتخاب کنید و آن را پیش از خرید در فضای خود ببینید.')}
+            </p>
+          </header>
+          <nav aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <a href="/ai-interior-design" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
+              {t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}
+            </a>
+            <a href="/virtual-product-preview" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
+              {t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}
+            </a>
+          </nav>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[13px]">
+            <a href="/studio/upload" className="inline-flex h-12 items-center bg-black text-white px-6">
+              {t('seo.home.start', 'طراحی با عکس اتاق')}
+            </a>
+            <a href="/explore" className="inline-flex h-12 items-center border border-black/15 px-6">
+              {t('seo.home.browse', 'مشاهده فروشگاه‌ها')}
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
 
 function Breadcrumbs({ data }: PublicPageProps) {
   if (!data.breadcrumbs.length) return null;
@@ -519,9 +566,9 @@ export function SeoProductDetailsPage({
                   </h1>
                   <div className="flex items-baseline gap-2">
                     <span className="text-[16px] lg:text-[18px] font-bold text-black">
-                      {formatPriceFromRial(
-                        selectedVariant?.price ?? product.price,
-                      )}
+                      {(selectedVariant?.price ?? product.price) > 0
+                        ? formatPriceFromRial(selectedVariant?.price ?? product.price)
+                        : "قیمت اعلام نشده"}
                     </span>
                   </div>
                 </div>
@@ -540,6 +587,19 @@ export function SeoProductDetailsPage({
                   onSelect={setSelectedVariantId}
                 />
               ) : null}
+              {selectedVariant && (
+                <div className="border-t border-black/[0.05] pt-5 text-[13px] text-black/60">
+                  {[
+                    ['عرض', selectedVariant.width_cm],
+                    ['طول', selectedVariant.length_cm],
+                    ['ارتفاع', selectedVariant.height_cm],
+                  ].filter(([, value]) => value).map(([label, value]) => (
+                    <div key={label} className="flex items-center gap-2 py-1">
+                      <span dir="ltr">{label}: {formatDimension(value)} سانتی‌متر</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="pt-8 space-y-3">
                 <div className="flex flex-col gap-3">
                   <a
@@ -803,7 +863,7 @@ function SeoContact({ data }: PublicPageProps) {
     data.supportUrl &&
     /^https:\/\/www\.instagram\.com\/myhoma\.ir\/?$/i.test(data.supportUrl)
       ? data.supportUrl
-      : "https://www.instagram.com/myhoma.ir/";
+      : null;
   return (
     <div
       className="min-h-screen bg-[#FDFDFB] flex flex-col font-vazirmatn"
@@ -821,22 +881,36 @@ function SeoContact({ data }: PublicPageProps) {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a
-              href={instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white border border-black/[0.03] p-10 flex flex-col items-center gap-4 group rounded-[32px] shadow-sm shadow-black/[0.02]"
-            >
-              <div className="w-14 h-14 rounded-full bg-black/[0.02] flex items-center justify-center text-black group-hover:bg-black group-hover:text-white transition-all duration-500">
-                <Phone className="w-6 h-6" />
+            {instagram ? (
+              <a
+                href={instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white border border-black/[0.03] p-10 flex flex-col items-center gap-4 group rounded-[32px] shadow-sm shadow-black/[0.02]"
+              >
+                <div className="w-14 h-14 rounded-full bg-black/[0.02] flex items-center justify-center text-black group-hover:bg-black group-hover:text-white transition-all duration-500">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <h2 className="opacity-40 text-[12px] font-bold uppercase tracking-widest">
+                  اینستاگرام هُما
+                </h2>
+                <p className="font-bold text-[20px] tracking-tight">
+                  <bdi dir="ltr">myhoma.ir</bdi>
+                </p>
+              </a>
+            ) : (
+              <div className="bg-white border border-black/[0.03] p-10 flex flex-col items-center gap-4 rounded-[32px] shadow-sm shadow-black/[0.02]">
+                <div className="w-14 h-14 rounded-full bg-black/[0.02] flex items-center justify-center">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <h2 className="opacity-40 text-[12px] font-bold uppercase tracking-widest">
+                  ارتباط با پشتیبانی هُما
+                </h2>
+                <p className="text-[14px] text-black/50 leading-relaxed">
+                  در حال حاضر راه ارتباط مستقیم با پشتیبانی در این صفحه معرفی نشده است. برای راهنمای استفاده، پرسش‌های متداول را ببینید.
+                </p>
               </div>
-              <h2 className="opacity-40 text-[12px] font-bold uppercase tracking-widest">
-                پشتیبانی در اینستاگرام
-              </h2>
-              <p className="font-bold text-[20px] tracking-tight">
-                <bdi dir="ltr">myhoma.ir</bdi>
-              </p>
-            </a>
+            )}
             <div className="bg-white border border-black/[0.03] p-10 flex flex-col items-center gap-4 rounded-[32px] shadow-sm shadow-black/[0.02]">
               <div className="w-14 h-14 rounded-full bg-black/[0.02] flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />

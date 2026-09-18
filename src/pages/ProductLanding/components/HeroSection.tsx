@@ -7,7 +7,7 @@ const imgEmpty = "/images/hero/before.png";
 const imgWithRug = "/images/hero/after.png";
 
 export interface HeroSectionProps {
-    onGetStarted: () => void;
+    onGetStarted?: () => void;
 }
 
 export function HeroSection({

@@ -260,14 +260,16 @@ export function categoriesFromResult(result: ResultEvent): RedesignCategory[] {
 export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
   return (evt.questions || []).map((q, gi) => {
     const groupId = `${q.id || 'q'}#${gi}`;
+    const visibleChips = (q.chips || []).slice(0, 3);
+    const recommendedIndex = visibleChips.findIndex((label) => q.recommended_chip === label);
     return {
       id: groupId,
       question: q.text_fa,
       chips: [
-        ...(q.chips || []).slice(0, 3).map((label, i) => ({
+        ...visibleChips.map((label, i) => ({
           id: `${groupId}:${i}`,
           label,
-          icon: q.recommended_chip === label ? 'sparkles' : undefined,
+          icon: q.recommended_chip === label ? 'check' : undefined,
         })),
         ...(q.allow_open_chat === false ? [] : [{
           id: `${groupId}:open-chat`,
@@ -275,7 +277,7 @@ export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
           icon: 'sparkles',
         }]),
       ],
-      selectedId: undefined,
+      selectedId: recommendedIndex >= 0 ? `${groupId}:${recommendedIndex}` : undefined,
       recommendation: q.recommended_chip,
       recommendationReason: q.recommendation_reason_fa,
     };
@@ -454,7 +456,7 @@ let rebuildSeq = 0;
  * Reconstruct the full conversation view from a persisted session payload so a
  * reload/reopen restores messages, chips, products and rendered versions — not
  * just the images. The backend stores every emitted event in `turns[].events`,
- * so this replays them the same way the live SSE stream builds state:
+ * so this replays them the same way the live WebSocket builds state:
  *  - `say` deltas concatenate into one assistant bubble per assistant turn;
  *  - `questions` set the pending chips (cleared by any later user turn);
  *  - `result` replaces products/impacts/issues (latest wins);

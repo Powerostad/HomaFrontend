@@ -94,14 +94,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, [setBasket]);
 
-  // Hydrate only after auth is known; unauthenticated intake should not issue
-  // an API request that can produce a noisy expected 401/network error.
+  // Hydrate after auth is known. The basket endpoint also supports the
+  // anonymous session header, so public pages must restore a guest basket too.
   useEffect(() => {
     if (!isInitialized) return;
-    if (!isLoggedIn) {
-      setIsLoading(false);
-      return;
-    }
     if (loadedRef.current) return;
     loadedRef.current = true;
     void refresh();

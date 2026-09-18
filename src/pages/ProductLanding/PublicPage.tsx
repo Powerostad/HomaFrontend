@@ -14,7 +14,9 @@ export interface ProductLandingContentProps {
 
 /** Original landing sections, kept provider-free for the server document. */
 export function ProductLandingContent({ onStudioStart, onBrowseCollections, onCollaborate }: ProductLandingContentProps) {
-  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><ComparisonSection onBrowseCollections={onBrowseCollections} /><ShoppingPropSection onCollaborate={onCollaborate} /></main>;
+  void onBrowseCollections;
+  void onCollaborate;
+  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><ComparisonSection /><ShoppingPropSection /></main>;
 }
 
 export function SeoProductLandingPage({ controllersEnabled = false }: { controllersEnabled?: boolean }) {

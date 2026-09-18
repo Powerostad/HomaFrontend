@@ -9,7 +9,7 @@
  *   step: 'context' → Screen 2 (review + optional context)
  *
  * The loading + analysis stages are owned by the destination (RoomRedesignPage)
- * because the chat hook + SSE stream live there.
+ * because the chat hook + WebSocket live there.
  */
 import { useCallback, useState } from 'react';
 import { prepareIntakeImage } from './intakePhoto';

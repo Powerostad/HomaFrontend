@@ -14,7 +14,10 @@ import { appConfig } from '@/config/appConfig';
 
 // ── Umami window API typing ───────────────────────────────────────────────
 type UmamiApi = {
-  track: (event?: string | Record<string, unknown>, data?: Record<string, unknown>) => void;
+  track: (
+    event?: string | Record<string, unknown> | ((payload: Record<string, unknown>) => Record<string, unknown>),
+    data?: Record<string, unknown>,
+  ) => void;
   // `identify` is version-dependent in self-hosted Umami — optional on purpose.
   identify?: (id?: string | Record<string, unknown>, data?: Record<string, unknown>) => void;
 };
@@ -22,6 +25,7 @@ type UmamiApi = {
 declare global {
   interface Window {
     umami?: UmamiApi;
+    homaAnalyticsBeforeSend?: (type: string, payload: Record<string, unknown>) => Record<string, unknown>;
   }
 }
 
@@ -34,6 +38,37 @@ const isConfigured = Boolean(UMAMI_SRC && UMAMI_WEBSITE_ID);
 
 // Track unless we're in dev mode without the dev flag.
 const isEnabled = isConfigured && (!isDev || isDevEnabled);
+
+function sanitizeAnalyticsUrl(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    const parsed = new URL(value, window.location.origin);
+    const pathname = parsed.origin === window.location.origin
+      ? parsed.pathname
+      : parsed.origin;
+    // Shared-page URLs contain a token after /s/. Keep the route useful for
+    // aggregate analytics while dropping the token and all query fragments.
+    return pathname.replace(/^\/s\/[^/]+(?:\/.*)?$/, '/s');
+  } catch {
+    return value.split(/[?#]/, 1)[0] || '/';
+  }
+}
+
+function sanitizeAnalyticsPayload(_type: string, payload: Record<string, unknown>) {
+  return {
+    ...payload,
+    ...(payload.url !== undefined ? { url: sanitizeAnalyticsUrl(payload.url) } : {}),
+    ...(payload.referrer !== undefined ? { referrer: sanitizeAnalyticsUrl(payload.referrer) } : {}),
+  };
+}
+
+function trackPageView() {
+  runOrQueue(() => window.umami?.track((payload) => sanitizeAnalyticsPayload('pageview', payload)));
+}
+
+if (typeof window !== 'undefined') {
+  window.homaAnalyticsBeforeSend = sanitizeAnalyticsPayload;
+}
 
 // ── homa_session_id ───────────────────────────────────────────────────────
 // Persisted per browser and attached to every event, since Umami has no
@@ -84,6 +119,7 @@ if (isEnabled) {
   const script = document.createElement('script');
   script.defer = true;
   script.src = UMAMI_SRC;
+  script.setAttribute('data-auto-track', 'false');
   script.setAttribute('data-website-id', UMAMI_WEBSITE_ID);
   script.addEventListener('load', flushQueue);
   script.addEventListener('error', () => {
@@ -91,6 +127,15 @@ if (isEnabled) {
     pendingCalls.length = 0;
   });
   document.head.appendChild(script);
+  // Disable Umami's automatic pageview and queue one sanitized pageview so
+  // shared URLs never send tokens or query parameters to analytics.
+  trackPageView();
+  const originalPushState = history.pushState.bind(history);
+  history.pushState = ((...args: Parameters<History['pushState']>) => {
+    const result = originalPushState(...args);
+    trackPageView();
+    return result;
+  }) as History['pushState'];
 }
 
 // ── Public API ────────────────────────────────────────────────────────────
@@ -101,7 +146,11 @@ if (isEnabled) {
  */
 export function umamiTrack(event: string, data?: Record<string, unknown>) {
   if (!isEnabled) return;
-  const payload = { session_id: getSessionId(), ...data };
+  const payload = {
+    session_id: getSessionId(),
+    landing_path: sanitizeAnalyticsUrl(window.location.href),
+    ...data,
+  };
   runOrQueue(() => window.umami?.track(event, payload));
 }
 
