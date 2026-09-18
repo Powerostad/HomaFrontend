@@ -47,6 +47,7 @@ export interface HomaIntakePayload {
   roomType?: RoomType;
   goals: Goal[];
   userNote?: string;
+  prefsUpdate?: { goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
   createdAt: string; // ISO 8601
 }
 
@@ -74,11 +75,9 @@ export const ROOM_TYPES: readonly RoomTypeOption[] = [
 
 /** Multi-select goal chips (icons reuse the shared ICONS map). */
 export const GOALS: readonly GoalOption[] = [
-  { value: 'analyze_only', label: 'فقط تحلیل کن', icon: 'image' },
   { value: 'low_budget', label: 'کم‌هزینه', icon: 'coins' },
   { value: 'warmer', label: 'گرم‌تر و صمیمی‌تر', icon: 'heart' },
   { value: 'modernize', label: 'مدرن‌تر', icon: 'sofa' },
   { value: 'declutter', label: 'مرتب‌تر', icon: 'minimize' },
-  { value: 'product_recommendations', label: 'پیشنهاد محصول بده', icon: 'bag' },
   { value: 'improve_for_rent_or_sale', label: 'برای فروش/اجاره بهترش کن', icon: 'tag' },
 ] as const;

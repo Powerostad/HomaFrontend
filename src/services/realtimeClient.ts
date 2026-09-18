@@ -74,8 +74,10 @@ export function parseRealtimeEvent(value: unknown): RealtimeEvent | null {
 export class RealtimeClient {
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectPromise: Promise<void> | null = null;
   private reconnectAttempt = 0;
   private stopping = true;
+  private lifecycleGeneration = 0;
   private state: RealtimeConnectionState = 'idle';
   private readonly eventListeners = new Set<EventListener>();
   private readonly stateListeners = new Set<StateListener>();
@@ -103,22 +105,34 @@ export class RealtimeClient {
 
   async connect(): Promise<void> {
     if (!this.stopping && (this.state === 'connecting' || this.state === 'connected')) {
-      return;
+      return this.connectPromise ?? Promise.resolve();
     }
     if (!this.stopping && this.state === 'reconnecting' && this.reconnectTimer) {
-      return;
+      return this.connectPromise ?? Promise.resolve();
     }
 
     this.stopping = false;
+    const generation = ++this.lifecycleGeneration;
     this.setState(this.reconnectAttempt > 0 ? 'reconnecting' : 'connecting');
+
+    const promise = this.open(generation).finally(() => {
+      if (this.connectPromise === promise) this.connectPromise = null;
+    });
+    this.connectPromise = promise;
+    return promise;
+  }
+
+  private async open(generation: number): Promise<void> {
+    if (!this.isCurrent(generation)) return;
 
     let response: Awaited<ReturnType<typeof apiPost<TicketResponse>>>;
     try {
       response = await apiPost<TicketResponse>('/realtime/ws-ticket/', {});
     } catch {
-      this.scheduleReconnect();
+      if (this.isCurrent(generation)) this.scheduleReconnect();
       return;
     }
+    if (!this.isCurrent(generation)) return;
     if (!response.success || typeof response.data?.ticket !== 'string' || !response.data.ticket) {
       if (response.statusCode === 401) {
         this.setState('unauthorized');
@@ -128,21 +142,26 @@ export class RealtimeClient {
       return;
     }
 
-    if (this.stopping) return;
+    if (!this.isCurrent(generation)) return;
     let socket: WebSocket;
     try {
       socket = new WebSocket(getRealtimeUrl(appConfig.apiBaseUrl, response.data.ticket));
     } catch {
-      this.scheduleReconnect();
+      if (this.isCurrent(generation)) this.scheduleReconnect();
       return;
     }
     this.socket = socket;
 
     socket.onopen = () => {
+      if (!this.isCurrent(generation) || this.socket !== socket) {
+        socket.close(1000, 'stale connection attempt');
+        return;
+      }
       this.reconnectAttempt = 0;
       this.setState('connected');
     };
     socket.onmessage = (message) => {
+      if (!this.isCurrent(generation) || this.socket !== socket) return;
       let parsed: unknown;
       try {
         parsed = JSON.parse(message.data as string);
@@ -166,10 +185,12 @@ export class RealtimeClient {
         }
       });
     };
-    socket.onerror = () => socket.close();
+    socket.onerror = () => {
+      if (this.socket === socket && socket.readyState < WebSocket.CLOSING) socket.close();
+    };
     socket.onclose = (event) => {
       if (this.socket === socket) this.socket = null;
-      if (this.stopping) return;
+      if (!this.isCurrent(generation)) return;
       if (event.code === 4401) {
         this.setState('unauthorized');
         return;
@@ -179,7 +200,9 @@ export class RealtimeClient {
   }
 
   disconnect(): void {
+    this.lifecycleGeneration += 1;
     this.stopping = true;
+    this.connectPromise = null;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
     this.socket?.close(1000, 'client logout');
@@ -207,6 +230,10 @@ export class RealtimeClient {
       };
       this.waiters.add(waiter);
     });
+  }
+
+  private isCurrent(generation: number): boolean {
+    return !this.stopping && generation === this.lifecycleGeneration;
   }
 
   private scheduleReconnect(): void {

@@ -1,682 +1,185 @@
-/**
- * Live state machine for the conversational Room Redesign chat.
- *
- * Owns the session id, the streamed message list, preference chips, product
- * results, impact rows, diagnostic issues, and any inline-rendered preview
- * images. `RoomRedesignPage` consumes this and stays a thin orchestrator.
- *
- * Concurrency: the backend serializes turns per session, so we block a new
- * `sendTurn` while one is `creating`/`streaming`. The in-flight stream is
- * aborted on unmount / `reset()`.
- */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { trackEvent } from '@/utils/analytics';
-import {
-  createChatSession,
-  streamChatTurn,
-  requestRender,
-  loadChatSession,
-  extractRenderImages,
-  type ImageEvent,
-  type QuestionsEvent,
-  type ResultEvent,
-  type SessionPayload,
-  type StageEvent,
-} from '../services/redesignChatService';
-import {
-  categoriesFromResult,
-  chipGroupsFromQuestions,
-  findingsFromResult,
-  impactsFromResult,
-  issuesFromResult,
-  pinsFromResult,
-  productsFromResult,
-  rebuildSessionView,
-  type ExistingIssue,
-  type RebuiltSession,
-  type RedesignCategory,
-  type RedesignProductWithMeta,
-  type RoomFinding,
-} from '../services/transformers';
-import type { AnnotationPin, ChatEventKind, ChatMessage, ChipGroup, ImpactItem, RoomVersion } from '../types';
-
-export type ChatStatus = 'idle' | 'creating' | 'streaming' | 'rendering' | 'error';
+import { createChatSession, loadChatSession, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
+import { rebuildSessionView, chipGroupsFromQuestions } from '../services/transformers';
+import type { ChatMessage, ChipGroup } from '../types';
 
 export interface SendTurnArgs {
   text: string;
   images?: string[];
+  prefsUpdate?: unknown;
+  action?: 'chat' | 'preview_product';
+  itemId?: string;
+  productId?: number;
 }
-
-export interface UseRedesignChat {
-  sessionId: string | null;
-  messages: ChatMessage[];
-  chipGroups: ChipGroup[];
-  products: RedesignProductWithMeta[];
-  /** Products grouped by design category (the guided shopping plan). */
-  categories: RedesignCategory[];
-  impacts: ImpactItem[];
-  existingIssues: ExistingIssue[];
-  /** Photo pins (gaps + goods) for the active scene, anchored at x/y percent. */
-  pins: AnnotationPin[];
-  /** All gaps + goods for the active scene (incl. unplaced) for the detail text list. */
-  findings: RoomFinding[];
-  previewImage: string | null;
-  versions: RoomVersion[];
-  activeVersion: number;
-  status: ChatStatus;
-  /** Live backend phase label (Persian) for the analysis loading screen; null between turns. */
-  stage: string | null;
-  error: string | null;
-  /** True once a `result` has arrived (products/impacts are meaningful). */
-  hasResult: boolean;
-  /** True while the initial session is being loaded from the DB (resume by path). */
-  hydrating: boolean;
-  /** True while creating a session or streaming a turn. */
-  busy: boolean;
-  sendTurn: (args: SendTurnArgs) => Promise<void>;
-  selectChip: (groupId: string, chipId: string) => void;
-  /** Request an explicit async render (Celery) and poll until the image lands. */
-  renderScene: (instructions?: string) => Promise<void>;
-  setActiveVersion: (n: number) => void;
-  reset: () => void;
-}
-
-let seq = 0;
-const nextId = (p: string): string => `${p}:${Date.now().toString(36)}:${(seq++).toString(36)}`;
-
-// Keep the current chat session as a convenience for background work and local
-// recovery. The canonical identity is the `/redesign/:sessionId` path.
-const SESSION_KEY = 'homa_redesign_session';
-
-/** setTimeout as an abortable promise (resolves early on abort). */
-const delay = (ms: number, signal: AbortSignal): Promise<void> =>
-  new Promise((resolve) => {
-    const t = setTimeout(resolve, ms);
-    signal.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(t);
-        resolve();
-      },
-      { once: true },
-    );
-  });
-
-export function useRedesignChat(sessionIdFromPath?: string): UseRedesignChat {
+export function useRedesignChat(path?: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
-  const [products, setProducts] = useState<RedesignProductWithMeta[]>([]);
-  const [categories, setCategories] = useState<RedesignCategory[]>([]);
-  const [impacts, setImpacts] = useState<ImpactItem[]>([]);
-  const [existingIssues, setExistingIssues] = useState<ExistingIssue[]>([]);
-  const [pins, setPins] = useState<AnnotationPin[]>([]);
-  const [findings, setFindings] = useState<RoomFinding[]>([]);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [versions, setVersions] = useState<RoomVersion[]>([]);
-  const [activeVersion, setActiveVersion] = useState(0);
-  const [status, setStatus] = useState<ChatStatus>('idle');
+  const [versions, setVersions] = useState<DesignVersion[]>([]);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [viewedId, setViewedId] = useState('original');
+  const [readyId, setReadyId] = useState<string | null>(null);
+  const [status, setStatus] = useState('idle');
   const [stage, setStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasResult, setHasResult] = useState(false);
-  // A session path starts in a loading state so the consumer shows a spinner
-  // instead of a blank/intake flash until the first DB load resolves.
-  const [hydrating, setHydrating] = useState(() => !!sessionIdFromPath);
+  const [unavailable, setUnavailable] = useState(false);
+  const [hydrating, setHydrating] = useState(!!path);
+  const sidRef = useRef<string | null>(null);
+  const viewedRef = useRef('original');
+  const following = useRef(true);
+  const locked = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+  const intent = useRef<StreamTurnParams | null>(null);
+  const pendingArgs = useRef<SendTurnArgs | null>(null);
+  const completed = useRef(false);
+  const operation = useRef<DesignOperation | null>(null);
+  const versionsRef = useRef<DesignVersion[]>([]);
 
-  const abortRef = useRef<AbortController | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
-  const assistantIdRef = useRef<string | null>(null);
-  const statusRef = useRef<ChatStatus>('idle');
-  const chipGroupsRef = useRef<ChipGroup[]>([]);
-  const versionsLenRef = useRef(0);
-  const lastSceneIdRef = useRef<string | null>(null);
-  const didHydrateRef = useRef(false);
-  const hydratedPathRef = useRef<string | null>(null);
-
-  const setStatusBoth = useCallback((s: ChatStatus) => {
-    statusRef.current = s;
-    setStatus(s);
+  const apply = useCallback((data: SessionPayload) => {
+    const rebuilt = rebuildSessionView(data);
+    setMessages(rebuilt.messages);
+    setChipGroups(rebuilt.chipGroups);
+    setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
+    const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
+    if (versionsRef.current.length && next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
+    versionsRef.current = next;
+    setVersions(next);
+    if (following.current && next.length) {
+      viewedRef.current = next[next.length - 1].version_id;
+      setViewedId(viewedRef.current);
+    }
   }, []);
 
-  const applyChipGroups = useCallback((g: ChipGroup[]) => {
-    chipGroupsRef.current = g;
-    setChipGroups(g);
-  }, []);
-
-  const clearLocalSession = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    sessionIdRef.current = null;
-    assistantIdRef.current = null;
-    versionsLenRef.current = 0;
-    lastSceneIdRef.current = null;
-    try {
-      localStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* localStorage unavailable */
-    }
-    setSessionId(null);
-    setMessages([]);
-    applyChipGroups([]);
-    setProducts([]);
-    setCategories([]);
-    setImpacts([]);
-    setExistingIssues([]);
-    setPins([]);
-    setFindings([]);
-    setPreviewImage(null);
-    setVersions([]);
-    setActiveVersion(0);
-    setError(null);
-    setStage(null);
-    setHasResult(false);
-    setHydrating(false);
-    setStatusBoth('idle');
-  }, [applyChipGroups, setStatusBoth]);
-
-  const pushAssistantMessageRef = useRef<(text: string) => void>(() => {});
-  const pushEventRef = useRef<(text: string, k: ChatEventKind) => void>(() => {});
-
-  /** Append a rendered version + point the canvas at it. */
-  const pushVersion = useCallback((url: string, sceneId: string | null) => {
-    const index = versionsLenRef.current + 1;
-    versionsLenRef.current = index;
-    if (sceneId) lastSceneIdRef.current = sceneId;
-    setVersions((prev) => [
-      ...prev,
-      { id: `ver:${sceneId ?? 'na'}:${index}`, index, imageUrl: url, thumbUrl: url, pins: [] },
-    ]);
-    setPreviewImage(url);
-    setActiveVersion(index);
-  }, []);
-
-  /**
-   * Apply an authoritative session view (rebuilt from the DB) onto live state.
-   * Shared by initial hydration, post-turn reconciliation, and render-landing so
-   * the live tab always converges to exactly what a fresh tab would show.
-   *
-   * - Messages are only REPLACED when the persisted thread is longer (covers an
-   *   event the live SSE missed) or `replaceMessages` — never shortened, so a
-   *   client-only ack bubble isn't dropped and bubbles don't needlessly remount.
-   * - Versions only grow; `focusLatest` jumps the canvas to the newest render
-   *   (after a render lands) vs. leaving the user on the version they're viewing.
-   */
-  const applySessionView = useCallback(
-    (view: RebuiltSession, opts?: { focusLatest?: boolean; replaceMessages?: boolean }) => {
-      const focusLatest = opts?.focusLatest ?? false;
-      const replaceMessages = opts?.replaceMessages ?? false;
-      setMessages((prev) => (replaceMessages || view.messages.length > prev.length ? view.messages : prev));
-      applyChipGroups(view.chipGroups);
-      setProducts(view.products);
-      setCategories(view.categories);
-      setImpacts(view.impacts);
-      setExistingIssues(view.issues);
-      setPins(view.pins);
-      setFindings(view.findings);
-      setHasResult((prev) => prev || view.hasResult);
-      if (view.versions.length >= versionsLenRef.current) {
-        versionsLenRef.current = view.versions.length;
-        if (view.lastSceneId) lastSceneIdRef.current = view.lastSceneId;
-        if (view.versions.length > 0) {
-          setVersions(view.versions);
-          if (focusLatest) {
-            setActiveVersion(view.activeVersion);
-            setPreviewImage(view.previewImage);
-          } else {
-            // Don't yank the user off a version they're viewing; just ensure the
-            // canvas has an image if it had none.
-            setActiveVersion((cur) => (cur === 0 ? view.activeVersion : cur));
-            setPreviewImage((cur) => cur ?? view.previewImage);
-          }
-        }
-      }
-    },
-    [applyChipGroups],
-  );
-
-  /** Load the session and reconcile live state from it (SSE is optimistic; the DB
-   *  is source of truth). Bails if the turn was aborted OR a newer turn/render has
-   *  since taken over (so a late reconcile can't revert fresher optimistic state). */
-  const reconcileFromSession = useCallback(
-    async (sid: string, controller: AbortController, focusLatest = false): Promise<void> => {
-      const load = await loadChatSession(sid);
-      if (controller.signal.aborted || abortRef.current !== controller || !load.success) return;
-      applySessionView(rebuildSessionView(load.data as SessionPayload), { focusLatest });
-    },
-    [applySessionView],
-  );
-
-  /** Poll the (DB-backed) session until a new render image lands or it fails. */
-  const pollForNewImage = useCallback(
-    async (sid: string, baseline: number, controller: AbortController) => {
-      const evt = pushEventRef.current;
-      for (let i = 0; i < 150; i++) {
-        // ~5 min at 2s
-        await delay(2000, controller.signal);
-        if (controller.signal.aborted) return;
-        const load = await loadChatSession(sid);
-        if (!load.success) {
-          setStatusBoth('error');
-          evt('این گفت‌وگو منقضی شده یا دیگر در دسترس نیست.', 'error');
-          trackEvent('redesign_failure', { error_type: 'expired_session' });
-          return;
-        }
-        const payload = load.data as SessionPayload;
-        const imgs = extractRenderImages(payload);
-        if (imgs.length > baseline) {
-          // Reconcile the whole session (all images + any scene result/pins), not
-          // just the one new image, and jump the canvas to the freshest render.
-          applySessionView(rebuildSessionView(payload), { focusLatest: true });
-          setStatusBoth('idle');
-          evt('این نسخه آماده شد', 'success');
-          return;
-        }
-        if (payload.status === 'failed') {
-          setStatusBoth('error');
-          evt('ساخت تصویر ناموفق بود. دوباره امتحان کن.', 'error');
-          return;
-        }
-        if (payload.status === 'active') {
-          // Render finished but produced no image (e.g. no scene to render).
-          setStatusBoth('error');
-          evt('تصویری ساخته نشد. دوباره امتحان کن.', 'error');
-          return;
-        }
-      }
-      setStatusBoth('error');
-      evt('ساخت تصویر بیش از حد طول کشید (سرویس پس‌زمینه فعاله؟).', 'error');
-    },
-    [applySessionView, setStatusBoth],
-  );
-
-  /**
-   * Recover a turn whose SSE stream dropped (e.g. ERR_NETWORK_CHANGED). The
-   * backend keeps running the turn after the client disconnects and persists the
-   * full result, so poll the DB-backed session briefly and adopt whatever landed
-   * instead of surfacing a transient network error. Falls back to an error only
-   * if the turn failed server-side, the session is unreachable, or it times out.
-   */
-  const recoverFromNetworkDrop = useCallback(
-    async (sid: string, baselineTurns: number, controller: AbortController) => {
-      const evt = pushEventRef.current;
-      for (let i = 0; i < 45; i++) {
-        // ~90s at 2s
-        await delay(2000, controller.signal);
-        if (controller.signal.aborted || abortRef.current !== controller) return;
-        const load = await loadChatSession(sid);
-        if (!load.success) break; // session unreachable → surface the network error
-        const payload = load.data as SessionPayload;
-        if (payload.status === 'failed') {
-          setStatusBoth('error');
-          evt('پردازش ناموفق بود. دوباره تلاش کن.', 'error');
-          trackEvent('redesign_failure', { error_type: 'recover_turn_failed' });
-          return;
-        }
-        if ((payload.turns || []).length > baselineTurns) {
-          // The turn landed. Reconcile (replacing messages, since the live thread
-          // may hold only a partial assistant delta from the dropped stream), then
-          // hand off to render polling if a render was auto-enqueued.
-          applySessionView(rebuildSessionView(payload), { focusLatest: true, replaceMessages: true });
-          if (payload.status === 'rendering') {
-            const baseline = extractRenderImages(payload).length;
-            setStatusBoth('rendering');
-            await pollForNewImage(sid, baseline, controller);
-          } else {
-            setStatusBoth('idle');
-            evt('پاسخ آماده شد', 'success');
-          }
-          return;
-        }
-      }
-      // Timed out or unreachable — surface the (accurate) network error.
-      setStatusBoth('error');
-      evt('ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن.', 'error');
-      trackEvent('redesign_failure', { error_type: 'recover_timeout' });
-    },
-    [applySessionView, pollForNewImage, setStatusBoth],
-  );
-
-  // Abort any in-flight stream/poll when the consumer unmounts.
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  // Resume the FULL session from the DB on mount. The backend persists every
-  // emitted event (`render_json`), so a reload / reopen restores the entire
-  // conversation — messages, chips, products, impacts and rendered versions —
-  // not just the images. The session id comes from the canonical path. If the
-  // path has no session id, start fresh and clear any stale stored pointer.
-  useEffect(() => {
-    const sid: string | null = sessionIdFromPath || null;
-    // The root-to-session transition happens after createChatSession() and
-    // must keep the live SSE stream mounted. It already has the same session,
-    // so only the URL changed; do not clear or rehydrate it.
-    if (sid && sid === sessionIdRef.current && didHydrateRef.current) {
-      hydratedPathRef.current = sid;
-      return;
-    }
-    // React StrictMode re-runs effects for the same already-hydrated path.
-    if (didHydrateRef.current && hydratedPathRef.current === sid) return;
-
-    clearLocalSession();
-    if (!sid) {
-      didHydrateRef.current = true;
-      hydratedPathRef.current = null;
-      setHydrating(false);
-      return;
-    }
-    didHydrateRef.current = false;
-    setHydrating(true);
-    sessionIdRef.current = sid;
-    setSessionId(sid);
-    try {
-      localStorage.setItem(SESSION_KEY, sid);
-    } catch {
-      /* localStorage unavailable */
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
-    void (async () => {
-      const load = await loadChatSession(sid);
-      // Aborted (e.g. React StrictMode's mount→unmount→remount probe in dev, or a
-      // real unmount): do NOT mark hydrated or clear the id — let the remount retry.
-      if (controller.signal.aborted) return;
-      if (!load.success) {
-        // A stale/invalid id (e.g. deleted session): drop it so the user starts fresh.
-        didHydrateRef.current = true;
-        hydratedPathRef.current = sid;
-        setHydrating(false);
-        sessionIdRef.current = null;
-        setSessionId(null);
-        try {
-          localStorage.removeItem(SESSION_KEY);
-        } catch {
-          /* localStorage unavailable */
-        }
+  const reconcile = useCallback(async (sid: string, signal: AbortSignal, key?: string) => {
+    for (let i = 0; i < 150 && !signal.aborted; i++) {
+      const loaded = await loadChatSession(sid, viewedRef.current);
+      if (signal.aborted) return;
+      if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); break; }
+      const data = loaded.data as SessionPayload;
+      apply(data);
+      const ops = data.operations || [];
+      const tracked = key ? ops.find(o => o.idempotency_key === key || o.operation_id === key) : undefined;
+      const active = ops.find(o => o.status === 'running');
+      const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
+      const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
+      if (failed) { operation.current = failed; setError(failed.error || 'پردازش ناموفق بود. دوباره تلاش کن.'); break; }
+      if (!active) {
+        if (key && !tracked) { setError('وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.'); break; }
+        operation.current = null; completed.current = true;
+        setStatus('idle'); setError(null); setStage(null); locked.current = false;
         return;
       }
-      // Successful, non-aborted load — safe to mark hydrated so we don't refetch.
-      didHydrateRef.current = true;
-      hydratedPathRef.current = sid;
-      const payload = load.data as SessionPayload;
-      applySessionView(rebuildSessionView(payload), { focusLatest: true, replaceMessages: true });
-      setHydrating(false);
-
-      // A render may still be running server-side (durable, survives reload).
-      if (payload.status === 'rendering') {
-        const baseline = extractRenderImages(payload).length;
-        setStatusBoth('rendering');
-        await pollForNewImage(sid, baseline, controller);
-      }
-    })();
-  }, [sessionIdFromPath, applySessionView, clearLocalSession, pollForNewImage, setStatusBoth]);
-
-  const ensureSession = useCallback(async (): Promise<string | null> => {
-    if (sessionIdRef.current) return sessionIdRef.current;
-    const res = await createChatSession();
-    if (res.success && res.data) {
-      sessionIdRef.current = res.data.sessionId;
-      setSessionId(res.data.sessionId);
-      try {
-        localStorage.setItem(SESSION_KEY, res.data.sessionId);
-      } catch {
-        /* localStorage unavailable */
-      }
-      return res.data.sessionId;
+      operation.current = active;
+      setStatus(active.kind === 'render' ? 'rendering' : 'streaming');
+      await new Promise<void>(resolve => {
+        const timer = setTimeout(resolve, 2000);
+        signal.addEventListener('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
+      });
     }
-    setError(res.error || 'خطا در ایجاد گفتگو');
-    return null;
-  }, []);
+    if (!signal.aborted) { setStatus('error'); locked.current = false; }
+  }, [apply]);
 
-  const appendAssistantDelta = useCallback((delta: string) => {
-    setMessages((prev) => {
-      const id = assistantIdRef.current;
-      if (id) return prev.map((m) => (m.id === id ? { ...m, text: m.text + delta } : m));
-      const newId = nextId('a');
-      assistantIdRef.current = newId;
-      return [...prev, { id: newId, role: 'assistant', text: delta }];
+  useEffect(() => {
+    if (path && sidRef.current === path && controller.current && !controller.current.signal.aborted) return;
+    controller.current?.abort();
+    sidRef.current = path || null; setSessionId(path || null);
+    setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
+    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
+    viewedRef.current = 'original'; following.current = true; setViewedId('original');
+    operation.current = null; intent.current = null;
+    if (!path) { setHydrating(false); return; }
+    const ac = new AbortController(); controller.current = ac; setHydrating(true);
+    void (async () => {
+      const loaded = await loadChatSession(path);
+      if (ac.signal.aborted) return;
+      setHydrating(false);
+      if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || 'این گفتگو در دسترس نیست.'); return; }
+      try {
+        const saved = sessionStorage.getItem(`redesign-view:${path}`);
+        if (saved && (saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
+      } catch { /* optional view memory */ }
+      apply(loaded.data as SessionPayload);
+      locked.current = true;
+      await reconcile(path, ac.signal);
+    })();
+  }, [path, apply, reconcile]);
+  useEffect(() => () => controller.current?.abort(), []);
+
+  const selectVersion = useCallback((id: string) => {
+    viewedRef.current = id; setViewedId(id);
+    if (id === versionsRef.current[versionsRef.current.length - 1]?.version_id) setReadyId(null);
+    try { sessionStorage.setItem(`redesign-view:${sidRef.current}`, id); } catch { /* optional view memory */ }
+    following.current = id === versionsRef.current[versionsRef.current.length - 1]?.version_id || (!versionsRef.current.length && id === 'original');
+    const sid = sidRef.current;
+    if (sid) void loadChatSession(sid, id).then(load => {
+      if (load.success && sidRef.current === sid && viewedRef.current === id) {
+        const data = load.data as SessionPayload;
+        if (data.versions) { setVersions(data.versions); versionsRef.current = data.versions; }
+      }
     });
   }, []);
 
-  const pushAssistantMessage = useCallback((text: string) => {
-    setMessages((prev) => [...prev, { id: nextId('a'), role: 'assistant', text }]);
-  }, []);
-  pushAssistantMessageRef.current = pushAssistantMessage;
+  const execute = useCallback(async (params: StreamTurnParams) => {
+    const ac = new AbortController(); controller.current?.abort(); controller.current = ac;
+    completed.current = false;
+    locked.current = true; setError(null); setStage(null); setStatus('streaming');
+    const messageId = crypto.randomUUID();
+    setChipGroups([]);
+    await streamChatTurn(params, {
+      onSay: delta => setMessages(old => old.some(m => m.id === messageId) ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m) : [...old, { id: messageId, role: 'assistant', text: delta }]),
+      onStage: event => setStage(event.label_fa),
+      onQuestions: event => setChipGroups(chipGroupsFromQuestions(event)),
+      onRenderPending: () => setStatus('rendering'),
+      onError: message => setError(message),
+    }, ac.signal);
+    if (!ac.signal.aborted) await reconcile(params.sessionId, ac.signal, params.idempotencyKey);
+  }, [reconcile]);
 
-  // Operational status / errors are NOT هما's conversational voice — push them as
-  // centered event pills (distinct severity), never chat bubbles. Strips the old
-  // 👇 glyph (the success pill carries an ImageDown icon instead).
-  const pushEvent = useCallback((text: string, eventKind: ChatEventKind) => {
-    setMessages((prev) => [
-      ...prev,
-      { id: nextId('ev'), role: 'assistant', text: text.replace('👇', '').trim(), kind: 'event', eventKind },
-    ]);
-  }, []);
-  pushEventRef.current = pushEvent;
+  const sendTurn = useCallback(async (args: SendTurnArgs) => {
+    if (locked.current || unavailable) return false;
+    // Resolve uncertainty before accepting another edit.
+    if (operation.current?.status === 'running') return false;
+    pendingArgs.current = args;
+    locked.current = true; setStatus('creating');
+    let sid = sidRef.current;
+    if (!sid) {
+      const created = await createChatSession();
+      if (!created.success || !created.data) { setError(created.error || 'خطا در ایجاد گفتگو'); setStatus('error'); locked.current = false; return false; }
+      sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
+    }
+    const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    intent.current = params;
+    if (args.images?.[0]) setOriginalImage(args.images[0]);
+    setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
+    await execute(params);
+    return completed.current;
+  }, [execute, unavailable]);
 
-  const sendTurn = useCallback(
-    async ({ text, images = [] }: SendTurnArgs) => {
-      const s = statusRef.current;
-      if (s === 'creating' || s === 'streaming' || s === 'rendering') return;
-      const trimmed = (text || '').trim();
-      const turnStartedAt = performance.now();
-      if (images.length) {
-        trackEvent('redesign_intake_submitted', { image_count: images.length });
-      }
+  const retry = useCallback(async () => {
+    const sid = sidRef.current;
+    if (locked.current) return;
+    if (!sid) { if (pendingArgs.current) await sendTurn(pendingArgs.current); return; }
+    locked.current = true;
+    const ac = new AbortController(); controller.current = ac;
+    const loaded = await loadChatSession(sid, viewedRef.current);
+    if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); locked.current = false; return; }
+    const ops = (loaded.data as SessionPayload).operations || [];
+    const active = ops.find(o => o.status === 'running');
+    const failed = ops.find(o => o.operation_id === operation.current?.operation_id) || ops.find(o => o.idempotency_key === intent.current?.idempotencyKey) || ops[0];
+    if (active) { await reconcile(sid, ac.signal, active.operation_id); return; }
+    if (failed?.status === 'failed' && failed.kind === 'render') {
+      const result = await requestRender({ sessionId: sid, idempotencyKey: failed.idempotency_key });
+      if (!result.success) { setError(result.error || 'خطا در ساخت تصویر'); locked.current = false; return; }
+      await reconcile(sid, ac.signal, failed.operation_id);
+    } else if (failed?.status === 'failed' || (!failed && intent.current)) {
+      await execute(intent.current || { sessionId: sid, text: '', images: [], idempotencyKey: failed.idempotency_key, baseVersionId: failed.base_version_id });
+    } else { await reconcile(sid, ac.signal); }
+  }, [execute, reconcile, sendTurn]);
 
-      const userId = nextId('u');
-      setMessages((prev) => [
-        ...prev,
-        { id: userId, role: 'user', text: trimmed, imageUrl: images[0] },
-      ]);
-      applyChipGroups([]);
-      setError(null);
-      setStage(null);
-      assistantIdRef.current = null;
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      setStatusBoth('creating');
-      const sid = await ensureSession();
-      if (!sid) {
-        setStatusBoth('error');
-        pushEvent('خطا در ایجاد گفتگو. دوباره تلاش کن.', 'error');
-        return;
-      }
-      if (controller.signal.aborted) return;
-
-      // Capture the DB turn count so a network drop can tell whether the turn landed.
-      const preLoad = await loadChatSession(sid);
-      const baselineTurns = preLoad.success ? (preLoad.data as SessionPayload).turns.length : 0;
-
-      setStatusBoth('streaming');
-      // Seed the uploaded photo as version 1 (the "before") on the very first
-      // turn so the user can track before→after in the version rail.
-      if (images[0] && versionsLenRef.current === 0) {
-        pushVersion(images[0], null);
-      }
-      // Track what the turn produced so the chat never goes silent: some turns
-      // emit only a `result`/`image` with no assistant `say` text.
-      let sawSay = false;
-      let sawResult = false;
-      let sawImage = false;
-      let sawQuestions = false;
-      let sawRenderPending = false;
-      let recovering = false;
-      await streamChatTurn(
-        { sessionId: sid, text: trimmed, images, idempotencyKey: nextId('turn') },
-        {
-          onSay: (delta) => {
-            sawSay = true;
-            appendAssistantDelta(delta);
-          },
-          onStage: (e: StageEvent) => setStage(e.label_fa),
-          onQuestions: (e: QuestionsEvent) => {
-            sawQuestions = true;
-            applyChipGroups(chipGroupsFromQuestions(e));
-            trackEvent('redesign_choice_seen', {
-              choice_count: e.questions?.[0]?.chips?.length ?? 0,
-            });
-          },
-          onResult: (e: ResultEvent) => {
-            sawResult = true;
-            const sceneId = e.items?.[0]?.scene_id ?? e.scenes?.[0]?.id ?? null;
-            if (sceneId) lastSceneIdRef.current = sceneId;
-            setProducts(productsFromResult(e));
-            setCategories(categoriesFromResult(e));
-            setImpacts(impactsFromResult(e));
-            setExistingIssues(issuesFromResult(e));
-            setPins(pinsFromResult(e, sceneId));
-            setFindings(findingsFromResult(e, sceneId));
-            setHasResult(true);
-            trackEvent('redesign_recommendation_seen', {
-              product_count: e.items?.reduce((count, item) => count + (item.products?.length ?? 0), 0) ?? 0,
-              category_count: e.items?.length ?? 0,
-            });
-          },
-          onImage: (e: ImageEvent) => {
-            sawImage = true;
-            pushVersion(e.url, e.scene_id ?? null);
-            trackEvent('redesign_render_ready', { duration_ms: Math.round(performance.now() - turnStartedAt) });
-          },
-          onRenderPending: () => {
-            // Server is rendering a scene async (Celery). Poll the DB-backed session
-            // until the image lands. Baseline MUST be the backend's render-image count
-            // (`extractRenderImages` ignores the user's uploaded "before" photo) — not
-            // `versionsLenRef`, which counts that seeded photo and would be off by one,
-            // so the first render (count 1) never exceeds baseline (1).
-            sawRenderPending = true;
-            setStatusBoth('rendering');
-            void (async () => {
-              const pre = await loadChatSession(sid);
-              const baseline = pre.success ? extractRenderImages(pre.data as SessionPayload).length : 0;
-              await pollForNewImage(sid, baseline, controller);
-            })();
-          },
-          onError: (msg, kind) => {
-            // A render is already in flight (render_pending arrived before the
-            // drop); pollForNewImage owns recovery/status, so ignore the stream error.
-            if (sawRenderPending) return;
-            if (kind === 'network') {
-              // The backend keeps running the turn after a client disconnect and
-              // persists the result — reconcile it once it lands instead of failing.
-              recovering = true;
-              void recoverFromNetworkDrop(sid, baselineTurns, controller);
-              return;
-            }
-            setError(msg);
-            setStatusBoth('error');
-            pushEvent(msg, 'error');
-            trackEvent('redesign_failure', { error_type: 'stream' });
-          },
-          onDone: () => {
-            if (statusRef.current === 'error') return;
-            // Acknowledge turns that produced output but no assistant text.
-            if (!sawSay && !sawQuestions) {
-              if (sawImage) {
-                pushAssistantMessage('این نسخه رو برات ساختم — توی پیش‌نمایش می‌تونی ببینیش.');
-              } else if (sawResult) {
-                pushAssistantMessage('چند پیشنهاد تازه برات آماده کردم؛ توی تب محصولات ببین.');
-              }
-            }
-            // A wow render is in flight (pollForNewImage owns status until it
-            // lands); don't drop back to idle and cancel the rendering state.
-            if (sawRenderPending || recovering) return;
-            setStatusBoth('idle');
-            // Reconcile from the DB (source of truth): the live SSE is optimistic,
-            // so adopt anything it missed — the live tab now matches a fresh tab.
-            void reconcileFromSession(sid, controller, false);
-          },
-        },
-        controller.signal,
-      );
-    },
-    [appendAssistantDelta, applyChipGroups, ensureSession, pollForNewImage, pushAssistantMessage, pushEvent, pushVersion, reconcileFromSession, recoverFromNetworkDrop, setStatusBoth],
-  );
-
-  const renderScene = useCallback(
-    async (instructions?: string) => {
-      const sid = sessionIdRef.current;
-      if (!sid) return; // need a session — send the first turn (photo) first
-      const s = statusRef.current;
-      if (s === 'creating' || s === 'streaming' || s === 'rendering') return;
-
-      setError(null);
-      setStatusBoth('rendering');
-      trackEvent('redesign_render_requested', { has_instructions: Boolean(instructions?.trim()) });
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      // Baseline = images already in the session (DB); poll until it grows.
-      let baseline = versionsLenRef.current;
-      const pre = await loadChatSession(sid);
-      if (pre.success) baseline = extractRenderImages(pre.data as SessionPayload).length;
-
-      const res = await requestRender({
-        sessionId: sid,
-        sceneId: lastSceneIdRef.current,
-        instructions,
-        idempotencyKey: nextId('render'),
-      });
-      if (!res.success) {
-        setStatusBoth('error');
-        pushEvent(res.error || 'خطا در ساخت تصویر', 'error');
-        return;
-      }
-      if (res.operationStatus === 'succeeded') {
-        await reconcileFromSession(sid, controller, true);
-        setStatusBoth('idle');
-        return;
-      }
-      await pollForNewImage(sid, baseline, controller);
-    },
-    [pollForNewImage, pushEvent, setStatusBoth],
-  );
-
-  const selectChip = useCallback(
-    (groupId: string, chipId: string) => {
-      const group = chipGroupsRef.current.find((g) => g.id === groupId);
-      if (chipId.endsWith(':open-chat')) {
-        trackEvent('redesign_choice_answered', { open_chat: true });
-        window.dispatchEvent(new Event('homa-redesign-focus-composer'));
-        return;
-      }
-      trackEvent('redesign_choice_answered', { open_chat: false });
-      const label = group?.chips.find((c) => c.id === chipId)?.label;
-      if (label) void sendTurn({ text: label, images: [] });
-    },
-    [sendTurn],
-  );
-
-  const reset = useCallback(() => {
-    clearLocalSession();
-  }, [clearLocalSession]);
-
-  const busy = status === 'creating' || status === 'streaming' || status === 'rendering';
-
-  return {
-    sessionId,
-    messages,
-    chipGroups,
-    products,
-    categories,
-    impacts,
-    existingIssues,
-    pins,
-    findings,
-    previewImage,
-    versions,
-    activeVersion,
-    status,
-    stage,
-    error,
-    hasResult,
-    hydrating,
-    busy,
-    sendTurn,
-    selectChip,
-    renderScene,
-    setActiveVersion,
-    reset,
+  const selectChip = (groupId: string, chipId: string) => {
+    if (chipId.endsWith(':open-chat')) { window.dispatchEvent(new Event('homa-redesign-focus-composer')); return; }
+    const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
+    if (label) void sendTurn({ text: label });
   };
+  return { sessionId, messages, chipGroups, versions, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

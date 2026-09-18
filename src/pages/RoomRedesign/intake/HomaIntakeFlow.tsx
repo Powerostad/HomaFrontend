@@ -32,6 +32,7 @@ export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.El
   const flow = useIntakeFlow();
   const reduce = useReducedMotion();
 
+  const [preferences, setPreferences] = useState<NonNullable<HomaIntakePayload['prefsUpdate']>>({});
   const [tipsOpen, setTipsOpen] = useState(false);
   const [warnOpen, setWarnOpen] = useState(false);
 
@@ -42,7 +43,7 @@ export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.El
       toast.error(INTAKE_COPY.errors.noPhoto);
       return;
     }
-    onStartAnalysis(payload);
+    onStartAnalysis({ ...payload, prefsUpdate: { ...preferences, preserved_items: preferences.preserved_items?.map(v => v.trim()).filter(Boolean), style: preferences.style?.map(v => v.trim()).filter(Boolean), goals: payload.goals } });
   };
 
   const onSubmit = () => {
@@ -88,6 +89,8 @@ export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.El
             transition={{ duration: D, ease: [0.22, 1, 0.36, 1] }}
           >
             <PhotoReviewContextScreen
+              preferences={preferences}
+              onPreferencesChange={setPreferences}
               image={flow.image}
               preparing={flow.preparing}
               onPick={flow.pickImage}

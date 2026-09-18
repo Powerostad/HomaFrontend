@@ -53,6 +53,7 @@ export async function prepareIntakeImage(file: File): Promise<PreparedPhoto> {
   }
 
   const jpeg = await convertHeicToJpeg(file);
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(jpeg.type) || jpeg.size > 8 * 1024 * 1024) throw new Error('unsupported image or image exceeds 8 MiB');
   const dataUrl = await fileToDataUrl(jpeg);
   const { width, height } = await readDimensions(dataUrl); // throws on undecodable
 

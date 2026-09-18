@@ -9,7 +9,7 @@
  * headers the same way `utils/apiClient.ts` does, POSTs the body, and parses the
  * `event:`/`data:` frames, dispatching each to `onEvent`.
  */
-import { getStoredTokens } from '@/utils/apiClient';
+import { getStoredTokens, refreshAccessToken } from '@/utils/apiClient';
 import i18n from '@/i18n/config';
 
 export interface SseEvent {
@@ -90,61 +90,30 @@ function isAbort(signal: AbortSignal, err: unknown): boolean {
   return signal.aborted || (err instanceof DOMException && err.name === 'AbortError');
 }
 
-/** Abortable sleep (resolves early on abort so a retry never outlives navigation). */
-function sleep(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve) => {
-    const t = setTimeout(resolve, ms);
-    signal.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(t);
-        resolve();
-      },
-      { once: true },
-    );
-  });
-}
-
 export async function runSseStream(opts: SseRunOptions): Promise<SseRunResult> {
   const { url, body, signal, onEvent } = opts;
 
-  // Retry the initial connection on transient network failures (before any bytes
-  // are read). Re-sending the same body — including the idempotency key — is safe:
-  // the backend serializes turns per session, so a retry either replays an
-  // already-completed turn or starts it fresh if the first request never arrived.
-  // Mid-stream drops are NOT retried here; the caller reconciles the DB-backed
-  // session instead (the turn keeps running server-side after a disconnect).
-  const MAX_CONNECT_ATTEMPTS = 3;
+  // A failed connection may have reached the server. The caller reconciles
+  // the operation before retrying the same intent and idempotency key.
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST', headers: buildSseHeaders(), body: JSON.stringify(body), signal,
+    });
+  } catch (err) {
+    return { ok: false, status: 0, aborted: isAbort(signal, err), errorKind: 'network' };
+  }
 
-  let response: Response | undefined;
-  let lastError = 'network error';
-  for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: buildSseHeaders(),
-        body: JSON.stringify(body),
-        signal,
-      });
-      break;
-    } catch (err) {
-      if (isAbort(signal, err)) return { ok: false, status: 0, aborted: true };
-      lastError = err instanceof Error ? err.message : 'network error';
-      if (attempt < MAX_CONNECT_ATTEMPTS) {
-        // Exponential backoff (1s, 2s) before the next attempt.
-        await sleep(Math.min(1000 * 2 ** (attempt - 1), 4000), signal);
-        if (signal.aborted) return { ok: false, status: 0, aborted: true };
+  if (response.status === 401) {
+    const token = await refreshAccessToken();
+    if (token && !signal.aborted) {
+      try {
+        response = await fetch(url, { method: 'POST', headers: buildSseHeaders(), body: JSON.stringify(body), signal });
+      } catch (err) {
+        return { ok: false, status: 0, aborted: isAbort(signal, err), errorKind: 'network' };
       }
     }
   }
-
-  if (!response) {
-    // fetch() rejected on every attempt: the request never reached the server
-    // (e.g. ERR_NETWORK_CHANGED, DNS failure). A client-side connection problem.
-    return { ok: false, status: 0, error: lastError, errorKind: 'network' };
-  }
-
-  // 401 is handled by the caller (no silent refresh on a raw streaming fetch).
   if (response.status === 401) return { ok: false, status: 401, errorKind: 'auth' };
   if (!response.ok || !response.body) {
     let detail = '';

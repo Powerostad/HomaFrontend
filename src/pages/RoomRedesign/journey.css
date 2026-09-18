@@ -1,0 +1,22 @@
+.redesign-journey { width:100%; min-height:100dvh; padding:clamp(16px,3vw,40px); background:var(--color-surface-page); color:var(--color-content-primary); }
+.redesign-journey header,.redesign-image-controls { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.redesign-columns { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr); gap:24px; max-width:1440px; margin:auto; }
+.redesign-columns > * { min-width:0; }
+.redesign-main-image { display:block; width:100%; max-height:70dvh; object-fit:contain; border-radius:16px; background:var(--color-surface-muted); }
+.redesign-journey button,.redesign-journey summary,.redesign-journey a { min-height:44px; padding:10px 14px; cursor:pointer; border-radius:10px; }
+.redesign-journey button:disabled { opacity:.5; cursor:wait; }
+.redesign-journey button[aria-pressed=true] { background:var(--color-surface-inverse); color:var(--color-surface-default); }
+.redesign-image-controls nav { display:flex; flex-wrap:wrap; gap:4px; }
+.redesign-explanation { font-size:16px; line-height:1.9; padding-block:12px; }
+.redesign-conversation { background:var(--color-surface-default); border-radius:16px; overflow:hidden; align-self:start; position:sticky; top:16px; max-height:90dvh; overflow-y:auto; }
+.redesign-execution { padding:16px; line-height:1.8; }
+.redesign-execution article { border-top:1px solid var(--color-border-default); padding-block:16px; }
+.redesign-product img { max-width:200px; max-height:200px; object-fit:contain; }
+.redesign-execution ul { list-style:disc; padding-inline-start:20px; }
+.redesign-journey :focus-visible { outline:2px solid var(--color-content-primary); outline-offset:3px; }
+@media(max-width:767px) { .redesign-columns { display:flex; flex-direction:column; gap:16px; } .redesign-conversation { position:static; max-height:none; } .redesign-main-image { max-height:48dvh; } .redesign-image-column > details { margin-top:12px; } }
+
+@media(max-width:767px) { .redesign-conversation > div > .sticky { order:-1; position:static; padding-bottom:16px; } }
+
+.redesign-image-controls > div button { padding:0; min-width:44px; min-height:44px; }
+.redesign-image-controls > div button svg { flex-shrink:0; }

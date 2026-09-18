@@ -68,6 +68,8 @@ export interface ChipGroup {
   question: string;
   chips: Chip[];
   selectedId?: string;
+  recommendation?: string;
+  recommendationReason?: string;
 }
 
 export type CostLevel = 'low' | 'medium' | 'high';
@@ -86,7 +88,7 @@ export interface RedesignProduct {
   id: string;
   name: string;
   subtitle: string; // color / size note, e.g. "سفید استخوانی"
-  priceRial: number; // stored in Rial; rendered via formatPriceFromRial
+  priceRial: number | null; // stored in Rial; rendered via formatPriceFromRial
   imageUrl: string;
   liked?: boolean;
   /** Backend unique link for product detail page redirect. */

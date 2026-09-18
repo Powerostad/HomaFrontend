@@ -338,6 +338,7 @@ export function ChipRow({
           {group.question}
         </h3>
       )}
+      {group.recommendation && <p className="text-sm">{group.recommendation}{group.recommendationReason ? ` · ${group.recommendationReason}` : ''}</p>}
       {layout === 'grid' ? (
         <div className="grid grid-cols-2 gap-2">{chips}</div>
       ) : layout === 'wrap' ? (

@@ -234,7 +234,7 @@ export function BasketPanel({
   onGoProducts: () => void;
 }) {
   const empty = items.length === 0;
-  const total = items.reduce((s, p) => s + p.priceRial, 0);
+  const total = items.reduce((s, p) => s + (p.priceRial ?? 0), 0);
 
   return (
     <PanelShell

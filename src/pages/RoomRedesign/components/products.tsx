@@ -99,7 +99,7 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
         <div className="mt-2 space-y-2">
           <span className="flex items-baseline gap-1 min-w-0">
             <span className="text-[14px] font-normal tabular-nums truncate" style={{ color: RD.inkSoft }}>
-              {formatPriceFromRial(product.priceRial, false)}
+              {product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : 'قیمت نامشخص'}
             </span>
             <span className="text-[11px] shrink-0" style={{ color: RD.inkMuted }}>تومان</span>
           </span>
@@ -172,7 +172,7 @@ export function SelectedProductCard({
         </h4>
         <span className="flex items-baseline gap-1 justify-start mt-1">
           <span className="text-[12px] font-normal tabular-nums" style={{ color: RD.inkSoft }}>
-            {formatPriceFromRial(product.priceRial, false)}
+            {product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : 'قیمت نامشخص'}
           </span>
           <span className="text-[9.5px]" style={{ color: RD.inkMuted }}>تومان</span>
         </span>

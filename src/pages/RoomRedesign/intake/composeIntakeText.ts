@@ -31,7 +31,7 @@ export function composeIntakeText(payload: HomaIntakePayload): string {
 
   // Nothing meaningful provided (e.g. only "فقط تحلیل کن") → a plain analysis ask.
   if (parts.length === 0) {
-    return 'این فضا رو برام تحلیل کن و پیشنهاد بده.';
+    return 'یک تغییر سبک با حفظ بیشتر وسایل برای این فضا طراحی کن و تصویر پیشنهادی را نشان بده.';
   }
 
   return parts.join('\n\n');

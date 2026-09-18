@@ -50,7 +50,7 @@ export function transformProduct(
     productId: p.product_id,
     name: p.name,
     subtitle: p.category_fa || '',
-    priceRial: (p.price_toman || 0) * 10, // backend Toman → Rial for formatPriceFromRial
+    priceRial: p.price_rial != null && p.price_rial > 0 ? p.price_rial : p.price_toman != null && p.price_toman > 0 ? p.price_toman * 10 : null, // backend Toman → Rial for formatPriceFromRial
     imageUrl: p.image_url || '',
     uniqueLink: p.unique_link || '',
     categoryCode,
@@ -195,7 +195,7 @@ function priorityFromPurchase(p?: string): CategoryPriority {
 
 /** Starting-cost band from the cheapest in-stock product (Toman thresholds). */
 function costFromProducts(products: RedesignProductWithMeta[]): CostLevel | null {
-  const prices = products.map((p) => p.priceRial).filter((v) => v > 0);
+  const prices = products.map((p) => p.priceRial).filter((v): v is number => v != null && v > 0);
   if (prices.length === 0) return null;
   const toman = Math.min(...prices) / 10;
   if (toman < 2_000_000) return 'low';
@@ -267,7 +267,7 @@ export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
         ...(q.chips || []).slice(0, 3).map((label, i) => ({
           id: `${groupId}:${i}`,
           label,
-          icon: q.recommended_chip === label ? 'check' : undefined,
+          icon: q.recommended_chip === label ? 'sparkles' : undefined,
         })),
         ...(q.allow_open_chat === false ? [] : [{
           id: `${groupId}:open-chat`,
@@ -275,7 +275,9 @@ export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
           icon: 'sparkles',
         }]),
       ],
-      selectedId: q.recommended_chip ? `${groupId}:${q.chips.indexOf(q.recommended_chip)}` : undefined,
+      selectedId: undefined,
+      recommendation: q.recommended_chip,
+      recommendationReason: q.recommendation_reason_fa,
     };
   });
 }

@@ -30,6 +30,7 @@ export interface BackendQuestion {
   text_fa: string;
   chips: string[];
   recommended_chip?: string;
+  recommendation_reason_fa?: string;
   allow_open_chat?: boolean;
   open_chat_label_fa?: string;
 }
@@ -42,7 +43,12 @@ export interface BackendProduct {
   product_id: number;
   name: string;
   category_fa?: string;
-  price_toman?: number;
+  price_toman?: number | null;
+  price_rial?: number | null;
+  merchant_name?: string;
+  merchant_url?: string;
+  merchant_destination?: string;
+  catalog_checked_at?: string;
   description?: string;
   ai_description?: string;
   score?: number;
@@ -175,6 +181,10 @@ export interface StreamTurnParams {
   text: string;
   images: string[];
   prefsUpdate?: unknown;
+  baseVersionId?: string;
+  action?: 'chat' | 'preview_product';
+  itemId?: string;
+  productId?: number;
   idempotencyKey: string;
 }
 
@@ -200,15 +210,16 @@ export async function createChatSession(): Promise<CreateSessionResult> {
 
 export interface LoadSessionResult {
   success: boolean;
+  statusCode?: number;
   data?: unknown;
   error?: string;
 }
 
 /** Resume payload (re-presigned image URLs). Used to resume/hydrate a session. */
-export async function loadChatSession(sessionId: string): Promise<LoadSessionResult> {
-  const res = await apiGet<unknown>(`/recommendations/chat/sessions/${sessionId}/`);
+export async function loadChatSession(sessionId: string, versionId?: string): Promise<LoadSessionResult> {
+  const res = await apiGet<unknown>(`/recommendations/chat/sessions/${sessionId}/${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`);
   if (res.success) return { success: true, data: res.data };
-  return { success: false, error: res.error || 'خطا در بارگذاری گفتگو' };
+  return { success: false, statusCode: res.statusCode, error: res.error || 'خطا در بارگذاری گفتگو' };
 }
 
 export async function selectChatProduct(params: {
@@ -235,6 +246,7 @@ export interface RenderResult {
   success: boolean;
   status?: string;
   operationStatus?: string;
+  operationId?: string;
   error?: string;
 }
 
@@ -244,7 +256,7 @@ export async function requestRender(params: {
   instructions?: string | null;
   idempotencyKey: string;
 }): Promise<RenderResult> {
-  const res = await apiPost<{ session_id: string; status: string; operation_status?: string }>(
+  const res = await apiPost<{ session_id: string; status: string; operation_status?: string; operation_id?: string }>(
     '/recommendations/chat/render/',
     {
       session_id: params.sessionId,
@@ -257,6 +269,7 @@ export async function requestRender(params: {
     success: true,
     status: res.data?.status,
     operationStatus: res.data?.operation_status,
+    operationId: res.data?.operation_id,
   };
   return { success: false, error: res.error || 'خطا در شروع ساخت تصویر' };
 }
@@ -278,6 +291,9 @@ export interface SessionPayload {
   status: string;
   title: string;
   turns: SessionTurn[];
+  versions?: DesignVersion[];
+  operations?: DesignOperation[];
+  original_image?: string | null;
 }
 
 /** All rendered images (presigned) across the session, in order. */
@@ -351,6 +367,10 @@ export async function streamChatTurn(
       text: params.text,
       images: params.images,
       prefs_update: params.prefsUpdate ?? null,
+      base_version_id: params.baseVersionId,
+      action: params.action ?? 'chat',
+      item_id: params.itemId,
+      product_id: params.productId,
       idempotency_key: params.idempotencyKey,
     },
     signal,
@@ -373,4 +393,32 @@ export async function streamChatTurn(
     }
   }
   handlers.onDone?.();
+}
+
+export interface ExecutionPlan {
+  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[] }[];
+  free_actions: { instruction_fa: string; reason_fa: string }[];
+  surface_actions: { change_fa: string }[];
+  known_subtotal_rial: number;
+  budget_ceiling_toman: number | null;
+  budget_status: string;
+  unknown_cost_item_ids: string[];
+}
+export interface DesignVersion {
+  version_id: string;
+  base_version_id: string;
+  image_url: string;
+  explanation: string;
+  execution: ExecutionPlan | null;
+  legacy_incomplete: boolean;
+}
+export interface DesignOperation {
+  operation_id: string;
+  kind: string;
+  status: string;
+  idempotency_key: string;
+  base_version_id?: string;
+  result_version_id?: string;
+  render_operation_id?: string;
+  error?: string;
 }
