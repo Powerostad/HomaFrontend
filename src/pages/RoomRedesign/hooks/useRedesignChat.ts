@@ -3,6 +3,16 @@ import { createChatSession, loadChatSession, requestRender, streamChatTurn, type
 import { rebuildSessionView, chipGroupsFromQuestions } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
 
+const RECONCILE_MAX_ATTEMPTS = 90;
+const RECONCILE_MAX_MS = 180_000;
+const GENERIC_PROCESSING_ERROR = 'پردازش ناموفق بود. دوباره تلاش کن.';
+
+function localizedFailure(value: unknown): string {
+  return typeof value === 'string' && /[؀-ۿ]/.test(value)
+    ? value
+    : GENERIC_PROCESSING_ERROR;
+}
+
 export interface SendTurnArgs {
   text: string;
   images?: string[];
@@ -34,6 +44,8 @@ export function useRedesignChat(path?: string) {
   const completed = useRef(false);
   const operation = useRef<DesignOperation | null>(null);
   const versionsRef = useRef<DesignVersion[]>([]);
+  const renderOperationId = useRef<string | null>(null);
+  const generation = useRef(0);
 
   const apply = useCallback((data: SessionPayload) => {
     const rebuilt = rebuildSessionView(data);
@@ -50,10 +62,17 @@ export function useRedesignChat(path?: string) {
     }
   }, []);
 
-  const reconcile = useCallback(async (sid: string, signal: AbortSignal, key?: string) => {
-    for (let i = 0; i < 150 && !signal.aborted; i++) {
+  const reconcile = useCallback(async (
+    sid: string,
+    signal: AbortSignal,
+    key?: string,
+    waitForCompletion = true,
+  ) => {
+    const deadline = Date.now() + RECONCILE_MAX_MS;
+    for (let i = 0; i < RECONCILE_MAX_ATTEMPTS && Date.now() < deadline && !signal.aborted; i++) {
+      if (sidRef.current !== sid) return;
       const loaded = await loadChatSession(sid, viewedRef.current);
-      if (signal.aborted) return;
+      if (signal.aborted || sidRef.current !== sid) return;
       if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); break; }
       const data = loaded.data as SessionPayload;
       apply(data);
@@ -62,7 +81,7 @@ export function useRedesignChat(path?: string) {
       const active = ops.find(o => o.status === 'running');
       const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
       const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
-      if (failed) { operation.current = failed; setError(failed.error || 'پردازش ناموفق بود. دوباره تلاش کن.'); break; }
+      if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
       if (!active) {
         if (key && !tracked) { setError('وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.'); break; }
         operation.current = null; completed.current = true;
@@ -71,22 +90,24 @@ export function useRedesignChat(path?: string) {
       }
       operation.current = active;
       setStatus(active.kind === 'render' ? 'rendering' : 'streaming');
+      if (!waitForCompletion) return;
       await new Promise<void>(resolve => {
         const timer = setTimeout(resolve, 2000);
         signal.addEventListener('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
       });
     }
-    if (!signal.aborted) { setStatus('error'); locked.current = false; }
+    if (!signal.aborted && sidRef.current === sid) { setStatus('error'); locked.current = false; }
   }, [apply]);
 
   useEffect(() => {
     if (path && sidRef.current === path && controller.current && !controller.current.signal.aborted) return;
+    generation.current += 1;
     controller.current?.abort();
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
     setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
-    operation.current = null; intent.current = null;
+    operation.current = null; intent.current = null; renderOperationId.current = null;
     if (!path) { setHydrating(false); return; }
     const ac = new AbortController(); controller.current = ac; setHydrating(true);
     void (async () => {
@@ -119,20 +140,48 @@ export function useRedesignChat(path?: string) {
     });
   }, []);
 
-  const execute = useCallback(async (params: StreamTurnParams) => {
-    const ac = new AbortController(); controller.current?.abort(); controller.current = ac;
+  const execute = useCallback(async (params: StreamTurnParams): Promise<boolean> => {
+    const ac = new AbortController();
+    controller.current?.abort();
+    controller.current = ac;
+    const commandGeneration = ++generation.current;
+    const isCurrent = () => generation.current === commandGeneration
+      && sidRef.current === params.sessionId
+      && !ac.signal.aborted;
     completed.current = false;
     locked.current = true; setError(null); setStage(null); setStatus('streaming');
     const messageId = crypto.randomUUID();
     setChipGroups([]);
-    await streamChatTurn(params, {
-      onSay: delta => setMessages(old => old.some(m => m.id === messageId) ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m) : [...old, { id: messageId, role: 'assistant', text: delta }]),
-      onStage: event => setStage(event.label_fa),
-      onQuestions: event => setChipGroups(chipGroupsFromQuestions(event)),
-      onRenderPending: () => setStatus('rendering'),
-      onError: message => setError(message),
+    const transport = await streamChatTurn(params, {
+      onSay: delta => {
+        if (!isCurrent()) return;
+        setMessages(old => old.some(m => m.id === messageId)
+          ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
+          : [...old, { id: messageId, role: 'assistant', text: delta }]);
+      },
+      onStage: event => { if (isCurrent()) setStage(event.label_fa); },
+      onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
+      onRenderPending: event => {
+        if (!isCurrent()) return;
+        renderOperationId.current = event.operation_id || null;
+        setStatus('rendering');
+      },
+      onRenderEvent: event => {
+        if (!isCurrent()) return;
+        if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
+        if (event.operationId) renderOperationId.current = event.operationId;
+        if (event.event === 'image' || event.event === 'error') {
+          void reconcile(params.sessionId, ac.signal, event.operationId || params.idempotencyKey);
+        }
+      },
+      onConnectionLost: () => {
+        if (isCurrent()) void reconcile(params.sessionId, ac.signal, renderOperationId.current || params.idempotencyKey);
+      },
+      onError: message => { if (isCurrent()) setError(message); },
     }, ac.signal);
-    if (!ac.signal.aborted) await reconcile(params.sessionId, ac.signal, params.idempotencyKey);
+    if (!isCurrent()) return false;
+    await reconcile(params.sessionId, ac.signal, params.idempotencyKey, !transport.ok);
+    return transport.ok || completed.current;
   }, [reconcile]);
 
   const sendTurn = useCallback(async (args: SendTurnArgs) => {
@@ -151,8 +200,7 @@ export function useRedesignChat(path?: string) {
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);
     setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
-    await execute(params);
-    return completed.current;
+    return execute(params);
   }, [execute, unavailable]);
 
   const retry = useCallback(async () => {
@@ -160,7 +208,12 @@ export function useRedesignChat(path?: string) {
     if (locked.current) return;
     if (!sid) { if (pendingArgs.current) await sendTurn(pendingArgs.current); return; }
     locked.current = true;
+    controller.current?.abort();
     const ac = new AbortController(); controller.current = ac;
+    const retryGeneration = ++generation.current;
+    const isCurrent = () => generation.current === retryGeneration
+      && sidRef.current === sid
+      && !ac.signal.aborted;
     const loaded = await loadChatSession(sid, viewedRef.current);
     if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); locked.current = false; return; }
     const ops = (loaded.data as SessionPayload).operations || [];
@@ -168,11 +221,39 @@ export function useRedesignChat(path?: string) {
     const failed = ops.find(o => o.operation_id === operation.current?.operation_id) || ops.find(o => o.idempotency_key === intent.current?.idempotencyKey) || ops[0];
     if (active) { await reconcile(sid, ac.signal, active.operation_id); return; }
     if (failed?.status === 'failed' && failed.kind === 'render') {
-      const result = await requestRender({ sessionId: sid, idempotencyKey: failed.idempotency_key });
+      renderOperationId.current = failed.operation_id;
+      const result = await requestRender({
+        sessionId: sid,
+        idempotencyKey: failed.idempotency_key,
+        signal: ac.signal,
+        onEvent: event => {
+          if (!isCurrent()) return;
+          if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
+          if (event.operationId) renderOperationId.current = event.operationId;
+          if (event.event === 'say') {
+            const data = event.data as { delta?: unknown };
+            if (typeof data?.delta === 'string') setStage(data.delta.trim());
+          }
+          if (event.event === 'image' || event.event === 'error') {
+            void reconcile(sid, ac.signal, event.operationId || failed.operation_id);
+          }
+        },
+        onConnectionLost: () => {
+          if (isCurrent()) void reconcile(sid, ac.signal, failed.operation_id);
+        },
+      });
+      if (!isCurrent()) return;
       if (!result.success) { setError(result.error || 'خطا در ساخت تصویر'); locked.current = false; return; }
-      await reconcile(sid, ac.signal, failed.operation_id);
+      setStatus('rendering');
+      // A non-terminal ack must retain an operation identity for live pushes;
+      // fall back to the durable session state if an older server cannot supply it.
+      if (result.terminal || !result.operationId) await reconcile(sid, ac.signal, failed.operation_id);
     } else if (failed?.status === 'failed' || (!failed && intent.current)) {
-      await execute(intent.current || { sessionId: sid, text: '', images: [], idempotencyKey: failed.idempotency_key, baseVersionId: failed.base_version_id });
+      if (intent.current) await execute(intent.current);
+      else {
+        setError('جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن.');
+        locked.current = false;
+      }
     } else { await reconcile(sid, ac.signal); }
   }, [execute, reconcile, sendTurn]);
 

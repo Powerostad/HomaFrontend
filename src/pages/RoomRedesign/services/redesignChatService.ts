@@ -3,16 +3,15 @@
  * (`/api/recommendations/chat/`).
  *
  * - `createChatSession()` / `loadChatSession()` use the shared `apiClient`.
- * - `streamChatTurn()` runs the SSE `turn` endpoint via `sseClient` and dispatches
- *   typed events to the supplied handlers.
+ * - `streamChatTurn()` sends a `chat.turn` command over the chat WebSocket and
+ *   dispatches the same typed events to the supplied handlers.
  *
  * The `Backend*` interfaces below are the exact JSON shapes the backend emits
  * (see backend `apps/recommendations/chat/harness/runner.py`). Prices are in
  * Toman and products carry no `unique_link` unless the backend exposes it.
  */
 import { apiGet, apiPost } from '@/utils/apiClient';
-import { appConfig } from '@/config/appConfig';
-import { runSseStream, type SseEvent, type SseErrorKind } from './sseClient';
+import { runChatCommand, type ChatErrorKind, type ChatSocketEvent } from './chatWebSocket';
 
 // --------------------------------------------------------------------------- //
 // Backend event payload shapes
@@ -152,6 +151,7 @@ export interface ImageEvent {
 export interface RenderPendingEvent {
   scene_id: string;
   scene_label_fa: string;
+  operation_id?: string;
 }
 
 /** Transient progress hint for the live loading screen (not persisted). */
@@ -169,9 +169,13 @@ export interface StreamTurnHandlers {
   onRenderPending?: (e: RenderPendingEvent) => void;
   /** Live backend phase label (Persian) for the analysis loading screen. */
   onStage?: (e: StageEvent) => void;
+  /** Render worker lifecycle event, including its operation identity. */
+  onRenderEvent?: (e: ChatSocketEvent) => void;
+  /** The live socket ended after a command had been accepted. */
+  onConnectionLost?: () => void;
   /** Localized (Persian) error message. `kind` classifies transport failures
    *  (`network`/`http`/`auth`) so the caller can recover vs. surface. */
-  onError?: (message: string, kind?: SseErrorKind) => void;
+  onError?: (message: string, kind?: ChatErrorKind) => void;
   /** Stream closed (success or handled error). Not called on abort. */
   onDone?: () => void;
 }
@@ -227,23 +231,30 @@ export async function selectChatProduct(params: {
   category: string;
   productId: number;
 }): Promise<{ success: boolean; error?: string }> {
-  const res = await apiPost<{ ok: boolean }>('/recommendations/chat/select/', {
-    session_id: params.sessionId,
-    category: params.category,
-    product_id: params.productId,
+  const res = await runChatCommand({
+    type: 'chat.select',
+    sessionId: params.sessionId,
+    requestId: crypto.randomUUID(),
+    payload: {
+      session_id: params.sessionId,
+      category: params.category,
+      product_id: params.productId,
+    },
+    signal: new AbortController().signal,
   });
-  return res.success && res.data?.ok
+  const data = res.data as { ok?: boolean } | undefined;
+  return res.ok && data?.ok
     ? { success: true }
     : { success: false, error: res.error || 'خطا در ذخیره انتخاب محصول' };
 }
 
 // --------------------------------------------------------------------------- //
-// Explicit async render (Celery): POST returns 202 immediately (no gunicorn
-// thread blocked); the worker generates + persists to the session in DB. The
-// client polls `GET /chat/sessions/<id>/`, which survives a frontend restart.
+// Explicit async render: the command is acknowledged on the chat WebSocket;
+// the native async worker generates and persists the image in the background.
 // --------------------------------------------------------------------------- //
 export interface RenderResult {
   success: boolean;
+  terminal?: boolean;
   status?: string;
   operationStatus?: string;
   operationId?: string;
@@ -255,26 +266,40 @@ export async function requestRender(params: {
   sceneId?: string | null;
   instructions?: string | null;
   idempotencyKey: string;
+  signal?: AbortSignal;
+  onEvent?: (event: ChatSocketEvent) => void;
+  onConnectionLost?: () => void;
 }): Promise<RenderResult> {
-  const res = await apiPost<{ session_id: string; status: string; operation_status?: string; operation_id?: string }>(
-    '/recommendations/chat/render/',
-    {
+  const res = await runChatCommand({
+    type: 'chat.render',
+    sessionId: params.sessionId,
+    requestId: crypto.randomUUID(),
+    payload: {
       session_id: params.sessionId,
       scene_id: params.sceneId ?? null,
       instructions: params.instructions ?? null,
       idempotency_key: params.idempotencyKey,
     },
-  );
-  if (res.success) return {
-    success: true,
-    status: res.data?.status,
-    operationStatus: res.data?.operation_status,
-    operationId: res.data?.operation_id,
-  };
+    signal: params.signal ?? new AbortController().signal,
+    onEvent: params.onEvent,
+    onConnectionLost: params.onConnectionLost,
+  });
+  const data = res.data as { status?: string; operation_id?: string } | undefined;
+  if (res.ok) {
+    const terminal = typeof data?.status === 'string'
+      && ['ready', 'succeeded', 'duplicate', 'completed'].includes(data.status);
+    return {
+      success: true,
+      terminal,
+      status: data?.status,
+      operationStatus: data?.status,
+      operationId: data?.operation_id,
+    };
+  }
   return { success: false, error: res.error || 'خطا در شروع ساخت تصویر' };
 }
 
-/** Shape of the GET session payload, for hydration + render polling. */
+/** Shape of the GET session payload, for hydration and REST recovery. */
 export interface SessionTurnEvent {
   event: string;
   data?: { url?: string; scene_id?: string; image_object_name?: string };
@@ -310,16 +335,15 @@ export function extractRenderImages(payload: SessionPayload): { url: string; sce
 }
 
 // --------------------------------------------------------------------------- //
-// Streamed turn (SSE)
+// Live turn (WebSocket)
 // --------------------------------------------------------------------------- //
-const CHAT_TURN_URL = `${appConfig.apiBaseUrl.replace(/\/$/, '')}/api/recommendations/chat/turn/`;
-
 export async function streamChatTurn(
   params: StreamTurnParams,
   handlers: StreamTurnHandlers,
   signal: AbortSignal,
-): Promise<void> {
-  const onEvent = (e: SseEvent) => {
+): Promise<{ ok: boolean; aborted?: boolean }> {
+  const onEvent = (e: ChatSocketEvent) => {
+    if (e.operationId) handlers.onRenderEvent?.(e);
     switch (e.event) {
       case 'session':
         handlers.onSession?.(e.data as SessionEvent);
@@ -360,9 +384,11 @@ export async function streamChatTurn(
     }
   };
 
-  const result = await runSseStream({
-    url: CHAT_TURN_URL,
-    body: {
+  const result = await runChatCommand({
+    type: 'chat.turn',
+    sessionId: params.sessionId,
+    requestId: params.idempotencyKey,
+    payload: {
       session_id: params.sessionId,
       text: params.text,
       images: params.images,
@@ -373,11 +399,12 @@ export async function streamChatTurn(
       product_id: params.productId,
       idempotency_key: params.idempotencyKey,
     },
-    signal,
     onEvent,
+    onConnectionLost: handlers.onConnectionLost,
+    signal,
   });
 
-  if (result.aborted) return; // silent — navigation / unmount
+  if (result.aborted) return { ok: false, aborted: true }; // silent — navigation / unmount
 
   if (!result.ok) {
     if (result.errorKind === 'auth' || result.status === 401) {
@@ -389,10 +416,11 @@ export async function streamChatTurn(
     } else {
       // Keep a Persian backend message if present; otherwise a generic one.
       const isPersian = !!result.error && /[؀-ۿ]/.test(result.error);
-      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور', 'http');
+      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور', 'server');
     }
   }
   handlers.onDone?.();
+  return { ok: result.ok };
 }
 
 export interface ExecutionPlan {
