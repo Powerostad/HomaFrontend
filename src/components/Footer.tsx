@@ -73,7 +73,9 @@ export function Footer() {
               </h3>
               <ul className="flex flex-col gap-5 text-start md:text-end text-content-secondary">
                 <li><Link to="/faq" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.faq')}</Link></li>
-                <li><Link to="/terms" className="hover:text-content-primary transition-colors text-p font-light">{t('footer.terms')}</Link></li>
+                <li><a href="/support" className="hover:text-content-primary transition-colors text-p font-light">{t('information:supportLabel')}</a></li>
+                <li><a href="/privacy" className="hover:text-content-primary transition-colors text-p font-light">{t('information:privacyLabel')}</a></li>
+                <li><a href="/terms" className="hover:text-content-primary transition-colors text-p font-light">{t('footer.terms')}</a></li>
                 <li><Link to="/contact" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.contactUs')}</Link></li>
               </ul>
             </div>

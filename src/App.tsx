@@ -27,7 +27,7 @@ import { ProductDetailsPage } from "./pages/ProductDetails";
 import { BasketPage } from "./pages/Basket";
 import { ContactPage } from "./pages/Contact/Page";
 import { FAQPage } from "./pages/FAQ/Page";
-import { TermsPage } from "./pages/Terms/Page";
+import { InformationPage } from "./pages/Information/Page";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { HomaLoader } from "./components/HomaLoader";
 
@@ -76,7 +76,9 @@ export default function App() {
               <RouterRoute path="basket" element={<BasketPage />} />
               <RouterRoute path="contact" element={<ContactPage />} />
               <RouterRoute path="faq" element={<FAQPage />} />
-              <RouterRoute path="terms" element={<TermsPage />} />
+              <RouterRoute path="support" element={<InformationPage page="support" />} />
+              <RouterRoute path="privacy" element={<InformationPage page="privacy" />} />
+              <RouterRoute path="terms" element={<InformationPage page="terms" />} />
 
               {/* Shared gallery items (public, no auth) */}
               <RouterRoute path="s/:token" element={<SharedPage />} />

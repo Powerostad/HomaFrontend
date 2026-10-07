@@ -6,6 +6,7 @@ import fa from './locales/fa.json';
 import ar from './locales/ar.json';
 import en from './locales/en.json';
 import tr from './locales/tr.json';
+import informationFa from './locales/information.fa.json';
 
 // Supported languages configuration
 export const languages = [
@@ -47,7 +48,7 @@ if (typeof document !== 'undefined') {
     .use(initReactI18next)
     .init({
       resources: {
-        fa: { translation: fa },
+        fa: { translation: fa, information: informationFa },
         ar: { translation: ar },
         en: { translation: en },
         tr: { translation: tr },
@@ -72,7 +73,7 @@ if (typeof document !== 'undefined') {
   // SSR / Node: no browser detection, no document access.
   i18nInstance.use(initReactI18next).init({
     resources: {
-      fa: { translation: fa },
+      fa: { translation: fa, information: informationFa },
       ar: { translation: ar },
       en: { translation: en },
       tr: { translation: tr },

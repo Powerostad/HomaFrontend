@@ -1,4 +1,5 @@
 import { SSRSafeLink } from "./SSRSafeLink";
+import information from "../../i18n/locales/information.fa.json";
 
 interface SSRFooterProps {
   translations?: {
@@ -114,6 +115,12 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
                   <SSRSafeLink to="/terms" className="hover:text-content-primary transition-colors text-p font-light">
                     {t.terms}
                   </SSRSafeLink>
+                </li>
+                <li>
+                  <a href="/support" className="hover:text-content-primary transition-colors text-p font-light">{information.supportLabel}</a>
+                </li>
+                <li>
+                  <a href="/privacy" className="hover:text-content-primary transition-colors text-p font-light">{information.privacyLabel}</a>
                 </li>
                 <li>
                   <SSRSafeLink to="/contact" className="hover:text-content-primary transition-colors text-p font-light">

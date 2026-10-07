@@ -9,6 +9,7 @@
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run generate:sitemap",
     "build": "tsc && vite build",
+    "postbuild": "node scripts/generate-information-pages.mjs",
     "preview": "vite preview",
     "clean": "rm -rf node_modules/.vite dist .cache",
     "clean:all": "rm -rf node_modules/.vite dist .cache node_modules && npm install",
