@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Search, X, ArrowUpRight } from "lucide-react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { ArrowUpRight, Search, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { BuyButton } from "./BuyButton";
-import { AddToBasketButton } from "./basket/AddToBasketButton";
 import type { Product } from "../types/product";
-import { Header } from "./Header";
 import { formatPriceFromRial } from "../utils/formatters";
+import { BuyButton } from "./BuyButton";
+import { Header } from "./Header";
+import { AddToBasketButton } from "./basket/AddToBasketButton";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface ProductGalleryProps {
   products: Product[];
@@ -15,6 +16,7 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ products, onSelectProduct }: ProductGalleryProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,7 +36,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
   }, [products, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-surface-page flex flex-col font-vazirmatn" dir="rtl">
+    <div className="min-h-screen bg-surface-page flex flex-col font-vazirmatn" dir={siteDirection()}>
       {/* Editorial Navigation Overlay */}
       <Header transparent={false} />
 
@@ -61,27 +63,27 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                {/* Search Toggle */}
                <div className="flex items-center gap-4">
                   <AnimatePresence>
-                    {isSearchOpen && (
+                    {siteValue(isSearchOpen && (
                       <motion.input 
                         initial={{ width: 0, opacity: 0 }}
                         animate={{ width: 200, opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
                         type="text"
-                        placeholder={t('common.search') + '...'}
+                        placeholder={siteValue(t('common.search') + '...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="bg-transparent border-b border-[var(--jet-black)] text-[12px] pb-1 outline-none"
                       />
-                    )}
+                    ))}
                   </AnimatePresence>
                   <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="opacity-60 hover:opacity-100 transition-opacity">
-                    {isSearchOpen ? <X size={18} /> : <Search size={18} />}
+                    {siteValue(isSearchOpen ? <X size={18} /> : <Search size={18} />)}
                   </button>
                </div>
 
                {/* Filters */}
                <nav className="flex flex-wrap gap-x-8 gap-y-3 justify-end">
-                  {categories.map(cat => (
+                  {siteValue(categories.map(cat => (
                     <button 
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
@@ -89,9 +91,9 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                         selectedCategory === cat ? 'text-accent' : 'text-[var(--jet-black)] opacity-40 hover:opacity-100'
                       }`}
                     >
-                      {cat}
+                      {siteValue(cat)}
                     </button>
-                  ))}
+                  )))}
                </nav>
             </div>
           </div>
@@ -99,7 +101,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
 
         {/* Catalog Grid - Asymmetrical editorial flow */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-y-24 md:gap-x-12">
-          {filteredProducts.map((product, idx) => {
+          {siteValue(filteredProducts.map((product, idx) => {
             // Zara Home Grids are often irregular. 
             // We use a pattern: Large, Small, Small, Large...
             const pattern = [8, 4, 4, 8, 4, 4, 6, 6];
@@ -120,7 +122,7 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                 <div className={`relative overflow-hidden mb-6 bg-[var(--accent-light)] ${isLarge ? 'aspect-[16/10]' : 'aspect-[3/4]'}`}>
                   <ImageWithFallback 
                     src={product.thumbnail} 
-                    alt={product.name} 
+                    alt={siteValue(product.name)}
                     className="w-full h-full object-cover transition-transform duration-[2500ms] group-hover:scale-105"
                   />
                   
@@ -160,22 +162,22 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
                 {/* Details - Minimalist Zara Home Style */}
                 <div className="space-y-2 px-1 text-center md:text-start">
                    <div className="flex items-center justify-center md:justify-start gap-3">
-                      <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-accent opacity-80">{product.category}</span>
+                      <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-accent opacity-80">{siteValue(product.category)}</span>
                       <div className="w-4 h-[1px] bg-[var(--jet-black)] opacity-10" />
                    </div>
                    <h2 className="text-[20px] md:text-[24px] font-light text-[var(--jet-black)] leading-tight tracking-tight">
-                      {product.name}
+                      {siteValue(product.name)}
                    </h2>
                    <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
                       <span className="text-[14px] font-medium text-[var(--muted-foreground)]">
-                        {product.price ? formatPriceFromRial(product.price) : "Price upon request"}
+                        {siteValue(product.price ? formatPriceFromRial(product.price) : "Price upon request")}
                       </span>
                       <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-40 group-hover:translate-x-1 transition-all" />
                    </div>
                 </div>
               </motion.div>
             );
-          })}
+          }))}
 
           {/* New Arrivals / Coming Soon Editorial Card */}
           <div className="md:col-span-4 flex flex-col items-center justify-center p-12 border border-[var(--border-subtle)] bg-white/20 min-h-[400px]">
@@ -196,9 +198,9 @@ export function ProductGallery({ products, onSelectProduct }: ProductGalleryProp
               </div>
               <div className="flex flex-col gap-2">
                  <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase mb-2">Navigation</h4>
-                 {['Archive', 'Materiality', 'Craftsmanship', 'Homa Studio'].map(link => (
-                    <a key={link} href="#" className="text-[11px] tracking-widest uppercase hover:text-accent transition-colors w-fit">{link}</a>
-                  ))}
+                 {siteValue(['Archive', 'Materiality', 'Craftsmanship', 'Homa Studio'].map(link => (
+                    <a key={link} href="#" className="text-[11px] tracking-widest uppercase hover:text-accent transition-colors w-fit">{siteValue(link)}</a>
+                  )))}
               </div>
               <div className="text-start md:text-end space-y-4">
                  <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase">Connect</h4>

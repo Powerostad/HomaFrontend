@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * API Client برای HOMA Platform
  * مدیریت تمام ارتباطات با Backend
@@ -9,9 +10,9 @@
  * - Type-safe responses
  */
 
-import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
-import i18n from '@/i18n/config';
 import { appConfig } from '@/config/appConfig';
+import i18n from '@/i18n/config';
+import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
 
 // =============================================================================
 // Environment Configuration
@@ -519,7 +520,7 @@ export async function apiGet<T>(
         // Refresh failed - return unauthorized error
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -529,7 +530,7 @@ export async function apiGet<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در دریافت اطلاعات',
+        data.error || data.message || siteText("خطا در دریافت اطلاعات"),
         response.status,
         data
       );
@@ -555,14 +556,14 @@ export async function apiGet<T>(
     if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
-        error: 'زمان درخواست به پایان رسید',
+        error: siteText("زمان درخواست به پایان رسید"),
         statusCode: 408,
       };
     }
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -606,7 +607,7 @@ export async function apiPost<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -616,7 +617,7 @@ export async function apiPost<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در ارسال اطلاعات',
+        data.error || data.message || siteText("خطا در ارسال اطلاعات"),
         response.status,
         data
       );
@@ -642,14 +643,14 @@ export async function apiPost<T>(
     if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
-        error: 'زمان درخواست به پایان رسید',
+        error: siteText("زمان درخواست به پایان رسید"),
         statusCode: 408,
       };
     }
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -680,7 +681,7 @@ export async function apiUpload<T>(
     console.error('[API Upload] Invalid file provided:', file);
     return {
       success: false,
-      error: 'فایل انتخاب نشده است',
+      error: siteText("فایل انتخاب نشده است"),
       statusCode: 400,
     };
   }
@@ -740,7 +741,7 @@ export async function apiUpload<T>(
           } else {
             resolve({
               success: false,
-              error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+              error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
               statusCode: 401,
             });
             return;
@@ -760,14 +761,14 @@ export async function apiUpload<T>(
           } else {
             resolve({
               success: false,
-              error: data.error || data.message || 'خطا در آپلود فایل',
+              error: data.error || data.message || siteText("خطا در آپلود فایل"),
               statusCode: xhr.status,
             });
           }
         } catch {
           resolve({
             success: false,
-            error: 'خطا در پردازش پاسخ سرور',
+            error: siteText("خطا در پردازش پاسخ سرور"),
             statusCode: xhr.status,
           });
         }
@@ -777,7 +778,7 @@ export async function apiUpload<T>(
       xhr.addEventListener('error', () => {
         resolve({
           success: false,
-          error: 'خطا در اتصال به سرور',
+          error: siteText("خطا در اتصال به سرور"),
           statusCode: 0,
         });
       });
@@ -786,7 +787,7 @@ export async function apiUpload<T>(
       xhr.addEventListener('timeout', () => {
         resolve({
           success: false,
-          error: 'زمان آپلود به پایان رسید',
+          error: siteText("زمان آپلود به پایان رسید"),
           statusCode: 408,
         });
       });
@@ -816,7 +817,7 @@ export async function apiUpload<T>(
     console.error('[API Upload Error]', endpoint, error);
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته در آپلود',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته در آپلود"),
       statusCode: 500,
     };
   }
@@ -859,7 +860,7 @@ export async function apiPut<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -869,7 +870,7 @@ export async function apiPut<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در به‌روزرسانی',
+        data.error || data.message || siteText("خطا در به‌روزرسانی"),
         response.status,
         data
       );
@@ -894,7 +895,7 @@ export async function apiPut<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -934,7 +935,7 @@ export async function apiPatch<T>(
       }
       return {
         success: false,
-        error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+        error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
         statusCode: 401,
       };
     }
@@ -943,7 +944,7 @@ export async function apiPatch<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در به‌روزرسانی',
+        data.error || data.message || siteText("خطا در به‌روزرسانی"),
         response.status,
         data
       );
@@ -968,7 +969,7 @@ export async function apiPatch<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -1009,7 +1010,7 @@ export async function apiDelete<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -1019,7 +1020,7 @@ export async function apiDelete<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در حذف',
+        data.error || data.message || siteText("خطا در حذف"),
         response.status,
         data
       );
@@ -1044,7 +1045,7 @@ export async function apiDelete<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -1093,7 +1094,7 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
 
   if (!response.ok) {
     throw new APIError(
-      `خطا در بارگذاری تصویر: ${response.status}`,
+      siteText("خطا در بارگذاری تصویر: {{v0}}", { v0: response.status }),
       response.status
     );
   }
@@ -1119,4 +1120,4 @@ export async function apiHealthCheck(): Promise<boolean> {
 // Auth-specific exports for authService
 // =============================================================================
 
-export { refreshAccessToken, translateErrorMessage };
+export { refreshAccessToken,translateErrorMessage };

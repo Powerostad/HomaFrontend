@@ -1,13 +1,15 @@
 import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { initReactI18next } from 'react-i18next';
 
-import fa from './locales/fa.json';
+import { seoFa } from '../seo/content';
 import ar from './locales/ar.json';
 import en from './locales/en.json';
-import tr from './locales/tr.json';
-import informationFa from './locales/information.fa.json';
+import fa from './locales/fa.json';
 import informationEn from './locales/information.en.json';
+import informationFa from './locales/information.fa.json';
+import tr from './locales/tr.json';
+import { translateUiTree } from './siteDictionary';
 
 // Supported languages configuration
 export const languages = [
@@ -36,6 +38,9 @@ export const updateDocumentLanguage = (lang: string) => {
   document.documentElement.dir = config.dir;
   document.documentElement.lang = lang;
   document.documentElement.setAttribute('data-lang', lang);
+  if (['HOMA - مشاهده محصول در فضای شما', 'HOMA - Product previews in your space'].includes(document.title)) {
+    document.title = lang.startsWith('en') ? 'HOMA - Product previews in your space' : 'HOMA - مشاهده محصول در فضای شما';
+  }
 
   // Store preference
   try { localStorage.setItem('i18nextLng', lang); } catch { /* preference storage may be disabled */ }
@@ -56,7 +61,7 @@ if (typeof document !== 'undefined') {
       resources: {
         fa: { translation: fa, information: informationFa },
         ar: { translation: ar },
-        en: { translation: en, information: informationEn },
+        en: { translation: { ...en, seo: translateUiTree(seoFa) }, information: informationEn },
         tr: { translation: tr },
       },
       fallbackLng: 'fa', // Persian as fallback
@@ -82,7 +87,7 @@ if (typeof document !== 'undefined') {
     resources: {
       fa: { translation: fa, information: informationFa },
       ar: { translation: ar },
-      en: { translation: en, information: informationEn },
+      en: { translation: { ...en, seo: translateUiTree(seoFa) }, information: informationEn },
       tr: { translation: tr },
     },
     fallbackLng: 'fa',

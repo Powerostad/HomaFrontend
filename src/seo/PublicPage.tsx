@@ -1,7 +1,9 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { SSRFooter } from "../components/seo/SSRFooter";
 import { BilingualSwitch } from '../components/BilingualSwitch';
+import { SSRFooter } from "../components/seo/SSRFooter";
+import { isRTL } from "../i18n/config";
 import {
   SeoExplorePage,
   SeoGalleryPage,
@@ -10,14 +12,14 @@ import {
   SeoProductDetailsPage,
   SeoStorePage,
 } from "../pages/PublicSeoPages";
-import { isRTL } from "../i18n/config";
 import "./public.css";
 import type { PublicPageData, PublicProduct } from "./types";
 
 type AppProviderComponent = ComponentType<{ children: ReactNode }>;
 
 function UnavailablePage() {
-  return <main className="min-h-screen flex items-center justify-center bg-surface-page px-6" dir="rtl"><div className="text-center space-y-4"><h1 className="text-[28px] font-light">این صفحه در دسترس نیست</h1><a href="/" className="inline-flex h-12 items-center px-6 bg-black text-white text-[13px]">بازگشت به خانه</a></div></main>;
+  const { siteText, siteDirection } = useSiteTranslation();
+  return <main className="min-h-screen flex items-center justify-center bg-surface-page px-6" dir={siteDirection()}><div className="text-center space-y-4"><h1 className="text-[28px] font-light">{siteText("این صفحه در دسترس نیست")}</h1><a href="/" className="inline-flex h-12 items-center px-6 bg-black text-white text-[13px]">{siteText("بازگشت به خانه")}</a></div></main>;
 }
 
 /**
@@ -26,11 +28,12 @@ function UnavailablePage() {
  * header loads client-side after hydration.
  */
 function SeoHeader() {
+  const { siteText } = useSiteTranslation();
   const { t, i18n } = useTranslation();
   return (
     <header className="seo-header" lang={i18n.language} dir={isRTL(i18n.language) ? "rtl" : "ltr"}>
       <a className="seo-brand" href="/" aria-label="HOMA">
-        HOMA<span>هُما</span>
+        HOMA<span>{siteText("هُما")}</span>
       </a>
       <nav aria-label={t("seo.header.label", "راهبری اصلی")}>
         <a href="/explore">{t("seo.header.explore", "فروشگاه‌ها")}</a>
@@ -58,6 +61,8 @@ export function PublicPage({
   renderBasketCommerce?: (product: PublicProduct, variantId: number | null) => ReactNode;
   renderBuyCommerce?: (product: PublicProduct) => ReactNode;
 }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
+  const { i18n } = useTranslation();
   const [AppProvider, setAppProvider] = useState<AppProviderComponent | null>(null);
 
   useEffect(() => {
@@ -92,15 +97,15 @@ export function PublicPage({
   }
 
   const shell = (
-    <div className="seo-public" dir="rtl" lang="fa">
-      <a className="seo-skip" href="#seo-main">پرش به محتوای اصلی</a>
+    <div className="seo-public" dir={siteDirection()} lang={i18n.language}>
+      <a className="seo-skip" href="#seo-main">{siteText("پرش به محتوای اصلی")}</a>
       <SeoHeader />
       <main id="seo-main" className="seo-main">
-        {content}
+        {siteValue(content)}
       </main>
       <SSRFooter />
     </div>
   );
 
-  return AppProvider ? <AppProvider>{shell}</AppProvider> : shell;
+  return AppProvider ? <AppProvider>{siteValue(shell)}</AppProvider> : shell;
 }

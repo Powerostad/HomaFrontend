@@ -1,10 +1,11 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 // frontend/src/components/BuyButton.tsx
-import { useState, useEffect } from 'react';
 import { ExternalLink, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from './ui/button';
-import { apiPost, apiConfig } from '../utils/apiClient';
 import { trackBuyButtonClicked } from '../analytics/events';
+import { apiConfig, apiPost } from '../utils/apiClient';
+import { Button } from './ui/button';
 
 interface BuyButtonProps {
   productId: string;
@@ -34,6 +35,7 @@ export function BuyButton({
   size = 'default',
   className = '',
 }: BuyButtonProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +111,7 @@ export function BuyButton({
         data-ph-capture-attribute-action="buy"
       >
         <ExternalLink className="h-4 w-4 ml-2" />
-        {buttonText}
+        {siteValue(buttonText)}
       </a>
     </Button>
   );

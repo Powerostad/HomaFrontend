@@ -1,32 +1,34 @@
-import { AnimatePresence } from 'motion/react';
-import { Bookmark, Download as DownloadIcon, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { Bookmark, Download as DownloadIcon, Loader2 } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
-import { useSimpleTranslation } from './result/types';
-import type { DiagnosisAction } from './result/DiagnosisActionCard';
-import type { CompletionChecklistItem } from './result/types';
-import { useStudioResult } from './result/useStudioResult';
-import { ImpactProgressCard } from './result/ImpactProgressCard';
-import { SpatialDiagnosis } from './result/SpatialDiagnosis';
-import { TierSection } from './result/TierSection';
 import { CollectionSummary } from './result/CollectionSummary';
-import { InvoiceSummary } from './result/InvoiceSummary';
-import { DesktopHeroPanel, MobileHeroSection } from './result/HeroImagePanel';
-import { FullscreenOverlay } from './result/FullscreenOverlay';
-import { ExitDecisionModal } from './result/ExitDecisionModal';
-import { DownloadReadyModal } from './result/DownloadReadyModal';
 import { CompletionChecklist } from './result/CompletionChecklist';
-import { UnifiedConsultationCTA } from './result/UnifiedConsultationCTA';
-import { trackStudioResultAction } from '@/analytics/events';
+import type { DiagnosisAction } from './result/DiagnosisActionCard';
+import { DownloadReadyModal } from './result/DownloadReadyModal';
+import { ExitDecisionModal } from './result/ExitDecisionModal';
+import { FullscreenOverlay } from './result/FullscreenOverlay';
+import { DesktopHeroPanel, MobileHeroSection } from './result/HeroImagePanel';
+import { ImpactProgressCard } from './result/ImpactProgressCard';
+import { InvoiceSummary } from './result/InvoiceSummary';
+import { SpatialDiagnosis } from './result/SpatialDiagnosis';
 import './result/studio-result.css';
+import { TierSection } from './result/TierSection';
+import type { CompletionChecklistItem } from './result/types';
+import { useSimpleTranslation } from './result/types';
+import { UnifiedConsultationCTA } from './result/UnifiedConsultationCTA';
+import { useStudioResult } from './result/useStudioResult';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
 export function StudioResultPage() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const state = useStudioResult();
   const [activePhase, setActivePhase] = useState<Phase>('analysis');
@@ -148,10 +150,10 @@ export function StudioResultPage() {
   return (
     <div
       className="studio-result-page"
-      dir="rtl"
+      dir={siteDirection()}
       style={{ fontFamily: FONT }}
     >
-      {!state.isFullScreen && <Header />}
+      {siteValue(!state.isFullScreen && <Header />)}
 
       <main className="studio-result-main" dir="ltr">
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
@@ -159,17 +161,17 @@ export function StudioResultPage() {
           <MobileHeroSection {...heroProps} />
         </section>
 
-        <section className="studio-result-content" dir="rtl">
+        <section className="studio-result-content" dir={siteDirection()}>
           <div className="studio-result-heading">
             <div>
               <p className="studio-result-eyebrow">
-                {state.analysisOnly
+                {siteValue(state.analysisOnly
                   ? t('studio.result.v2.analysisOnly.label', 'تحلیل اولیه فضا')
-                  : t('studio.result.v2.title', 'نتیجه طراحی')}
+                  : t('studio.result.v2.title', 'نتیجه طراحی'))}
               </p>
               <h1>
-                {state.projectName || t('studio.result.v2.roomFallback', 'فضای شما')}
-                {state.targetStyle && <span className="studio-result-heading-style">، {state.targetStyle}</span>}
+                {siteValue(state.projectName || t('studio.result.v2.roomFallback', 'فضای شما'))}
+                {siteValue(state.targetStyle && <span className="studio-result-heading-style">، {siteValue(state.targetStyle)}</span>)}
               </h1>
               <p className="studio-result-heading-description">
                 {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
@@ -180,12 +182,12 @@ export function StudioResultPage() {
                 type="button"
                 className="studio-icon-button"
                 onClick={() => state.setIsSaved(!state.isSaved)}
-                aria-label={state.isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}
+                aria-label={siteValue(state.isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره'))}
                 aria-pressed={state.isSaved}
               >
                 <Bookmark size={18} fill={state.isSaved ? 'currentColor' : 'none'} />
               </button>
-              {!state.analysisOnly && (
+              {siteValue(!state.analysisOnly && (
                 <button
                   type="button"
                   className="studio-icon-button"
@@ -193,9 +195,9 @@ export function StudioResultPage() {
                   disabled={state.isDownloading}
                   aria-label={t('common.download', 'دانلود')}
                 >
-                  {state.isDownloading ? <Loader2 size={18} className="animate-spin" /> : <DownloadIcon size={18} />}
+                  {siteValue(state.isDownloading ? <Loader2 size={18} className="animate-spin" /> : <DownloadIcon size={18} />)}
                 </button>
-              )}
+              ))}
             </div>
           </div>
 
@@ -204,7 +206,7 @@ export function StudioResultPage() {
               {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
             </h2>
 
-            {state.analysisOnly && (
+            {siteValue(state.analysisOnly && (
               <div className="studio-analysis-only-callout" role="status">
                 <div>
                   <strong>{t('studio.result.v2.analysisOnly.title', 'این نتیجه، تحلیل اولیه فضای شماست')}</strong>
@@ -216,12 +218,12 @@ export function StudioResultPage() {
                   disabled={state.isRequestingRedesignCredit}
                   className="studio-secondary-button"
                 >
-                  {state.isRequestingRedesignCredit
+                  {siteValue(state.isRequestingRedesignCredit
                     ? t('studio.result.v2.analysisOnly.requesting', 'در حال ثبت درخواست...')
-                    : t('studio.result.v2.analysisOnly.request', 'درخواست تولید تصویر بازطراحی')}
+                    : t('studio.result.v2.analysisOnly.request', 'درخواست تولید تصویر بازطراحی'))}
                 </button>
               </div>
-            )}
+            ))}
 
             <ImpactProgressCard
               currentScore={state.harmonyScore}
@@ -259,10 +261,10 @@ export function StudioResultPage() {
                 <p className="studio-result-eyebrow">{t('studio.result.v2.phase.recommendations', 'پیشنهادها')}</p>
                 <h2 id="products-title">{t('studio.result.v2.recommendationsTitle', 'سه تغییر برای شروع')}</h2>
               </div>
-              <span className="studio-count-badge">{state.categoryGroups.length} {t('studio.result.v2.changeCount', 'تغییر')}</span>
+              <span className="studio-count-badge">{siteValue(state.categoryGroups.length)} {t('studio.result.v2.changeCount', 'تغییر')}</span>
             </div>
 
-            {state.tierGroups.map(({ tier, items }, tierIndex) => (
+            {siteValue(state.tierGroups.map(({ tier, items }, tierIndex) => (
               <TierSection
                 key={tier}
                 tier={tier}
@@ -283,13 +285,13 @@ export function StudioResultPage() {
                 onScrollToAnalysis={() => handlePhaseClick('analysis')}
                 onUpdateQuantity={(itemId, quantity) => state.updateItemQuantity(itemId, quantity)}
               />
-            ))}
+            )))}
 
-            {state.tierGroups.length === 0 && (
+            {siteValue(state.tierGroups.length === 0 && (
               <div className="studio-empty-state">
                 <p>{t('studio.result.v2.noRecommendations', 'هنوز پیشنهادی برای این جلسه آماده نشده است.')}</p>
               </div>
-            )}
+            ))}
 
             <CompletionChecklist
               items={checklistItems}
@@ -340,7 +342,7 @@ export function StudioResultPage() {
       />
 
       <AnimatePresence>
-        {state.isFullScreen && !state.analysisOnly && (
+        {siteValue(state.isFullScreen && !state.analysisOnly && (
           <FullscreenOverlay
             resultImage={state.resultImage}
             originalImage={state.originalImage}
@@ -352,10 +354,10 @@ export function StudioResultPage() {
             onToggleSaved={() => state.setIsSaved(!state.isSaved)}
             onDownload={state.handleDownload}
           />
-        )}
+        ))}
       </AnimatePresence>
 
-      {state.selectedProduct && (
+      {siteValue(state.selectedProduct && (
         <ProductDetailSheet
           product={state.selectedProduct}
           isOpen
@@ -367,30 +369,30 @@ export function StudioResultPage() {
           onToggleBasket={() => state.toggleBasketProduct(state.selectedProduct!.id)}
           onSelectProduct={state.handleProductClick}
         />
-      )}
+      ))}
 
       <AnimatePresence>
-        {state.showExitDecision && (
+        {siteValue(state.showExitDecision && (
           <ExitDecisionModal
             onConfirm={() => { state.setIsSaved(true); state.setShowExitDecision(false); state.navigate('/studio'); }}
             onCancel={() => state.setShowExitDecision(false)}
           />
-        )}
+        ))}
       </AnimatePresence>
 
       <AnimatePresence>
-        {state.isLoading && (
+        {siteValue(state.isLoading && (
           <div className="studio-loading-overlay" role="status" aria-live="polite">
             <Loader2 className="animate-spin" size={32} />
             <span>{t('common.loading', 'در حال بارگذاری...')}</span>
           </div>
-        )}
+        ))}
       </AnimatePresence>
 
       <AnimatePresence>
-        {state.showDownloadReady && (
+        {siteValue(state.showDownloadReady && (
           <DownloadReadyModal onConfirm={state.handleConfirmDownload} onCancel={state.handleCancelDownload} />
-        )}
+        ))}
       </AnimatePresence>
     </div>
   );

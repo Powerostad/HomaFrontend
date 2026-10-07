@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Service layer for the conversational Room Redesign chat backend
  * (`/api/recommendations/chat/`).
@@ -209,7 +210,7 @@ export async function createChatSession(): Promise<CreateSessionResult> {
   if (res.success && res.data) {
     return { success: true, data: { sessionId: res.data.session_id, status: res.data.status } };
   }
-  return { success: false, error: res.error || 'خطا در ایجاد گفتگو' };
+  return { success: false, error: res.error || siteText("خطا در ایجاد گفتگو") };
 }
 
 export interface LoadSessionResult {
@@ -223,7 +224,7 @@ export interface LoadSessionResult {
 export async function loadChatSession(sessionId: string, versionId?: string): Promise<LoadSessionResult> {
   const res = await apiGet<unknown>(`/recommendations/chat/sessions/${sessionId}/${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`);
   if (res.success) return { success: true, data: res.data };
-  return { success: false, statusCode: res.statusCode, error: res.error || 'خطا در بارگذاری گفتگو' };
+  return { success: false, statusCode: res.statusCode, error: res.error || siteText("خطا در بارگذاری گفتگو") };
 }
 
 export async function selectChatProduct(params: {
@@ -245,7 +246,7 @@ export async function selectChatProduct(params: {
   const data = res.data as { ok?: boolean } | undefined;
   return res.ok && data?.ok
     ? { success: true }
-    : { success: false, error: res.error || 'خطا در ذخیره انتخاب محصول' };
+    : { success: false, error: res.error || siteText("خطا در ذخیره انتخاب محصول") };
 }
 
 // --------------------------------------------------------------------------- //
@@ -296,7 +297,7 @@ export async function requestRender(params: {
       operationId: data?.operation_id,
     };
   }
-  return { success: false, error: res.error || 'خطا در شروع ساخت تصویر' };
+  return { success: false, error: res.error || siteText("خطا در شروع ساخت تصویر") };
 }
 
 /** Shape of the GET session payload, for hydration and REST recovery. */
@@ -376,7 +377,7 @@ export async function streamChatTurn(
         const d = e.data as { error?: string };
         const raw = d?.error || '';
         const isPersian = /[؀-ۿ]/.test(raw);
-        handlers.onError?.(isPersian ? raw : 'خطایی رخ داد. لطفاً دوباره تلاش کن.');
+        handlers.onError?.(isPersian ? raw : siteText("خطایی رخ داد. لطفاً دوباره تلاش کن."));
         break;
       }
       default:
@@ -408,15 +409,15 @@ export async function streamChatTurn(
 
   if (!result.ok) {
     if (result.errorKind === 'auth' || result.status === 401) {
-      handlers.onError?.('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.', 'auth');
+      handlers.onError?.(siteText("نشست شما منقضی شده است. لطفاً دوباره وارد شوید."), 'auth');
     } else if (result.errorKind === 'network') {
       // The client's connection dropped (e.g. ERR_NETWORK_CHANGED) — not the
       // server's fault. The caller may recover by reconciling the DB-backed session.
-      handlers.onError?.('ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن.', 'network');
+      handlers.onError?.(siteText("ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن."), 'network');
     } else {
       // Keep a Persian backend message if present; otherwise a generic one.
       const isPersian = !!result.error && /[؀-ۿ]/.test(result.error);
-      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور', 'server');
+      handlers.onError?.(isPersian ? (result.error as string) : siteText("خطا در ارتباط با سرور"), 'server');
     }
   }
   handlers.onDone?.();

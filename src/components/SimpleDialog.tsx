@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { ReactNode, useEffect, useState } from "react";
 
 interface DialogProps {
@@ -7,6 +8,7 @@ interface DialogProps {
 }
 
 export function SimpleDialog({ open, onOpenChange, children }: DialogProps) {
+  const { siteValue } = useSiteTranslation();
   const [isOpen, setIsOpen] = useState(open || false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function SimpleDialog({ open, onOpenChange, children }: DialogProps) {
         onClick={handleClose}
       />
       {/* Content wrapper */}
-      <div className="relative z-50">{children}</div>
+      <div className="relative z-50">{siteValue(children)}</div>
     </div>
   );
 }
@@ -40,7 +42,8 @@ interface DialogTriggerProps {
 }
 
 export function SimpleDialogTrigger({ children, onClick }: DialogTriggerProps) {
-  return <div onClick={onClick}>{children}</div>;
+  const { siteValue } = useSiteTranslation();
+  return <div onClick={onClick}>{siteValue(children)}</div>;
 }
 
 interface DialogContentProps {
@@ -50,11 +53,12 @@ interface DialogContentProps {
 }
 
 export function SimpleDialogContent({ children, className = "" }: DialogContentProps) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div
       className={`relative bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg ${className}`}
     >
-      {children}
+      {siteValue(children)}
     </div>
   );
 }
@@ -65,17 +69,19 @@ interface DialogHeaderProps {
 }
 
 export function SimpleDialogHeader({ children, className = "" }: DialogHeaderProps) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className={`flex flex-col gap-2 text-center sm:text-start ${className}`}>
-      {children}
+      {siteValue(children)}
     </div>
   );
 }
 
 export function SimpleDialogFooter({ children, className = "" }: DialogHeaderProps) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className={`flex flex-col-reverse gap-2 sm:flex-row sm:justify-end ${className}`}>
-      {children}
+      {siteValue(children)}
     </div>
   );
 }
@@ -86,9 +92,11 @@ interface DialogTitleProps {
 }
 
 export function SimpleDialogTitle({ children, className = "" }: DialogTitleProps) {
-  return <h2 className={`leading-none ${className}`}>{children}</h2>;
+  const { siteValue } = useSiteTranslation();
+  return <h2 className={`leading-none ${className}`}>{siteValue(children)}</h2>;
 }
 
 export function SimpleDialogDescription({ children, className = "" }: DialogTitleProps) {
-  return <p className={`text-muted-foreground text-sm ${className}`}>{children}</p>;
+  const { siteValue } = useSiteTranslation();
+  return <p className={`text-muted-foreground text-sm ${className}`}>{siteValue(children)}</p>;
 }

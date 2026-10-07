@@ -1,19 +1,20 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Gallery Service - گالری کاربر
  * مدیریت دریافت و نمایش نتایج Try-On و استودیو کاربر
  */
 
-import { apiGet, apiDelete } from '@/utils/apiClient';
 import {
   type BackendGalleryItem,
-  type PaginatedResponse,
   type GalleryFetchResult,
   type GalleryItemResult,
-  transformBackendGalleryItem,
-  getPinnedItemIds,
-  savePinnedItemIds,
   getImageUrl,
+  getPinnedItemIds,
+  type PaginatedResponse,
+  savePinnedItemIds,
+  transformBackendGalleryItem,
 } from '@/types/gallery';
+import { apiDelete, apiGet } from '@/utils/apiClient';
 
 // =============================================================================
 // Types
@@ -57,7 +58,7 @@ export async function fetchGallery(
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت گالری',
+    error: response.error || siteText("خطا در دریافت گالری"),
   };
 }
 
@@ -80,7 +81,7 @@ export async function fetchGalleryItem(id: string): Promise<GalleryItemResult> {
 
   return {
     success: false,
-    error: response.error || 'آیتم مورد نظر یافت نشد',
+    error: response.error || siteText("آیتم مورد نظر یافت نشد"),
   };
 }
 
@@ -100,7 +101,7 @@ export async function deleteGalleryItem(
 
   return {
     success: false,
-    error: response.error || 'خطا در حذف آیتم',
+    error: response.error || siteText("خطا در حذف آیتم"),
   };
 }
 

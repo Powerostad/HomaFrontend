@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * CompletionChecklist — "تکمیل پازل چیدمان"
  *
@@ -13,17 +14,17 @@
  * Uses CSS transitions only (no motion). All styling via CSS variables.
  * Fonts: Vazirmatn.
  */
-import { useState } from 'react';
-import {
-  Sparkles,
-  Check,
-  Plus,
-  Puzzle,
-  ChevronDown,
-  Search,
-} from 'lucide-react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { toLocalizedDigits } from '@/utils/formatters';
+import {
+  Check,
+  ChevronDown,
+  Plus,
+  Puzzle,
+  Search,
+  Sparkles,
+} from 'lucide-react';
+import { useState } from 'react';
 import type { CompletionChecklistItem } from './types';
 
 const FONT = 'var(--font-family-vazirmatn)';
@@ -43,6 +44,7 @@ export function CompletionChecklist({
   checkedIds,
   onToggleItem,
 }: CompletionChecklistProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (!items || items.length === 0) return null;
@@ -51,7 +53,7 @@ export function CompletionChecklist({
 
   return (
     <section
-      aria-label="تکمیل پازل چیدمان"
+      aria-label={siteText("تکمیل پازل چیدمان")}
       style={{
         fontFamily: FONT,
         marginTop: 'var(--spacing-lg)',
@@ -98,8 +100,7 @@ export function CompletionChecklist({
                 lineHeight: 1.4,
               }}
             >
-              تکمیل پازل چیدمان
-            </h3>
+              {siteText("تکمیل پازل چیدمان")}</h3>
           </div>
           <span
             style={{
@@ -111,12 +112,11 @@ export function CompletionChecklist({
               textAlign: 'start',
             }}
           >
-            موارد پیشنهادی هوش مصنوعی — انتخاب کنید، ما مشاوره تهیه می‌دیم
-          </span>
+            {siteText("موارد پیشنهادی هوش مصنوعی — انتخاب کنید، ما مشاوره تهیه می‌دیم")}</span>
         </div>
 
         <div className="flex items-center" style={{ gap: '8px' }}>
-          {selectedCount > 0 && (
+          {siteValue(selectedCount > 0 && (
             <span
               className="tabular-nums"
               style={{
@@ -129,9 +129,9 @@ export function CompletionChecklist({
                 background: 'rgba(154,140,116,0.1)',
               }}
             >
-              {toLocalizedDigits(selectedCount)}/{toLocalizedDigits(items.length)}
+              {siteValue(toLocalizedDigits(selectedCount))}/{siteValue(toLocalizedDigits(items.length))}
             </span>
-          )}
+          ))}
           <ChevronDown
             size={16}
             strokeWidth={1.5}
@@ -186,14 +186,12 @@ export function CompletionChecklist({
               margin: 0,
             }}
           >
-            این موارد در تصویر طراحی شما دیده می‌شن اما در انبار هُما موجود نیستن.
-            موارد مورد نظرتون رو انتخاب کنید تا تیم ما برای تهیه‌شون مشاوره بده.
-          </p>
+            {siteText("این موارد در تصویر طراحی شما دیده می‌شن اما در انبار هُما موجود نیستن. موارد مورد نظرتون رو انتخاب کنید تا تیم ما برای تهیه‌شون مشاوره بده.")}</p>
         </div>
 
         {/* ── List Items ── */}
         <div className="flex flex-col" style={{ gap: '0' }}>
-          {items.map((item, idx) => {
+          {siteValue(items.map((item, idx) => {
             const isSelected = checkedIds.has(item.id);
 
             return (
@@ -225,7 +223,7 @@ export function CompletionChecklist({
                 >
                   <ImageWithFallback
                     src={item.imageUrl}
-                    alt={item.name}
+                    alt={siteValue(item.name)}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
@@ -246,7 +244,7 @@ export function CompletionChecklist({
                       lineHeight: 1.4,
                     }}
                   >
-                    {item.name}
+                    {siteValue(item.name)}
                   </span>
 
                   {/* Category badge */}
@@ -264,7 +262,7 @@ export function CompletionChecklist({
                       letterSpacing: '0.04em',
                     }}
                   >
-                    {item.category}
+                    {siteValue(item.category)}
                   </span>
 
                   {/* AI Reasoning */}
@@ -278,7 +276,7 @@ export function CompletionChecklist({
                       margin: 0,
                     }}
                   >
-                    {item.aiReasoning}
+                    {siteValue(item.aiReasoning)}
                   </p>
 
                   {/* Selection toggle + Search */}
@@ -307,22 +305,22 @@ export function CompletionChecklist({
                         letterSpacing: '0.02em',
                       }}
                       aria-label={
-                        isSelected
-                          ? `حذف ${item.name} از انتخاب`
-                          : `انتخاب ${item.name} برای مشاوره`
+                        siteValue(isSelected
+                          ? siteText("حذف {{v0}} از انتخاب", { v0: item.name })
+                          : siteText("انتخاب {{v0}} برای مشاوره", { v0: item.name }))
                       }
                       aria-pressed={isSelected}
                     >
-                      {isSelected ? (
+                      {siteValue(isSelected ? (
                         <Check size={11} strokeWidth={2.5} />
                       ) : (
                         <Plus size={11} strokeWidth={2} />
-                      )}
-                      {isSelected ? 'انتخاب شد' : 'می‌خوام تهیه کنم'}
+                      ))}
+                      {siteValue(isSelected ? siteText("انتخاب شد") : siteText("می‌خوام تهیه کنم"))}
                     </button>
 
                     {/* Web search button */}
-                    {item.webSearchQuery && (
+                    {siteValue(item.webSearchQuery && (
                       <a
                         href={`https://www.google.com/search?q=${encodeURIComponent(item.webSearchQuery)}`}
                         target="_blank"
@@ -340,7 +338,7 @@ export function CompletionChecklist({
                           textDecoration: 'none',
                           letterSpacing: '0.02em',
                         }}
-                        aria-label={`جست‌وجوی ${item.name} در وب`}
+                        aria-label={siteText("جست‌وجوی {{v0}} در وب", { v0: item.name })}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = 'var(--editorial-accent)';
                           e.currentTarget.style.color = 'var(--editorial-charcoal)';
@@ -351,14 +349,13 @@ export function CompletionChecklist({
                         }}
                       >
                         <Search size={11} strokeWidth={1.8} />
-                        جست‌وجو
-                      </a>
-                    )}
+                        {siteText("جست‌وجو")}</a>
+                    ))}
                   </div>
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
     </section>

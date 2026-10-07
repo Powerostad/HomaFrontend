@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * AuthContext - مدیریت احراز هویت کاربر
  *
@@ -8,26 +9,26 @@
  * - Loading states for UI feedback
  */
 
+import { identifyUser, resetUser, trackAuthEvent } from '@/analytics/events';
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from 'react';
-import {
-  getStoredAuthState,
-  storeAuthState,
-  isTokenExpired,
-  refreshToken,
+  getProfile as authGetProfile,
   logout as authLogout,
   updateProfile as authUpdateProfile,
-  getProfile as authGetProfile,
+  getStoredAuthState,
+  isTokenExpired,
+  refreshToken,
+  storeAuthState,
 } from '@/services/authService';
-import { getStoredTokens, clearAuthData, AUTH_LOGOUT_EVENT, AUTH_LOGIN_EVENT } from '@/utils/apiClient';
-import { identifyUser, resetUser, trackAuthEvent } from '@/analytics/events';
-import type { User, AuthTokens, AuthContextType } from '@/types/auth';
+import type { AuthContextType, AuthTokens, User } from '@/types/auth';
+import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT, clearAuthData, getStoredTokens } from '@/utils/apiClient';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 
 // Re-export User type for backwards compatibility
 export type { User } from '@/types/auth';
@@ -43,6 +44,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // =============================================================================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { siteText, siteValue } = useSiteTranslation();
   // Core state
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -193,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success && result.user) {
         setUser(result.user);
       } else {
-        throw new Error(result.error || 'خطا در به‌روزرسانی پروفایل');
+        throw new Error(result.error || siteText("خطا در به‌روزرسانی پروفایل"));
       }
     } finally {
       setIsLoading(false);
@@ -236,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {siteValue(children)}
     </AuthContext.Provider>
   );
 }

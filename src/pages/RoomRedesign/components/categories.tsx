@@ -1,3 +1,4 @@
+import { siteText, useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * CategoryCard — the heart of the "guided shopping plan".
  *
@@ -10,27 +11,27 @@
  * Pure presentation — all cart/preview behavior is delegated to callbacks so the
  * existing basket + render logic is untouched.
  */
+import { toLocalizedDigits } from '@/utils/formatters';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Grid3x3,
-  Blinds,
   BedDouble,
-  Lamp,
-  Sparkles,
+  Blinds,
+  Check,
+  Eye,
   Frame,
+  Grid3x3,
+  Lamp,
   Leaf,
-  Sofa,
   Package,
   ShoppingBag,
-  Eye,
-  Check,
+  Sofa,
+  Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { RD } from '../theme';
-import { ImpactBars, ProductCarousel } from './products';
-import type { CostLevel, RedesignProduct } from '../types';
 import type { CategoryPriority, DesignCategoryKey, RedesignCategory } from '../services/transformers';
-import { toPersianDigits } from '@/utils/formatters';
+import { RD } from '../theme';
+import type { CostLevel, RedesignProduct } from '../types';
+import { ImpactBars, ProductCarousel } from './products';
 
 const TAP = { scale: 0.97 };
 const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
@@ -61,38 +62,40 @@ const COST_META: Record<CostLevel, { label: string; color: string }> = {
 };
 
 function impactLabel(impact: number): string {
-  if (impact >= 4) return 'تاثیر زیاد';
-  if (impact >= 2) return 'تاثیر متوسط';
-  return 'تاثیر کم';
+  if (impact >= 4) return siteText("تاثیر زیاد");
+  if (impact >= 2) return siteText("تاثیر متوسط");
+  return siteText("تاثیر کم");
 }
 
 // ── Badge / meta atoms ──────────────────────────────────────────────
 function PriorityBadge({ priority }: { priority: CategoryPriority }) {
+  const { siteValue } = useSiteTranslation();
   const m = PRIORITY_META[priority];
   return (
     <span
       className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold leading-none"
       style={{ backgroundColor: m.bg, color: m.fg }}
     >
-      {m.label}
+      {siteValue(m.label)}
     </span>
   );
 }
 
 function MetaRow({ impact, cost }: { impact: number; cost: CostLevel | null }) {
+  const { siteValue } = useSiteTranslation();
   const c = cost ? COST_META[cost] : null;
   return (
     <div className="flex items-center gap-4" style={{ fontFamily: 'Vazirmatn' }}>
       <span className="flex items-center gap-1.5">
-        <span className="text-[11px]" style={{ color: RD.inkMuted }}>{impactLabel(impact)}</span>
+        <span className="text-[11px]" style={{ color: RD.inkMuted }}>{siteValue(impactLabel(impact))}</span>
         <ImpactBars value={impact} />
       </span>
-      {c && (
+      {siteValue(c && (
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color }} />
-          <span className="text-[11.5px] font-medium" style={{ color: c.color }}>{c.label}</span>
+          <span className="text-[11.5px] font-medium" style={{ color: c.color }}>{siteValue(c.label)}</span>
         </span>
-      )}
+      ))}
     </div>
   );
 }
@@ -109,6 +112,7 @@ export function CategoryCard({
   onAddCategory: (c: RedesignCategory) => void;
   onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const Icon = CATEGORY_ICON[category.key] ?? Package;
   const unavailable = category.unavailable;
 
@@ -116,7 +120,7 @@ export function CategoryCard({
     <section
       className="overflow-hidden"
       style={{ backgroundColor: '#fff', border: `1px solid ${RD.line}`, borderRadius: 16, fontFamily: 'Vazirmatn' }}
-      dir="rtl"
+      dir={siteDirection()}
     >
       {/* Header: rank · icon · title · priority */}
       <div className="flex items-start gap-2.5 px-3.5 pt-3.5">
@@ -129,10 +133,10 @@ export function CategoryCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold tabular-nums" style={{ color: RD.inkMuted }}>
-              اولویت {toPersianDigits(category.rank)}
+              {siteText("اولویت")}{siteValue(toLocalizedDigits(category.rank))}
             </span>
             <h3 className="text-[15px] font-bold leading-tight truncate" style={{ color: RD.ink }}>
-              {category.title}
+              {siteValue(category.title)}
             </h3>
           </div>
         </div>
@@ -140,11 +144,11 @@ export function CategoryCard({
       </div>
 
       {/* Design reason */}
-      {category.reason && (
+      {siteValue(category.reason && (
         <p className="text-[12.5px] leading-[1.85] px-3.5 pt-2" style={{ color: RD.inkSoft }}>
-          {category.reason}
+          {siteValue(category.reason)}
         </p>
-      )}
+      ))}
 
       {/* Impact + cost */}
       <div className="px-3.5 pt-2.5">
@@ -152,21 +156,21 @@ export function CategoryCard({
       </div>
 
       {/* Products — or an unavailable note */}
-      {unavailable ? (
+      {siteValue(unavailable ? (
         <div
           className="mx-3.5 mt-3 mb-1 rounded-xl px-3 py-3 text-[12px] leading-[1.8]"
           style={{ backgroundColor: RD.cream, border: `1px dashed ${RD.line}`, color: RD.inkSoft }}
         >
-          {category.unavailableReason || 'فعلاً محصول مناسبی برای این تغییر پیدا نشد؛ بعداً دوباره بررسی می‌کنیم.'}
+          {siteValue(category.unavailableReason || siteText("فعلاً محصول مناسبی برای این تغییر پیدا نشد؛ بعداً دوباره بررسی می‌کنیم."))}
         </div>
       ) : (
         <div className="mt-3">
           <ProductCarousel products={category.products} onAdd={onAdd} />
         </div>
-      )}
+      ))}
 
       {/* Actions */}
-      {!unavailable && (
+      {siteValue(!unavailable && (
         <div className="flex items-center gap-2 px-3.5 pb-3.5 pt-1">
           <motion.button
             type="button"
@@ -177,12 +181,11 @@ export function CategoryCard({
             style={{ backgroundColor: RD.green, color: '#fff' }}
           >
             <ShoppingBag size={15} strokeWidth={2} />
-            افزودن این دسته به سبد
-          </motion.button>
-          {onPreviewCategory && (
+            {siteText("افزودن این دسته به سبد")}</motion.button>
+          {siteValue(onPreviewCategory && (
             <motion.button
               type="button"
-              aria-label="پیش‌نمایش این تغییر"
+              aria-label={siteText("پیش‌نمایش این تغییر")}
               onClick={() => onPreviewCategory(category)}
               whileTap={TAP}
               transition={SPRING}
@@ -190,11 +193,10 @@ export function CategoryCard({
               style={{ backgroundColor: '#fff', border: `1px solid ${RD.line}`, color: RD.ink }}
             >
               <Eye size={15} strokeWidth={2} />
-              پیش‌نمایش
-            </motion.button>
-          )}
+              {siteText("پیش‌نمایش")}</motion.button>
+          ))}
         </div>
-      )}
+      ))}
     </section>
   );
 }
@@ -211,16 +213,16 @@ export function CategoryPlan({
   onAddCategory: (c: RedesignCategory) => void;
   onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
+  const { siteValue, siteText, siteDirection } = useSiteTranslation();
   const available = categories.filter((c) => !c.unavailable).length;
   return (
-    <div className="flex flex-col gap-3" dir="rtl">
+    <div className="flex flex-col gap-3" dir={siteDirection()}>
       <div className="flex items-center gap-1.5 text-[12px]" style={{ color: RD.inkSoft, fontFamily: 'Vazirmatn' }}>
         <Check size={13} strokeWidth={2.5} style={{ color: RD.accentGreen }} />
         <span>
-          {toPersianDigits(available)} دسته پیشنهادی، به ترتیب اولویت
-        </span>
+          {siteValue(toLocalizedDigits(available))} {siteText("دسته پیشنهادی، به ترتیب اولویت")}</span>
       </div>
-      {categories.map((c) => (
+      {siteValue(categories.map((c) => (
         <CategoryCard
           key={c.id}
           category={c}
@@ -228,7 +230,7 @@ export function CategoryPlan({
           onAddCategory={onAddCategory}
           onPreviewCategory={onPreviewCategory}
         />
-      ))}
+      )))}
     </div>
   );
 }

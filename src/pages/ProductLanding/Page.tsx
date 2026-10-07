@@ -1,32 +1,34 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import {
-  parseEntryParams,
-  fetchProduct,
   fetchAllProducts,
+  fetchProduct,
+  parseEntryParams,
 } from "../../utils/productLoader";
 
 // Shared Components
-import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
+import { Header } from "../../components/Header";
 import { LazySection } from "../../components/LazySection";
 
 // Above-the-fold Components (loaded immediately)
 import { HeroSection } from "./components/HeroSection";
-import { TrustBar } from "./components/TrustBar";
 import { OutputShowcase } from "./components/OutputShowcase";
+import { TrustBar } from "./components/TrustBar";
 
 // Below-the-fold Components (lazy loaded for better performance)
-const ComparisonSection = lazy(() => import("./components/ComparisonSection").then(m => ({ default: m.ComparisonSection })));
-const ShoppingPropSection = lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
+const ComparisonSection=lazy(() => import("./components/ComparisonSection").then(m => ({ default: m.ComparisonSection })));
+const ShoppingPropSection=lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
 
-import { HomaLoader } from "../../components/HomaLoader";
 import { useSeo } from "@/hooks/useSeo";
+import { HomaLoader } from "../../components/HomaLoader";
 
 export function ProductLandingPage() {
+  const { siteText } = useSiteTranslation();
   useSeo({
-    description: "با هوش مصنوعی HOMA محصولات را قبل از خرید در فضای خانه خود ببینید.",
+    description: siteText("با هوش مصنوعی HOMA محصولات را قبل از خرید در فضای خانه خود ببینید."),
   });
   const navigate = useRouterNavigate();
   const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();

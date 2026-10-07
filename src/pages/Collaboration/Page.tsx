@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useSeo } from '@/hooks/useSeo';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { ArrowLeft, CheckCircle2, ChevronDown, LayoutTemplate } from 'lucide-react';
 import { motion } from 'motion/react';
-import { CheckCircle2, ChevronDown, ArrowLeft, LayoutTemplate } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Header } from '../../components/Header';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { apiPost } from '../../utils/apiClient';
-import { toast } from 'sonner';
-import { useSeo } from '@/hooks/useSeo';
 
 export function CollaborationPage() {
+  const { siteValue, siteText, siteDirection } = useSiteTranslation();
   useSeo({
-    title: 'همکاری با ما',
-    description: 'فرم همکاری فروشگاه‌ها و برندها با HOMA.',
+    title: siteText("همکاری با ما"),
+    description: siteText("فرم همکاری فروشگاه‌ها و برندها با HOMA."),
   });
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -49,11 +51,11 @@ export function CollaborationPage() {
         setIsSubmitted(true);
       } else {
         console.error('Submission failed:', response.error);
-        toast.error(response.error || 'خطا در ثبت درخواست');
+        toast.error(response.error || siteText("خطا در ثبت درخواست"));
       }
     } catch (error) {
       console.error('Collaboration Request Error:', error);
-      toast.error('خطا در برقراری ارتباط با سرور');
+      toast.error(siteText("خطا در برقراری ارتباط با سرور"));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +67,7 @@ export function CollaborationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col" dir={siteDirection()}>
       {/* Editorial Noise Overlay */}
       <div className="fixed inset-0 pointer-events-none z-[150] opacity-[0.03] mix-blend-overlay">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -101,7 +103,7 @@ export function CollaborationPage() {
 
         {/* Right Side: Form Content */}
         <div className="w-full md:w-1/2 flex flex-col justify-center py-12 md:py-24 px-6 md:px-20 lg:px-32">
-          {!isSubmitted ? (
+          {siteValue(!isSubmitted ? (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -113,15 +115,13 @@ export function CollaborationPage() {
                   className="text-[42px] md:text-[56px] font-light text-[#292b2d] leading-[1.1] tracking-tighter"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  محصولات شما، <br /> در خانه‌ی مشتریان ما.
-                </h1>
+                  {siteText("محصولات شما،")}<br /> {siteText("در خانه‌ی مشتریان ما.")}</h1>
                 <p className="text-[#292b2d]/60 text-[18px] leading-relaxed max-w-md">
-                  با پیوستن به اکوسیستم هُما، محصولات خود را به صورت هوشمند در فضاهای واقعی به نمایش بگذارید.
-                </p>
+                  {siteText("با پیوستن به اکوسیستم هُما، محصولات خود را به صورت هوشمند در فضاهای واقعی به نمایش بگذارید.")}</p>
                 <div className="flex gap-4">
                    <button className="flex items-center gap-2 text-[13px] font-bold text-accent border-b border-accent/20 pb-1 hover:border-accent transition-all">
                       <LayoutTemplate size={16} />
-                      <span>دیدن نمونه همکاری‌ها</span>
+                      <span>{siteText("دیدن نمونه همکاری‌ها")}</span>
                    </button>
                 </div>
               </div>
@@ -136,15 +136,14 @@ export function CollaborationPage() {
                         className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        نام و نام خانوادگی
-                      </label>
+                        {siteText("نام و نام خانوادگی")}</label>
                       <input
                         required
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        placeholder="مثلاً علی علوی"
+                        placeholder={siteText("مثلاً علی علوی")}
                         className="w-full bg-white border border-[#E0E0E0] rounded-[12px] px-6 py-4 text-[16px] font-medium text-[#292b2d] focus:outline-none focus:border-[#292b2d] transition-all placeholder:text-[#757575]"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       />
@@ -156,15 +155,14 @@ export function CollaborationPage() {
                         className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        نام فروشگاه / برند
-                      </label>
+                        {siteText("نام فروشگاه / برند")}</label>
                       <input
                         required
                         type="text"
                         name="shopName"
                         value={formData.shopName}
                         onChange={handleChange}
-                        placeholder="مثلاً مبلمان آریا"
+                        placeholder={siteText("مثلاً مبلمان آریا")}
                         className="w-full bg-white border border-[#E0E0E0] rounded-[12px] px-6 py-4 text-[16px] font-medium text-[#292b2d] focus:outline-none focus:border-[#292b2d] transition-all placeholder:text-[#757575]"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       />
@@ -178,8 +176,7 @@ export function CollaborationPage() {
                         className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        شماره تماس
-                      </label>
+                        {siteText("شماره تماس")}</label>
                       <input
                         required
                         type="tel"
@@ -198,8 +195,7 @@ export function CollaborationPage() {
                         className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        آیدی اینستاگرام (اختیاری)
-                      </label>
+                        {siteText("آیدی اینستاگرام (اختیاری)")}</label>
                       <input
                         type="text"
                         name="instagramId"
@@ -218,8 +214,7 @@ export function CollaborationPage() {
                       className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                     >
-                      آدرس وب‌سایت (اختیاری)
-                    </label>
+                      {siteText("آدرس وب‌سایت (اختیاری)")}</label>
                     <input
                       type="url"
                       name="website"
@@ -237,8 +232,7 @@ export function CollaborationPage() {
                       className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                     >
-                      نوع محصولات
-                    </label>
+                      {siteText("نوع محصولات")}</label>
                     <div className="relative">
                       <select
                         required
@@ -248,12 +242,12 @@ export function CollaborationPage() {
                         className="w-full bg-white border border-[#E0E0E0] rounded-[12px] px-6 py-4 text-[16px] font-medium text-[#292b2d] focus:outline-none focus:border-[#292b2d] transition-all appearance-none cursor-pointer"
                         style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                       >
-                        <option value="">انتخاب نوع محصولات...</option>
-                        <option value="furniture">مبلمان و راحتی</option>
-                        <option value="lighting">روشنایی و لوستر</option>
-                        <option value="rug">فرش و کفپوش</option>
-                        <option value="decor">اکسسوری و دکوراتیو</option>
-                        <option value="other">سایر موارد</option>
+                        <option value="">{siteText("انتخاب نوع محصولات...")}</option>
+                        <option value="furniture">{siteText("مبلمان و راحتی")}</option>
+                        <option value="lighting">{siteText("روشنایی و لوستر")}</option>
+                        <option value="rug">{siteText("فرش و کفپوش")}</option>
+                        <option value="decor">{siteText("اکسسوری و دکوراتیو")}</option>
+                        <option value="other">{siteText("سایر موارد")}</option>
                       </select>
                       <ChevronDown size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-[#292b2d]/30 pointer-events-none" />
                     </div>
@@ -265,13 +259,12 @@ export function CollaborationPage() {
                       className="text-[11px] font-bold text-[#212121] uppercase tracking-[0.1em] block pr-2"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                     >
-                      توضیحات تکمیلی
-                    </label>
+                      {siteText("توضیحات تکمیلی")}</label>
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      placeholder="درباره برند یا کاتالوگ محصولات خود توضیح دهید..."
+                      placeholder={siteText("درباره برند یا کاتالوگ محصولات خود توضیح دهید...")}
                       rows={3}
                       className="w-full bg-white border border-[#E0E0E0] rounded-[12px] px-6 py-4 text-[16px] font-medium text-[#292b2d] focus:outline-none focus:border-[#292b2d] transition-all resize-none placeholder:text-[#757575]"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
@@ -287,14 +280,14 @@ export function CollaborationPage() {
                       className="w-full bg-[#292b2d] text-white h-[64px] rounded-[12px] text-[16px] font-medium tracking-[0.1em] hover:bg-black transition-all duration-300 flex items-center justify-center gap-4 disabled:opacity-50"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                     >
-                      {isSubmitting ? (
+                      {siteValue(isSubmitting ? (
                         <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                       ) : (
                         <>
-                          <span>شروع همکاری رایگان</span>
+                          <span>{siteText("شروع همکاری رایگان")}</span>
                           <ArrowLeft className="w-5 h-5" />
                         </>
-                      )}
+                      ))}
                     </button>
                   </div>
                   <div className="flex flex-col items-center gap-2">
@@ -302,8 +295,7 @@ export function CollaborationPage() {
                       className="text-[#292b2d]/60 text-[12px] font-medium"
                       style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                     >
-                      بررسی درخواست شما در کمتر از ۲۴ ساعت انجام می‌شود.
-                    </p>
+                      {siteText("بررسی درخواست شما در کمتر از ۲۴ ساعت انجام می‌شود.")}</p>
                   </div>
                 </div>
               </form>
@@ -322,25 +314,23 @@ export function CollaborationPage() {
                   className="text-[40px] md:text-[48px] font-light text-[#292b2d] leading-tight"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  درخواست شما <br /> با موفقیت ثبت شد.
-                </h2>
+                  {siteText("درخواست شما")}<br /> {siteText("با موفقیت ثبت شد.")}</h2>
                 <p 
                   className="text-zinc-500 text-[18px] font-light leading-relaxed opacity-60 italic"
                   style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
                 >
-                  تیم کارشناسان هُما به‌زودی برای بررسی جزئیات همکاری با شما تماس خواهند گرفت.
-                </p>
+                  {siteText("تیم کارشناسان هُما به‌زودی برای بررسی جزئیات همکاری با شما تماس خواهند گرفت.")}</p>
               </div>
               <button 
                 onClick={() => navigate('/')}
                 className="group flex items-center gap-4 text-[#292b2d] font-medium text-[14px] tracking-[0.2em] uppercase border-b border-[#292b2d]/20 pb-2 hover:border-[#292b2d] transition-all duration-700"
                 style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
               >
-                <span>بازگشت به صفحه اصلی</span>
+                <span>{siteText("بازگشت به صفحه اصلی")}</span>
                 <ArrowLeft className="w-5 h-5 group-hover:translate-x-[-8px] transition-transform duration-700" />
               </button>
             </motion.div>
-          )}
+          ))}
         </div>
       </main>
 
@@ -350,14 +340,13 @@ export function CollaborationPage() {
             <span className="text-[18px] font-black tracking-tighter text-[#292b2d]">HOMA.</span>
             <div className="hidden md:block w-[1px] h-4 bg-[#292b2d]/10" />
             <p className="text-[12px] text-[#292b2d]/70 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              تمامی حقوق برای پلتفرم هُما محفوظ است. ۲۰۲۵
-            </p>
+              {siteText("تمامی حقوق برای پلتفرم هُما محفوظ است. ۲۰۲۵")}</p>
           </div>
           
           <div className="flex items-center gap-8">
-            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>قوانین</button>
-            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>حریم خصوصی</button>
-            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>پشتیبانی</button>
+            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{siteText("قوانین")}</button>
+            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{siteText("حریم خصوصی")}</button>
+            <button className="text-[11px] font-bold text-[#292b2d]/60 uppercase tracking-[0.2em] hover:text-[#292b2d] transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>{siteText("پشتیبانی")}</button>
           </div>
         </div>
       </footer>

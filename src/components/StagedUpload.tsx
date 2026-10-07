@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Sparkles } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Header } from "./Header";
 import svgPaths from "../imports/svg-m4kfj8jpfi";
+import { Header } from "./Header";
 
 interface StagedUploadProps {
   file: File;
@@ -69,6 +70,7 @@ function ProcessingIcon() {
 }
 
 export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [stages, setStages] = useState<Stage[]>([
     { id: 1, label: t('tryOn.uploadPhoto'), progress: 0, status: "active" },
@@ -189,7 +191,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
         >
           <h2 className="text-center text-[#1a1a1a] mb-2">{t('tryOn.progress.title')}</h2>
           <p className="text-center text-[#6B7280]">
-            {activeStage ? activeStage.label : t('common.success')}
+            {siteValue(activeStage ? activeStage.label : t('common.success'))}
           </p>
         </motion.div>
 
@@ -203,7 +205,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
           <div className="flex items-center justify-between mb-3">
             <p className="text-[#6B7280]">{t('tryOn.progress.title')}</p>
             <p className="text-[#1A1A1A] tabular-nums" style={{ fontWeight: 600 }}>
-              {Math.round(overallProgress)}٪
+              {siteValue(Math.round(overallProgress))}٪
             </p>
           </div>
           <div className="w-full h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
@@ -218,7 +220,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
 
         {/* Stages List */}
         <div className="space-y-3 mb-8">
-          {stages.map((stage, index) => {
+          {siteValue(stages.map((stage, index) => {
             const colors = getStageColors(stage);
             
             return (
@@ -247,13 +249,13 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                   className="flex-shrink-0 bg-[#212121] rounded-[16px] size-[39.985px] flex items-center justify-center"
                 >
                   <div className="size-[19.983px]">
-                    {stage.status === "complete" ? (
+                    {siteValue(stage.status === "complete" ? (
                       <SuccessIcon />
                     ) : stage.status === "active" ? (
                       <ProcessingIcon />
                     ) : (
                       <div className="size-full rounded-full border-2 border-gray-400" />
-                    )}
+                    ))}
                   </div>
                 </motion.div>
 
@@ -261,10 +263,10 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h4 style={{ color: colors.text }}>
-                      {stage.label}
+                      {siteValue(stage.label)}
                     </h4>
                     
-                    {stage.status === "active" && (
+                    {siteValue(stage.status === "active" && (
                       <motion.span 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -275,11 +277,11 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                           fontWeight: 600
                         }}
                       >
-                        {Math.round(stage.progress)}٪
+                        {siteValue(Math.round(stage.progress))}٪
                       </motion.span>
-                    )}
+                    ))}
                     
-                    {stage.status === "complete" && (
+                    {siteValue(stage.status === "complete" && (
                       <motion.span
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -291,11 +293,11 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                       >
                         ✓ {t('common.success')}
                       </motion.span>
-                    )}
+                    ))}
                   </div>
                   
                   {/* Progress Bar for Active Stage */}
-                  {stage.status === "active" && (
+                  {siteValue(stage.status === "active" && (
                     <div 
                       className="w-full h-2 rounded-full overflow-hidden"
                       style={{ backgroundColor: "rgba(0,0,0,0.1)" }}
@@ -308,15 +310,15 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
                         transition={{ duration: 0.3, ease: "easeOut" }}
                       />
                     </div>
-                  )}
+                  ))}
                 </div>
               </motion.div>
             );
-          })}
+          }))}
         </div>
 
         {/* Complete Button */}
-        {allComplete && (
+        {siteValue(allComplete && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -332,7 +334,7 @@ export function StagedUpload({ file, onComplete, onError }: StagedUploadProps) {
               <span>{t('studio.viewResult')}</span>
             </motion.button>
           </motion.div>
-        )}
+        ))}
       </div>
     </div>
   );

@@ -1,20 +1,21 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useUpload } from '../../context/AppProviders';
-import { useStudio } from '../../context/StudioContext';
-import { Header } from '../../components/Header';
-import { ProgressScreen, type ProgressStep } from '../../components/ProgressScreen';
-import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigationGuard } from '../../hooks/useNavigationGuard';
-import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
-import { fetchSessionStatus, type SessionStatus } from '@/services/studioService';
 import {
-  trackStudioProcessingStarted,
   trackStudioProcessingCompleted,
   trackStudioProcessingFailed,
+  trackStudioProcessingStarted,
 } from '@/analytics/events';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { fetchSessionStatus, type SessionStatus } from '@/services/studioService';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Header } from '../../components/Header';
+import { ProgressScreen, type ProgressStep } from '../../components/ProgressScreen';
+import { useUpload } from '../../context/AppProviders';
+import { useStudio } from '../../context/StudioContext';
+import { useNavigationGuard } from '../../hooks/useNavigationGuard';
+import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../../utils/storageUtils';
 
 /**
  * Map session status from API to step index for ProgressScreen
@@ -51,6 +52,7 @@ function statusToStepIndex(status: SessionStatus | null, skipImageGeneration = f
 }
 
 export function StudioProgressPage() {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
@@ -337,7 +339,7 @@ export function StudioProgressPage() {
   // Recovery loading state
   if (isRecovering) {
     return (
-      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
+      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir={siteDirection()}>
         <Header theme="light" disableNavigation={true} />
         <div className="flex flex-col items-center gap-4 z-10">
           <Loader2 size={40} className="animate-spin text-black/30" />
@@ -348,22 +350,21 @@ export function StudioProgressPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir={siteDirection()}>
 
       <Header theme="light" disableNavigation={true} />
 
       {/* --- Error State --- */}
-      {error && !isPolling && (
+      {siteValue(error && !isPolling && (
         <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6 text-center">
           <div className="w-[80px] h-[80px] mb-6 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
             <AlertCircle className="w-10 h-10 text-red-500" />
           </div>
 
           <h1 className="text-[24px] sm:text-[28px] font-bold leading-tight tracking-tight text-black dark:text-white mb-3">
-            خطا در پردازش
-          </h1>
+            {siteText("خطا در پردازش")}</h1>
           <p className="text-[14px] sm:text-[16px] font-medium text-black/60 dark:text-white/60 mb-8">
-            {error}
+            {siteValue(error)}
           </p>
 
           <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -372,20 +373,18 @@ export function StudioProgressPage() {
               className="h-12 bg-black dark:bg-white text-white dark:text-black text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
             >
               <RefreshCw size={18} />
-              تلاش مجدد
-            </button>
+              {siteText("تلاش مجدد")}</button>
             <button
               onClick={handleGoBack}
               className="h-12 bg-transparent border border-black/10 dark:border-white/10 text-black/70 dark:text-white/70 text-[13px] font-medium rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             >
-              بازگشت و آپلود مجدد
-            </button>
+              {siteText("بازگشت و آپلود مجدد")}</button>
           </div>
         </div>
-      )}
+      ))}
 
       {/* --- Processing State (ProgressScreen) --- */}
-      {(!error || isPolling) && (
+      {siteValue((!error || isPolling) && (
         <ProgressScreen
           steps={visibleSteps}
           activeStepIndex={activeStepIndex}
@@ -393,7 +392,7 @@ export function StudioProgressPage() {
           bgImage={bgImage}
           statusOverride={statusOverride}
         />
-      )}
+      ))}
 
     </div>
   );

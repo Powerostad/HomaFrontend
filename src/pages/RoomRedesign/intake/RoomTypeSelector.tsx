@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * RoomTypeSelector — single-select room/space type chip group.
  *
@@ -5,8 +6,8 @@
  * sourced from ROOM_TYPES. Selecting an already-selected chip is handled
  * upstream (the onSelect callback always fires; clearing is the caller's job).
  */
-import { RD } from '../theme';
 import { Chip } from '../components/chat';
+import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 import { ROOM_TYPES, type RoomType } from './intakeTypes';
 
@@ -16,6 +17,7 @@ interface RoomTypeSelectorProps {
 }
 
 export function RoomTypeSelector({ value, onSelect }: RoomTypeSelectorProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   return (
     <div
       style={{
@@ -23,7 +25,7 @@ export function RoomTypeSelector({ value, onSelect }: RoomTypeSelectorProps): JS
         flexDirection: 'column',
         gap: '8px',
         fontFamily: 'Vazirmatn, sans-serif',
-        direction: 'rtl',
+        direction: siteDirection(),
       }}
     >
       <span
@@ -34,7 +36,7 @@ export function RoomTypeSelector({ value, onSelect }: RoomTypeSelectorProps): JS
           textAlign: 'right',
         }}
       >
-        {INTAKE_COPY.review.roomTypeLabel}
+        {siteValue(INTAKE_COPY.review.roomTypeLabel)}
       </span>
       <span
         style={{
@@ -44,10 +46,10 @@ export function RoomTypeSelector({ value, onSelect }: RoomTypeSelectorProps): JS
           lineHeight: '1.6',
         }}
       >
-        {INTAKE_COPY.review.roomTypeHelper}
+        {siteValue(INTAKE_COPY.review.roomTypeHelper)}
       </span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {ROOM_TYPES.map((rt) => (
+        {siteValue(ROOM_TYPES.map((rt) => (
           <Chip
             key={rt.value}
             chip={{ id: rt.value, label: rt.label }}
@@ -55,7 +57,7 @@ export function RoomTypeSelector({ value, onSelect }: RoomTypeSelectorProps): JS
             variant="pill"
             onClick={() => onSelect(rt.value)}
           />
-        ))}
+        )))}
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
-import { Outlet as RouterOutlet } from "react-router-dom";
-import { Toaster } from "../components/ui/sonner";
-import { BrandColors } from "../components/BrandColors";
-import { BasketSheet } from "../components/basket/BasketSheet";
-import { ErrorBoundary } from "../components/ErrorBoundary";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useTranslation } from 'react-i18next';
+import { Outlet as RouterOutlet } from "react-router-dom";
+import { BasketSheet } from "../components/basket/BasketSheet";
+import { BrandColors } from "../components/BrandColors";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import { Toaster } from "../components/ui/sonner";
 
 /**
  * Layout - Main application layout wrapper
@@ -12,6 +13,7 @@ import { useTranslation } from 'react-i18next';
  * Debug components (BrandColors) only render in development.
  */
 export function Layout() {
+  const { siteValue } = useSiteTranslation();
   const isDev = import.meta.env.DEV;
   const { i18n } = useTranslation();
 
@@ -28,7 +30,7 @@ export function Layout() {
       </ErrorBoundary>
 
       {/* Dev-only debug overlays - excluded from production builds */}
-      {isDev && <BrandColors />}
+      {siteValue(isDev && <BrandColors />)}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { siteValue } from '../i18n/siteCopy';
 
 /**
  * Per-route SEO head management — dependency-free.
@@ -57,8 +58,8 @@ function upsertCanonical(href: string) {
 }
 
 function applySeo(config: SeoConfig) {
-  const title = config.title ? `${config.title} | ${SITE_NAME}` : DEFAULTS.title;
-  const description = config.description || DEFAULTS.description;
+  const title = config.title ? `${config.title} | ${SITE_NAME}` : siteValue(DEFAULTS.title);
+  const description = config.description || siteValue(DEFAULTS.description);
   const type = config.type || DEFAULTS.type;
   const image = config.image || DEFAULTS.image;
   const url =

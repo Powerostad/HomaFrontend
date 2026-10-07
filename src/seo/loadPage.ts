@@ -1,7 +1,8 @@
-import { ARTICLES } from './content';
+import { siteText } from '@/i18n/siteCopy';
 import { CatalogNotFound, UpstreamError, validateProduct, validateShop, type CatalogReader } from './catalog';
-import { canonicalSearch, isTrackingParameter, matchRoute, productPath } from './routes';
+import { ARTICLES } from './content';
 import { safeHttpUrl, structuredData } from './metadata';
+import { canonicalSearch, isTrackingParameter, matchRoute, productPath } from './routes';
 import type { PublicPageData, PublicProduct, PublicShop } from './types';
 
 export interface PageOptions { origin: string; apiBase: string; indexable: boolean; supportUrl?: string; }
@@ -13,7 +14,7 @@ const titles: Record<string, [string, string]> = {
 };
 export function emptyPage(path: string, options: PageOptions): PublicPageData {
   return { kind: 'private', path, page: 1, total: 0, products: [], shops: [], breadcrumbs: [], status: 200, apiBase: options.apiBase, supportUrl: options.supportUrl,
-    seo: { title: 'هما | HOMA', description: 'هما؛ طراحی دکوراسیون و مشاهده محصولات با هوش مصنوعی.', canonical: options.origin + path, robots: 'noindex, follow', image: options.origin + '/images/seo/homa-preview.png', type: 'website', jsonLd: [] } };
+    seo: { title: siteText("هما | HOMA"), description: siteText("هما؛ طراحی دکوراسیون و مشاهده محصولات با هوش مصنوعی."), canonical: options.origin + path, robots: 'noindex, follow', image: options.origin + '/images/seo/homa-preview.png', type: 'website', jsonLd: [] } };
 }
 export async function loadPage(url: URL, read: CatalogReader, options: PageOptions): Promise<PageResult> {
   const route = matchRoute(url.pathname);
@@ -50,8 +51,8 @@ export async function loadPage(url: URL, read: CatalogReader, options: PageOptio
       const path = productPath(product.shop_slug, product.unique_link);
       if (route.path !== path) return { redirect: path + url.search, status: 308 };
       data.kind = 'product'; data.product = product; data.shop = validateShop(shops.results[0]);
-      data.seo.title = `${product.name} | ${product.shop_name} | هما`;
-      data.seo.description = product.description?.slice(0, 180) || `${product.name} از ${product.shop_name} را در عکس فضای خود ببینید و مشخصات محصول را پیش از خرید بررسی کنید.`;
+      data.seo.title = siteText("{{v0}} | {{v1}} | هما", { v0: product.name, v1: product.shop_name });
+      data.seo.description = product.description?.slice(0, 180) || siteText("{{v0}} از {{v1}} را در عکس فضای خود ببینید و مشخصات محصول را پیش از خرید بررسی کنید.", { v0: product.name, v1: product.shop_name });
       data.seo.image = safeHttpUrl(product.image_urls?.detail || product.image_url, options.origin) || data.seo.image;
       data.seo.type = 'product';
       data.breadcrumbs.push({ name: 'فروشگاه‌ها', path: '/explore' }, { name: product.shop_name, path: `/store/${encodeURIComponent(product.shop_slug)}` }, { name: product.name, path });
@@ -63,14 +64,14 @@ export async function loadPage(url: URL, read: CatalogReader, options: PageOptio
       if (!shops.count) return failure(data, 404);
       if (shops.count !== 1 || shops.results[0]?.slug !== route.slug || products.results.some((p) => p.shop_slug !== route.slug)) throw new UpstreamError('Exact shop filter unavailable');
       data.kind = 'store'; data.shop = validateShop(shops.results[0]); data.products = products.results.map(validateProduct); data.total = products.count;
-      data.seo.title = `محصولات ${data.shop.shop_name} | هما`;
-      data.seo.description = `محصولات فروشگاه ${data.shop.shop_name} را ببینید و با هوش مصنوعی در فضای خود امتحان کنید.`;
+      data.seo.title = siteText("محصولات {{v0}} | هما", { v0: data.shop.shop_name });
+      data.seo.description = siteText("محصولات فروشگاه {{v0}} را ببینید و با هوش مصنوعی در فضای خود امتحان کنید.", { v0: data.shop.shop_name });
       data.seo.image = safeHttpUrl(data.shop.logo_url, options.origin) || data.seo.image;
       data.breadcrumbs.push({ name: 'فروشگاه‌ها', path: '/explore' }, { name: data.shop.shop_name, path: route.path });
     } else {
       const article = ARTICLES[route.path];
-      const [title, description] = titles[route.path] || [article?.title || 'هما', article?.description || ''];
-      data.seo.title = title + ' | هما'; data.seo.description = description;
+      const [title, description] = titles[route.path] || [article?.title || siteText("هما"), article?.description || ''];
+      data.seo.title = title + siteText(" | هما"); data.seo.description = description;
       if (route.path === '/') data.kind = 'home';
       else if (route.path === '/explore') { const shops = await read<PublicShop>('/shops/list/', params); data.kind = 'explore'; data.shops = shops.results.map(validateShop); data.total = shops.count; }
       else if (route.path === '/gallery') { const products = await read<PublicProduct>('/products/', params); data.kind = 'gallery'; data.products = products.results.map(validateProduct); data.total = products.count; }
@@ -78,7 +79,7 @@ export async function loadPage(url: URL, read: CatalogReader, options: PageOptio
       if (route.path !== '/') data.breadcrumbs.push({ name: title, path: route.path });
     }
     if (paginated && data.page > 1 && (data.page - 1) * 20 >= data.total) return failure(data, 404);
-    if (data.page > 1) data.seo.title += ` | صفحه ${data.page.toLocaleString('fa-IR')}`;
+    if (data.page > 1) data.seo.title += siteText(" | صفحه {{v0}}", { v0: data.page.toLocaleString('fa-IR') });
     data.seo.robots = options.indexable && !(route.path === '/contact' && !options.supportUrl) && !filtered && (!paginated || data.total > 0) ? 'index, follow, max-image-preview:large' : 'noindex, follow';
     data.seo.jsonLd = structuredData(data, options.origin);
     return { data, status: 200 };
@@ -87,8 +88,8 @@ export async function loadPage(url: URL, read: CatalogReader, options: PageOptio
 function failure(data: PublicPageData, status: number): PageResult {
   data.kind = status === 404 ? 'not-found' : 'unavailable'; data.status = status;
   data.product = undefined; data.shop = undefined; data.products = []; data.shops = [];
-  data.seo.title = status === 404 ? 'صفحه پیدا نشد | هما' : 'دریافت اطلاعات ممکن نشد | هما';
-  data.seo.description = status === 404 ? 'این صفحه در دسترس نیست. فروشگاه‌ها و محصولات هما را ببینید.' : 'لطفاً کمی بعد دوباره تلاش کنید.';
+  data.seo.title = status === 404 ? siteText("صفحه پیدا نشد | هما") : siteText("دریافت اطلاعات ممکن نشد | هما");
+  data.seo.description = status === 404 ? siteText("این صفحه در دسترس نیست. فروشگاه‌ها و محصولات هما را ببینید.") : siteText("لطفاً کمی بعد دوباره تلاش کنید.");
   data.seo.robots = 'noindex, follow'; data.seo.jsonLd = [];
   return { data, status };
 }

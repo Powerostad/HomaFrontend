@@ -1,12 +1,13 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { Menu, ShoppingBag, User } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, User, ShoppingBag } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { UnifiedMenu } from "./SidebarMenu";
-import { AuthModal } from "./AuthModal";
+import { Link } from "react-router-dom";
 import { useAuth, useBasket } from "../context/AppProviders";
-import { toPersianDigits } from "../utils/formatters";
+import { toLocalizedDigits } from "../utils/formatters";
+import { AuthModal } from "./AuthModal";
 import { BilingualSwitch } from './BilingualSwitch';
+import { UnifiedMenu } from "./SidebarMenu";
 
 interface HeaderProps {
   theme?: "light" | "dark";
@@ -20,6 +21,7 @@ export function Header({
   disableNavigation = false,
   hideSpacer = false
 }: HeaderProps) {
+  const { siteValue } = useSiteTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { isLoggedIn, login } = useAuth();
@@ -56,7 +58,7 @@ export function Header({
             {/* Menu Trigger */}
             <div className="flex justify-start items-center">
               <BilingualSwitch />
-              {!disableNavigation && (
+              {siteValue(!disableNavigation && (
                 <button
                   onClick={() => setIsMenuOpen(true)}
                   className={`p-2 transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}
@@ -65,7 +67,7 @@ export function Header({
                 >
                   <Menu size={18} strokeWidth={1} />
                 </button>
-              )}
+              ))}
             </div>
 
             {/* HOMA Wordmark */}
@@ -85,7 +87,7 @@ export function Header({
 
             {/* Quick Access Profile */}
             <div className="flex justify-end items-center gap-4 md:gap-6">
-              {!disableNavigation && (
+              {siteValue(!disableNavigation && (
                 <>
                   {/* Basket */}
                   <button
@@ -95,16 +97,16 @@ export function Header({
                     data-ph-capture-attribute-nav="basket"
                   >
                     <ShoppingBag size={18} strokeWidth={1} />
-                    {itemCount > 0 && (
+                    {siteValue(itemCount > 0 && (
                       <span
                         className="absolute -top-0.5 -left-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-brand-primary text-white text-[10px] font-medium leading-none"
                       >
-                        {itemCount > 99 ? '۹۹+' : toPersianDigits(itemCount)}
+                        {siteValue(itemCount > 99 ? '۹۹+' : toLocalizedDigits(itemCount))}
                       </span>
-                    )}
+                    ))}
                   </button>
 
-                  {isLoggedIn ? (
+                  {siteValue(isLoggedIn ? (
                     <Link to="/account/gallery" data-ph-capture-attribute-nav="account" className={`transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`}>
                       <User size={18} strokeWidth={1} />
                     </Link>
@@ -115,9 +117,9 @@ export function Header({
                     >
                       <User size={18} strokeWidth={1} />
                     </button>
-                  )}
+                  ))}
                 </>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -138,7 +140,7 @@ export function Header({
       />
 
       {/* Spacer to prevent content from going under the fixed header */}
-      {!transparent && !hideSpacer && <div className="h-[64px] md:h-[80px]" />}
+      {siteValue(!transparent && !hideSpacer && <div className="h-[64px] md:h-[80px]" />)}
     </>
   );
 }

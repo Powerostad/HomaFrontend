@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * useStudioResult - Central state management hook for the Studio Result Page
  *
@@ -10,35 +11,30 @@
  *   'recommendations' - User selects/rejects items and browses products
  *   'basket'          - Final shopping list review before finalization
  */
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useStudio } from '@/context/StudioContext';
-import { useAuth } from '@/context/AuthContext';
 import { useUpload } from '@/context/AppProviders';
+import { useAuth } from '@/context/AuthContext';
 import { useBasket } from '@/context/BasketContext';
-import { toast } from 'sonner';
+import { useStudio } from '@/context/StudioContext';
 import {
+  getDownloadErrorMessage,
   prepareDownload,
   triggerDownload,
   triggerShare,
-  getDownloadErrorMessage,
   type PreparedDownload,
 } from '@/utils/downloadUtils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 // formatPriceFromRial available for consumers: import from '@/utils/formatters'
 import {
-  trackStudioResultViewed,
-  trackStudioResultAction,
   trackStudioProductClicked,
+  trackStudioResultAction,
+  trackStudioResultViewed,
 } from '@/analytics/events';
-import type { Product } from '../components/ProductDetailSheet';
 import type { RedesignSession } from '@/services/studioService';
 import { createImageCreditRequest } from '@/services/studioService';
-import {
-  type CategoryGroup,
-  type TierGroup,
-  matchedProductToUIProduct,
-} from './types';
+import type { Product } from '../components/ProductDetailSheet';
 import {
   calculateRecommendedTotalPrice,
   calculateSelectedPrice,
@@ -46,6 +42,11 @@ import {
   getResultImage,
   isAnalysisOnlyResult,
 } from './resultState';
+import {
+  matchedProductToUIProduct,
+  type CategoryGroup,
+  type TierGroup,
+} from './types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -172,6 +173,7 @@ export interface UseStudioResultReturn {
 // ---------------------------------------------------------------------------
 
 export function useStudioResult(): UseStudioResultReturn {
+  const { siteText } = useSiteTranslation();
   const { t } = useTranslation();
   const navigate = useNavigate();
   // Route param is named "jobId" in App.tsx, but we use "sessionId" internally
@@ -663,9 +665,9 @@ export function useStudioResult(): UseStudioResultReturn {
       });
 
       if (result.success) {
-        toast.success('درخواست شما ثبت شده است');
+        toast.success(siteText("درخواست شما ثبت شده است"));
       } else {
-        toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+        toast.error(result.error || siteText("خطا در ثبت درخواست اعتبار"));
       }
     } finally {
       setIsRequestingRedesignCredit(false);

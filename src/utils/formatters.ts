@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Formatters - Shared formatting utilities
  *
@@ -185,25 +186,25 @@ export function formatRelativeTime(input: number | string): string {
   };
 
   if (years > 0) {
-    return localizeTime('time.yearsAgo', '{{count}} سال پیش', years);
+    return localizeTime('time.yearsAgo', siteText("{{count}} سال پیش"), years);
   }
   if (months > 0) {
-    return localizeTime('time.monthsAgo', '{{count}} ماه پیش', months);
+    return localizeTime('time.monthsAgo', siteText("{{count}} ماه پیش"), months);
   }
   if (weeks > 0) {
-    return localizeTime('time.weeksAgo', '{{count}} هفته پیش', weeks);
+    return localizeTime('time.weeksAgo', siteText("{{count}} هفته پیش"), weeks);
   }
   if (days > 0) {
     if (days === 1) {
       return t('time.yesterday', 'دیروز');
     }
-    return localizeTime('time.daysAgo', '{{count}} روز پیش', days);
+    return localizeTime('time.daysAgo', siteText("{{count}} روز پیش"), days);
   }
   if (hours > 0) {
-    return localizeTime('time.hoursAgo', '{{count}} ساعت پیش', hours);
+    return localizeTime('time.hoursAgo', siteText("{{count}} ساعت پیش"), hours);
   }
   if (minutes > 0) {
-    return localizeTime('time.minutesAgo', '{{count}} دقیقه پیش', minutes);
+    return localizeTime('time.minutesAgo', siteText("{{count}} دقیقه پیش"), minutes);
   }
   return t('time.justNow', 'همین الان');
 }

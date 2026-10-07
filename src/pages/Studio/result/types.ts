@@ -1,14 +1,15 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Types, constants and helpers for Studio Result Page
  */
+import type { ImagePlacementMarker } from '@/services/studioService';
 import {
+  HardHat,
   Paintbrush,
   Wrench,
-  HardHat,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
-import type { ImagePlacementMarker } from '@/services/studioService';
 
 export type { ImagePlacementMarker } from '@/services/studioService';
 
@@ -187,8 +188,8 @@ export function matchedProductToUIProduct(product: MatchedProduct, index: number
     id: String(product.id),
     name: product.name,
     price: product.price,
-    category: product.categoryDisplay || product.category || 'محصول',
-    store: product.shopName || 'فروشگاه هوما',
+    category: product.categoryDisplay || product.category || siteText("محصول"),
+    store: product.shopName || siteText("فروشگاه هوما"),
     image: product.imageUrl,
     hotspot: { x: 50, y: 50 + index * 10 },
     isPromoted: product.isPromoted,

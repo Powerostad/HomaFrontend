@@ -1,17 +1,17 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
-import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { apiGet } from "@/utils/apiClient";
-import { formatPriceFromRial } from "@/utils/formatters";
-import { toLocalizedDigits } from "@/utils/formatters";
 import type { BackendProduct, PaginatedProductResponse } from "@/types/apiProduct";
 import { getProductImageUrl } from "@/types/apiProduct";
+import { apiGet } from "@/utils/apiClient";
+import { formatPriceFromRial, toLocalizedDigits } from "@/utils/formatters";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { BeforeAfterSlider } from "../../../components/BeforeAfterSlider";
+import { ImageWithFallback } from "../../../components/figma/ImageWithFallback";
 
 export interface OutputShowcaseProps {
     onGetStarted?: () => void;
@@ -28,6 +28,7 @@ interface DisplayProduct {
 export function OutputShowcase({
     onGetStarted: _onGetStarted
 }: OutputShowcaseProps) {
+  const { siteText, siteValue } = useSiteTranslation();
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [products, setProducts] = useState<DisplayProduct[]>([]);
@@ -54,7 +55,7 @@ export function OutputShowcase({
                 }));
                 setProducts(displayProducts);
             } else {
-                setError(response.error || 'خطا در دریافت محصولات');
+                setError(response.error || siteText("خطا در دریافت محصولات"));
             }
 
             setIsLoading(false);
@@ -133,19 +134,19 @@ export function OutputShowcase({
                                 <div className="mb-14 text-right">
                                     <h3 className="text-[16px] font-medium tracking-[0.3em] uppercase mb-2 opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
                                     <span className="text-[12px] font-light opacity-50 tracking-widest">
-                                        {isLoading ? t('common.loading', 'در حال بارگذاری...') :
-                                         products.length > 0 ? `${toLocalizedDigits(products.length)} ${t('landing.showcase.selectedItemsSuffix', 'موردِ انتخاب شده')}` : ''}
+                                        {siteValue(isLoading ? t('common.loading', 'در حال بارگذاری...') :
+                                         products.length > 0 ? siteText("{{v0}} {{v1}}", { v0: toLocalizedDigits(products.length), v1: t('landing.showcase.selectedItemsSuffix', 'موردِ انتخاب شده') }) : '')}
                                     </span>
                                 </div>
 
                                 <div className="space-y-12">
-                                    {isLoading ? (
+                                    {siteValue(isLoading ? (
                                         <div className="flex items-center justify-center py-16">
                                             <Loader2 className="w-8 h-8 animate-spin opacity-40" />
                                         </div>
                                     ) : error ? (
                                         <div className="text-center py-16 opacity-60">
-                                            <p className="text-sm">{error}</p>
+                                            <p className="text-sm">{siteValue(error)}</p>
                                         </div>
                                     ) : products.length === 0 ? (
                                         <div className="text-center py-16 opacity-60">
@@ -155,20 +156,20 @@ export function OutputShowcase({
                                         <div key={product.id} className="group flex items-center justify-between gap-8">
                                             {/* Image on the Right */}
                                             <div className="w-28 h-28 bg-surface-default flex items-center justify-center overflow-hidden border transition-all duration-700 rounded-[1px] shrink-0" style={{ borderColor: 'var(--color-border-default)' }}>
-                                                <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                                                <ImageWithFallback src={product.image} alt={siteValue(product.name)} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
                                             </div>
 
                                             {/* Description on the Left */}
                                             <div className="flex-1 text-right">
-                                                <h4 className="text-[18px] font-light mb-1 text-foreground/80 group-hover:text-foreground transition-colors">{product.name}</h4>
-                                                <p className="text-[12px] font-light opacity-60 tracking-widest mb-3 uppercase">{product.category}</p>
+                                                <h4 className="text-[18px] font-light mb-1 text-foreground/80 group-hover:text-foreground transition-colors">{siteValue(product.name)}</h4>
+                                                <p className="text-[12px] font-light opacity-60 tracking-widest mb-3 uppercase">{siteValue(product.category)}</p>
                                                 <div className="flex items-baseline justify-end gap-1.5">
-                                                    <span className="text-[18px] font-medium tracking-tighter">{product.price}</span>
+                                                    <span className="text-[18px] font-medium tracking-tighter">{siteValue(product.price)}</span>
                                                     <span className="text-[11px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    )))}
                                 </div>
                             </div>
                         </motion.div>
@@ -233,18 +234,18 @@ export function OutputShowcase({
                     <div className="flex items-center justify-between border-b pb-6" style={{ borderColor: 'var(--color-border-default)' }}>
                         <h3 className="text-[14px] font-medium uppercase tracking-[0.2em] opacity-80">{t('landing.showcase.suggestedProducts', 'محصولات پیشنهادی هما')}</h3>
                         <span className="text-[10px] font-light opacity-50">
-                            {isLoading ? '' : products.length > 0 ? `${toLocalizedDigits(products.length)} ${t('landing.showcase.itemSuffix', 'مورد')}` : ''}
+                            {siteValue(isLoading ? '' : products.length > 0 ? siteText("{{v0}} {{v1}}", { v0: toLocalizedDigits(products.length), v1: t('landing.showcase.itemSuffix', 'مورد') }) : '')}
                         </span>
                     </div>
 
                     <div className="space-y-10">
-                        {isLoading ? (
+                        {siteValue(isLoading ? (
                             <div className="flex items-center justify-center py-10">
                                 <Loader2 className="w-6 h-6 animate-spin opacity-40" />
                             </div>
                         ) : error ? (
                             <div className="text-center py-10 opacity-60">
-                                <p className="text-sm">{error}</p>
+                                <p className="text-sm">{siteValue(error)}</p>
                             </div>
                         ) : products.length === 0 ? (
                             <div className="text-center py-10 opacity-60">
@@ -253,18 +254,18 @@ export function OutputShowcase({
                         ) : products.map((product) => (
                             <div key={product.id} className="flex items-center gap-8">
                                 <div className="w-20 h-20 bg-surface-page overflow-hidden border flex items-center justify-center shrink-0 rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
-                                    <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover grayscale-[0.2]" />
+                                    <ImageWithFallback src={product.image} alt={siteValue(product.name)} className="w-full h-full object-cover grayscale-[0.2]" />
                                 </div>
                                 <div className="flex-1 min-w-0 text-right">
-                                    <h4 className="text-[15px] font-light truncate text-foreground/80">{product.name}</h4>
-                                    <p className="text-[10px] font-light opacity-60 tracking-widest uppercase mb-2">{product.category}</p>
+                                    <h4 className="text-[15px] font-light truncate text-foreground/80">{siteValue(product.name)}</h4>
+                                    <p className="text-[10px] font-light opacity-60 tracking-widest uppercase mb-2">{siteValue(product.category)}</p>
                                     <div className="flex items-baseline justify-end gap-1.5">
-                                        <span className="text-[15px] font-medium tracking-tighter">{product.price}</span>
+                                        <span className="text-[15px] font-medium tracking-tighter">{siteValue(product.price)}</span>
                                         <span className="text-[10px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )))}
                     </div>
                 </div>
 

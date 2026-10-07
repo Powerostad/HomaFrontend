@@ -1,47 +1,48 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Suspense } from "react";
-import { BrowserRouter as Router, Routes as RouterRoutes, Route as RouterRoute, Navigate } from "react-router-dom";
-import { AppProvider } from "./context/AppContext";
-import { Layout } from "./layout/Layout";
+import { Navigate, BrowserRouter as Router, Route as RouterRoute, Routes as RouterRoutes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AppProvider } from "./context/AppContext";
+import { Layout } from "./layout/Layout";
 
 // Import Pages directly instead of lazy to prevent "white screen" hydration issues in this environment
-import { ProductLandingPage } from "./pages/ProductLanding/Page";
-import { UploadPage } from "./pages/Upload/Page";
+import { HomaLoader } from "./components/HomaLoader";
+import { ScrollToTop } from "./components/ScrollToTop";
+import { BasketPage } from "./pages/Basket";
+import { CollaborationPage } from "./pages/Collaboration/Page";
+import { ConfirmationPage } from "./pages/Confirmation";
+import { ContactPage } from "./pages/Contact/Page";
+import { ErrorPage } from "./pages/Error";
+import { ExplorePage } from "./pages/Explore";
+import { FAQPage } from "./pages/FAQ/Page";
 import { GalleryPage } from "./pages/Gallery";
+import { InformationPage } from "./pages/Information/Page";
 import { PrecheckPage } from "./pages/Precheck";
 import { ProcessingPage } from "./pages/Processing";
-import { ConfirmationPage } from "./pages/Confirmation";
-import { VisualizationPage } from "./pages/Visualization";
-import { ErrorPage } from "./pages/Error";
-import { ProductFallbackPage } from "./pages/ProductFallback";
-import { CollaborationPage } from "./pages/Collaboration/Page";
-import { StudioUploadPage } from "./pages/Studio/UploadPage";
-import { StudioProgressPage } from "./pages/Studio/ProgressPage";
-import { StudioResultPage } from "./pages/Studio/ResultPage";
-import { StudioProjectsDashboard } from "./pages/Studio/ProjectsDashboard";
-import { StudioProjectDetailsPage } from "./pages/Studio/ProjectDetailsPage";
-import { ExplorePage } from "./pages/Explore";
-import { StorePage } from "./pages/Store";
 import { ProductDetailsPage } from "./pages/ProductDetails";
-import { BasketPage } from "./pages/Basket";
-import { ContactPage } from "./pages/Contact/Page";
-import { FAQPage } from "./pages/FAQ/Page";
-import { InformationPage } from "./pages/Information/Page";
-import { ScrollToTop } from "./components/ScrollToTop";
-import { HomaLoader } from "./components/HomaLoader";
+import { ProductFallbackPage } from "./pages/ProductFallback";
+import { ProductLandingPage } from "./pages/ProductLanding/Page";
+import { StorePage } from "./pages/Store";
+import { StudioProgressPage } from "./pages/Studio/ProgressPage";
+import { StudioProjectDetailsPage } from "./pages/Studio/ProjectDetailsPage";
+import { StudioProjectsDashboard } from "./pages/Studio/ProjectsDashboard";
+import { StudioResultPage } from "./pages/Studio/ResultPage";
+import { StudioUploadPage } from "./pages/Studio/UploadPage";
+import { UploadPage } from "./pages/Upload/Page";
+import { VisualizationPage } from "./pages/Visualization";
 
 // Try On Flow
-import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
 import { TryOnProgressPage } from "./pages/TryOn/ProgressPage";
 import { TryOnResultPage } from "./pages/TryOn/ResultPage";
+import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
 
 // Room Redesign Flow (conversational recommendations - live chat backend)
 import { RoomRedesignPage } from "./pages/RoomRedesign/RoomRedesignPage";
 
 // Account & Gallery
-import AccountGalleryPage from "./pages/Account/GalleryPage";
 import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
+import AccountGalleryPage from "./pages/Account/GalleryPage";
 
 // Shared (public)
 import SharedPage from "./pages/Shared/SharedPage";
@@ -51,6 +52,7 @@ import SharedPage from "./pages/Shared/SharedPage";
 const PageLoader = () => <HomaLoader />;
 
 export default function App() {
+  const { siteText } = useSiteTranslation();
   return (
     <ErrorBoundary>
       <Router>
@@ -137,12 +139,12 @@ export default function App() {
               } />
               <RouterRoute path="account/orders" element={
                 <ProtectedRoute fallback="modal">
-                  <div className="p-20 text-center">صفحه سفارش‌ها (بزودی)</div>
+                  <div className="p-20 text-center">{siteText("صفحه سفارش‌ها (بزودی)")}</div>
                 </ProtectedRoute>
               } />
               <RouterRoute path="account/settings" element={
                 <ProtectedRoute fallback="modal">
-                  <div className="p-20 text-center">تنظیمات حساب (بزودی)</div>
+                  <div className="p-20 text-center">{siteText("تنظیمات حساب (بزودی)")}</div>
                 </ProtectedRoute>
               } />
             </RouterRoute>

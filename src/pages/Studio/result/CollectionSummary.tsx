@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { ShoppingBag } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
+import { ShoppingBag } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
@@ -23,6 +24,7 @@ export function CollectionSummary({
   selectedPrice = 0,
   isAtBasket = false,
 }: CollectionSummaryProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const summaryRef = useRef<HTMLElement>(null);
@@ -64,7 +66,7 @@ export function CollectionSummary({
     >
       <div className="studio-summary-inner">
         <nav className="studio-summary-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
-          {tabs.map((tab) => (
+          {siteValue(tabs.map((tab) => (
             <button
               type="button"
               key={tab.id}
@@ -72,18 +74,18 @@ export function CollectionSummary({
               aria-current={tab.id === activePhase ? 'step' : undefined}
               className={tab.id === activePhase ? 'is-active' : ''}
             >
-              {tab.label}
+              {siteValue(tab.label)}
             </button>
-          ))}
+          )))}
         </nav>
 
         <div className="studio-summary-info">
           <div className="studio-summary-count">
             <ShoppingBag size={17} />
-            <span>{toLocalizedDigits(selectedCount)} {t('studio.result.v2.summary.selectedProducts', 'محصول انتخاب شده')}</span>
+            <span>{siteValue(toLocalizedDigits(selectedCount))} {t('studio.result.v2.summary.selectedProducts', 'محصول انتخاب شده')}</span>
             <small>{t('studio.result.v2.summary.ofRecommendations', 'از {{count}} پیشنهاد', { count: totalRecommendations })}</small>
           </div>
-          <span className="studio-summary-price" dir="ltr">{formatPriceFromRial(selectedPrice, true)}</span>
+          <span className="studio-summary-price" dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, true))}</span>
           <button
             type="button"
             className="studio-summary-cta"

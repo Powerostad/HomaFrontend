@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Scroll-driven mobile sheet (Apple-Maps-card pattern).
  *
@@ -12,8 +13,8 @@
  *
  * The consumer renders its own sticky nav + sticky-bottom input inside `children`.
  */
-import { RD } from '../theme';
 import { ChevronUp } from 'lucide-react';
+import { RD } from '../theme';
 
 export interface MobileSheetProps {
   /** Focus layer (room photo + pins + header). Sizes itself to the photo height. */
@@ -27,6 +28,7 @@ export interface MobileSheetProps {
 }
 
 export function MobileSheet({ focus, children, scrollRef, showHint = false }: MobileSheetProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   return (
     <div
       ref={scrollRef}
@@ -35,7 +37,7 @@ export function MobileSheet({ focus, children, scrollRef, showHint = false }: Mo
     >
       {/* Sticky photo — sized to its own height; stays pinned behind as the sheet
           scrolls up over it. */}
-      <div className="sticky top-0 z-0">{focus}</div>
+      <div className="sticky top-0 z-0">{siteValue(focus)}</div>
 
       {/* Sheet flows directly under the photo (no gap, no letterbox). */}
       <div
@@ -45,17 +47,16 @@ export function MobileSheet({ focus, children, scrollRef, showHint = false }: Mo
         {/* Drag handle + pull-up hint (scroll does the work; this is the affordance). */}
         <div className="flex flex-col items-center gap-1 pt-2.5 pb-1.5">
           <span className="w-10 h-1 rounded-full" style={{ backgroundColor: RD.handle }} />
-          {showHint && (
+          {siteValue(showHint && (
             <span
               className="flex items-center gap-1 text-[11px] font-medium"
               style={{ color: RD.inkSoft, fontFamily: 'Vazirmatn' }}
             >
               <ChevronUp size={12} strokeWidth={2.25} />
-              جزئیات
-            </span>
-          )}
+              {siteText("جزئیات")}</span>
+          ))}
         </div>
-        {children}
+        {siteValue(children)}
       </div>
     </div>
   );

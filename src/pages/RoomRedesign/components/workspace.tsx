@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Shared workspace molecules for the Room Redesign flow — used by BOTH the
  * desktop columns (desktop.tsx) and the mobile sheet (RoomRedesignPage mobile
@@ -12,28 +13,29 @@
  *
  * All visual values come from theme.ts tokens (RD / FRAME). No literals here.
  */
-import { useState, type ReactNode } from 'react';
-import {
-  X,
-  Download,
-  Share2,
-  Maximize2,
-  GitCompareArrows,
-  type LucideIcon,
-} from 'lucide-react';
-import { toast } from 'sonner';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
 import { SimpleDialog } from '@/components/SimpleDialog';
 import { downloadImage } from '@/utils/downloadUtils';
-import { RD } from '../theme';
+import {
+  Download,
+  GitCompareArrows,
+  Maximize2,
+  Share2,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { toast } from 'sonner';
 import { DESKTOP_QUICK_EDITS } from '../data/uiCopy';
+import { RD } from '../theme';
 
 // ── CanvasCaption ───────────────────────────────────────────────────
 export function CanvasCaption({ kicker, title, align = 'right' }: { kicker: string; title: string; align?: 'right' | 'center' }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="shrink-0" style={{ fontFamily: 'Vazirmatn', textAlign: align }}>
-      <p style={{ fontSize: 11, letterSpacing: '0.14em', color: RD.inkSoft, fontWeight: 600 }}>{kicker}</p>
-      <p style={{ fontSize: 15, fontWeight: 600, color: RD.ink, marginTop: 2 }}>{title}</p>
+      <p style={{ fontSize: 11, letterSpacing: '0.14em', color: RD.inkSoft, fontWeight: 600 }}>{siteValue(kicker)}</p>
+      <p style={{ fontSize: 15, fontWeight: 600, color: RD.ink, marginTop: 2 }}>{siteValue(title)}</p>
     </div>
   );
 }
@@ -52,14 +54,15 @@ function ToolbarButton({
   disabled?: boolean;
   onClick?: () => void;
 }) {
+  const { siteValue } = useSiteTranslation();
   const [hover, setHover] = useState(false);
   const bg = active ? RD.accentGreenBg : hover ? RD.hoverOverlay : 'transparent';
   const color = active ? RD.accentGreen : hover ? RD.ink : RD.inkSoft;
   return (
     <button
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label={siteValue(label)}
+      title={siteValue(label)}
       disabled={disabled}
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
@@ -89,6 +92,7 @@ export function ImageToolbar({
    *  ghost icon row with no surface (flush sheet chrome on a white mobile sheet). */
   variant?: 'glass' | 'bare';
 }) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const buttons = (
     <>
       <ToolbarButton icon={Download} label="دانلود" onClick={onDownload} />
@@ -101,8 +105,8 @@ export function ImageToolbar({
 
   if (variant === 'bare') {
     return (
-      <div className="shrink-0 flex items-center gap-0.5" dir="rtl">
-        {buttons}
+      <div className="shrink-0 flex items-center gap-0.5" dir={siteDirection()}>
+        {siteValue(buttons)}
       </div>
     );
   }
@@ -110,7 +114,7 @@ export function ImageToolbar({
   return (
     <div
       className="shrink-0 flex items-center"
-      dir="rtl"
+      dir={siteDirection()}
       style={{
         background: RD.glassBg,
         backdropFilter: RD.glassBlur,
@@ -122,18 +126,19 @@ export function ImageToolbar({
         gap: 2,
       }}
     >
-      {buttons}
+      {siteValue(buttons)}
     </div>
   );
 }
 
 // ── Modals ──────────────────────────────────────────────────────────
 function ModalClose({ onClose }: { onClose: () => void }) {
+  const { siteText } = useSiteTranslation();
   // RTL: leading corner is the physical top-RIGHT → close sits there.
   return (
     <button
       type="button"
-      aria-label="بستن"
+      aria-label={siteText("بستن")}
       onClick={onClose}
       className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-md"
       style={{ backgroundColor: RD.modalCloseBg }}
@@ -144,14 +149,15 @@ function ModalClose({ onClose }: { onClose: () => void }) {
 }
 
 export function ZoomModal({ src, open, onClose }: { src: string; open: boolean; onClose: () => void }) {
+  const { siteText, siteDirection } = useSiteTranslation();
   return (
     <SimpleDialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <div className="relative" style={{ width: '90vw', height: '88vh' }} dir="rtl">
+      <div className="relative" style={{ width: '90vw', height: '88vh' }} dir={siteDirection()}>
         <div
           className="w-full h-full flex items-center justify-center rounded-2xl overflow-hidden"
           style={{ backgroundColor: RD.cream }}
         >
-          <img src={src} alt="پیش‌نمایش" className="max-w-full max-h-full object-contain" />
+          <img src={src} alt={siteText("پیش‌نمایش")} className="max-w-full max-h-full object-contain" />
         </div>
         <ModalClose onClose={onClose} />
       </div>
@@ -170,9 +176,10 @@ export function CompareModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { siteDirection } = useSiteTranslation();
   return (
     <SimpleDialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <div className="relative" style={{ width: 'min(90vw, 1100px)' }} dir="rtl">
+      <div className="relative" style={{ width: 'min(90vw, 1100px)' }} dir={siteDirection()}>
         <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ border: `1px solid ${RD.line}` }}>
           <BeforeAfterSlider beforeImage={before} afterImage={after} priority />
         </div>
@@ -185,9 +192,10 @@ export function CompareModal({
 // ── QuickEditChips ──────────────────────────────────────────────────
 // Static follow-up prompts; tapping one sends it as the next conversation turn.
 export function QuickEditChips({ onPick, disabled }: { onPick: (text: string) => void; disabled: boolean }) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   return (
-    <div className="flex flex-wrap gap-2" dir="rtl" style={{ fontFamily: 'Vazirmatn' }}>
-      {DESKTOP_QUICK_EDITS.map((c) => (
+    <div className="flex flex-wrap gap-2" dir={siteDirection()} style={{ fontFamily: 'Vazirmatn' }}>
+      {siteValue(DESKTOP_QUICK_EDITS.map((c) => (
         <button
           key={c.id}
           type="button"
@@ -198,9 +206,9 @@ export function QuickEditChips({ onPick, disabled }: { onPick: (text: string) =>
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = RD.chipHoverBg)}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
         >
-          {c.label}
+          {siteValue(c.label)}
         </button>
-      ))}
+      )))}
     </div>
   );
 }
@@ -227,29 +235,30 @@ export function useImageActions({
   onCompare: () => void;
   modals: ReactNode;
 } {
+  const { siteValue, siteText } = useSiteTranslation();
   const [zoom, setZoom] = useState(false);
   const [compare, setCompare] = useState(false);
   const canCompare = !!(originalImage && image && originalImage !== image && isPreview);
 
   const onDownload = async () => {
     if (!image) return;
-    toast.loading('در حال آماده‌سازی دانلود…', { id: 'dl' });
+    toast.loading(siteText("در حال آماده‌سازی دانلود…"), { id: 'dl' });
     try {
       const res = await downloadImage({ imageUrl: image, filename: `homa-${activeVersion}`, useAuth: false });
-      if (res.success) toast.success('تصویر ذخیره شد', { id: 'dl' });
-      else toast.error('دانلود ناموفق بود', { id: 'dl' });
+      if (res.success) toast.success(siteText("تصویر ذخیره شد"), { id: 'dl' });
+      else toast.error(siteText("دانلود ناموفق بود"), { id: 'dl' });
     } catch {
-      toast.error('دانلود ناموفق بود', { id: 'dl' });
+      toast.error(siteText("دانلود ناموفق بود"), { id: 'dl' });
     }
   };
 
   const onShare = async () => {
     if (!image) return;
     try {
-      if (navigator.share) await navigator.share({ title: 'پیش‌نمایش طراحی هما', url: image });
+      if (navigator.share) await navigator.share({ title: siteText("پیش‌نمایش طراحی هما"), url: image });
       else {
         await navigator.clipboard.writeText(image);
-        toast.success('لینک تصویر کپی شد');
+        toast.success(siteText("لینک تصویر کپی شد"));
       }
     } catch {
       /* user cancelled share — no-op */
@@ -258,10 +267,10 @@ export function useImageActions({
 
   const modals = (
     <>
-      {image && <ZoomModal src={image} open={zoom} onClose={() => setZoom(false)} />}
-      {canCompare && originalImage && image && (
+      {siteValue(image && <ZoomModal src={image} open={zoom} onClose={() => setZoom(false)} />)}
+      {siteValue(canCompare && originalImage && image && (
         <CompareModal before={originalImage} after={image} open={compare} onClose={() => setCompare(false)} />
-      )}
+      ))}
     </>
   );
 

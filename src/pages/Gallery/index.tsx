@@ -1,15 +1,17 @@
+import { useSeo } from "@/hooks/useSeo";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useEffect, useState } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
+import { HomaLoader } from "../../components/HomaLoader";
 import { ProductGallery } from "../../components/ProductGallery";
 import { useApp } from "../../context/AppContext";
 import { fetchAllProducts, fetchProduct, validateProduct } from "../../utils/productLoader";
-import { HomaLoader } from "../../components/HomaLoader";
-import { useSeo } from "@/hooks/useSeo";
 
 export function GalleryPage() {
+  const { siteText } = useSiteTranslation();
   useSeo({
-    title: 'گالری الهام‌بخش',
-    description: 'نمونه‌های واقعی محصولات در فضای کاربران HOMA برای الهام گرفتن.',
+    title: siteText("گالری الهام‌بخش"),
+    description: siteText("نمونه‌های واقعی محصولات در فضای کاربران HOMA برای الهام گرفتن."),
   });
   const navigate = useRouterNavigate();
   const { allProducts, setAllProducts, setProduct, setProductVariant, trackKPI } = useApp();

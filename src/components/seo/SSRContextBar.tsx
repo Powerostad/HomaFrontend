@@ -1,3 +1,4 @@
+import { siteLocale, useSiteTranslation } from '@/i18n/siteCopy';
 import React from "react";
 import { SSRSafeLink } from "./SSRSafeLink";
 
@@ -17,7 +18,7 @@ interface SSRContextBarProps {
 
 function formatPriceSimple(price: number): string {
   const toman = Math.round(price / 10);
-  return toman.toLocaleString("fa-IR");
+  return toman.toLocaleString(siteLocale());
 }
 
 /**
@@ -30,8 +31,9 @@ export function SSRContextBar({
   price,
   translations = {},
 }: SSRContextBarProps) {
-  const tomanLabel = translations.toman || "تومان";
-  const productLabel = translations.product || "محصول";
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
+  const tomanLabel = translations.toman || siteText("تومان");
+  const productLabel = translations.product || siteText("محصول");
 
   const validItems = items
     .filter((item) => item.label)
@@ -43,46 +45,46 @@ export function SSRContextBar({
   return (
     <nav
       className="h-[40px] md:h-[44px] flex items-center justify-between px-[var(--spacing-md)] md:px-[var(--spacing-2xl)] w-full max-w-[1440px] mx-auto overflow-x-auto no-scrollbar"
-      dir="rtl"
+      dir={siteDirection()}
     >
       <div className="flex items-center gap-1.5 whitespace-nowrap">
-        {validItems.map((item, index) => {
+        {siteValue(validItems.map((item, index) => {
           const isLast = index === validItems.length - 1;
           const isStudio = item.href?.includes("/studio");
 
           return (
             <React.Fragment key={index}>
-              {item.href && !isLast && !isStudio ? (
+              {siteValue(item.href && !isLast && !isStudio ? (
                 <SSRSafeLink
                   to={item.href}
                   className="text-[11px] md:text-[length:var(--text-caption-size)] font-[number:var(--font-weight-regular)] text-[var(--foreground)]/30 hover:text-[var(--foreground)]/60 transition-colors"
                 >
-                  {item.label}
+                  {siteValue(item.label)}
                 </SSRSafeLink>
               ) : (
                 <span
                   className={`text-[11px] md:text-[length:var(--text-caption-size)] ${isLast ? "font-[number:var(--font-weight-bold)] text-[var(--foreground)]/80" : "font-[number:var(--font-weight-regular)] text-[var(--foreground)]/30"}`}
                 >
-                  {item.label}
+                  {siteValue(item.label)}
                 </span>
-              )}
-              {!isLast && (
+              ))}
+              {siteValue(!isLast && (
                 <span className="text-[10px] text-[var(--foreground)]/10 mx-0.5">
                   /
                 </span>
-              )}
+              ))}
             </React.Fragment>
           );
-        })}
+        }))}
       </div>
 
-      {price !== undefined && (
+      {siteValue(price !== undefined && (
         <div className="flex items-baseline gap-1 mr-4 shrink-0">
           <span
             className="font-bold text-foreground"
             style={{ fontSize: "var(--text-h4-size)" }}
           >
-            {formatPriceSimple(price)}
+            {siteValue(formatPriceSimple(price))}
           </span>
           <span
             className="text-muted-foreground"
@@ -91,10 +93,10 @@ export function SSRContextBar({
               fontWeight: "var(--font-weight-medium)",
             }}
           >
-            {tomanLabel}
+            {siteValue(tomanLabel)}
           </span>
         </div>
-      )}
+      ))}
     </nav>
   );
 }

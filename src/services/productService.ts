@@ -1,17 +1,18 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Product Service
  * API integration for product catalog data
  */
 
-import { apiGet, type RequestOptions } from '@/utils/apiClient';
 import {
   type BackendProduct,
+  type PaginatedProductResponse,
+  type ProductDetailResult,
   type ProductListParams,
   type ProductListResult,
-  type ProductDetailResult,
-  type PaginatedProductResponse,
   transformBackendProduct,
 } from '@/types/apiProduct';
+import { apiGet, type RequestOptions } from '@/utils/apiClient';
 
 // =============================================================================
 // API Functions
@@ -69,7 +70,7 @@ export async function fetchProducts(
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت لیست محصولات',
+    error: response.error || siteText("خطا در دریافت لیست محصولات"),
   };
 }
 
@@ -98,7 +99,7 @@ export async function fetchProduct(
 
   return {
     success: false,
-    error: response.error || 'محصول یافت نشد',
+    error: response.error || siteText("محصول یافت نشد"),
   };
 }
 

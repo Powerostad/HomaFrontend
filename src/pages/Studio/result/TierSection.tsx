@@ -1,7 +1,8 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
-import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 import { RecommendationCard } from './RecommendationCard';
+import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 
 interface TierSectionProps {
   tier: InterventionTier;
@@ -41,21 +42,22 @@ export function TierSection({
   onScrollToAnalysis,
   onUpdateQuantity,
 }: TierSectionProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const config = TIER_CONFIG[tier];
   if (items.length === 0) return null;
 
   return (
-    <section className="studio-tier-section" aria-label={config.label}>
+    <section className="studio-tier-section" aria-label={siteValue(config.label)}>
       <div className="studio-tier-heading">
         <div>
           <p className="studio-result-eyebrow">{t(`studio.result.v2.tier.${tier === 'quick_win' ? 'quickWin' : tier}`, config.label)}</p>
-          <h3>{config.label}</h3>
+          <h3>{siteValue(config.label)}</h3>
         </div>
-        <span>{items.length} {t('studio.result.v2.card.options', 'گزینه')}</span>
+        <span>{siteValue(items.length)} {t('studio.result.v2.card.options', 'گزینه')}</span>
       </div>
       <div>
-        {items.map((group, index) => (
+        {siteValue(items.map((group, index) => (
           <RecommendationCard
             key={group.itemId}
             group={group}
@@ -76,7 +78,7 @@ export function TierSection({
             onScrollToAnalysis={onScrollToAnalysis}
             onUpdateQuantity={onUpdateQuantity ? (quantity) => onUpdateQuantity(group.itemId, quantity) : undefined}
           />
-        ))}
+        )))}
       </div>
     </section>
   );

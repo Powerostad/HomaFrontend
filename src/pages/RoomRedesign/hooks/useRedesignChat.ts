@@ -1,6 +1,7 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChatSession, loadChatSession, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
-import { rebuildSessionView, chipGroupsFromQuestions } from '../services/transformers';
+import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
 
 const RECONCILE_MAX_ATTEMPTS = 90;
@@ -22,6 +23,7 @@ export interface SendTurnArgs {
   productId?: number;
 }
 export function useRedesignChat(path?: string) {
+  const { siteText } = useSiteTranslation();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
@@ -73,7 +75,7 @@ export function useRedesignChat(path?: string) {
       if (sidRef.current !== sid) return;
       const loaded = await loadChatSession(sid, viewedRef.current);
       if (signal.aborted || sidRef.current !== sid) return;
-      if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); break; }
+      if (!loaded.success) { setError(loaded.error || siteText("ارتباط برقرار نشد")); break; }
       const data = loaded.data as SessionPayload;
       apply(data);
       const ops = data.operations || [];
@@ -83,7 +85,7 @@ export function useRedesignChat(path?: string) {
       const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
       if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
       if (!active) {
-        if (key && !tracked) { setError('وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.'); break; }
+        if (key && !tracked) { setError(siteText("وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.")); break; }
         operation.current = null; completed.current = true;
         setStatus('idle'); setError(null); setStage(null); locked.current = false;
         return;
@@ -114,7 +116,7 @@ export function useRedesignChat(path?: string) {
       const loaded = await loadChatSession(path);
       if (ac.signal.aborted) return;
       setHydrating(false);
-      if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || 'این گفتگو در دسترس نیست.'); return; }
+      if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || siteText("این گفتگو در دسترس نیست.")); return; }
       try {
         const saved = sessionStorage.getItem(`redesign-view:${path}`);
         if (saved && (saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
@@ -193,7 +195,7 @@ export function useRedesignChat(path?: string) {
     let sid = sidRef.current;
     if (!sid) {
       const created = await createChatSession();
-      if (!created.success || !created.data) { setError(created.error || 'خطا در ایجاد گفتگو'); setStatus('error'); locked.current = false; return false; }
+      if (!created.success || !created.data) { setError(created.error || siteText("خطا در ایجاد گفتگو")); setStatus('error'); locked.current = false; return false; }
       sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
     }
     const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
@@ -215,7 +217,7 @@ export function useRedesignChat(path?: string) {
       && sidRef.current === sid
       && !ac.signal.aborted;
     const loaded = await loadChatSession(sid, viewedRef.current);
-    if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); locked.current = false; return; }
+    if (!loaded.success) { setError(loaded.error || siteText("ارتباط برقرار نشد")); locked.current = false; return; }
     const ops = (loaded.data as SessionPayload).operations || [];
     const active = ops.find(o => o.status === 'running');
     const failed = ops.find(o => o.operation_id === operation.current?.operation_id) || ops.find(o => o.idempotency_key === intent.current?.idempotencyKey) || ops[0];
@@ -243,7 +245,7 @@ export function useRedesignChat(path?: string) {
         },
       });
       if (!isCurrent()) return;
-      if (!result.success) { setError(result.error || 'خطا در ساخت تصویر'); locked.current = false; return; }
+      if (!result.success) { setError(result.error || siteText("خطا در ساخت تصویر")); locked.current = false; return; }
       setStatus('rendering');
       // A non-terminal ack must retain an operation identity for live pushes;
       // fall back to the durable session state if an older server cannot supply it.
@@ -251,7 +253,7 @@ export function useRedesignChat(path?: string) {
     } else if (failed?.status === 'failed' || (!failed && intent.current)) {
       if (intent.current) await execute(intent.current);
       else {
-        setError('جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن.');
+        setError(siteText("جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن."));
         locked.current = false;
       }
     } else { await reconcile(sid, ac.signal); }

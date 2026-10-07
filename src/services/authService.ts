@@ -1,30 +1,31 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Auth Service - احراز هویت
  * مدیریت OTP، توکن‌ها و پروفایل کاربر
  */
 
-import { apiPost, apiGet, apiPut, setStoredTokens, clearAuthData, getRefreshToken, refreshAccessToken } from '@/utils/apiClient';
 import {
   AUTH_STORAGE_KEYS,
   transformBackendUser,
-  type BackendUser,
   type AuthTokens,
-  type User,
-  type StoredAuthState,
-  type OTPSendResponse,
-  type OTPVerifyResponse,
-  type LoginResponse,
-  type ResetPasswordResponse,
+  type BackendUser,
   type CheckUserResponse,
-  type SetPasswordResponse,
+  type CheckUserResult,
+  type LoginResponse,
+  type LoginResult,
+  type OTPSendResponse,
   type OTPSendResult,
+  type OTPVerifyResponse,
   type OTPVerifyResult,
   type ProfileResult,
-  type LoginResult,
+  type ResetPasswordResponse,
   type ResetPasswordResult,
-  type CheckUserResult,
+  type SetPasswordResponse,
   type SetPasswordResult,
+  type StoredAuthState,
+  type User,
 } from '@/types/auth';
+import { apiGet, apiPost, apiPut, clearAuthData, getRefreshToken, refreshAccessToken, setStoredTokens } from '@/utils/apiClient';
 
 // =============================================================================
 // Constants
@@ -160,11 +161,11 @@ export async function sendOTP(phone: string): Promise<OTPSendResult> {
   }
 
   // Parse specific error messages
-  let errorMessage = response.error || 'خطا در ارسال کد تایید';
+  let errorMessage = response.error || siteText("خطا در ارسال کد تایید");
 
   // Rate limiting error
   if (response.statusCode === 429) {
-    errorMessage = 'تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید';
+    errorMessage = siteText("تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید");
   }
 
   return {
@@ -204,7 +205,7 @@ export async function verifyOTP(phone: string, otpCode: string): Promise<OTPVeri
   }
 
   // Parse specific error messages
-  let errorMessage = response.error || 'کد تایید نامعتبر است';
+  let errorMessage = response.error || siteText("کد تایید نامعتبر است");
   let remainingAttempts: number | undefined;
 
   // Extract remaining attempts from error message
@@ -216,12 +217,12 @@ export async function verifyOTP(phone: string, otpCode: string): Promise<OTPVeri
 
   // OTP expired (410 Gone)
   if (response.statusCode === 410) {
-    errorMessage = 'کد تایید منقضی شده است. لطفا کد جدید درخواست کنید';
+    errorMessage = siteText("کد تایید منقضی شده است. لطفا کد جدید درخواست کنید");
   }
 
   // Max attempts exceeded
   if (response.error?.includes('حد مجاز')) {
-    errorMessage = 'تعداد تلاش‌های شما از حد مجاز گذشته است. لطفا کد جدید درخواست کنید';
+    errorMessage = siteText("تعداد تلاش‌های شما از حد مجاز گذشته است. لطفا کد جدید درخواست کنید");
     remainingAttempts = 0;
   }
 
@@ -254,10 +255,10 @@ export async function resendOTP(phone: string): Promise<OTPSendResult> {
     };
   }
 
-  let errorMessage = response.error || 'خطا در ارسال مجدد کد تایید';
+  let errorMessage = response.error || siteText("خطا در ارسال مجدد کد تایید");
 
   if (response.statusCode === 429) {
-    errorMessage = 'تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید';
+    errorMessage = siteText("تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید");
   }
 
   return {
@@ -292,7 +293,7 @@ export async function checkUser(phone: string): Promise<CheckUserResult> {
 
   return {
     success: false,
-    error: response.error || 'خطا در بررسی کاربر',
+    error: response.error || siteText("خطا در بررسی کاربر"),
   };
 }
 
@@ -331,21 +332,21 @@ export async function setPassword(
   }
 
   // Parse specific error messages
-  let errorMessage = response.error || 'خطا در تنظیم رمز عبور';
+  let errorMessage = response.error || siteText("خطا در تنظیم رمز عبور");
 
   // User already has password
   if (response.error?.includes('قبلاً رمز عبور')) {
-    errorMessage = 'این کاربر قبلاً رمز عبور دارد. از صفحه ورود استفاده کنید';
+    errorMessage = siteText("این کاربر قبلاً رمز عبور دارد. از صفحه ورود استفاده کنید");
   }
 
   // User not found
   if (response.statusCode === 404) {
-    errorMessage = 'کاربری با این شماره تلفن یافت نشد';
+    errorMessage = siteText("کاربری با این شماره تلفن یافت نشد");
   }
 
   // Password validation errors
   if (response.error?.includes('رمزهای عبور')) {
-    errorMessage = 'رمز عبور و تکرار آن یکسان نیست';
+    errorMessage = siteText("رمز عبور و تکرار آن یکسان نیست");
   }
 
   return {
@@ -388,16 +389,16 @@ export async function loginWithPassword(phone: string, password: string): Promis
   }
 
   // Parse specific error messages - use generic message for security
-  let errorMessage = 'شماره موبایل یا رمز عبور اشتباه است';
+  let errorMessage = siteText("شماره موبایل یا رمز عبور اشتباه است");
 
   // Rate limiting / account locked
   if (response.statusCode === 429) {
-    errorMessage = 'حساب شما موقتاً مسدود شده. لطفاً بعداً تلاش کنید';
+    errorMessage = siteText("حساب شما موقتاً مسدود شده. لطفاً بعداً تلاش کنید");
   }
 
   // Network error
   if (response.statusCode === 0) {
-    errorMessage = 'خطا در برقراری ارتباط با سرور';
+    errorMessage = siteText("خطا در برقراری ارتباط با سرور");
   }
 
   return {
@@ -428,10 +429,10 @@ export async function sendOTPForReset(phone: string): Promise<OTPSendResult> {
     };
   }
 
-  let errorMessage = response.error || 'خطا در ارسال کد تایید';
+  let errorMessage = response.error || siteText("خطا در ارسال کد تایید");
 
   if (response.statusCode === 429) {
-    errorMessage = 'تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید';
+    errorMessage = siteText("تعداد درخواست‌های شما از حد مجاز گذشته است. لطفا بعدا تلاش کنید");
   }
 
   return {
@@ -468,16 +469,16 @@ export async function resetPassword(
   }
 
   // Parse specific error messages
-  let errorMessage = response.error || 'خطا در تغییر رمز عبور';
+  let errorMessage = response.error || siteText("خطا در تغییر رمز عبور");
 
   // Invalid OTP
   if (response.statusCode === 400 && response.error?.includes('کد')) {
-    errorMessage = 'کد تایید نامعتبر است';
+    errorMessage = siteText("کد تایید نامعتبر است");
   }
 
   // OTP expired
   if (response.statusCode === 410) {
-    errorMessage = 'کد تایید منقضی شده است. لطفا کد جدید درخواست کنید';
+    errorMessage = siteText("کد تایید منقضی شده است. لطفا کد جدید درخواست کنید");
   }
 
   return {
@@ -525,7 +526,7 @@ export async function getProfile(): Promise<ProfileResult> {
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت اطلاعات پروفایل',
+    error: response.error || siteText("خطا در دریافت اطلاعات پروفایل"),
   };
 }
 
@@ -546,7 +547,7 @@ export async function updateProfile(name: string): Promise<ProfileResult> {
 
   return {
     success: false,
-    error: response.error || 'خطا در به‌روزرسانی پروفایل',
+    error: response.error || siteText("خطا در به‌روزرسانی پروفایل"),
   };
 }
 

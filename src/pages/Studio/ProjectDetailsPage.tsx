@@ -1,22 +1,23 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import {
   ArrowRight,
+  Download,
+  Layout,
+  MessageSquare,
   Settings,
   Share2,
-  Download,
   ShoppingBag,
-  Sparkles,
-  Layout,
-  MessageSquare
+  Sparkles
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Header } from '../../components/Header';
 import { StudioSessions } from '../../components/studio/StudioSessions';
-import { useStudio } from '../../context/StudioContext';
-import { StudioProject, StudioSession, StudioRecommendation } from '../../types/studio';
 import { Button } from '../../components/ui/button';
-import { toast } from 'sonner';
+import { useStudio } from '../../context/StudioContext';
+import { StudioProject, StudioRecommendation, StudioSession } from '../../types/studio';
 
 // --- MOCK DATA FOR DEMO ---
 const MOCK_PROJECT: StudioProject = {
@@ -60,6 +61,7 @@ const MOCK_PROJECT: StudioProject = {
 };
 
 export function StudioProjectDetailsPage() {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { studioProjects, updateStudioProject } = useStudio();
@@ -75,7 +77,7 @@ export function StudioProjectDetailsPage() {
 
     const newShoppingList = [...project.shoppingList, productId];
     updateStudioProject(project.id, { shoppingList: newShoppingList });
-    toast.success('محصول به لیست خرید پروژه اضافه شد');
+    toast.success(siteText("محصول به لیست خرید پروژه اضافه شد"));
   };
 
   const handleAddAllToShoppingList = (sessionId: string) => {
@@ -86,18 +88,18 @@ export function StudioProjectDetailsPage() {
     const newShoppingList = Array.from(new Set([...project.shoppingList, ...sessionProductIds]));
 
     updateStudioProject(project.id, { shoppingList: newShoppingList });
-    toast.success('تمامی محصولات سشن به لیست خرید اضافه شدند');
+    toast.success(siteText("تمامی محصولات سشن به لیست خرید اضافه شدند"));
   };
 
   return (
-    <div className="min-h-screen bg-background font-vazirmatn flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-background font-vazirmatn flex flex-col" dir={siteDirection()}>
       <Header />
 
       {/* Project Banner/Header */}
       <div className="relative h-[240px] w-full overflow-hidden">
         <img
           src={project.thumbnail}
-          alt={project.name}
+          alt={siteValue(project.name)}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -111,8 +113,8 @@ export function StudioProjectDetailsPage() {
               <ArrowRight size={24} />
             </button>
             <div className="flex flex-col">
-              <span className="text-[12px] text-white/60 font-medium mb-1 uppercase tracking-widest">پروژه استودیو هُما</span>
-              <h1 className="text-[28px] font-bold text-white leading-none">{project.name}</h1>
+              <span className="text-[12px] text-white/60 font-medium mb-1 uppercase tracking-widest">{siteText("پروژه استودیو هُما")}</span>
+              <h1 className="text-[28px] font-bold text-white leading-none">{siteValue(project.name)}</h1>
             </div>
           </div>
 
@@ -125,7 +127,7 @@ export function StudioProjectDetailsPage() {
             </button>
             <Button className="h-11 px-6 rounded-full bg-accent text-accent-foreground font-bold flex items-center gap-2 shadow-lg">
               <Sparkles size={18} />
-              <span>ساخت پیشنهاد جدید</span>
+              <span>{siteText("ساخت پیشنهاد جدید")}</span>
             </Button>
           </div>
         </div>
@@ -140,9 +142,9 @@ export function StudioProjectDetailsPage() {
           >
             <div className="flex items-center gap-2">
               <Layout size={18} />
-              <span>طراحی ویژوال</span>
+              <span>{siteText("طراحی ویژوال")}</span>
             </div>
-            {activeTab === 'design' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />}
+            {siteValue(activeTab === 'design' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />)}
           </button>
 
           <button
@@ -151,12 +153,12 @@ export function StudioProjectDetailsPage() {
           >
             <div className="flex items-center gap-2">
               <Sparkles size={18} />
-              <span>پیشنهادهای هوشمند</span>
+              <span>{siteText("پیشنهادهای هوشمند")}</span>
               <span className="ml-1 w-5 h-5 rounded-full bg-accent text-accent-foreground text-[10px] flex items-center justify-center">
-                {project.sessions.length}
+                {siteValue(project.sessions.length)}
               </span>
             </div>
-            {activeTab === 'recommendations' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />}
+            {siteValue(activeTab === 'recommendations' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />)}
           </button>
 
           <button
@@ -165,12 +167,12 @@ export function StudioProjectDetailsPage() {
           >
             <div className="flex items-center gap-2">
               <ShoppingBag size={18} />
-              <span>لیست خرید پروژه</span>
+              <span>{siteText("لیست خرید پروژه")}</span>
               <span className="ml-1 w-5 h-5 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center">
-                {project.shoppingList.length}
+                {siteValue(project.shoppingList.length)}
               </span>
             </div>
-            {activeTab === 'shopping' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />}
+            {siteValue(activeTab === 'shopping' && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full" />)}
           </button>
         </div>
       </div>
@@ -178,7 +180,7 @@ export function StudioProjectDetailsPage() {
       {/* Tab Content */}
       <div className="flex-1 max-w-[1200px] mx-auto w-full py-8">
         <AnimatePresence mode="wait">
-          {activeTab === 'recommendations' && (
+          {siteValue(activeTab === 'recommendations' && (
             <motion.div
               key="recommendations-tab"
               initial={{ opacity: 0, y: 10 }}
@@ -189,13 +191,13 @@ export function StudioProjectDetailsPage() {
                 project={project}
                 onAddToShoppingList={handleAddToShoppingList}
                 onAddAllToShoppingList={handleAddAllToShoppingList}
-                onLikeProduct={(_id) => toast.info('محصول به علاقه‌مندی‌ها اضافه شد')}
+                onLikeProduct={(_id) => toast.info(siteText("محصول به علاقه‌مندی‌ها اضافه شد"))}
                 onCreateNewSession={() => navigate('/studio/upload')}
               />
             </motion.div>
-          )}
+          ))}
 
-          {activeTab === 'design' && (
+          {siteValue(activeTab === 'design' && (
             <motion.div
               key="design-tab"
               initial={{ opacity: 0, y: 10 }}
@@ -206,17 +208,15 @@ export function StudioProjectDetailsPage() {
               <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
                 <Layout size={40} className="text-muted-foreground" />
               </div>
-              <h3 className="text-[20px] font-bold text-foreground mb-2">طراحی ویژوال هنوز نهایی نشده</h3>
+              <h3 className="text-[20px] font-bold text-foreground mb-2">{siteText("طراحی ویژوال هنوز نهایی نشده")}</h3>
               <p className="text-[14px] text-muted-foreground max-w-[320px] mb-8">
-                شما می‌توانید آخرین ران‌های طراحی خود را در اینجا مشاهده و مقایسه کنید.
-              </p>
+                {siteText("شما می‌توانید آخرین ران‌های طراحی خود را در اینجا مشاهده و مقایسه کنید.")}</p>
               <Button onClick={() => navigate('/studio/upload')} className="btn-primary px-10 h-14 rounded-full">
-                ورود به ادیتور ویژوال
-              </Button>
+                {siteText("ورود به ادیتور ویژوال")}</Button>
             </motion.div>
-          )}
+          ))}
 
-          {activeTab === 'shopping' && (
+          {siteValue(activeTab === 'shopping' && (
             <motion.div
               key="shopping-tab"
               initial={{ opacity: 0, y: 10 }}
@@ -225,30 +225,30 @@ export function StudioProjectDetailsPage() {
               className="px-6"
             >
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-[20px] font-bold">لیست نهایی خرید</h2>
+                <h2 className="text-[20px] font-bold">{siteText("لیست نهایی خرید")}</h2>
                 <Button variant="ghost" className="text-accent flex items-center gap-2">
                   <Download size={18} />
-                  <span>دانلود لیست (PDF)</span>
+                  <span>{siteText("دانلود لیست (PDF)")}</span>
                 </Button>
               </div>
 
-              {project.shoppingList.length === 0 ? (
+              {siteValue(project.shoppingList.length === 0 ? (
                 <div className="py-20 flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-6">
                     <ShoppingBag size={32} className="text-muted-foreground" />
                   </div>
-                  <p className="text-[14px] text-muted-foreground">هنوز محصولی به لیست خرید اضافه نشده است.</p>
+                  <p className="text-[14px] text-muted-foreground">{siteText("هنوز محصولی به لیست خرید اضافه نشده است.")}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Real implementation would map products by IDs */}
                   <div className="p-6 bg-white dark:bg-zinc-900 rounded-[32px] border border-border flex flex-col items-center justify-center text-center py-20">
-                    <p className="text-[14px] text-muted-foreground">آیتم‌های انتخاب شده در اینجا نمایش داده می‌شوند.</p>
+                    <p className="text-[14px] text-muted-foreground">{siteText("آیتم‌های انتخاب شده در اینجا نمایش داده می‌شوند.")}</p>
                   </div>
                 </div>
-              )}
+              ))}
             </motion.div>
-          )}
+          ))}
         </AnimatePresence>
       </div>
 

@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * HomaIntakeFlow — the pre-analysis intake flow that runs BEFORE the
  * conversational redesign/analysis screen.
@@ -12,23 +13,24 @@
  * The bad-photo warning is shown at the submit gate (not mid-pick), per the V1
  * product decision: warn on small/low-quality photos but always allow continue.
  */
-import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { RD } from '../theme';
-import { useIntakeFlow } from './useIntakeFlow';
+import { BadPhotoWarning } from './BadPhotoWarning';
 import { INTAKE_COPY } from './intakeCopy';
 import type { HomaIntakePayload } from './intakeTypes';
 import { PhotoIntakeScreen } from './PhotoIntakeScreen';
-import { PhotoTipsBottomSheet } from './PhotoTipsBottomSheet';
 import { PhotoReviewContextScreen } from './PhotoReviewContextScreen';
-import { BadPhotoWarning } from './BadPhotoWarning';
+import { PhotoTipsBottomSheet } from './PhotoTipsBottomSheet';
+import { useIntakeFlow } from './useIntakeFlow';
 
 export interface HomaIntakeFlowProps {
   onStartAnalysis: (payload: HomaIntakePayload) => void;
 }
 
 export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const flow = useIntakeFlow();
   const reduce = useReducedMotion();
 
@@ -77,10 +79,10 @@ export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.El
     <div
       className="relative w-full max-w-[520px] mx-auto"
       style={{ backgroundColor: RD.cream, minHeight: '100dvh', fontFamily: 'Vazirmatn, sans-serif' }}
-      dir="rtl"
+      dir={siteDirection()}
     >
       <AnimatePresence mode="wait" initial={false}>
-        {flow.step === 'context' && flow.image ? (
+        {siteValue(flow.step === 'context' && flow.image ? (
           <motion.div
             key="context"
             initial={enter}
@@ -119,7 +121,7 @@ export function HomaIntakeFlow({ onStartAnalysis }: HomaIntakeFlowProps): JSX.El
               onOpenTips={() => setTipsOpen(true)}
             />
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
 
       <PhotoTipsBottomSheet open={tipsOpen} onClose={() => setTipsOpen(false)} />

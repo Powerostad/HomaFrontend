@@ -1,5 +1,6 @@
-import { apiPost, type APIResponse, type RequestOptions } from '@/utils/apiClient';
 import { appConfig } from '@/config/appConfig';
+import { siteText } from '@/i18n/siteCopy';
+import { apiPost, type APIResponse, type RequestOptions } from '@/utils/apiClient';
 
 export type ChatErrorKind = 'network' | 'auth' | 'server';
 
@@ -65,7 +66,7 @@ function isAbort(signal: AbortSignal, error?: unknown): boolean {
 
 function userError(value: unknown): string {
   const raw = typeof value === 'string' ? value : '';
-  return /[؀-ۿ]/.test(raw) ? raw : 'خطایی رخ داد. لطفاً دوباره تلاش کن.';
+  return /[؀-ۿ]/.test(raw) ? raw : siteText("خطایی رخ داد. لطفاً دوباره تلاش کن.");
 }
 
 function operationIdFromData(value: unknown): string | undefined {
@@ -128,7 +129,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
           finish({
             ok: false,
             status: 408,
-            error: 'مهلت ارتباط با سرور تمام شد.',
+            error: siteText("مهلت ارتباط با سرور تمام شد."),
             errorKind: 'network',
           }, true);
           return;

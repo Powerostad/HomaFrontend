@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Desktop (lg+) workspace for the Room Redesign flow — "warm editorial" skin.
  *
@@ -14,32 +15,32 @@
  * Image chrome (caption / toolbar / modals / quick-edit chips) is shared with
  * the mobile sheet via components/workspace.tsx — both surfaces stay identical.
  */
-import { useEffect, useRef, useState } from 'react';
-import {
-  Droplet,
-  X,
-  Plus,
-  RotateCcw,
-  Check,
-  Palette,
-  Wallet,
-  ShoppingBag,
-  Eye,
-  ChevronRight,
-  ChevronLeft,
-  ImageOff,
-} from 'lucide-react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toPersianDigits } from '@/utils/formatters';
-import { RD, FRAME } from '../theme';
+import { toLocalizedDigits } from '@/utils/formatters';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Droplet,
+  Eye,
+  ImageOff,
+  Palette,
+  Plus,
+  RotateCcw,
+  ShoppingBag,
+  Wallet,
+  X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ASSISTANT_TAGLINE, DESKTOP_PLAN, DESKTOP_TABS, EXIT_LABEL } from '../data/uiCopy';
+import type { RedesignCategory, RoomFinding } from '../services/transformers';
+import { FRAME, RD } from '../theme';
+import type { AnnotationPin as AnnotationPinType, ChatMessage, ChipGroup, RedesignProduct, RoomVersion } from '../types';
+import { CategoryCard } from './categories';
 import { ChatThread, MessageInput, inputPlaceholder } from './chat';
 import { PinnedImage } from './shell';
 import { CanvasCaption, ImageToolbar, QuickEditChips, useImageActions } from './workspace';
-import { CategoryCard } from './categories';
-import type { RoomFinding, RedesignCategory } from '../services/transformers';
-import type { AnnotationPin as AnnotationPinType, ChatMessage, RedesignProduct, ChipGroup, RoomVersion } from '../types';
-import { DESKTOP_TABS, DESKTOP_PLAN, EXIT_LABEL, ASSISTANT_TAGLINE } from '../data/uiCopy';
 
 const EMPTY_PREVIEW_HINT = 'هنوز پیش‌نمایشی ساخته نشده';
 const EMPTY_PRODUCTS_HINT = 'محصولی هنوز انتخاب نشده. اول تحلیل فضا رو ببین؛ هر وقت خواستی، از هما بخواه پیشنهاد محصول بده.';
@@ -81,9 +82,10 @@ export interface DesktopWorkspaceProps {
 
 // ── Brand mark ──────────────────────────────────────────────────────
 function BrandMark() {
+  const { siteText } = useSiteTranslation();
   return (
     <div className="flex items-center gap-2" style={{ fontFamily: 'Vazirmatn' }}>
-      <span className="text-[20px] font-bold leading-none" style={{ color: RD.ink }}>هما</span>
+      <span className="text-[20px] font-bold leading-none" style={{ color: RD.ink }}>{siteText("هما")}</span>
       <span
         className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
         style={{ backgroundColor: RD.ink }}
@@ -96,14 +98,15 @@ function BrandMark() {
 
 // ── Workflow tabs (segmented pill) ──────────────────────────────────
 function WorkflowTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: DeskTab) => void }) {
+  const { siteText, siteValue } = useSiteTranslation();
   return (
     <div
       role="tablist"
-      aria-label="مراحل طراحی"
+      aria-label={siteText("مراحل طراحی")}
       className="inline-flex items-center"
       style={{ background: RD.tabTrackBg, borderRadius: 999, padding: 4, gap: 2, fontFamily: 'Vazirmatn' }}
     >
-      {DESKTOP_TABS.map((t) => {
+      {siteValue(DESKTOP_TABS.map((t) => {
         const isActive = t.id === active;
         return (
           <button
@@ -123,10 +126,10 @@ function WorkflowTabs({ active, onSelect }: { active: DeskTab; onSelect: (t: Des
               boxShadow: isActive ? RD.activePillShadow : 'none',
             }}
           >
-            {t.label}
+            {siteValue(t.label)}
           </button>
         );
-      })}
+      }))}
     </div>
   );
 }
@@ -143,6 +146,7 @@ function DesktopTopBar({
   onExit: () => void;
   onNewSession: () => void;
 }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const link = 'flex items-center gap-1.5 text-[13px] font-medium transition px-2 h-9 rounded-md hover:bg-black/[0.03]';
   return (
     <header
@@ -158,15 +162,14 @@ function DesktopTopBar({
         </div>
       </div>
 
-      <div className="flex items-center gap-1" dir="rtl" style={{ fontFamily: 'Vazirmatn' }}>
+      <div className="flex items-center gap-1" dir={siteDirection()} style={{ fontFamily: 'Vazirmatn' }}>
         <button type="button" onClick={onNewSession} className={link} style={{ color: RD.inkSoft }}>
           <RotateCcw size={14} strokeWidth={2} />
-          گفتگوی جدید
-        </button>
+          {siteText("گفتگوی جدید")}</button>
         <span className="w-px h-4" style={{ backgroundColor: RD.line }} />
         <button type="button" onClick={onExit} className={link} style={{ color: RD.inkSoft }}>
           <X size={15} strokeWidth={2} />
-          {EXIT_LABEL}
+          {siteValue(EXIT_LABEL)}
         </button>
       </div>
     </header>
@@ -193,11 +196,12 @@ function DesignPreviewCanvas({
   activeVersion: number;
   hasVersions: boolean;
 }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const isPreview = deskTab === 'preview';
   const actions = useImageActions({ image, originalImage, activeVersion, isPreview });
 
-  const kicker = isPreview ? 'پیش‌نمایش طراحی' : 'تحلیل فضا';
-  const title = isPreview ? (hasVersions ? `نسخه ${toPersianDigits(activeVersion)}` : 'پیش‌نمایش') : 'عکس اصلی شما';
+  const kicker = isPreview ? siteText("پیش‌نمایش طراحی") : siteText("تحلیل فضا");
+  const title = isPreview ? (hasVersions ? siteText("نسخه {{v0}}", { v0: toLocalizedDigits(activeVersion) }) : siteText("پیش‌نمایش")) : siteText("عکس اصلی شما");
 
   return (
     <div
@@ -205,15 +209,15 @@ function DesignPreviewCanvas({
       style={{ background: RD.canvas, padding: '32px 56px 28px' }}
     >
       {/* Caption — hidden in the empty state */}
-      {(image || rendering) && (
+      {siteValue((image || rendering) && (
         <div className="w-full mb-3.5">
-          <CanvasCaption kicker={rendering ? 'در حال ساخت…' : kicker} title={title} />
+          <CanvasCaption kicker={rendering ? siteText("در حال ساخت…") : kicker} title={siteValue(title)} />
         </div>
-      )}
+      ))}
 
       {/* Frame row */}
       <div className="flex-1 min-h-0 w-full flex items-center justify-center">
-        {rendering ? (
+        {siteValue(rendering ? (
           <div style={{ ...FRAME, width: 'min(70%, 720px)', aspectRatio: '4 / 3', overflow: 'hidden' }}>
             <Skeleton className="w-full h-full" style={{ borderRadius: 8, backgroundColor: '#EDE8DF' }} />
           </div>
@@ -227,13 +231,13 @@ function DesignPreviewCanvas({
             >
               <ImageOff size={26} strokeWidth={1.5} style={{ color: RD.inkSoft }} />
             </span>
-            <span className="text-[13.5px]" style={{ color: RD.inkSoft }}>{EMPTY_PREVIEW_HINT}</span>
+            <span className="text-[13.5px]" style={{ color: RD.inkSoft }}>{siteValue(EMPTY_PREVIEW_HINT)}</span>
           </div>
-        )}
+        ))}
       </div>
 
       {/* Toolbar — only when a real image is shown */}
-      {image && !rendering && (
+      {siteValue(image && !rendering && (
         <div className="shrink-0 self-center mt-4">
           <ImageToolbar
             canCompare={actions.canCompare}
@@ -243,9 +247,9 @@ function DesignPreviewCanvas({
             onZoom={actions.onZoom}
           />
         </div>
-      )}
+      ))}
 
-      {actions.modals}
+      {siteValue(actions.modals)}
     </div>
   );
 }
@@ -266,25 +270,25 @@ function ProductsCanvas({
   onAddCategory: (c: RedesignCategory) => void;
   onPreviewCategory?: (c: RedesignCategory) => void;
 }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   return (
     <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide" style={{ background: RD.canvas }}>
-      <div className="max-w-5xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }} dir="rtl">
-        {!hasResult || categories.length === 0 ? (
+      <div className="max-w-5xl mx-auto px-10 py-10" style={{ fontFamily: 'Vazirmatn' }} dir={siteDirection()}>
+        {siteValue(!hasResult || categories.length === 0 ? (
           <div className="text-center py-20 space-y-2">
-            <p className="text-[15px] font-semibold" style={{ color: RD.ink }}>محصولات هنوز فعال نشده</p>
-            <p className="text-[13px] leading-[1.8] max-w-[420px] mx-auto" style={{ color: RD.inkSoft }}>{EMPTY_PRODUCTS_HINT}</p>
+            <p className="text-[15px] font-semibold" style={{ color: RD.ink }}>{siteText("محصولات هنوز فعال نشده")}</p>
+            <p className="text-[13px] leading-[1.8] max-w-[420px] mx-auto" style={{ color: RD.inkSoft }}>{siteValue(EMPTY_PRODUCTS_HINT)}</p>
           </div>
         ) : (
           <>
             <div className="flex items-baseline justify-between mb-1.5">
-              <h2 className="text-[24px] font-medium" style={{ color: RD.ink }}>برنامهٔ خرید برای این فضا</h2>
-              <span className="text-[13px]" style={{ color: RD.inkSoft }}>{toPersianDigits(cart.length)} مورد در سبد</span>
+              <h2 className="text-[24px] font-medium" style={{ color: RD.ink }}>{siteText("برنامهٔ خرید برای این فضا")}</h2>
+              <span className="text-[13px]" style={{ color: RD.inkSoft }}>{siteValue(toLocalizedDigits(cart.length))} {siteText("مورد در سبد")}</span>
             </div>
             <p className="text-[13px] mb-6" style={{ color: RD.inkSoft }}>
-              دسته‌ها به ترتیب اولویت چیده شده‌اند؛ از بالا شروع کن.
-            </p>
+              {siteText("دسته‌ها به ترتیب اولویت چیده شده‌اند؛ از بالا شروع کن.")}</p>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-              {categories.map((c) => (
+              {siteValue(categories.map((c) => (
                 <CategoryCard
                   key={c.id}
                   category={c}
@@ -292,10 +296,10 @@ function ProductsCanvas({
                   onAddCategory={onAddCategory}
                   onPreviewCategory={onPreviewCategory}
                 />
-              ))}
+              )))}
             </div>
           </>
-        )}
+        ))}
       </div>
     </div>
   );
@@ -315,6 +319,7 @@ function PreviewHistoryPanel({
   onRender: () => void;
   busy: boolean;
 }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const [open, setOpen] = useState(true);
   const ordered = [...versions].sort((a, b) => a.index - b.index); // oldest on top, newest at bottom
 
@@ -332,32 +337,31 @@ function PreviewHistoryPanel({
       {/* Header + collapse toggle. Panel sits on the visual LEFT (RTL) → collapse
           arrow points further left, expand arrow points back toward the canvas. */}
       <div className="shrink-0 flex items-center justify-between px-3 h-12" style={{ borderBottom: `1px solid ${RD.line}` }}>
-        {open && <h3 className="text-[12.5px] font-semibold" style={{ color: RD.inkSoft }}>تاریخچه پیش‌نمایش‌ها</h3>}
+        {siteValue(open && <h3 className="text-[12.5px] font-semibold" style={{ color: RD.inkSoft }}>{siteText("تاریخچه پیش‌نمایش‌ها")}</h3>)}
         <button
           type="button"
-          aria-label={open ? 'جمع کردن' : 'باز کردن'}
+          aria-label={siteValue(open ? siteText("جمع کردن") : siteText("باز کردن"))}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
           className="w-8 h-8 rounded-md flex items-center justify-center transition hover:bg-black/[0.04] mx-auto"
         >
-          {open ? (
+          {siteValue(open ? (
             <ChevronLeft size={17} strokeWidth={2} style={{ color: RD.inkSoft }} />
           ) : (
             <ChevronRight size={17} strokeWidth={2} style={{ color: RD.inkSoft }} />
-          )}
+          ))}
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3">
-        {ordered.length === 0 ? (
+        {siteValue(ordered.length === 0 ? (
           open && (
             <p className="text-[12px] text-center leading-[1.9] px-1 py-6" style={{ color: RD.inkSoft }}>
-              {EMPTY_PREVIEW_HINT}؛ از دکمهٔ زیر شروع کن.
-            </p>
+              {siteValue(EMPTY_PREVIEW_HINT)}{siteText("؛ از دکمهٔ زیر شروع کن.")}</p>
           )
         ) : (
           <div className="flex flex-col gap-3">
-            {ordered.map((v) => {
+            {siteValue(ordered.map((v) => {
               const isActive = v.index === active;
               if (!open) {
                 // collapsed rail → rounded thumb only
@@ -365,7 +369,7 @@ function PreviewHistoryPanel({
                   <button
                     key={v.id}
                     type="button"
-                    aria-label={`پیش‌نمایش ${toPersianDigits(v.index)}`}
+                    aria-label={siteText("پیش‌نمایش {{v0}}", { v0: toLocalizedDigits(v.index) })}
                     onClick={() => onSelect(v.index)}
                     className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden transition"
                     style={{ boxShadow: isActive ? `0 0 0 2px ${RD.accentGreen}` : `0 0 0 1px ${RD.line}` }}
@@ -378,7 +382,7 @@ function PreviewHistoryPanel({
                 <button
                   key={v.id}
                   type="button"
-                  aria-label={`پیش‌نمایش ${toPersianDigits(v.index)}${isActive ? ' — فعال' : ''}`}
+                  aria-label={siteText("پیش‌نمایش {{v0}}{{v1}}", { v0: toLocalizedDigits(v.index), v1: isActive ? ' — فعال' : '' })}
                   onClick={() => onSelect(v.index)}
                   className="text-right rounded-xl p-2 transition"
                   style={{
@@ -394,22 +398,22 @@ function PreviewHistoryPanel({
                   </div>
                   <div className="flex items-center justify-between mt-1.5 px-0.5">
                     <span className="text-[12.5px] font-medium" style={{ color: RD.ink }}>
-                      پیش‌نمایش {toPersianDigits(v.index)}
+                      {siteText("پیش‌نمایش")}{siteValue(toLocalizedDigits(v.index))}
                     </span>
-                    {isActive && (
+                    {siteValue(isActive && (
                       <span
                         className="w-4 h-4 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: RD.accentGreen }}
                       >
                         <Check size={10} strokeWidth={3} color="#fff" />
                       </span>
-                    )}
+                    ))}
                   </div>
                 </button>
               );
-            })}
+            }))}
           </div>
-        )}
+        ))}
       </div>
 
       {/* New preview CTA */}
@@ -418,12 +422,12 @@ function PreviewHistoryPanel({
           type="button"
           onClick={onRender}
           disabled={busy}
-          aria-label="ایجاد پیش‌نمایش جدید"
+          aria-label={siteText("ایجاد پیش‌نمایش جدید")}
           className="w-full flex items-center justify-center gap-1.5 rounded-lg transition hover:bg-black/[0.02] disabled:opacity-50"
           style={{ border: `1.5px dashed ${RD.line}`, color: RD.inkSoft, padding: open ? '12px' : '12px 0', fontSize: 12 }}
         >
           <Plus size={17} strokeWidth={2} />
-          {open && (busy ? 'در حال ساخت…' : 'ایجاد پیش‌نمایش جدید')}
+          {siteValue(open && (busy ? siteText("در حال ساخت…") : siteText("ایجاد پیش‌نمایش جدید")))}
         </button>
       </div>
     </aside>
@@ -434,22 +438,23 @@ function PreviewHistoryPanel({
 const PLAN_ICONS: Record<string, typeof Eye> = { palette: Palette, coins: Wallet, bag: ShoppingBag, eye: Eye };
 
 function ChatChecklist() {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="rounded-xl px-3.5 py-3" style={{ backgroundColor: '#FFFFFF', border: `1px solid ${RD.line}`, fontFamily: 'Vazirmatn' }}>
-      <p className="text-[12.5px] font-medium mb-2.5" style={{ color: RD.ink }}>{DESKTOP_PLAN.title}</p>
+      <p className="text-[12.5px] font-medium mb-2.5" style={{ color: RD.ink }}>{siteValue(DESKTOP_PLAN.title)}</p>
       <div className="space-y-2.5">
-        {DESKTOP_PLAN.items.map((it) => {
+        {siteValue(DESKTOP_PLAN.items.map((it) => {
           const Icon = PLAN_ICONS[it.icon] ?? Eye;
           return (
             <div key={it.label} className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Check size={15} strokeWidth={2.5} style={{ color: RD.accentGreen }} />
-                <span className="text-[12.5px]" style={{ color: RD.ink }}>{it.label}</span>
+                <span className="text-[12.5px]" style={{ color: RD.ink }}>{siteValue(it.label)}</span>
               </span>
               <Icon size={15} strokeWidth={1.75} style={{ color: RD.inkMuted }} />
             </div>
           );
-        })}
+        }))}
       </div>
     </div>
   );
@@ -480,6 +485,7 @@ function AssistantPanel({
   onQuickEdit: (text: string) => void;
   hasResult: boolean;
 }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -499,10 +505,9 @@ function AssistantPanel({
         </span>
         <div className="leading-tight">
           <p className="text-[15px] font-semibold flex items-center gap-1.5" style={{ color: RD.ink }}>
-            هما
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: RD.accentGreen }} />
+            {siteText("هما")}<span className="w-2 h-2 rounded-full" style={{ backgroundColor: RD.accentGreen }} />
           </p>
-          <p className="text-[12px]" style={{ color: RD.inkSoft }}>{ASSISTANT_TAGLINE}</p>
+          <p className="text-[12px]" style={{ color: RD.inkSoft }}>{siteValue(ASSISTANT_TAGLINE)}</p>
         </div>
       </div>
 
@@ -520,15 +525,15 @@ function AssistantPanel({
         />
       </div>
 
-      {showQuickEdits && (
+      {siteValue(showQuickEdits && (
         <div className="px-4 pb-2.5">
           <QuickEditChips onPick={onQuickEdit} disabled={busy} />
         </div>
-      )}
+      ))}
 
       <div className="shrink-0 px-4 pb-4 pt-1">
         <MessageInput
-          placeholder={inputPlaceholder(busy, rendering)}
+          placeholder={siteValue(inputPlaceholder(busy, rendering))}
           value={input}
           onChange={setInput}
           onSend={onSend}
@@ -569,13 +574,14 @@ export function DesktopWorkspace({
   findings,
   versions,
 }: DesktopWorkspaceProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const versionImage = versions.find((v) => v.index === activeVersion)?.imageUrl ?? previewImage;
   // Analysis tab shows the user's original photo (with annotation pins); the
   // preview tab shows the selected render. Products tab swaps the canvas entirely.
   const canvasImage = deskTab === 'preview' ? versionImage : originalImage ?? versionImage;
 
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden" style={{ backgroundColor: RD.cream }} dir="rtl">
+    <div className="w-full h-screen flex flex-col overflow-hidden" style={{ backgroundColor: RD.cream }} dir={siteDirection()}>
       <DesktopTopBar deskTab={deskTab} onTabChange={onTabChange} onExit={onExit} onNewSession={onNewSession} />
       <div className="flex-1 min-h-0 flex">
         <AssistantPanel
@@ -592,7 +598,7 @@ export function DesktopWorkspace({
           hasResult={hasResult}
         />
 
-        {deskTab === 'products' ? (
+        {siteValue(deskTab === 'products' ? (
           <ProductsCanvas
             cart={cart}
             addToCart={addToCart}
@@ -611,7 +617,7 @@ export function DesktopWorkspace({
             activeVersion={activeVersion}
             hasVersions={versions.length > 0}
           />
-        )}
+        ))}
 
         <PreviewHistoryPanel versions={versions} active={activeVersion} onSelect={setActiveVersion} onRender={onRender} busy={busy} />
       </div>

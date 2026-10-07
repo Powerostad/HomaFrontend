@@ -24,7 +24,12 @@
     "openAgain": "Open again",
     "viewFullPage": "View full basket page",
     "clearAll": "Clear basket",
-    "browseProducts": "Browse products"
+    "browseProducts": "Browse products",
+    "reviewTitle": "Review changes",
+    "reviewNotice": "Some prices or stock levels have changed at the seller's store. Please review them before continuing.",
+    "reviewRemoved": "Out of stock — will be removed",
+    "reviewUnavailableNote": "Unavailable products will not be added to the order.",
+    "reviewConfirm": "Confirm and continue to purchase"
   },
   "common": {
     "loading": "Loading...",
@@ -341,7 +346,15 @@
       "tip3": "You can save the result and view it later",
       "tip4": "Each category shows you the best options",
       "tip5": "See the result in your actual space before buying",
-      "tip6": "Space analysis includes lighting, color and dimensions"
+      "tip6": "Space analysis includes lighting, color and dimensions",
+      "noImageStep1Label": "Space analysis",
+      "noImageStep1Msg1": "Analyzing structure and lighting...",
+      "noImageStep1Msg2": "Identifying the style and needs of your space...",
+      "noImageStep2Label": "Finding products",
+      "noImageStep2Msg1": "Searching for suitable products for this space...",
+      "noImageStep2Msg2": "Matching suggestions to the image analysis...",
+      "noImageStep3Label": "Preparation",
+      "noImageStep3Msg1": "Preparing recommendations without generating a redesigned image..."
     },
     "roomTypes": {
       "living": "Living room",
@@ -559,7 +572,8 @@
           "serviceNote": "Prices and shipping terms may change on the merchant's website.",
           "purchaseUnavailable": "Purchase information is unavailable for this product",
           "replaced": "Product replaced"
-        }
+        },
+        "fullscreenView": "Fullscreen View"
       }
     }
   },
@@ -781,7 +795,10 @@
       "selectedItems": "3 selected items",
       "itemCount": "3 items",
       "buyLayout": "Buy entire layout",
-      "ctaButton": "Transform your home now"
+      "ctaButton": "Transform your home now",
+      "selectedItemsSuffix": "Selected item",
+      "noProducts": "No products found",
+      "itemSuffix": "Item"
     },
     "comparison": {
       "label": "Visual proof",
@@ -938,5 +955,36 @@
     "toman": "Toman",
     "style": "Style",
     "showDesign": "Show my proposed design"
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Find answers to common questions about HOMA and how to use it.",
+    "moreQuestions": "Have another question?",
+    "contactUs": "Contact us"
+  },
+  "seo": {
+    "home": {
+      "eyebrow": "AI-assisted design and selection",
+      "title": "AI-assisted home interior design",
+      "description": "Explore home decor ideas with a photo of your room, or choose a product and see it in your space before buying.",
+      "routes": "Where would you like to start?",
+      "redesign": "I want ideas for my room",
+      "preview": "I want to try a product",
+      "start": "Design with a room photo",
+      "browse": "Browse stores"
+    },
+    "header": {
+      "label": "Main navigation",
+      "explore": "Stores",
+      "gallery": "Products",
+      "account": "Account",
+      "basket": "Basket"
+    }
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "subtitle": "Please read these terms carefully before using HOMA services.",
+    "lastUpdate": "Last updated: January 2026",
+    "contactUs": "Contact us"
   }
 }

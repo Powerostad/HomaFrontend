@@ -1,21 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
-import { useParams, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Maximize2, X, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { fetchSharedItem } from '@/services/sharedService';
-import { formatPriceFromRial } from '@/utils/formatters';
-import { formatRelativeTime } from '@/utils/formatters';
-import { ProductDetailSheet, type Product } from '@/pages/Studio/components/ProductDetailSheet';
 import { trackSharedPageViewed } from '@/analytics/events';
+import { Button } from '@/components/ui/button';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { ProductDetailSheet, type Product } from '@/pages/Studio/components/ProductDetailSheet';
+import { fetchSharedItem } from '@/services/sharedService';
 import type {
   SharedItem,
-  SharedTryOnItem,
+  SharedStudioCategoryItem,
   SharedStudioItem,
   SharedStudioProduct,
-  SharedStudioCategoryItem,
+  SharedTryOnItem,
 } from '@/types/shared';
+import { formatPriceFromRial, formatRelativeTime } from '@/utils/formatters';
+import { ChevronDown, ChevronUp, Maximize2, ShoppingBag, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams } from 'react-router-dom';
 
 // =============================================================================
 // Loading Skeleton
@@ -100,6 +100,7 @@ function sharedProductToUIProduct(product: SharedStudioProduct): Product & { sto
 // =============================================================================
 
 function TryOnSharedView({ item }: { item: SharedTryOnItem }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -125,47 +126,47 @@ function TryOnSharedView({ item }: { item: SharedTryOnItem }) {
         {/* Content */}
         <div className="p-6 flex flex-col gap-6">
           {/* Shared by label */}
-          {item.owner_name && (
+          {siteValue(item.owner_name && (
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-muted-foreground">
-                {t('shared.sharedBy')} {item.owner_name}
+                {t('shared.sharedBy')} {siteValue(item.owner_name)}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                · {formatRelativeTime(item.created_at)}
+                · {siteValue(formatRelativeTime(item.created_at))}
               </span>
             </div>
-          )}
+          ))}
 
           {/* Product Info Card */}
-          {item.product_name && (
+          {siteValue(item.product_name && (
             <div className="flex gap-4 items-center p-4 bg-card rounded-2xl border border-border">
-              {item.product_image_url && (
+              {siteValue(item.product_image_url && (
                 <div className="w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
                   <img
                     src={item.product_image_url}
-                    alt={item.product_name}
+                    alt={siteValue(item.product_name)}
                     className="w-full h-full object-cover"
                   />
                 </div>
-              )}
+              ))}
               <div className="flex-1 flex flex-col gap-1">
                 <h2 className="text-[16px] font-bold text-foreground leading-tight">
-                  {item.product_name}
+                  {siteValue(item.product_name)}
                 </h2>
                 <span className="text-[12px] text-muted-foreground">
-                  {item.product_category}
+                  {siteValue(item.product_category)}
                 </span>
-                {item.product_price != null && (
+                {siteValue(item.product_price != null && (
                   <span className="text-[14px] font-bold text-foreground">
-                    {formatPriceFromRial(item.product_price)}
+                    {siteValue(formatPriceFromRial(item.product_price))}
                   </span>
-                )}
+                ))}
               </div>
             </div>
-          )}
+          ))}
 
           {/* CTA */}
-          {item.product_id && (
+          {siteValue(item.product_id && (
             <Link
               to={`/try-on/${item.product_id}/upload`}
               className="w-full"
@@ -175,12 +176,12 @@ function TryOnSharedView({ item }: { item: SharedTryOnItem }) {
                 {t('shared.tryItYourself')}
               </Button>
             </Link>
-          )}
+          ))}
         </div>
       </div>
 
       {/* Fullscreen overlay */}
-      {isFullScreen && (
+      {siteValue(isFullScreen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -198,7 +199,7 @@ function TryOnSharedView({ item }: { item: SharedTryOnItem }) {
             className="max-w-full max-h-[85vh] object-contain rounded-2xl"
           />
         </motion.div>
-      )}
+      ))}
     </>
   );
 }
@@ -214,6 +215,7 @@ function CategoryCard({
   categoryItem: SharedStudioCategoryItem;
   onProductClick: (product: Product & { store?: string; matchScore?: number }) => void;
 }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const products = categoryItem.products.map(sharedProductToUIProduct);
@@ -227,21 +229,21 @@ function CategoryCard({
       {/* Category header */}
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-bold text-foreground">
-          {categoryItem.category_display || categoryItem.category}
+          {siteValue(categoryItem.category_display || categoryItem.category)}
         </h3>
-        {alternatives.length > 0 && (
+        {siteValue(alternatives.length > 0 && (
           <span className="text-[11px] text-muted-foreground">
-            {alternatives.length + 1} {t('shared.products')}
+            {siteValue(alternatives.length + 1)} {t('shared.products')}
           </span>
-        )}
+        ))}
       </div>
 
       {/* AI reasoning */}
-      {categoryItem.fit_reasoning_fa && (
+      {siteValue(categoryItem.fit_reasoning_fa && (
         <p className="text-[13px] text-muted-foreground leading-relaxed">
-          {categoryItem.fit_reasoning_fa}
+          {siteValue(categoryItem.fit_reasoning_fa)}
         </p>
-      )}
+      ))}
 
       {/* Top pick - large card */}
       <button
@@ -251,7 +253,7 @@ function CategoryCard({
         <div className="w-[80px] h-[80px] rounded-xl overflow-hidden flex-shrink-0 bg-secondary/30">
           <img
             src={topPick.image}
-            alt={topPick.name}
+            alt={siteValue(topPick.name)}
             className="w-full h-full object-cover"
           />
         </div>
@@ -260,31 +262,31 @@ function CategoryCard({
             {t('studio.result.topPick')}
           </span>
           <span className="text-[14px] font-bold text-foreground leading-tight line-clamp-1">
-            {topPick.name}
+            {siteValue(topPick.name)}
           </span>
-          {topPick.store && (
-            <span className="text-[11px] text-muted-foreground">{topPick.store}</span>
-          )}
+          {siteValue(topPick.store && (
+            <span className="text-[11px] text-muted-foreground">{siteValue(topPick.store)}</span>
+          ))}
           <span className="text-[13px] font-bold text-foreground">
-            {formatPriceFromRial(topPick.price)}
+            {siteValue(formatPriceFromRial(topPick.price))}
           </span>
         </div>
       </button>
 
       {/* Alternatives toggle */}
-      {alternatives.length > 0 && (
+      {siteValue(alternatives.length > 0 && (
         <>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center justify-center gap-1 py-2 text-[12px] font-bold text-muted-foreground hover:text-foreground transition-colors"
           >
-            {isExpanded ? t('shared.hideAlternatives') : t('shared.showAlternatives')}
-            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {siteValue(isExpanded ? t('shared.hideAlternatives') : t('shared.showAlternatives'))}
+            {siteValue(isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
           </button>
 
-          {isExpanded && (
+          {siteValue(isExpanded && (
             <div className="flex flex-col gap-2">
-              {alternatives.map((product) => (
+              {siteValue(alternatives.map((product) => (
                 <button
                   key={product.id}
                   onClick={() => onProductClick(product)}
@@ -293,24 +295,24 @@ function CategoryCard({
                   <div className="w-[52px] h-[52px] rounded-lg overflow-hidden flex-shrink-0 bg-secondary/30">
                     <img
                       src={product.image}
-                      alt={product.name}
+                      alt={siteValue(product.name)}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-0.5 justify-center">
                     <span className="text-[13px] font-bold text-foreground line-clamp-1">
-                      {product.name}
+                      {siteValue(product.name)}
                     </span>
                     <span className="text-[12px] font-bold text-muted-foreground">
-                      {formatPriceFromRial(product.price)}
+                      {siteValue(formatPriceFromRial(product.price))}
                     </span>
                   </div>
                 </button>
-              ))}
+              )))}
             </div>
-          )}
+          ))}
         </>
-      )}
+      ))}
     </div>
   );
 }
@@ -320,6 +322,7 @@ function CategoryCard({
 // =============================================================================
 
 function StudioSharedView({ item }: { item: SharedStudioItem }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<(Product & { store?: string; matchScore?: number }) | null>(null);
@@ -347,34 +350,34 @@ function StudioSharedView({ item }: { item: SharedStudioItem }) {
         <div className="p-6 flex flex-col gap-6">
           {/* Shared by label */}
           <div className="flex items-center gap-2">
-            {item.owner_name && (
+            {siteValue(item.owner_name && (
               <span className="text-[12px] text-muted-foreground">
-                {t('shared.sharedBy')} {item.owner_name}
+                {t('shared.sharedBy')} {siteValue(item.owner_name)}
               </span>
-            )}
+            ))}
             <span className="text-[11px] text-muted-foreground">
-              · {formatRelativeTime(item.created_at)}
+              · {siteValue(formatRelativeTime(item.created_at))}
             </span>
           </div>
 
           {/* Room type */}
-          {item.room_type && (
+          {siteValue(item.room_type && (
             <div className="px-3 py-1.5 bg-secondary rounded-full w-fit">
               <span className="text-[12px] font-bold text-muted-foreground">
-                {item.room_type}
+                {siteValue(item.room_type)}
               </span>
             </div>
-          )}
+          ))}
 
           {/* Category groups with products */}
           <div className="flex flex-col gap-8">
-            {item.items.map((categoryItem, index) => (
+            {siteValue(item.items.map((categoryItem, index) => (
               <CategoryCard
                 key={`${categoryItem.category}-${index}`}
                 categoryItem={categoryItem}
                 onProductClick={setSelectedProduct}
               />
-            ))}
+            )))}
           </div>
 
           {/* CTA */}
@@ -387,7 +390,7 @@ function StudioSharedView({ item }: { item: SharedStudioItem }) {
       </div>
 
       {/* Fullscreen overlay */}
-      {isFullScreen && (
+      {siteValue(isFullScreen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -405,7 +408,7 @@ function StudioSharedView({ item }: { item: SharedStudioItem }) {
             className="max-w-full max-h-[85vh] object-contain rounded-2xl"
           />
         </motion.div>
-      )}
+      ))}
 
       {/* Product Detail Sheet */}
       <ProductDetailSheet

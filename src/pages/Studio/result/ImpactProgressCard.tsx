@@ -1,7 +1,8 @@
-import { CheckCircle2, Sparkles } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { toLocalizedDigits } from '@/utils/formatters';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ImpactProgressCardProps {
   currentScore: number;
@@ -24,6 +25,7 @@ export function ImpactProgressCard({
   acceptedCount,
   totalCount,
 }: ImpactProgressCardProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const scoreColor = getScoreColor(liveProjectedScore);
   const maxGain = Math.max(0, maxProjectedScore - currentScore);
@@ -47,21 +49,21 @@ export function ImpactProgressCard({
             strokeDasharray={`${liveProjectedScore} 100`}
           />
         </svg>
-        <strong dir="ltr">{toLocalizedDigits(liveProjectedScore)}</strong>
+        <strong dir="ltr">{siteValue(toLocalizedDigits(liveProjectedScore))}</strong>
       </div>
       <div className="studio-impact-copy">
         <div className="studio-impact-heading">
           <h2>{t('studio.result.v2.diagnosis.harmonyScore', 'امتیاز هماهنگی فضا')}</h2>
-          <span dir="ltr">{toLocalizedDigits(currentScore)} → {toLocalizedDigits(maxProjectedScore)}</span>
+          <span dir="ltr">{siteValue(toLocalizedDigits(currentScore))} → {siteValue(toLocalizedDigits(maxProjectedScore))}</span>
         </div>
-        <p>{message}</p>
+        <p>{siteValue(message)}</p>
         <div className="studio-impact-progress" aria-hidden="true">
           <span style={{ width: `${progressPercent}%`, background: scoreColor }} />
         </div>
       </div>
       <div className="studio-impact-count">
-        {acceptedCount === totalCount && totalCount > 0 ? <Sparkles size={16} /> : <CheckCircle2 size={16} />}
-        <span dir="ltr">{toLocalizedDigits(acceptedCount)}/{toLocalizedDigits(totalCount)}</span>
+        {siteValue(acceptedCount === totalCount && totalCount > 0 ? <Sparkles size={16} /> : <CheckCircle2 size={16} />)}
+        <span dir="ltr">{siteValue(toLocalizedDigits(acceptedCount))}/{siteValue(toLocalizedDigits(totalCount))}</span>
         <small>{t('studio.result.v2.diagnosis.acceptedChanges', 'تغییر انتخاب شده')}</small>
       </div>
     </section>

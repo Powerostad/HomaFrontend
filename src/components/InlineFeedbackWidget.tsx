@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ThumbsUp, Minus, ThumbsDown, Check, Loader2 } from 'lucide-react';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { Check, Loader2, Minus, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { apiPost } from '../utils/apiClient';
 import { trackFeedbackSubmitted } from '../analytics/events';
+import { apiPost } from '../utils/apiClient';
 
 interface InlineFeedbackWidgetProps {
   flow: 'tryon' | 'studio';
@@ -25,6 +26,7 @@ function getStorageKey(flow: string, id: string | number): string {
 }
 
 export function InlineFeedbackWidget({ flow, imageId, sessionId }: InlineFeedbackWidgetProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [state, setState] = useState<FeedbackState>('idle');
   const [selectedScore, setSelectedScore] = useState<number | null>(null);
@@ -89,7 +91,7 @@ export function InlineFeedbackWidget({ flow, imageId, sessionId }: InlineFeedbac
   return (
     <div className="flex flex-col gap-4 py-6 border-t border-black/[0.08]">
       <AnimatePresence mode="wait">
-        {state === 'submitted' ? (
+        {siteValue(state === 'submitted' ? (
           <motion.div
             key="thankyou"
             initial={{ opacity: 0, y: 4 }}
@@ -116,7 +118,7 @@ export function InlineFeedbackWidget({ flow, imageId, sessionId }: InlineFeedbac
             </span>
 
             <div className="flex gap-2">
-              {VOTE_OPTIONS.map(({ score, icon: Icon, labelKey }) => {
+              {siteValue(VOTE_OPTIONS.map(({ score, icon: Icon, labelKey }) => {
                 const isSelected = selectedScore === score;
                 const isSubmitting = state === 'submitting' && isSelected;
 
@@ -134,18 +136,18 @@ export function InlineFeedbackWidget({ flow, imageId, sessionId }: InlineFeedbac
                       ${state === 'submitting' && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}
                     `}
                   >
-                    {isSubmitting ? (
+                    {siteValue(isSubmitting ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <Icon size={14} strokeWidth={1.5} />
-                    )}
+                    ))}
                     <span>{t(labelKey)}</span>
                   </button>
                 );
-              })}
+              }))}
             </div>
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
     </div>
   );

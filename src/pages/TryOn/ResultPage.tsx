@@ -1,40 +1,41 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate, Link, useSearchParams, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import {
-   ArrowRight,
-   Share2,
-   Download,
-   ShoppingBag,
-   Maximize2,
-   X,
-   Menu,
-   Heart,
-   CheckCircle2,
-   Users,
-   Loader2,
-   AlertCircle
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  Heart,
+  Loader2,
+  Maximize2,
+  Menu,
+  Share2,
+  ShoppingBag,
+  Users,
+  X
 } from "lucide-react";
-import { useAuth, useUpload, useProduct } from '../../context/AppProviders';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
-import { Header } from '../../components/Header';
-import { prepareDownload, triggerDownload, triggerShare, getDownloadErrorMessage, type PreparedDownload } from '../../utils/downloadUtils';
-import { AuthModal } from '../../components/AuthModal';
-import { SidebarMenu } from '../../components/SidebarMenu';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from "sonner";
+import { trackGalleryEvent, trackResultAction, trackResultViewed } from '../../analytics/events';
+import { AuthModal } from '../../components/AuthModal';
+import { AddToBasketButton } from '../../components/basket/AddToBasketButton';
+import { BuyButton } from '../../components/BuyButton';
+import { AuthenticatedImage } from '../../components/figma/AuthenticatedImage';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { Header } from '../../components/Header';
+import { InlineFeedbackWidget } from '../../components/InlineFeedbackWidget';
+import { SidebarMenu } from '../../components/SidebarMenu';
+import { useAuth, useProduct, useUpload } from '../../context/AppProviders';
+import type { User } from '../../context/AuthContext';
 import { submitToGallery } from '../../services/socialGalleryService';
 import { getResultImageUrl } from '../../services/visualizationService';
-import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
-import { getProductById } from '../../utils/productLoader';
-import { formatPriceFromRial } from '../../utils/formatters';
-import { BuyButton } from '../../components/BuyButton';
-import { AddToBasketButton } from '../../components/basket/AddToBasketButton';
-import { trackResultViewed, trackResultAction, trackGalleryEvent } from '../../analytics/events';
-import { InlineFeedbackWidget } from '../../components/InlineFeedbackWidget';
-import type { User } from '../../context/AuthContext';
 import type { Product } from '../../types/product';
+import { getDownloadErrorMessage, prepareDownload, triggerDownload, triggerShare, type PreparedDownload } from '../../utils/downloadUtils';
+import { formatPriceFromRial } from '../../utils/formatters';
+import { getProductById } from '../../utils/productLoader';
+import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 
 // --- Helper to build specifications from product data ---
 function buildSpecifications(
@@ -106,6 +107,7 @@ function fallbackCopy(text: string, t: (key: string) => string) {
 }
 
 export function TryOnResultPage() {
+  const { siteValue, siteText, siteDirection } = useSiteTranslation();
    const navigate = useNavigate();
    const [searchParams] = useSearchParams();
    const { productId } = useParams<{ productId: string }>();
@@ -405,44 +407,45 @@ export function TryOnResultPage() {
       resultImageId,
       t
    }: ProductContentProps) => {
+  const { siteValue } = useSiteTranslation();
       // Build specifications from real data
       const specifications = buildSpecifications(product, selectedSize, t);
       return (
          <div className={`flex flex-col gap-12 ${isDesktop ? 'px-12' : 'px-8'} pb-[96px] bg-[#FDFDFB]`}>
             {/* Product Header Section - Editorial Style */}
-            {product && (
+            {siteValue(product && (
                <div className="flex flex-col gap-6 pb-8 border-b border-black/[0.08]">
                   <span className="text-[15px] font-bold uppercase tracking-[0.3em] text-black/40 text-[rgba(7,7,7,0.73)]">{t('tryOn.result.testedProduct')}</span>
                   <div className="flex gap-6 items-start">
                      <div className="relative w-[100px] h-[100px] overflow-hidden flex-shrink-0 border border-black/[0.05] bg-black/[0.02]">
                         <ImageWithFallback
                            src={product.images?.[0]}
-                           alt={product.name}
+                           alt={siteValue(product.name)}
                            className="w-full h-full object-cover grayscale-[0.2]"
                         />
                      </div>
                      <div className="flex-1 flex flex-col gap-2">
-                        <h1 className="text-[20px] font-light text-black leading-tight tracking-tight">{product.name}</h1>
-                        {product.price && (
+                        <h1 className="text-[20px] font-light text-black leading-tight tracking-tight">{siteValue(product.name)}</h1>
+                        {siteValue(product.price && (
                            <div className="flex items-baseline gap-1.5">
                               <span className="text-[17px] font-regular text-black">
-                                 {formatPriceFromRial(product.price, false)}
+                                 {siteValue(formatPriceFromRial(product.price, false))}
                               </span>
                               <span className="text-[11px] font-light text-black/60">{t('common.toman')}</span>
                            </div>
-                        )}
-                        {(product.seller?.name || product.brand) && (
+                        ))}
+                        {siteValue((product.seller?.name || product.brand) && (
                            <span className="text-[9px] font-bold text-black/40 uppercase tracking-[0.2em] mt-1">
-                              {product.seller?.name || product.brand}
+                              {siteValue(product.seller?.name || product.brand)}
                            </span>
-                        )}
+                        ))}
                      </div>
                   </div>
                </div>
-            )}
+            ))}
 
             {/* Buy Button - Primary CTA */}
-            {product && (
+            {siteValue(product && (
                <BuyButton
                   productId={product.id}
                   sourceContext="try_on_result"
@@ -452,10 +455,10 @@ export function TryOnResultPage() {
                   size="lg"
                   className="w-full py-5 bg-black text-white font-bold uppercase tracking-wider text-[13px] hover:bg-black/90 transition-colors"
                />
-            )}
+            ))}
 
             {/* Add to Basket - secondary CTA next to Buy */}
-            {product && (
+            {siteValue(product && (
                <AddToBasketButton
                   productUniqueLink={product.id}
                   sourceContext="try_on_result"
@@ -464,7 +467,7 @@ export function TryOnResultPage() {
                   size="lg"
                   className="w-full py-5 font-bold uppercase tracking-wider text-[13px]"
                />
-            )}
+            ))}
 
             {/* Navigation Links - Clean & Minimal */}
             <div className="flex flex-col border-b border-black/[0.08]">
@@ -487,18 +490,18 @@ export function TryOnResultPage() {
                </h3>
 
                <div className="flex flex-col">
-                  {specifications.length > 0 ? (
+                  {siteValue(specifications.length > 0 ? (
                      specifications.map((detail, idx) => (
                         <div key={idx} className="flex justify-between items-center py-4 border-b border-black/[0.05]">
-                           <span className="text-[13px] text-black/40 font-light">{detail.label}</span>
-                           <span className="text-[13px] font-regular text-black" dir={detail.label === t('product.dimensions') ? 'ltr' : 'rtl'}>{detail.value}</span>
+                           <span className="text-[13px] text-black/40 font-light">{siteValue(detail.label)}</span>
+                           <span className="text-[13px] font-regular text-black" dir={detail.label === t('product.dimensions') ? 'ltr' : 'rtl'}>{siteValue(detail.value)}</span>
                         </div>
                      ))
                   ) : (
                      <div className="py-4 text-center">
                         <span className="text-[13px] text-black/40 font-light">{t('tryOn.result.noSpecs')}</span>
                      </div>
-                  )}
+                  ))}
                </div>
             </div>
 
@@ -577,7 +580,7 @@ export function TryOnResultPage() {
    // Recovery failed state - no result data found
    if (recoveryFailed && !resultImageUrl) {
       return (
-         <div className="h-screen w-full bg-background flex flex-col font-vazirmatn" dir="rtl">
+         <div className="h-screen w-full bg-background flex flex-col font-vazirmatn" dir={siteDirection()}>
             <Header />
             <div className="flex-1 flex flex-col items-center justify-center px-6">
                <div className="w-20 h-20 rounded-full bg-black/5 flex items-center justify-center mb-6">
@@ -590,14 +593,14 @@ export function TryOnResultPage() {
                   {t('tryOn.result.notFoundDescription')}
                </p>
                <div className="flex flex-col gap-3 w-full max-w-[280px]">
-                  {isLoggedIn && (
+                  {siteValue(isLoggedIn && (
                      <button
                         onClick={() => navigate('/account/gallery')}
                         className="h-14 bg-black text-white text-[14px] font-bold uppercase tracking-[0.1em] hover:bg-black/90 transition-all flex items-center justify-center"
                      >
                         {t('tryOn.result.viewGallery')}
                      </button>
-                  )}
+                  ))}
                   <button
                      onClick={() => navigate(`/try-on/${productId}/upload`)}
                      className="h-14 bg-white border border-black/10 text-black text-[14px] font-medium hover:bg-black/[0.02] transition-all"
@@ -611,13 +614,13 @@ export function TryOnResultPage() {
    }
 
    return (
-      <div className="h-screen w-full bg-background relative overflow-hidden flex flex-col font-vazirmatn select-none" dir="rtl">
+      <div className="h-screen w-full bg-background relative overflow-hidden flex flex-col font-vazirmatn select-none" dir={siteDirection()}>
          {/* 1. Mobile-only Global Header */}
-         {!isFullScreen && (
+         {siteValue(!isFullScreen && (
             <div className="md:hidden">
                <Header />
             </div>
-         )}
+         ))}
 
          {/* 10. GLOBAL SIDEBAR MENU */}
          <SidebarMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
@@ -631,7 +634,7 @@ export function TryOnResultPage() {
                      <button
                         onClick={() => setIsMenuOpen(true)}
                         className="p-2 -mr-2 text-foreground/60 hover:text-foreground transition-colors"
-                        aria-label="منو"
+                        aria-label={siteText("منو")}
                      >
                         <Menu size={24} strokeWidth={1.5} />
                      </button>
@@ -663,7 +666,7 @@ export function TryOnResultPage() {
             {/* 3. Left Hero (Image Area) - Desktop Only */}
             <div className="hidden md:block flex-1 h-full bg-secondary relative overflow-hidden group">
                {/* Show result image or shimmer during recovery */}
-               {resultImageUrl ? (
+               {siteValue(resultImageUrl ? (
                   <AuthenticatedImage
                      src={resultImageUrl}
                      alt="Try-On Result"
@@ -671,14 +674,14 @@ export function TryOnResultPage() {
                   />
                ) : (
                   <div className="w-full h-full image-loading" />
-               )}
-               {originalImage && (
+               ))}
+               {siteValue(originalImage && (
                   <img
                      src={originalImage}
                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
                      alt="Original"
                   />
-               )}
+               ))}
 
                {/* Desktop Gallery Controls Overlay */}
                <div className="absolute inset-0 pointer-events-none">
@@ -688,7 +691,7 @@ export function TryOnResultPage() {
                      <button
                         onClick={handleExitRequest}
                         className="w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90 shadow-lg"
-                        aria-label="بازگشت"
+                        aria-label={siteText("بازگشت")}
                      >
                         <ArrowRight size={24} className="rotate-0" />
                      </button>
@@ -699,9 +702,9 @@ export function TryOnResultPage() {
                            onClick={handleSubmitToGallery}
                            disabled={isSubmittingToGallery || isSubmittedToGallery}
                            className={`w-12 h-12 rounded-full backdrop-blur-xl flex items-center justify-center border transition-all active:scale-90 ${isSubmittedToGallery ? 'bg-white border-white text-green-600 shadow-lg' : 'bg-black/10 border-white/20 text-white hover:bg-black/20'} ${isSubmittingToGallery ? 'opacity-50 cursor-not-allowed' : ''}`}
-                           title="اشتراک در گالری عمومی"
+                           title={siteText("اشتراک در گالری عمومی")}
                         >
-                           {isSubmittingToGallery ? <Loader2 size={20} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={20} /> : <Users size={20} />}
+                           {siteValue(isSubmittingToGallery ? <Loader2 size={20} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={20} /> : <Users size={20} />)}
                         </button>
                         <button
                            onClick={() => setIsSaved(!isSaved)}
@@ -714,7 +717,7 @@ export function TryOnResultPage() {
                            disabled={isDownloading}
                            className={`w-12 h-12 rounded-full bg-black/10 backdrop-blur-xl border border-white/20 text-white hover:bg-black/20 flex items-center justify-center transition-all active:scale-90 ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                           {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                           {siteValue(isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />)}
                         </button>
                      </div>
                   </div>
@@ -741,7 +744,7 @@ export function TryOnResultPage() {
                      className={`relative w-full h-[65vh] z-0`}
                   >
                      {/* Show result image only when available */}
-                     {resultImageUrl ? (
+                     {siteValue(resultImageUrl ? (
                         <AuthenticatedImage
                            src={resultImageUrl}
                            alt="Try-On Result"
@@ -749,7 +752,7 @@ export function TryOnResultPage() {
                         />
                      ) : (
                         <div className="w-full h-full image-loading" />
-                     )}
+                     ))}
 
                      {/* Full Screen Trigger Overlay (Invisible button over image) */}
                      <button
@@ -767,7 +770,7 @@ export function TryOnResultPage() {
                               handleExitRequest();
                            }}
                            className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90 transition-transform pointer-events-auto"
-                           aria-label="بازگشت"
+                           aria-label={siteText("بازگشت")}
                         >
                            <ArrowRight size={20} className="rotate-0" />
                         </button>
@@ -779,7 +782,7 @@ export function TryOnResultPage() {
                               disabled={isSubmittingToGallery || isSubmittedToGallery}
                               className={`w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center border border-white/10 transition-all active:scale-90 ${isSubmittedToGallery ? 'text-green-600 bg-white' : 'text-white bg-black/20'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
                            >
-                              {isSubmittingToGallery ? <Loader2 size={16} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={16} /> : <Users size={16} />}
+                              {siteValue(isSubmittingToGallery ? <Loader2 size={16} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={16} /> : <Users size={16} />)}
                            </button>
                            <button
                               onClick={(e) => { e.stopPropagation(); setIsSaved(!isSaved); }}
@@ -792,7 +795,7 @@ export function TryOnResultPage() {
                               disabled={isDownloading}
                               className={`w-10 h-10 rounded-full bg-black/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/10 active:scale-90 ${isDownloading ? 'opacity-50' : ''}`}
                            >
-                              {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                              {siteValue(isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />)}
                            </button>
                         </div>
                      </div>
@@ -834,7 +837,7 @@ export function TryOnResultPage() {
                         disabled={isSubmittingToGallery || isSubmittedToGallery}
                         className={`w-14 h-14 flex items-center justify-center border-l border-black/10 transition-colors ${isSubmittedToGallery ? 'bg-green-50 text-green-600' : 'bg-white hover:bg-black/[0.02]'} ${isSubmittingToGallery ? 'opacity-50' : ''}`}
                      >
-                        {isSubmittingToGallery ? <Loader2 size={18} strokeWidth={1.2} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={18} strokeWidth={1.2} /> : <Users size={18} strokeWidth={1.2} />}
+                        {siteValue(isSubmittingToGallery ? <Loader2 size={18} strokeWidth={1.2} className="animate-spin" /> : isSubmittedToGallery ? <CheckCircle2 size={18} strokeWidth={1.2} /> : <Users size={18} strokeWidth={1.2} />)}
                      </button>
                      <button
                         onClick={() => setIsSaved(!isSaved)}
@@ -855,7 +858,7 @@ export function TryOnResultPage() {
 
          {/* 5. FULL SCREEN OVERLAY - Shared Logic */}
          <AnimatePresence>
-            {isFullScreen && (
+            {siteValue(isFullScreen && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -873,7 +876,7 @@ export function TryOnResultPage() {
                   {/* Full Screen Image Container (Maintains Aspect Ratio) */}
                   <div className="relative max-w-full max-h-[80vh] aspect-[4/5] overflow-hidden rounded-[20px] shadow-2xl border border-white/10">
                      {/* Show result image only when available */}
-                     {resultImageUrl ? (
+                     {siteValue(resultImageUrl ? (
                         <AuthenticatedImage
                            src={resultImageUrl}
                            alt="Try-On Result"
@@ -881,14 +884,14 @@ export function TryOnResultPage() {
                         />
                      ) : (
                         <div className="w-full h-full image-loading" />
-                     )}
-                     {originalImage && (
+                     ))}
+                     {siteValue(originalImage && (
                         <img
                            src={originalImage}
                            alt="Original"
                            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
                         />
-                     )}
+                     ))}
                   </div>
 
                   {/* Before/After Toggle - Only in Full Screen */}
@@ -915,12 +918,12 @@ export function TryOnResultPage() {
                      <span className="text-[10px]">{t('tryOn.result.renderEngine')}</span>
                   </div>
                </motion.div>
-            )}
+            ))}
          </AnimatePresence>
 
          {/* 7. AUTO-SAVE GLASS NOTICE */}
          <AnimatePresence>
-            {showAutoSaveNotice && (
+            {siteValue(showAutoSaveNotice && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -956,12 +959,12 @@ export function TryOnResultPage() {
                      </div>
                   </motion.div>
                </motion.div>
-            )}
+            ))}
          </AnimatePresence>
 
          {/* 9. EXIT CONFIRMATION (Glass Modal Style) */}
          <AnimatePresence>
-            {showExitConfirm && (
+            {siteValue(showExitConfirm && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -997,12 +1000,12 @@ export function TryOnResultPage() {
                      </div>
                   </motion.div>
                </motion.div>
-            )}
+            ))}
          </AnimatePresence>
 
          {/* 8. DOWNLOAD READY MODAL */}
          <AnimatePresence>
-            {showDownloadReady && (
+            {siteValue(showDownloadReady && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -1043,7 +1046,7 @@ export function TryOnResultPage() {
                      </div>
                   </motion.div>
                </motion.div>
-            )}
+            ))}
          </AnimatePresence>
 
          {/* 9. AUTH MODAL (Matches Studio Flow exactly) */}

@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * AnalysisLoadingScreen — Screen 3 of the intake flow.
  *
@@ -8,9 +9,9 @@
  * Purely presentational — no navigation logic.
  */
 
-import { AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { AlertTriangle } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 
@@ -24,11 +25,12 @@ interface AnalysisLoadingScreenProps {
 
 // ── Animated dots (normal state loading indicator) ──────────────────────────
 function PulsingDots({ reduced }: { reduced: boolean }) {
+  const { siteValue } = useSiteTranslation();
   if (reduced) {
     // Static dots for reduced-motion preference
     return (
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {[0, 1, 2].map((i) => (
+        {siteValue([0, 1, 2].map((i) => (
           <span
             key={i}
             style={{
@@ -39,14 +41,14 @@ function PulsingDots({ reduced }: { reduced: boolean }) {
               display: 'block',
             }}
           />
-        ))}
+        )))}
       </div>
     );
   }
 
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-      {[0, 1, 2].map((i) => (
+      {siteValue([0, 1, 2].map((i) => (
         <motion.span
           key={i}
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1, 0.85] }}
@@ -64,7 +66,7 @@ function PulsingDots({ reduced }: { reduced: boolean }) {
             display: 'block',
           }}
         />
-      ))}
+      )))}
     </div>
   );
 }
@@ -76,13 +78,14 @@ export function AnalysisLoadingScreen({
   error = false,
   onRetry,
 }: AnalysisLoadingScreenProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const reduced = useReducedMotion() ?? false;
   // Real backend phase, with a neutral fallback until the first stage arrives.
   const statusText = stage?.trim() || INTAKE_COPY.loading.preparing;
 
   return (
     <div
-      dir="rtl"
+      dir={siteDirection()}
       style={{
         position: 'fixed',
         inset: 0,
@@ -113,7 +116,7 @@ export function AnalysisLoadingScreen({
         }}
       >
         {/* ── Photo preview / placeholder ─────────────────────────────── */}
-        {imageUrl ? (
+        {siteValue(imageUrl ? (
           <div style={{ position: 'relative', width: '100%', maxWidth: '360px' }}>
             {/* Entrance animation — fade + slight rise */}
             <motion.div
@@ -179,10 +182,10 @@ export function AnalysisLoadingScreen({
               border: `1px solid ${RD.line}`,
             }}
           />
-        )}
+        ))}
 
         {/* ── Loading state ─────────────────────────────────────────────── */}
-        {!error && (
+        {siteValue(!error && (
           <div
             style={{
               display: 'flex',
@@ -217,19 +220,19 @@ export function AnalysisLoadingScreen({
                     lineHeight: '1.6',
                     color: RD.ink,
                     textAlign: 'center',
-                    direction: 'rtl',
+                    direction: siteDirection(),
                     fontFamily: 'Vazirmatn, sans-serif',
                   }}
                 >
-                  {statusText}
+                  {siteValue(statusText)}
                 </motion.span>
               </AnimatePresence>
             </div>
           </div>
-        )}
+        ))}
 
         {/* ── Error state ──────────────────────────────────────────────── */}
-        {error && (
+        {siteValue(error && (
           <motion.div
             initial={{ opacity: 0, y: reduced ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -256,10 +259,10 @@ export function AnalysisLoadingScreen({
                 color: RD.ink,
                 lineHeight: '1.5',
                 fontFamily: 'Vazirmatn, sans-serif',
-                direction: 'rtl',
+                direction: siteDirection(),
               }}
             >
-              {INTAKE_COPY.errors.analysisFailedTitle}
+              {siteValue(INTAKE_COPY.errors.analysisFailedTitle)}
             </span>
 
             <span
@@ -268,13 +271,13 @@ export function AnalysisLoadingScreen({
                 color: RD.inkSoft,
                 lineHeight: '1.75',
                 fontFamily: 'Vazirmatn, sans-serif',
-                direction: 'rtl',
+                direction: siteDirection(),
               }}
             >
-              {INTAKE_COPY.errors.analysisFailedBody}
+              {siteValue(INTAKE_COPY.errors.analysisFailedBody)}
             </span>
 
-            {onRetry && (
+            {siteValue(onRetry && (
               <motion.button
                 type="button"
                 onClick={onRetry}
@@ -299,11 +302,11 @@ export function AnalysisLoadingScreen({
                   minWidth: '160px',
                 }}
               >
-                {INTAKE_COPY.errors.analysisRetry}
+                {siteValue(INTAKE_COPY.errors.analysisRetry)}
               </motion.button>
-            )}
+            ))}
           </motion.div>
-        )}
+        ))}
       </div>
     </div>
   );

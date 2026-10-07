@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * AuthModal - مودال ورود با OTP و رمز عبور
  *
@@ -11,34 +12,34 @@
  * - Rate limiting feedback
  */
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { useTranslation } from "react-i18next";
+import { appConfig } from "@/config/appConfig";
 import {
-  Phone,
-  ShieldCheck,
-  ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
+  checkUser,
+  isValidPhoneNumber,
+  loginWithPassword,
+  normalizePhoneNumber,
+  resendOTP,
+  resetPassword,
+  sendOTP,
+  sendOTPForReset,
+  setPassword as setUserPassword,
+  verifyOTP,
+} from "@/services/authService";
+import type { AuthTokens, User } from "@/types/auth";
+import {
   AlertCircle,
-  Lock,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
   Eye,
   EyeOff,
+  Lock,
+  Phone,
+  ShieldCheck,
 } from "lucide-react";
-import {
-  sendOTP,
-  verifyOTP,
-  resendOTP,
-  loginWithPassword,
-  sendOTPForReset,
-  resetPassword,
-  checkUser,
-  setPassword as setUserPassword,
-  normalizePhoneNumber,
-  isValidPhoneNumber,
-} from "@/services/authService";
-import type { User, AuthTokens } from "@/types/auth";
-import { appConfig } from "@/config/appConfig";
+import { AnimatePresence, motion } from "motion/react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // =============================================================================
 // Types
@@ -57,6 +58,7 @@ interface AuthModalProps {
 // =============================================================================
 
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
 
   // Auth mode from environment variable
@@ -371,7 +373,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     e.preventDefault();
 
     if (newPassword.length < 8) {
-      setError(t('auth.validation.passwordMin8', { defaultValue: 'رمز عبور باید حداقل ۸ کاراکتر باشد' }));
+      setError(t('auth.validation.passwordMin8', { defaultValue: siteText("رمز عبور باید حداقل ۸ کاراکتر باشد") }));
       return;
     }
 
@@ -408,12 +410,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     e.preventDefault();
 
     if (!name.trim()) {
-      setError(t('auth.validation.nameRequired', { defaultValue: 'نام و نام خانوادگی الزامی است' }));
+      setError(t('auth.validation.nameRequired', { defaultValue: siteText("نام و نام خانوادگی الزامی است") }));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError(t('auth.validation.passwordMin8', { defaultValue: 'رمز عبور باید حداقل ۸ کاراکتر باشد' }));
+      setError(t('auth.validation.passwordMin8', { defaultValue: siteText("رمز عبور باید حداقل ۸ کاراکتر باشد") }));
       return;
     }
 
@@ -603,7 +605,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     if (authMode === 'password') {
       // In password mode, show support contact message
       setError(t('auth.errors.contactSupportForReset', {
-        defaultValue: 'برای بازیابی رمز عبور با پشتیبانی تماس بگیرید'
+        defaultValue: siteText("برای بازیابی رمز عبور با پشتیبانی تماس بگیرید")
       }));
     } else {
       // OTP mode: go to reset flow
@@ -642,9 +644,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
       case "login":
         return t('auth.login');
       case "set-password":
-        return t('auth.setPasswordTitle', { defaultValue: 'تنظیم رمز عبور' });
+        return t('auth.setPasswordTitle', { defaultValue: siteText("تنظیم رمز عبور") });
       case "register":
-        return t('auth.register', { defaultValue: 'ثبت‌نام' });
+        return t('auth.register', { defaultValue: siteText("ثبت‌نام") });
       case "reset-otp":
         return t('auth.resetPassword');
       case "reset-password":
@@ -706,7 +708,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
 
           <div className="p-10 relative z-10">
             {/* Back Button */}
-            {showBackButton && (
+            {siteValue(showBackButton && (
               <button
                 type="button"
                 onClick={handleBack}
@@ -715,7 +717,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               >
                 <ArrowRight size={20} />
               </button>
-            )}
+            ))}
 
             {/* Branding */}
             <div className="text-center mb-10 space-y-3">
@@ -728,28 +730,28 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               </div>
 
               <h2 className="text-[26px] font-bold text-black tracking-tight leading-tight">
-                {getStepTitle()}
+                {siteValue(getStepTitle())}
               </h2>
             </div>
 
             {/* Success Message */}
-            {successMessage && (
+            {siteValue(successMessage && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-center gap-2 text-[13px] font-bold text-green-700 text-center py-3 px-4 bg-green-100 rounded-[var(--radius-sm)] mb-6"
               >
                 <CheckCircle2 size={16} />
-                <span>{successMessage}</span>
+                <span>{siteValue(successMessage)}</span>
               </motion.div>
-            )}
+            ))}
 
             {/* Form / Content */}
             <div className="space-y-6">
               {/* ============================================================ */}
               {/* STEP: Phone Input */}
               {/* ============================================================ */}
-              {step === "phone" && (
+              {siteValue(step === "phone" && (
                 <form onSubmit={handleSendOtp} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
@@ -774,30 +776,30 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('auth.getOtp')}</span>
                         <ArrowLeft size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
 
                   {/* Password Login Link */}
@@ -812,12 +814,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     </button>
                   </div>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: OTP Verification */}
               {/* ============================================================ */}
-              {step === "otp" && (
+              {siteValue(step === "otp" && (
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
@@ -856,7 +858,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         {t('common.edit')}
                       </button>
                       <span className="text-[11px] font-bold text-black/40">
-                        {countdown > 0 ? (
+                        {siteValue(countdown > 0 ? (
                           `${Math.floor(countdown / 60)}:${(countdown % 60)
                             .toString()
                             .padStart(2, "0")}`
@@ -869,55 +871,55 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                           >
                             {t('auth.resendOtp')}
                           </button>
-                        )}
+                        ))}
                       </span>
                     </div>
                   </div>
 
                   {/* Remaining attempts warning */}
-                  {remainingAttempts !== null && remainingAttempts <= 2 && remainingAttempts > 0 && (
+                  {siteValue(remainingAttempts !== null && remainingAttempts <= 2 && remainingAttempts > 0 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-[11px] font-medium text-amber-600 text-center py-2 px-4 bg-amber-50 rounded-[var(--radius-sm)]"
                     >
-                      {remainingAttempts} {t('common.retry')}
+                      {siteValue(remainingAttempts)} {t('common.retry')}
                     </motion.div>
-                  )}
+                  ))}
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('common.confirm')}</span>
                         <CheckCircle2 size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Password Login */}
               {/* ============================================================ */}
-              {step === "password" && (
+              {siteValue(step === "password" && (
                 <form onSubmit={handlePasswordLogin} className="space-y-5">
                   {/* Phone Input */}
                   <div className="space-y-2">
@@ -968,7 +970,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
 
@@ -994,30 +996,30 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('auth.login')}</span>
                         <ArrowLeft size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
 
                   {/* Divider & OTP Login Link */}
@@ -1038,17 +1040,17 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     </button>
                   </div>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Login (Password Mode - Existing User) */}
               {/* ============================================================ */}
-              {step === "login" && (
+              {siteValue(step === "login" && (
                 <form onSubmit={handlePasswordLogin} className="space-y-5">
                   {/* Phone Display (subtle) */}
                   <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
                     <Phone size={14} />
-                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <span dir="ltr" className="font-medium">{siteValue(phone)}</span>
                     <button
                       type="button"
                       onClick={handleChangePhone}
@@ -1085,7 +1087,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
 
@@ -1103,38 +1105,38 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('auth.login')}</span>
                         <ArrowLeft size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Set Password (OTP User without password) */}
               {/* ============================================================ */}
-              {step === "set-password" && (
+              {siteValue(step === "set-password" && (
                 <form onSubmit={handleSetPassword} className="space-y-5">
                   {/* Info Message */}
                   <motion.div
@@ -1145,7 +1147,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                     <span>
                       {t('auth.setPasswordExplanation', {
-                        defaultValue: 'به دلیل محدودیت‌های ارسال پیامک، لطفاً یک رمز عبور برای حساب خود تنظیم کنید.'
+                        defaultValue: siteText("به دلیل محدودیت‌های ارسال پیامک، لطفاً یک رمز عبور برای حساب خود تنظیم کنید.")
                       })}
                     </span>
                   </motion.div>
@@ -1153,7 +1155,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Phone Display (subtle) */}
                   <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
                     <Phone size={14} />
-                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <span dir="ltr" className="font-medium">{siteValue(phone)}</span>
                     <button
                       type="button"
                       onClick={handleChangePhone}
@@ -1189,7 +1191,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
@@ -1219,49 +1221,49 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>{t('auth.setPasswordButton', { defaultValue: 'تنظیم رمز عبور و ورود' })}</span>
+                        <span>{t('auth.setPasswordButton', { defaultValue: siteText("تنظیم رمز عبور و ورود") })}</span>
                         <CheckCircle2 size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Register (New User) */}
               {/* ============================================================ */}
-              {step === "register" && (
+              {siteValue(step === "register" && (
                 <form onSubmit={handleRegister} className="space-y-5">
                   {/* Phone Display (subtle) */}
                   <div className="flex items-center justify-center gap-2 text-[13px] text-black/50">
                     <Phone size={14} />
-                    <span dir="ltr" className="font-medium">{phone}</span>
+                    <span dir="ltr" className="font-medium">{siteValue(phone)}</span>
                     <button
                       type="button"
                       onClick={handleChangePhone}
@@ -1275,12 +1277,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   {/* Name Input */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
-                      {t('auth.name', { defaultValue: 'نام و نام خانوادگی' })}
+                      {t('auth.name', { defaultValue: siteText("نام و نام خانوادگی") })}
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder={t('auth.namePlaceholder', { defaultValue: 'نام خود را وارد کنید' })}
+                        placeholder={t('auth.namePlaceholder', { defaultValue: siteText("نام خود را وارد کنید") })}
                         value={name}
                         onChange={(e) => {
                           setName(e.target.value);
@@ -1289,7 +1291,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         required
                         disabled={isLoading}
                         className="w-full h-14 px-4 bg-white/20 border border-white/40 rounded-[var(--radius-sm)] focus:outline-none focus:bg-white/40 focus:border-white/60 transition-all duration-300 text-[16px] font-medium text-center"
-                        dir="rtl"
+                        dir={siteDirection()}
                       />
                     </div>
                   </div>
@@ -1319,7 +1321,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
@@ -1349,44 +1351,44 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>{t('auth.registerButton', { defaultValue: 'ثبت‌نام' })}</span>
+                        <span>{t('auth.registerButton', { defaultValue: siteText("ثبت‌نام") })}</span>
                         <CheckCircle2 size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Reset Password - Request OTP */}
               {/* ============================================================ */}
-              {step === "reset-otp" && (
+              {siteValue(step === "reset-otp" && (
                 <form onSubmit={handleSendResetOtp} className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em] px-1">
@@ -1411,38 +1413,38 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('auth.getOtp')}</span>
                         <ArrowLeft size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
 
               {/* ============================================================ */}
               {/* STEP: Reset Password - Enter OTP & New Password */}
               {/* ============================================================ */}
-              {step === "reset-password" && (
+              {siteValue(step === "reset-password" && (
                 <form onSubmit={handleResetPassword} className="space-y-5">
                   {/* OTP Input */}
                   <div className="space-y-2">
@@ -1481,7 +1483,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         {t('common.edit')}
                       </button>
                       <span className="text-[11px] font-bold text-black/40">
-                        {countdown > 0 ? (
+                        {siteValue(countdown > 0 ? (
                           `${Math.floor(countdown / 60)}:${(countdown % 60)
                             .toString()
                             .padStart(2, "0")}`
@@ -1494,7 +1496,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                           >
                             {t('auth.resendOtp')}
                           </button>
-                        )}
+                        ))}
                       </span>
                     </div>
                   </div>
@@ -1524,7 +1526,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
@@ -1554,45 +1556,45 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {siteValue(showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />)}
                       </button>
                     </div>
                   </div>
 
                   {/* Error Message */}
-                  {error && (
+                  {siteValue(error && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-2 text-[11px] font-bold text-destructive text-center py-3 px-4 bg-destructive/10 rounded-[var(--radius-sm)]"
                     >
                       <AlertCircle size={14} />
-                      <span>{error}</span>
+                      <span>{siteValue(error)}</span>
                     </motion.div>
-                  )}
+                  ))}
 
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-[var(--radius-sm)] text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                   >
-                    {isLoading ? (
+                    {siteValue(isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         <span>{t('auth.changePassword')}</span>
                         <CheckCircle2 size={18} />
                       </>
-                    )}
+                    ))}
                   </button>
                 </form>
-              )}
+              ))}
             </div>
 
             {/* Footer Note - kept simple, could be translated later */}
             <p className="mt-10 text-[11px] text-center text-black/30 font-medium leading-relaxed">
               {t('auth.termsNotice', {
-                defaultValue: 'با ورود به هُما، شما با تمامی قوانین حریم خصوصی و شرایط استفاده موافقت می‌کنید.'
+                defaultValue: siteText("با ورود به هُما، شما با تمامی قوانین حریم خصوصی و شرایط استفاده موافقت می‌کنید.")
               })}
             </p>
           </div>

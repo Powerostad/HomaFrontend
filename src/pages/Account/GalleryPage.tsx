@@ -1,25 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { RefreshCw } from 'lucide-react';
-import { Header } from '../../components/Header';
-import { SidebarMenu } from '../../components/SidebarMenu';
-import { ResultCard } from '../../components/account/ResultCard';
-import { EmptyGallery } from '../../components/account/EmptyGallery';
-import { Button } from '../../components/ui/button';
-import { toast } from 'sonner';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { fetchGallery, togglePinItem, type GalleryTab } from '@/services/galleryService';
 import { toResultCardData, type GalleryItem, type ResultCardData } from '@/types/gallery';
 import { formatRelativeTime } from '@/utils/formatters';
+import { RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Header } from '../../components/Header';
+import { SidebarMenu } from '../../components/SidebarMenu';
+import { EmptyGallery } from '../../components/account/EmptyGallery';
+import { ResultCard } from '../../components/account/ResultCard';
+import { Button } from '../../components/ui/button';
 
 // =============================================================================
 // Loading Skeleton Component
 // =============================================================================
 
 function GallerySkeleton() {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-      {[...Array(8)].map((_, i) => (
+      {siteValue([...Array(8)].map((_, i) => (
         <div key={i} className="flex flex-col gap-3 animate-pulse">
           <div className="aspect-[4/5] bg-secondary rounded-[var(--radius-card)]" />
           <div className="flex flex-col gap-2 px-1">
@@ -27,7 +29,7 @@ function GallerySkeleton() {
             <div className="h-3 bg-secondary rounded w-1/2" />
           </div>
         </div>
-      ))}
+      )))}
     </div>
   );
 }
@@ -43,6 +45,7 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ onRetry, isRetrying, t }: ErrorStateProps) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-6">
       <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center text-destructive">
@@ -61,7 +64,7 @@ function ErrorState({ onRetry, isRetrying, t }: ErrorStateProps) {
         disabled={isRetrying}
         className="h-[56px] px-10 bg-foreground text-background rounded-full font-bold text-[14px] active:scale-95 transition-all shadow-lg"
       >
-        {isRetrying ? t('common.wait') : t('common.retry')}
+        {siteValue(isRetrying ? t('common.wait') : t('common.retry'))}
       </Button>
     </div>
   );
@@ -72,6 +75,7 @@ function ErrorState({ onRetry, isRetrying, t }: ErrorStateProps) {
 // =============================================================================
 
 export default function GalleryPage() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<GalleryTab>('all');
@@ -200,7 +204,7 @@ export default function GalleryPage() {
   // Render
   // ==========================================================================
   return (
-    <div className="min-h-screen bg-background font-vazirmatn flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-background font-vazirmatn flex flex-col" dir={siteDirection()}>
       <Header />
       <SidebarMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -213,31 +217,31 @@ export default function GalleryPage() {
           </div>
 
           {/* Tabs */}
-          {!isLoading && !error && (
+          {siteValue(!isLoading && !error && (
             <div className="flex items-center p-1.5 bg-secondary/50 backdrop-blur-md rounded-full border border-border">
-              {tabs.map((tab) => (
+              {siteValue(tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
                   className={`px-8 h-10 rounded-full text-[13px] font-bold transition-all ${activeTab === tab.key ? 'bg-white text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  {tab.label}
+                  {siteValue(tab.label)}
                 </button>
-              ))}
+              )))}
             </div>
-          )}
+          ))}
         </div>
 
         {/* Content */}
         <div className="flex-1">
-          {isLoading ? (
+          {siteValue(isLoading ? (
             <GallerySkeleton />
           ) : error ? (
             <ErrorState onRetry={() => loadGallery(activeTab, 1)} isRetrying={isLoading} t={t} />
           ) : displayItems.length > 0 ? (
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                {displayItems.map((result) => (
+                {siteValue(displayItems.map((result) => (
                   <ResultCard
                     key={result.id}
                     result={result}
@@ -246,11 +250,11 @@ export default function GalleryPage() {
                     onTogglePin={handleTogglePin}
                     onClick={handleCardClick}
                   />
-                ))}
+                )))}
               </div>
 
               {/* Load More */}
-              {hasMore && (
+              {siteValue(hasMore && (
                 <div className="flex justify-center">
                   <Button
                     onClick={handleLoadMore}
@@ -258,14 +262,14 @@ export default function GalleryPage() {
                     variant="outline"
                     className="h-[48px] px-10 rounded-full font-bold text-[13px]"
                   >
-                    {isLoadingMore ? t('common.wait') : t('store.loadMore')}
+                    {siteValue(isLoadingMore ? t('common.wait') : t('store.loadMore'))}
                   </Button>
                 </div>
-              )}
+              ))}
             </div>
           ) : (
             <EmptyGallery />
-          )}
+          ))}
         </div>
       </main>
     </div>

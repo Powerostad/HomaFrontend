@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Social Gallery Service
  *
@@ -111,12 +112,12 @@ export async function submitToGallery(
       };
     }
 
-    return { success: false, error: response.message || 'خطا در ارسال به گالری' };
+    return { success: false, error: response.message || siteText("خطا در ارسال به گالری") };
   } catch (error: any) {
     console.error('[socialGalleryService] submitToGallery error:', error);
     return {
       success: false,
-      error: translateErrorMessage(error?.message || 'خطا در ارسال به گالری')
+      error: translateErrorMessage(error?.message || siteText("خطا در ارسال به گالری"))
     };
   }
 }
@@ -159,7 +160,7 @@ export async function fetchProductGallery(
       };
     }
 
-    return { success: false, error: 'خطا در دریافت گالری محصول' };
+    return { success: false, error: siteText("خطا در دریافت گالری محصول") };
   } catch (error: any) {
     // 404 means no gallery items yet - not an error
     if (error?.status === 404) {
@@ -172,7 +173,7 @@ export async function fetchProductGallery(
     console.error('[socialGalleryService] fetchProductGallery error:', error);
     return {
       success: false,
-      error: translateErrorMessage(error?.message || 'خطا در دریافت گالری محصول')
+      error: translateErrorMessage(error?.message || siteText("خطا در دریافت گالری محصول"))
     };
   }
 }
@@ -192,7 +193,7 @@ export async function likeGalleryItem(
     console.error('[socialGalleryService] likeGalleryItem error:', error);
     return {
       success: false,
-      error: translateErrorMessage(error?.message || 'خطا در ثبت لایک')
+      error: translateErrorMessage(error?.message || siteText("خطا در ثبت لایک"))
     };
   }
 }

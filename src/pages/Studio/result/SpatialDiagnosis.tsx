@@ -1,6 +1,7 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { CheckCircle2, ChevronDown, ChevronLeft, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import type { DiagnosisAction } from './DiagnosisActionCard';
 
 const FONT = 'var(--font-family-vazirmatn)';
@@ -49,6 +50,7 @@ export function SpatialDiagnosis({
   onScrollToStep,
   onNavigateToRecommendations,
 }: SpatialDiagnosisProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const headline = harmonyScore >= 75
     ? t('studio.result.v2.diagnosis.headlineGood', 'فضای شما پایه‌ی هماهنگی خوبی دارد')
@@ -60,8 +62,8 @@ export function SpatialDiagnosis({
       <div className="studio-diagnosis-intro">
         <div>
           <p className="studio-result-eyebrow">{t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}</p>
-          <h2>{headline}</h2>
-          <p>{detail}</p>
+          <h2>{siteValue(headline)}</h2>
+          <p>{siteValue(detail)}</p>
         </div>
         <button type="button" className="studio-text-button" onClick={onNavigateToRecommendations}>
           {t('studio.result.v2.diagnosis.seeChanges', 'دیدن تغییرها')}
@@ -72,23 +74,23 @@ export function SpatialDiagnosis({
       <div className="studio-diagnosis-metrics" aria-label={t('studio.result.v2.diagnosis.metrics', 'خلاصه عددی تحلیل')}>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.harmonyScore', 'امتیاز هماهنگی')}</span>
-          <strong dir="ltr">{toLocalizedDigits(harmonyScore)}<small>/۱۰۰</small></strong>
+          <strong dir="ltr">{siteValue(toLocalizedDigits(harmonyScore))}<small>/۱۰۰</small></strong>
           <em>{t('studio.result.v2.diagnosis.scoreMethod', 'ترکیب رنگ، سبک و تناسب')}</em>
         </div>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.changeCount', 'تغییر پیشنهادی')}</span>
-          <strong>{toLocalizedDigits(totalRecommendations)}</strong>
+          <strong>{siteValue(toLocalizedDigits(totalRecommendations))}</strong>
           <em>{t('studio.result.v2.diagnosis.changeHint', 'قابل بررسی جداگانه')}</em>
         </div>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.recommendedTotal', 'هزینه همه پیشنهادها')}</span>
-          <strong className="studio-price" dir="ltr">{formatPriceFromRial(totalPrice, false)}</strong>
+          <strong className="studio-price" dir="ltr">{siteValue(formatPriceFromRial(totalPrice, false))}</strong>
           <em>{t('common.toman', 'تومان')} · {t('studio.result.v2.diagnosis.estimated', 'تخمینی')}</em>
         </div>
         <div className="studio-diagnosis-metric studio-diagnosis-metric-selected">
           <span>{t('studio.result.v2.diagnosis.selectedTotal', 'انتخاب فعلی')}</span>
-          <strong className="studio-price" dir="ltr">{formatPriceFromRial(selectedPrice, false)}</strong>
-          <em>{toLocalizedDigits(selectedCount)} {t('studio.result.v2.diagnosis.selectedProducts', 'محصول انتخاب شده')}</em>
+          <strong className="studio-price" dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, false))}</strong>
+          <em>{siteValue(toLocalizedDigits(selectedCount))} {t('studio.result.v2.diagnosis.selectedProducts', 'محصول انتخاب شده')}</em>
         </div>
       </div>
 
@@ -97,29 +99,29 @@ export function SpatialDiagnosis({
           <h3>{t('studio.result.v2.diagnosis.improvementTitle', 'سه فرصت بهبود')}</h3>
           <span>{t('studio.result.v2.diagnosis.linkHint', 'هر مورد به پیشنهاد متناظر وصل است')}</span>
         </div>
-        {diagnosisActions.slice(0, 3).map((action, index) => (
+        {siteValue(diagnosisActions.slice(0, 3).map((action, index) => (
           <article key={action.id} className="studio-diagnosis-action">
-            <div className="studio-diagnosis-action-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</div>
+            <div className="studio-diagnosis-action-number" aria-hidden="true">{siteValue(String(index + 1).padStart(2, '0'))}</div>
             <div className="studio-diagnosis-action-copy">
               <div className="studio-diagnosis-action-heading">
-                <h4>{action.title}</h4>
-                <span>{impactLabel(action.status, t)}</span>
+                <h4>{siteValue(action.title)}</h4>
+                <span>{siteValue(impactLabel(action.status, t))}</span>
               </div>
-              <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {action.diagnosis}</p>
-              <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {action.solution}</p>
+              <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {siteValue(action.diagnosis)}</p>
+              <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {siteValue(action.solution)}</p>
               <p><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}:</strong> {t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر و خوانایی بهتر فضا')}</p>
-              {action.placements && action.placements.length > 0 && (
+              {siteValue(action.placements && action.placements.length > 0 && (
                 <div className="studio-placement-list">
-                  {action.placements.map((placement) => <span key={placement}>{placement}</span>)}
+                  {siteValue(action.placements.map((placement) => <span key={placement}>{siteValue(placement)}</span>))}
                 </div>
-              )}
+              ))}
               <button type="button" className="studio-inline-link" onClick={() => action.linkedItemId && onScrollToStep?.(action.linkedItemId)}>
                 {t('studio.result.v2.card.viewRecommendation', 'مشاهده پیشنهاد')}
                 <ChevronLeft size={15} />
               </button>
             </div>
           </article>
-        ))}
+        )))}
       </div>
 
       <div className="studio-diagnosis-details">
@@ -127,23 +129,23 @@ export function SpatialDiagnosis({
           <span><Sparkles size={16} />{t('studio.result.v2.diagnosis.detailToggle', 'جزئیات تشخیص')}</span>
           <ChevronDown className={diagnosisExpanded ? 'is-open' : ''} size={17} />
         </button>
-        {diagnosisExpanded && (
+        {siteValue(diagnosisExpanded && (
           <div className="studio-details-content">
-            {detectedContext && (
+            {siteValue(detectedContext && (
               <div className="studio-context-pills">
-                {detectedContext.roomType && <span>{t('studio.result.v2.diagnosis.roomType', 'نوع فضا')}: {detectedContext.roomType}</span>}
-                {detectedContext.targetStyle && <span>{t('studio.result.v2.diagnosis.style', 'سبک هدف')}: {detectedContext.targetStyle}</span>}
-                {detectedContext.naturalLight && <span>{t('studio.result.v2.diagnosis.light', 'نور')}: {detectedContext.naturalLight}</span>}
-                {detectedContext.dominantSurfaces && <span>{t('studio.result.v2.diagnosis.surfaces', 'سطوح غالب')}: {detectedContext.dominantSurfaces}</span>}
+                {siteValue(detectedContext.roomType && <span>{t('studio.result.v2.diagnosis.roomType', 'نوع فضا')}: {siteValue(detectedContext.roomType)}</span>)}
+                {siteValue(detectedContext.targetStyle && <span>{t('studio.result.v2.diagnosis.style', 'سبک هدف')}: {siteValue(detectedContext.targetStyle)}</span>)}
+                {siteValue(detectedContext.naturalLight && <span>{t('studio.result.v2.diagnosis.light', 'نور')}: {siteValue(detectedContext.naturalLight)}</span>)}
+                {siteValue(detectedContext.dominantSurfaces && <span>{t('studio.result.v2.diagnosis.surfaces', 'سطوح غالب')}: {siteValue(detectedContext.dominantSurfaces)}</span>)}
               </div>
-            )}
-            <p>{detail}</p>
+            ))}
+            <p>{siteValue(detail)}</p>
             <div className="studio-score-explanation">
               <CheckCircle2 size={16} />
-              <span>{t('studio.result.v2.diagnosis.projectedExplanation', 'اگر همه تغییرها اعمال شوند، امتیاز پیش‌بینی‌شده به')} <strong>{toLocalizedDigits(projectedScore)}</strong> {t('studio.result.v2.diagnosis.outOf', 'از ۱۰۰ می‌رسد.')}</span>
+              <span>{t('studio.result.v2.diagnosis.projectedExplanation', 'اگر همه تغییرها اعمال شوند، امتیاز پیش‌بینی‌شده به')} <strong>{siteValue(toLocalizedDigits(projectedScore))}</strong> {t('studio.result.v2.diagnosis.outOf', 'از ۱۰۰ می‌رسد.')}</span>
             </div>
           </div>
-        )}
+        ))}
       </div>
     </section>
   );

@@ -1,22 +1,23 @@
-import React from "react";
-import { motion, AnimatePresence } from "motion/react";
-import {
-  X,
-  Home,
-  ShoppingBag,
-  Image as ImageIcon,
-  Settings,
-  Palette,
-  LayoutGrid,
-  Globe
-} from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "../context/AppProviders";
-import { AuthModal } from "./AuthModal";
-import { createPortal } from "react-dom";
-import type { User } from "../context/AuthContext";
 import { languages, updateDocumentLanguage, type LanguageCode } from "@/i18n/config";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import {
+  Globe,
+  Home,
+  Image as ImageIcon,
+  LayoutGrid,
+  Palette,
+  Settings,
+  ShoppingBag,
+  X
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import React from "react";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AppProviders";
+import type { User } from "../context/AuthContext";
+import { AuthModal } from "./AuthModal";
 
 interface UnifiedMenuProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface UnifiedMenuProps {
 }
 
 export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user, logout, login } = useAuth();
@@ -71,7 +73,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
   // Render the menu using a Portal to ensure it's on top of everything
   return createPortal(
     <AnimatePresence>
-      {isOpen && (
+      {siteValue(isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
@@ -89,7 +91,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
             exit={{ x: '100%' }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed top-0 right-0 bottom-0 w-full max-w-[400px] bg-surface-default z-[9999] shadow-none border-l border-[var(--border-subtle)] flex flex-col overflow-hidden font-vazirmatn"
-            dir="rtl"
+            dir={siteDirection()}
           >
             {/* 1. Header Area - Zara Style */}
             <div className="flex-shrink-0 px-8 py-12 flex flex-col gap-12">
@@ -103,13 +105,13 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                 </button>
               </div>
 
-              {isLoggedIn ? (
+              {siteValue(isLoggedIn ? (
                 <div className="space-y-2">
                    <div className="text-[28px] font-light tracking-tight text-[var(--jet-black)]" data-ph-mask>
                       {t('auth.greeting', { name: user?.name?.split(' ')[0] || t('common.user') })}
                    </div>
                    <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-                      <span data-ph-mask>{user?.phone}</span>
+                      <span data-ph-mask>{siteValue(user?.phone)}</span>
                       <div className="w-4 h-[1px] bg-[var(--border-subtle)]" />
                       <button onClick={handleLogout} className="hover:text-accent transition-colors">{t('auth.logout')}</button>
                    </div>
@@ -129,7 +131,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                   <span className="text-[28px] font-light tracking-tight text-[var(--jet-black)] block group-hover:translate-x-[-10px] transition-transform duration-500">{t('auth.loginToAccount')}</span>
                   <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-accent mt-2 block">{t('auth.login')} / {t('auth.register')}</span>
                 </button>
-              )}
+              ))}
             </div>
 
             {/* 2. Navigation Content - Vertical Editorial Flow */}
@@ -137,7 +139,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
               <div className="space-y-16">
                 {/* Section: Main Links */}
                 <div className="space-y-8">
-                  {navItems.map((item) => {
+                  {siteValue(navItems.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
                       <Link
@@ -151,21 +153,21 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                            <span className={`text-[24px] md:text-[32px] font-light tracking-tight transition-all duration-500 group-hover:translate-x-[-8px] ${
                              isActive ? 'text-accent' : 'text-[var(--jet-black)]'
                            }`}>
-                             {item.label}
+                             {siteValue(item.label)}
                            </span>
-                           {isActive && <div className="w-2 h-2 rounded-full bg-accent" />}
+                           {siteValue(isActive && <div className="w-2 h-2 rounded-full bg-accent" />)}
                         </div>
                       </Link>
                     );
-                  })}
+                  }))}
                 </div>
 
                 {/* Section: Personal Area */}
-                {isLoggedIn && (
+                {siteValue(isLoggedIn && (
                   <div className="space-y-10 pt-10 border-t border-[var(--border-subtle)]">
                     <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--muted-foreground)] block">{t('nav.mySpace')}</span>
                     <div className="space-y-8">
-                      {accountItems.map((item) => {
+                      {siteValue(accountItems.map((item) => {
                         const isActive = location.pathname === item.href;
                         return (
                           <Link
@@ -178,18 +180,18 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                                 <span className={`text-[18px] font-light transition-all duration-500 group-hover:translate-x-[-6px] ${
                                   isActive ? 'text-accent' : 'text-[var(--jet-black)]'
                                 }`}>
-                                   {item.label}
+                                   {siteValue(item.label)}
                                 </span>
                                 <span className="text-[11px] text-[var(--muted-foreground)] opacity-60 font-medium">
-                                   {item.desc}
+                                   {siteValue(item.desc)}
                                 </span>
                              </div>
                           </Link>
                         );
-                      })}
+                      }))}
                     </div>
                   </div>
-                )}
+                ))}
 
                 {/* Section: Secondary Info */}
                 <div className="pt-10 border-t border-[var(--border-subtle)] space-y-6">
@@ -211,11 +213,11 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                     className="flex items-center gap-2 text-[12px] font-medium text-[var(--jet-black)] hover:text-accent transition-colors w-full"
                   >
                     <Globe size={16} strokeWidth={1.5} />
-                    <span>{currentLanguage.name}</span>
+                    <span>{siteValue(currentLanguage.name)}</span>
                   </button>
-                  {isLanguageOpen && (
+                  {siteValue(isLanguageOpen && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-elevated border border-[var(--border-subtle)] rounded-lg shadow-lg overflow-hidden">
-                      {languages.map((lang) => (
+                      {siteValue(languages.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
@@ -226,12 +228,12 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
                             fontFamily: lang.dir === 'rtl' ? 'Vazirmatn, sans-serif' : 'Inter, sans-serif',
                           }}
                         >
-                          <span>{lang.name}</span>
-                          {lang.code === i18n.language && <span className="text-accent">✓</span>}
+                          <span>{siteValue(lang.name)}</span>
+                          {siteValue(lang.code === i18n.language && <span className="text-accent">✓</span>)}
                         </button>
-                      ))}
+                      )))}
                     </div>
-                  )}
+                  ))}
                </div>
 
                {/* Version Info */}
@@ -243,15 +245,15 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
           </motion.div>
           
           {/* Internal Auth Modal if no external handler provided */}
-          {!onLoginClick && (
+          {siteValue(!onLoginClick && (
             <AuthModal
               isOpen={isAuthOpen}
               onClose={() => setIsAuthOpen(false)}
               onSuccess={handleAuthSuccess}
             />
-          )}
+          ))}
         </>
-      )}
+      ))}
     </AnimatePresence>,
     document.body
   );

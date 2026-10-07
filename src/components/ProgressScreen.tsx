@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Check } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { toLocalizedDigits } from '@/utils/formatters';
+import { Check } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /* ── Types ── */
 
@@ -38,6 +39,7 @@ export function ProgressScreen({
   isUploading,
   statusOverride,
 }: ProgressScreenProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const { t } = useTranslation();
 
   // Only move forward (never go backwards)
@@ -119,7 +121,7 @@ export function ProgressScreen({
     <>
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        {bgImage ? (
+        {siteValue(bgImage ? (
           <>
             <img
               src={bgImage}
@@ -130,7 +132,7 @@ export function ProgressScreen({
           </>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-zinc-50 to-zinc-200 dark:from-zinc-900 dark:to-zinc-800" />
-        )}
+        ))}
         <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-[20px]" />
       </div>
 
@@ -138,16 +140,16 @@ export function ProgressScreen({
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6">
         {/* Stepped progress bar */}
         <div className="flex w-full gap-1.5 mb-6">
-          {steps.map((step, idx) => {
+          {siteValue(steps.map((step, idx) => {
             const isCompleted = idx < maxStep;
             const isActive = idx === maxStep;
             return (
               <div key={idx} className="flex-1 flex flex-col gap-2">
                 <div className="h-1.5 rounded-full overflow-hidden bg-border-subtle">
-                  {isCompleted && (
+                  {siteValue(isCompleted && (
                     <div className="h-full w-full bg-content-primary rounded-full" />
-                  )}
-                  {isActive && (
+                  ))}
+                  {siteValue(isActive && (
                     <div className="h-full w-1/2 bg-content-primary rounded-full overflow-hidden relative">
                       <div
                         className="absolute inset-0 bg-content-primary"
@@ -156,7 +158,7 @@ export function ProgressScreen({
                         }}
                       />
                     </div>
-                  )}
+                  ))}
                 </div>
                 <span
                   className={`text-[11px] text-center leading-tight ${
@@ -167,15 +169,15 @@ export function ProgressScreen({
                         : 'text-content-muted'
                   }`}
                 >
-                  {step.label}
+                  {siteValue(step.label)}
                 </span>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {/* Upload progress bar (TryOn only) */}
-        {isUploading && uploadProgress != null && uploadProgress > 0 && (
+        {siteValue(isUploading && uploadProgress != null && uploadProgress > 0 && (
           <div className="w-full max-w-[200px] mb-4">
             <div className="h-1 bg-black/10 rounded-full overflow-hidden">
               <motion.div
@@ -191,7 +193,7 @@ export function ProgressScreen({
               })}
             </p>
           </div>
-        )}
+        ))}
 
         {/* Micro-feed */}
         <div
@@ -199,7 +201,7 @@ export function ProgressScreen({
           className="w-full max-h-[180px] overflow-hidden mb-6 flex flex-col gap-2"
         >
           <AnimatePresence initial={false}>
-            {visibleMessages.slice(-6).map((msg) => (
+            {siteValue(visibleMessages.slice(-6).map((msg) => (
               <motion.div
                 key={`${msg.stepIdx}-${msg.text}`}
                 initial={{ opacity: 0, y: 8 }}
@@ -207,14 +209,14 @@ export function ProgressScreen({
                 transition={{ duration: 0.4, ease: 'easeOut' }}
                 className="flex items-center gap-2.5 px-3 py-2"
               >
-                {msg.done ? (
+                {siteValue(msg.done ? (
                   <Check
                     size={14}
                     className="text-content-secondary flex-shrink-0"
                   />
                 ) : (
                   <span className="w-2 h-2 rounded-full bg-content-primary animate-pulse flex-shrink-0" />
-                )}
+                ))}
                 <span
                   className={`text-[13px] leading-snug ${
                     msg.done
@@ -222,30 +224,30 @@ export function ProgressScreen({
                       : 'text-content-primary font-medium'
                   }`}
                 >
-                  {msg.text}
+                  {siteValue(msg.text)}
                 </span>
               </motion.div>
-            ))}
+            )))}
           </AnimatePresence>
         </div>
 
         {/* Status override (e.g. retrying amber message) */}
-        {statusOverride && (
-          <div className="mb-4">{statusOverride}</div>
-        )}
+        {siteValue(statusOverride && (
+          <div className="mb-4">{siteValue(statusOverride)}</div>
+        ))}
 
         {/* Time estimate */}
-        {remainingSec > 0 && (
+        {siteValue(remainingSec > 0 && (
           <p className="text-[12px] font-medium text-content-muted mb-4">
             {t('progress.timeEstimate', {
               seconds: toLocalizedDigits(remainingSec),
-              defaultValue: `کمتر از ${toLocalizedDigits(remainingSec)} ثانیه`,
+              defaultValue: siteText("کمتر از {{v0}} ثانیه", { v0: toLocalizedDigits(remainingSec) }),
             })}
           </p>
-        )}
+        ))}
 
         {/* Tips carousel */}
-        {tips.length > 0 && (
+        {siteValue(tips.length > 0 && (
           <div className="h-10 flex items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.p
@@ -256,11 +258,11 @@ export function ProgressScreen({
                 transition={{ duration: 0.4 }}
                 className="text-[12px] text-content-secondary text-center max-w-[300px] leading-relaxed"
               >
-                {tips[tipIndex]}
+                {siteValue(tips[tipIndex])}
               </motion.p>
             </AnimatePresence>
           </div>
-        )}
+        ))}
       </div>
     </>
   );

@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * API Product Types
  * TypeScript definitions for product data from the backend API
@@ -305,7 +306,7 @@ export function apiProductToProduct(apiProduct: APIProduct): Product {
     imageUrls: apiProduct.imageUrls,
     brand: apiProduct.shopName,
     description: apiProduct.description,
-    currency: 'تومان',
+    currency: siteText("تومان"),
     status: 'active',
     seller: {
       name: apiProduct.shopName,

@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Image utility functions for handling image URL to File conversions
  * Used for preset images that need to be uploaded as files
@@ -21,7 +22,7 @@ export async function fetchImageAsFile(
     if (!response.ok) {
       return {
         success: false,
-        error: `خطا در دریافت تصویر (${response.status})`,
+        error: siteText("خطا در دریافت تصویر ({{v0}})", { v0: response.status }),
       };
     }
 
@@ -45,13 +46,13 @@ export async function fetchImageAsFile(
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       return {
         success: false,
-        error: 'خطا در دسترسی به تصویر. لطفا دوباره امتحان کنید.',
+        error: siteText("خطا در دسترسی به تصویر. لطفا دوباره امتحان کنید."),
       };
     }
 
     return {
       success: false,
-      error: 'خطا در بارگذاری تصویر نمونه',
+      error: siteText("خطا در بارگذاری تصویر نمونه"),
     };
   }
 }

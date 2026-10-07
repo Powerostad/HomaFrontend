@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
+import { describe, expect, it } from "vitest";
 import { PublicPage } from "./PublicPage";
 import { createPublicI18n } from "./i18n";
 import type { PublicPageData } from "./types";
@@ -112,7 +112,7 @@ describe("public HTML content", () => {
         <PublicPage data={base} />
       </I18nextProvider>,
     );
-    expect(html).toContain('class="seo-public" dir="rtl" lang="fa"');
+    expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
   });

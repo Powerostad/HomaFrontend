@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Mock AI Image Processing Service
  * این سرویس موقت است و نتایج موک برمی‌گرداند
@@ -74,7 +75,7 @@ export async function processImageWithAI(
       originalImageUrl: '',
       processingTime: 0,
       confidence: 0,
-      error: error instanceof Error ? error.message : 'خطای ناشناخته',
+      error: error instanceof Error ? error.message : siteText("خطای ناشناخته"),
     };
   }
 }
@@ -133,7 +134,7 @@ export async function saveVisualization(
     return {
       success: false,
       visualizationId: '',
-      error: error instanceof Error ? error.message : 'خطای ناشناخته',
+      error: error instanceof Error ? error.message : siteText("خطای ناشناخته"),
     };
   }
 }

@@ -1,5 +1,6 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { CheckCircle, ExternalLink } from "lucide-react";
 import { motion } from "motion/react";
-import { ExternalLink, CheckCircle } from "lucide-react";
 import type { Product } from "../types/product";
 
 interface ProductChipProps {
@@ -9,10 +10,11 @@ interface ProductChipProps {
 }
 
 export function ProductChip({ product, onShowDetails, compact = false }: ProductChipProps) {
+  const { siteText, siteValue, siteLocale } = useSiteTranslation();
   const displayPrice = product.price 
-    ? `${product.price.toLocaleString('fa-IR')} ${product.currency}`
+    ? `${product.price.toLocaleString(siteLocale())} ${product.currency}`
     : product.priceRange
-    ? `${product.priceRange.min.toLocaleString('fa-IR')} - ${product.priceRange.max.toLocaleString('fa-IR')} ${product.currency}`
+    ? `${product.priceRange.min.toLocaleString(siteLocale())} - ${product.priceRange.max.toLocaleString(siteLocale())} ${product.currency}`
     : null;
 
   if (compact) {
@@ -25,14 +27,14 @@ export function ProductChip({ product, onShowDetails, compact = false }: Product
       >
         <img 
           src={product.thumbnail} 
-          alt={product.name}
+          alt={siteValue(product.name)}
           className="w-12 h-12 rounded-xl object-cover border border-gray-200"
         />
         <div className="flex-1 min-w-0 text-right">
-          <h4 className="text-gray-900 truncate">{product.name}</h4>
-          {displayPrice && (
-            <p className="text-gray-600">{displayPrice}</p>
-          )}
+          <h4 className="text-gray-900 truncate">{siteValue(product.name)}</h4>
+          {siteValue(displayPrice && (
+            <p className="text-gray-600">{siteValue(displayPrice)}</p>
+          ))}
         </div>
         <ExternalLink className="w-5 h-5 text-gray-400 flex-shrink-0" />
       </motion.button>
@@ -52,7 +54,7 @@ export function ProductChip({ product, onShowDetails, compact = false }: Product
           <div className="w-24 h-24 flex-shrink-0">
             <img 
               src={product.thumbnail}
-              alt={product.name}
+              alt={siteValue(product.name)}
               className="w-full h-full rounded-2xl object-cover border border-gray-200"
             />
           </div>
@@ -60,40 +62,40 @@ export function ProductChip({ product, onShowDetails, compact = false }: Product
           {/* Product Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="text-gray-900 leading-tight">{product.name}</h3>
-              {product.seller.verified && (
+              <h3 className="text-gray-900 leading-tight">{siteValue(product.name)}</h3>
+              {siteValue(product.seller.verified && (
                 <div className="flex-shrink-0">
                   <CheckCircle className="w-5 h-5 text-blue-500" />
                 </div>
-              )}
+              ))}
             </div>
 
             <p className="text-gray-600 mb-2">
-              {product.seller.name}
-              {product.brand && ` • ${product.brand}`}
+              {siteValue(product.seller.name)}
+              {siteValue(product.brand && ` • ${product.brand}`)}
             </p>
 
-            {displayPrice && (
-              <p className="text-gray-900 mb-3">{displayPrice}</p>
-            )}
+            {siteValue(displayPrice && (
+              <p className="text-gray-900 mb-3">{siteValue(displayPrice)}</p>
+            ))}
 
             {/* Variants */}
-            {product.selectedVariant && (
+            {siteValue(product.selectedVariant && (
               <div className="flex items-center gap-3">
-                {product.selectedVariant.color && (
+                {siteValue(product.selectedVariant.color && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-gray-500">رنگ:</span>
-                    <span className="text-gray-900">{product.selectedVariant.color}</span>
+                    <span className="text-gray-500">{siteText("رنگ:")}</span>
+                    <span className="text-gray-900">{siteValue(product.selectedVariant.color)}</span>
                   </div>
-                )}
-                {product.selectedVariant.size && (
+                ))}
+                {siteValue(product.selectedVariant.size && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-gray-500">سایز:</span>
-                    <span className="text-gray-900">{product.selectedVariant.size}</span>
+                    <span className="text-gray-500">{siteText("سایز:")}</span>
+                    <span className="text-gray-900">{siteValue(product.selectedVariant.size)}</span>
                   </div>
-                )}
+                ))}
               </div>
-            )}
+            ))}
           </div>
         </div>
 
@@ -102,7 +104,7 @@ export function ProductChip({ product, onShowDetails, compact = false }: Product
           onClick={onShowDetails}
           className="w-full mt-4 flex items-center justify-center gap-2 py-2 text-purple-600 hover:text-purple-700 transition-colors"
         >
-          <span>جزئیات محصول</span>
+          <span>{siteText("جزئیات محصول")}</span>
           <ExternalLink className="w-4 h-4" />
         </button>
       </div>

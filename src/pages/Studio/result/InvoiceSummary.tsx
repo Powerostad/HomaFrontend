@@ -1,8 +1,9 @@
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { ArrowLeft, Check, Loader2, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup } from './types';
 
@@ -41,6 +42,7 @@ export function InvoiceSummary({
   onUpdateProductQuantity,
   productQuantityOverrides = new Map(),
 }: InvoiceSummaryProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const basketItems = useMemo<BasketItem[]>(() => {
     const items: BasketItem[] = [];
@@ -69,7 +71,7 @@ export function InvoiceSummary({
         <ShoppingBag size={24} aria-hidden="true" />
       </div>
 
-      {basketItems.length === 0 ? (
+      {siteValue(basketItems.length === 0 ? (
         <div className="studio-invoice-empty">
           <ShoppingBag size={32} />
           <strong>{t('studio.result.v2.basket.empty', 'هنوز محصولی به سبد انتخابی اضافه نشده است')}</strong>
@@ -77,15 +79,15 @@ export function InvoiceSummary({
         </div>
       ) : (
         <div className="studio-invoice-list">
-          {basketItems.map((item) => (
+          {siteValue(basketItems.map((item) => (
             <article key={item.product.id} className="studio-invoice-item">
-              <ImageWithFallback src={item.product.image} alt={item.product.name} className="studio-invoice-image" />
+              <ImageWithFallback src={item.product.image} alt={siteValue(item.product.name)} className="studio-invoice-image" />
               <div className="studio-invoice-item-copy">
-                <span className="studio-invoice-category">{item.group.categoryDisplay}</span>
-                <strong>{item.product.name}</strong>
+                <span className="studio-invoice-category">{siteValue(item.group.categoryDisplay)}</span>
+                <strong>{siteValue(item.product.name)}</strong>
                 <div className="studio-invoice-item-meta">
-                  <span>{item.isMain ? t('studio.result.v2.basket.recommended', 'پیشنهاد اصلی') : t('studio.result.v2.basket.alternative', 'جایگزین')}</span>
-                  {item.group.recommendedSize && <span>{item.group.recommendedSize}</span>}
+                  <span>{siteValue(item.isMain ? t('studio.result.v2.basket.recommended', 'پیشنهاد اصلی') : t('studio.result.v2.basket.alternative', 'جایگزین'))}</span>
+                  {siteValue(item.group.recommendedSize && <span>{siteValue(item.group.recommendedSize)}</span>)}
                 </div>
                 <div className="studio-invoice-quantity" dir="ltr">
                   <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
@@ -99,7 +101,7 @@ export function InvoiceSummary({
                   >
                     <Minus size={14} />
                   </button>
-                  <span>{toLocalizedDigits(item.quantity)}</span>
+                  <span>{siteValue(toLocalizedDigits(item.quantity))}</span>
                   <button
                     type="button"
                     onClick={() => item.isMain
@@ -113,41 +115,41 @@ export function InvoiceSummary({
                 </div>
               </div>
               <div className="studio-invoice-item-price">
-                <strong dir="ltr">{formatPriceFromRial(item.lineTotal, false)}</strong>
+                <strong dir="ltr">{siteValue(formatPriceFromRial(item.lineTotal, false))}</strong>
                 <span>{t('common.toman', 'تومان')}</span>
                 <button
                   type="button"
                   onClick={() => onToggleBasketProduct?.(item.product.id)}
                   aria-pressed={true}
-                  aria-label={`${t('basket.remove', 'حذف')} ${item.product.name}`}
+                  aria-label={siteText("{{v0}} {{v1}}", { v0: t('basket.remove', 'حذف'), v1: item.product.name })}
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </article>
-          ))}
+          )))}
         </div>
-      )}
+      ))}
 
       <div className="studio-invoice-total">
         <div>
           <span>{t('studio.result.v2.basket.selectedTotal', 'جمع انتخاب‌ها')}</span>
           <small>{t('studio.result.v2.basket.estimated', 'هزینه محصولات تخمینی است')}</small>
         </div>
-        <strong dir="ltr">{formatPriceFromRial(selectedPrice, true)}</strong>
+        <strong dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, true))}</strong>
       </div>
 
       <p className="studio-invoice-note">
         {t('studio.result.v2.basket.installationNote', 'هزینه ارسال، اجرا و نصب جداگانه محاسبه می‌شود و در این مبلغ نیامده است.')}
       </p>
 
-      {onFinalize && (
+      {siteValue(onFinalize && (
         <button type="button" className="studio-primary-button studio-invoice-finalize" onClick={onFinalize} disabled={basketItems.length === 0 || isFinalizing}>
-          {isFinalizing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-          {isFinalizing ? t('studio.result.v2.basket.finalizing', 'در حال آماده‌سازی سبد...') : t('studio.result.v2.basket.finalize', 'مشاهده سبد و ادامه به پرداخت')}
-          {!isFinalizing && <ArrowLeft size={18} />}
+          {siteValue(isFinalizing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />)}
+          {siteValue(isFinalizing ? t('studio.result.v2.basket.finalizing', 'در حال آماده‌سازی سبد...') : t('studio.result.v2.basket.finalize', 'مشاهده سبد و ادامه به پرداخت'))}
+          {siteValue(!isFinalizing && <ArrowLeft size={18} />)}
         </button>
-      )}
+      ))}
     </section>
   );
 }

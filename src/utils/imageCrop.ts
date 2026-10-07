@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Image cropping utility for Google Lens search feature
  * Uses Canvas API to crop a region from an image element
@@ -39,7 +40,7 @@ export function cropImageRegion(
     const naturalHeight = imageElement.naturalHeight;
 
     if (!naturalWidth || !naturalHeight) {
-      return { success: false, error: 'تصویر هنوز بارگذاری نشده است' };
+      return { success: false, error: siteText("تصویر هنوز بارگذاری نشده است") };
     }
 
     const scaleX = naturalWidth / displayWidth;
@@ -61,7 +62,7 @@ export function cropImageRegion(
 
     // Validate minimum size (50x50 in natural coordinates)
     if (naturalRegion.width < 50 || naturalRegion.height < 50) {
-      return { success: false, error: 'لطفاً ناحیه بزرگ‌تری انتخاب کنید' };
+      return { success: false, error: siteText("لطفاً ناحیه بزرگ‌تری انتخاب کنید") };
     }
 
     // Create canvas and crop
@@ -71,7 +72,7 @@ export function cropImageRegion(
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      return { success: false, error: 'خطا در پردازش تصویر' };
+      return { success: false, error: siteText("خطا در پردازش تصویر") };
     }
 
     // Draw cropped region
@@ -94,7 +95,7 @@ export function cropImageRegion(
           if (blob) {
             resolve({ success: true, blob });
           } else {
-            resolve({ success: false, error: 'خطا در تبدیل تصویر' });
+            resolve({ success: false, error: siteText("خطا در تبدیل تصویر") });
           }
         },
         'image/jpeg',
@@ -103,7 +104,7 @@ export function cropImageRegion(
     }) as unknown as CropResult;
   } catch (error) {
     console.error('[cropImageRegion] Error:', error);
-    return { success: false, error: 'خطا در برش تصویر' };
+    return { success: false, error: siteText("خطا در برش تصویر") };
   }
 }
 
@@ -123,7 +124,7 @@ export async function cropImageRegionAsync(
     const naturalHeight = imageElement.naturalHeight;
 
     if (!naturalWidth || !naturalHeight) {
-      return { success: false, error: 'تصویر هنوز بارگذاری نشده است' };
+      return { success: false, error: siteText("تصویر هنوز بارگذاری نشده است") };
     }
 
     const scaleX = naturalWidth / displayWidth;
@@ -145,7 +146,7 @@ export async function cropImageRegionAsync(
 
     // Validate minimum size
     if (naturalRegion.width < 50 || naturalRegion.height < 50) {
-      return { success: false, error: 'لطفاً ناحیه بزرگ‌تری انتخاب کنید' };
+      return { success: false, error: siteText("لطفاً ناحیه بزرگ‌تری انتخاب کنید") };
     }
 
     // Create canvas and crop
@@ -155,7 +156,7 @@ export async function cropImageRegionAsync(
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      return { success: false, error: 'خطا در پردازش تصویر' };
+      return { success: false, error: siteText("خطا در پردازش تصویر") };
     }
 
     ctx.drawImage(
@@ -176,7 +177,7 @@ export async function cropImageRegionAsync(
           if (blob) {
             resolve({ success: true, blob });
           } else {
-            resolve({ success: false, error: 'خطا در تبدیل تصویر' });
+            resolve({ success: false, error: siteText("خطا در تبدیل تصویر") });
           }
         },
         'image/jpeg',
@@ -185,6 +186,6 @@ export async function cropImageRegionAsync(
     });
   } catch (error) {
     console.error('[cropImageRegionAsync] Error:', error);
-    return { success: false, error: 'خطا در برش تصویر' };
+    return { success: false, error: siteText("خطا در برش تصویر") };
   }
 }
