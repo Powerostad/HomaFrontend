@@ -66,14 +66,14 @@ export function ContactPage() {
                     {siteValue(item.icon)}
                   </div>
                   <h4 className="opacity-40 text-[12px] font-bold uppercase tracking-widest">{siteValue(item.title)}</h4>
-                  <p className="font-bold text-[14px] md:text-[18px] tracking-tight break-all">{siteValue(item.value)}</p>
+                  <p className="font-bold text-[14px] md:text-[18px] tracking-tight" style={{ overflowWrap: 'anywhere' }}>{siteValue(item.value)}</p>
                 </motion.a>
               )))}
             </div>
 
             {/* FAQ Center */}
             <div className="space-y-10 pt-10 text-start">
-              <h2 className="text-[24px] font-bold text-black border-r-4 border-accent pr-4">{siteText("سوالات متداول (Smart FAQ)")}</h2>
+              <h2 className="text-[24px] font-bold text-black border-s-4 border-accent ps-4">{siteText("سوالات متداول (Smart FAQ)")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 {siteValue(faqs.map((faq, idx) => (
                   <div key={idx} className="p-6 bg-white border border-black/[0.02] rounded-[24px]">
