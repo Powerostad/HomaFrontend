@@ -7,6 +7,7 @@ import ar from './locales/ar.json';
 import en from './locales/en.json';
 import tr from './locales/tr.json';
 import informationFa from './locales/information.fa.json';
+import informationEn from './locales/information.en.json';
 
 // Supported languages configuration
 export const languages = [
@@ -37,7 +38,12 @@ export const updateDocumentLanguage = (lang: string) => {
   document.documentElement.setAttribute('data-lang', lang);
 
   // Store preference
-  localStorage.setItem('i18nextLng', lang);
+  try { localStorage.setItem('i18nextLng', lang); } catch { /* preference storage may be disabled */ }
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('lang')) {
+    url.searchParams.set('lang', lang);
+    window.history.replaceState(window.history.state, '', url);
+  }
 };
 
 const i18nInstance = i18n;
@@ -50,14 +56,15 @@ if (typeof document !== 'undefined') {
       resources: {
         fa: { translation: fa, information: informationFa },
         ar: { translation: ar },
-        en: { translation: en },
+        en: { translation: en, information: informationEn },
         tr: { translation: tr },
       },
       fallbackLng: 'fa', // Persian as fallback
       supportedLngs: ['fa', 'ar', 'en', 'tr'],
 
       detection: {
-        order: ['localStorage', 'htmlTag'],
+        order: ['querystring', 'localStorage', 'htmlTag'],
+        lookupQuerystring: 'lang',
         caches: ['localStorage'],
       },
 
@@ -75,7 +82,7 @@ if (typeof document !== 'undefined') {
     resources: {
       fa: { translation: fa, information: informationFa },
       ar: { translation: ar },
-      en: { translation: en },
+      en: { translation: en, information: informationEn },
       tr: { translation: tr },
     },
     fallbackLng: 'fa',

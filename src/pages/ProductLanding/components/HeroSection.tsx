@@ -13,7 +13,7 @@ export interface HeroSectionProps {
 export function HeroSection({
     onGetStarted: _onGetStarted
 }: HeroSectionProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
 
     const handleStudioStart = () => {
@@ -77,7 +77,7 @@ export function HeroSection({
                 </div>
 
                 {/* Content Area (Right) */}
-                <div className="absolute top-0 right-0 z-20 w-[45%] h-full flex flex-col justify-center pr-12 md:pr-16 lg:pr-32 pl-12" dir="rtl">
+                <div className="absolute top-0 right-0 z-20 w-[45%] h-full flex flex-col justify-center pr-12 md:pr-16 lg:pr-32 pl-12" dir={['fa', 'ar'].includes(i18n.language) ? 'rtl' : 'ltr'}>
                     <motion.div
                         initial={{ x: 40, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}

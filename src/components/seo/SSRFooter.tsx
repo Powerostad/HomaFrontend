@@ -1,5 +1,7 @@
 import { SSRSafeLink } from "./SSRSafeLink";
 import information from "../../i18n/locales/information.fa.json";
+import informationEn from "../../i18n/locales/information.en.json";
+import { useTranslation } from 'react-i18next';
 
 interface SSRFooterProps {
   translations?: {
@@ -19,22 +21,26 @@ interface SSRFooterProps {
 
 /**
  * SSR-safe Footer: renders navigation links with plain <a> tags on server,
- * hydrates to React Router <Link> after mount. Accepts optional translations
- * to avoid requiring useTranslation during server render.
+ * hydrates to React Router <Link> after mount. An SSR-safe i18n provider
+ * supplies the active language; optional translations can override labels.
  */
 export function SSRFooter({ translations = {} }: SSRFooterProps) {
+  const { t: translate, i18n } = useTranslation();
+  const english = i18n.language?.startsWith('en');
+  const copy = english ? informationEn : information;
+  const informationQuery = `?lang=${english ? 'en' : 'fa'}`;
   const t = {
-    tagline: translations.tagline || "طراحی دکوراسیون خانه با هوش مصنوعی",
-    quickAccess: translations.quickAccess || "دسترسی سریع",
-    home: translations.home || "خانه",
-    stores: translations.stores || "فروشگاه‌ها",
-    gallery: translations.gallery || "گالری",
-    collaboration: translations.collaboration || "همکاری",
-    collaborateWithHoma: translations.collaborateWithHoma || "همکاری با هما",
-    support: translations.support || "پشتیبانی",
-    faq: translations.faq || "سوالات متداول",
-    terms: translations.terms || "قوانین و مقررات",
-    contactUs: translations.contactUs || "تماس با ما",
+    tagline: translations.tagline || translate('footer.tagline', 'طراحی دکوراسیون خانه با هوش مصنوعی'),
+    quickAccess: translations.quickAccess || translate('footer.quickAccess', 'دسترسی سریع'),
+    home: translations.home || translate('nav.home', 'خانه'),
+    stores: translations.stores || translate('nav.stores', 'فروشگاه‌ها'),
+    gallery: translations.gallery || translate('nav.gallery', 'گالری'),
+    collaboration: translations.collaboration || translate('footer.collaboration', 'همکاری'),
+    collaborateWithHoma: translations.collaborateWithHoma || translate('footer.collaborateWithHoma', 'همکاری با هما'),
+    support: translations.support || translate('footer.support', 'پشتیبانی'),
+    faq: translations.faq || translate('nav.faq', 'سوالات متداول'),
+    terms: translations.terms || translate('footer.terms', 'قوانین و مقررات'),
+    contactUs: translations.contactUs || translate('nav.contactUs', 'تماس با ما'),
   };
 
   return (
@@ -112,15 +118,15 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
                   </SSRSafeLink>
                 </li>
                 <li>
-                  <SSRSafeLink to="/terms" className="hover:text-content-primary transition-colors text-p font-light">
+                  <a href={`/terms${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">
                     {t.terms}
-                  </SSRSafeLink>
+                  </a>
                 </li>
                 <li>
-                  <a href="/support" className="hover:text-content-primary transition-colors text-p font-light">{information.supportLabel}</a>
+                  <a href={`/support${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{copy.supportLabel}</a>
                 </li>
                 <li>
-                  <a href="/privacy" className="hover:text-content-primary transition-colors text-p font-light">{information.privacyLabel}</a>
+                  <a href={`/privacy${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{copy.privacyLabel}</a>
                 </li>
                 <li>
                   <SSRSafeLink to="/contact" className="hover:text-content-primary transition-colors text-p font-light">

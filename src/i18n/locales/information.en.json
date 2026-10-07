@@ -1,0 +1,44 @@
+{
+  "brand": "HOMA",
+  "home": "Back to website",
+  "navigation": "HOMA information and support",
+  "supportLabel": "Support",
+  "privacyLabel": "Privacy",
+  "termsLabel": "Terms of use",
+  "contact": "Support email",
+  "scope": "This page covers only the HOMA catalog capability in ChatGPT, not every feature of this website.",
+  "updated": "Text updated: October 8, 2026",
+  "draftNotice": "Draft for review — this is not the final privacy policy or terms of service. Proposed retention periods and legal and commercial details have not yet been confirmed.",
+  "support": {
+    "title": "HOMA Support",
+    "summary": "HOMA helps you search and compare real home-furnishing products through ChatGPT.",
+    "sections": [
+      {"title": "Get help", "paragraphs": ["Email FARBOD.LOTFI@PARSMEHRAGRO.COM for support. Include a short description, the approximate time of the issue and the relevant product ID. Hide personal information in screenshots.", "Do not send passwords, sign-in codes, API keys, banking details or complete private conversations. You do not need to give us access to your ChatGPT account for support."]},
+      {"title": "What does HOMA do?", "paragraphs": ["ChatGPT analyzes the conversation and room image; HOMA retrieves categories, search results and real product information from the catalog. Current HOMA tools do not accept image files directly.", "The current catalog tools are read-only. They do not purchase products, process payments, place orders or change product information. No HOMA account is required for the public catalog."]},
+      {"title": "Questions about a purchase", "paragraphs": ["Check final prices, stock, shipping, payment and returns with the product's merchant. A merchant link is shown in product details when available. Catalog prices may differ from the merchant's current terms."]}
+    ]
+  },
+  "privacy": {
+    "title": "HOMA Privacy",
+    "summary": "What information reaches the catalog tools, how it is used and how to contact us.",
+    "sections": [
+      {"title": "About the service", "paragraphs": ["HOMA is a home-furnishing product search service that can be used through ChatGPT. The publisher name is HOMA. Contact FARBOD.LOTFI@PARSMEHRAGRO.COM for support and information-related requests."]},
+      {"title": "Information received by the tools", "paragraphs": ["The tools receive a product category, search query, requested number of results or product ID. The query may describe your room or preferences, as prepared by ChatGPT to find products. Do not include sensitive information in a query.", "Current tools have no direct input for image files, complete conversation history, banking details or sign-in credentials. However, anything a client includes in tool arguments reaches the service. Image and conversation processing within ChatGPT is subject to that provider's settings and policies."]},
+      {"title": "Technical information and support messages", "paragraphs": ["Infrastructure may record limited technical information such as request times, response status, service errors and connection information needed for security and troubleshooting.", "If you email support, your email address, message and attachments are available to support and the email provider to handle your request. Do not send passwords, sign-in codes, API keys, banking details or other sensitive information. The catalog capability does not process payments or place orders."]},
+      {"title": "Purposes and recipients", "paragraphs": ["Tool inputs are used to find products and return catalog information. Technical information is used for service operation, security and troubleshooting; support messages are used to handle your request.", "Infrastructure providers needed for hosting, networking, CDN and support email may process relevant information. OpenAI or your client also processes data under its own policies. After you open a merchant link, further interactions are subject to that merchant's policies."]},
+      {"title": "Proposed data retention plan", "paragraphs": ["These periods are operational proposals, not a statement of current practice or a guarantee of automatic deletion: technical and error logs, 30 days; security events, 6 months; support email, 6 months after a request is closed; backups containing personal information, no more than 30 days.", "The proposed goal is not to store conversation text, room images or search-query content by default. Actual logging and deletion settings have not yet been aligned with and verified against this plan. This section is not a final retention policy until then."]},
+      {"title": "Your controls and information requests", "paragraphs": ["You can stop sending requests and manage the HOMA installation or connection in your client. Disconnecting does not by itself delete possible infrastructure records. Email support with information-related requests without including passwords or sensitive data.", "HOMA cannot delete information independently processed by ChatGPT/OpenAI or merchants. Please contact those services directly for such requests."]}
+    ]
+  },
+  "terms": {
+    "title": "HOMA Terms of Use",
+    "summary": "The limits of the catalog capability and what to check before a purchase.",
+    "sections": [
+      {"title": "The service and HOMA's independence", "paragraphs": ["HOMA is a search and retrieval service for home-furnishing product information. ChatGPT may use this data to suggest designs or purchases. HOMA is not an OpenAI product. Use of the names ChatGPT or OpenAI does not imply OpenAI's endorsement or support.", "Current tools are read-only. They do not place orders, process payments, change prices or provide access to customer information."]},
+      {"title": "Product information and purchase decisions", "paragraphs": ["Prices and specifications may reflect the catalog when data was obtained or copied. Before purchasing, confirm stock, final prices, shipping and returns with the merchant. Purchases take place on the merchant's website under its own terms.", "Prices should display a clear currency unit. Iranian rials are converted to tomans by dividing by 10. A similarity score does not guarantee quality or a perfect match. Check your room measurements and the selected product variant's dimensions before purchasing. AI-generated images, if requested, are illustrative and do not guarantee an exact match to the item."]},
+      {"title": "Responsible use", "paragraphs": ["Do not attempt unauthorized access to personal information, database changes or service disruption. Do not send passwords, sign-in codes, API keys or banking details in searches. When using a room image in ChatGPT, make sure you have permission to use it and check for visible sensitive information."]},
+      {"title": "Accounts and other services", "paragraphs": ["The current catalog does not require a HOMA account. ChatGPT access depends on that service's terms, supported countries, plans and permissions; availability is not guaranteed for every account or country. Merchant and OpenAI policies apply to their respective services."]},
+      {"title": "Contact", "paragraphs": ["For support or questions about this text, email FARBOD.LOTFI@PARSMEHRAGRO.COM."]}
+    ]
+  }
+}

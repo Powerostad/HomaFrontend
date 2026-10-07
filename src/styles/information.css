@@ -9,6 +9,7 @@
   overflow-wrap: anywhere;
 }
 .homa-information * { box-sizing: border-box; }
+.homa-information[lang="en"] { font-family: Inter, var(--font-family-display); }
 .homa-information header, .homa-information nav,
 .homa-information main, .homa-information footer {
   max-width: 680px;

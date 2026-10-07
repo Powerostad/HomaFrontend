@@ -22,7 +22,10 @@ export function hydratePublic() {
         try { localStorage.setItem('i18nextLng', language); } catch { /* storage may be disabled */ }
       };
       i18n.on('languageChanged', updateLanguage);
-      try { const language = localStorage.getItem('i18nextLng'); if (language && ['fa', 'ar', 'en', 'tr'].includes(language)) void i18n.changeLanguage(language); } catch { /* use Persian */ }
+      const requestedLanguage = new URLSearchParams(window.location.search).get('lang');
+      let language = requestedLanguage;
+      if (!language) { try { language = localStorage.getItem('i18nextLng'); } catch { /* use Persian */ } }
+      if (language && ['fa', 'ar', 'en', 'tr'].includes(language)) void i18n.changeLanguage(language);
       let removeCtaTracking = () => {};
       let active = true;
       void import('../utils/umami').then(async ({ umamiTrack }) => {

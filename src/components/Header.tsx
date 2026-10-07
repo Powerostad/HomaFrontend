@@ -6,6 +6,7 @@ import { UnifiedMenu } from "./SidebarMenu";
 import { AuthModal } from "./AuthModal";
 import { useAuth, useBasket } from "../context/AppProviders";
 import { toPersianDigits } from "../utils/formatters";
+import { BilingualSwitch } from './BilingualSwitch';
 
 interface HeaderProps {
   theme?: "light" | "dark";
@@ -23,7 +24,7 @@ export function Header({
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { isLoggedIn, login } = useAuth();
   const { itemCount, openBasket } = useBasket();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const handleAuthSuccess = (
     userData: { id: string; name: string; phone?: string },
@@ -45,15 +46,16 @@ export function Header({
           height: 'var(--header-height)',
           borderColor: transparent ? 'transparent' : 'var(--color-border-default)',
         }}
-        dir="rtl"
+        dir={['fa', 'ar'].includes(i18n.language) ? 'rtl' : 'ltr'}
       >
         <div
           className="h-full border-b transition-colors duration-700"
           style={{ borderColor: transparent ? 'rgba(255,255,255,0.1)' : 'var(--color-border-default)' }}
         >
-          <div className="h-full mx-auto px-8 md:px-16 grid grid-cols-3 items-center" style={{ maxWidth: 'var(--max-width-content)' }}>
+          <div className="h-full mx-auto px-4 md:px-16 grid grid-cols-3 items-center" style={{ maxWidth: 'var(--max-width-content)' }}>
             {/* Menu Trigger */}
-            <div className="flex justify-start">
+            <div className="flex justify-start items-center">
+              <BilingualSwitch />
               {!disableNavigation && (
                 <button
                   onClick={() => setIsMenuOpen(true)}

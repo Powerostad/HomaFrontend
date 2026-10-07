@@ -9,17 +9,19 @@ interface InformationContent {
 }
 
 export function InformationPage({ page }: { page: PageId }) {
-  const { t } = useTranslation('information');
+  const { t, i18n } = useTranslation('information');
+  const language = i18n.language.startsWith('en') ? 'en' : 'fa';
   const content = t(page, { returnObjects: true }) as InformationContent;
   return (
-    <div className="homa-information" lang="fa" dir="rtl">
+    <div className="homa-information" lang={language} dir={language === 'fa' ? 'rtl' : 'ltr'}>
       <header>
         <a href="/" className="homa-information-brand" dir="ltr">{t('brand')}</a>
-        <a href="/">{t('home')}</a>
+        <a href={`/?lang=${language}`}>{t('home')}</a>
+        <a href={`/${page}?lang=${language === 'fa' ? 'en' : 'fa'}`} lang={language === 'fa' ? 'en' : 'fa'}>{language === 'fa' ? 'English' : 'فارسی'}</a>
       </header>
       <nav aria-label={t('navigation')}>
         {(['support', 'privacy', 'terms'] as const).map((id) => (
-          <a key={id} href={`/${id}`} aria-current={id === page ? 'page' : undefined}>
+          <a key={id} href={`/${id}?lang=${language}`} aria-current={id === page ? 'page' : undefined}>
             {t(`${id}Label`)}
           </a>
         ))}

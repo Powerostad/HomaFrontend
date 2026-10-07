@@ -3,6 +3,7 @@ import { Toaster } from "../components/ui/sonner";
 import { BrandColors } from "../components/BrandColors";
 import { BasketSheet } from "../components/basket/BasketSheet";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { useTranslation } from 'react-i18next';
 
 /**
  * Layout - Main application layout wrapper
@@ -12,11 +13,12 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
  */
 export function Layout() {
   const isDev = import.meta.env.DEV;
+  const { i18n } = useTranslation();
 
   return (
     <div className="min-h-screen antialiased selection:bg-brand-primary selection:text-content-inverse bg-surface-page text-content-primary">
       <RouterOutlet />
-      <Toaster position="top-center" dir="rtl" richColors />
+      <Toaster position="top-center" dir={['fa', 'ar'].includes(i18n.language) ? 'rtl' : 'ltr'} richColors />
 
       {/* Global slide-over basket — opens from the header bag icon anywhere.
           Isolated in an ErrorBoundary so a basket render failure can never

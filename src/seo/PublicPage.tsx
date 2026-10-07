@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { SSRFooter } from "../components/seo/SSRFooter";
+import { BilingualSwitch } from '../components/BilingualSwitch';
 import {
   SeoExplorePage,
   SeoGalleryPage,
@@ -36,6 +37,7 @@ function SeoHeader() {
         <a href="/gallery">{t("seo.header.gallery", "محصولات")}</a>
         <a href="/account/gallery">{t("seo.header.account", "حساب کاربری")}</a>
         <a href="/basket">{t("seo.header.basket", "سبد خرید")}</a>
+        <BilingualSwitch />
       </nav>
     </header>
   );
