@@ -13,6 +13,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
  */
 
 import { appConfig } from "@/config/appConfig";
+import { GoogleSignIn } from '@/components/GoogleSignIn';
 import {
   checkUser,
   isValidPhoneNumber,
@@ -1590,6 +1591,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 </form>
               ))}
             </div>
+
+            {(step === 'phone' || step === 'password' || step === 'login') && (
+              <div className="mt-6">
+                <GoogleSignIn disabled={isLoading} onBusyChange={setIsLoading} onSuccess={(user, tokens) => {
+                  onSuccess(user, tokens);
+                  onClose();
+                }} />
+              </div>
+            )}
 
             {/* Footer Note - kept simple, could be translated later */}
             <p className="mt-10 text-[11px] text-center text-black/30 font-medium leading-relaxed">

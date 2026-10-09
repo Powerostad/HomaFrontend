@@ -67,7 +67,7 @@ UMAMI_ORIGIN=$(origin_from_url "${VITE_UMAMI_SRC:-https://analytics.myhoma.ir}")
 PUBLIC_MEDIA_ORIGIN=$(origin_from_url "${VITE_PUBLIC_MEDIA_BASE_URL:-}")
 PRIVATE_MEDIA_ORIGIN=$(origin_from_url "${VITE_PRIVATE_MEDIA_BASE_URL:-}")
 
-CONNECT_SRC="'self'"
+CONNECT_SRC="'self' https://accounts.google.com/gsi/"
 if [ -n "$API_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $API_ORIGIN"
 fi
@@ -84,12 +84,12 @@ if [ -n "$PRIVATE_MEDIA_ORIGIN" ]; then
   CONNECT_SRC="$CONNECT_SRC $PRIVATE_MEDIA_ORIGIN"
 fi
 
-SCRIPT_SRC="'self' 'unsafe-inline'"
+SCRIPT_SRC="'self' 'unsafe-inline' https://accounts.google.com/gsi/client"
 if [ -n "$UMAMI_ORIGIN" ]; then
   SCRIPT_SRC="$SCRIPT_SRC $UMAMI_ORIGIN"
 fi
 
 cat > "$CSP_FILE" <<EOF
 # Runtime CSP generated from public environment variables.
-add_header Content-Security-Policy "default-src 'self'; script-src $SCRIPT_SRC; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src $CONNECT_SRC; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self';" always;
+add_header Content-Security-Policy "default-src 'self'; script-src $SCRIPT_SRC; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src $CONNECT_SRC; worker-src 'self' blob:; frame-src 'self' https://accounts.google.com/gsi/; object-src 'none'; base-uri 'self';" always;
 EOF

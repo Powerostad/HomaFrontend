@@ -12,7 +12,8 @@
  */
 export interface BackendUser {
   id: number;
-  phone_number: string;
+  phone_number: string | null;
+  email?: string;
   name: string;
   created_at: string;
   updated_at: string;
@@ -332,7 +333,8 @@ export function transformBackendUser(backendUser: BackendUser): User {
   return {
     id: String(backendUser.id),
     name: backendUser.name || '',
-    phone: backendUser.phone_number,
+    phone: backendUser.phone_number || undefined,
+    email: backendUser.email || undefined,
     createdAt: backendUser.created_at,
   };
 }

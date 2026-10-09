@@ -581,7 +581,8 @@ export async function apiPost<T>(
 
   try {
     const url = buildURL(endpoint);
-    console.log('[API POST]', url.toString(), body);
+    // Authentication bodies can contain OTPs, passwords or Google ID tokens.
+    console.log('[API POST]', url.toString());
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
