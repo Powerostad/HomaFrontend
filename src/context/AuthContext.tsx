@@ -20,7 +20,7 @@ import {
   storeAuthState,
 } from '@/services/authService';
 import type { AuthContextType, AuthTokens, User } from '@/types/auth';
-import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT, clearAuthData, getStoredTokens } from '@/utils/apiClient';
+import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT, getStoredTokens } from '@/utils/apiClient';
 import {
   createContext,
   useCallback,
@@ -72,9 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newToken = await refreshToken();
 
           if (!newToken) {
-            // Refresh failed - clear everything and require re-login
-            console.log('[Auth] Token refresh failed, clearing auth');
-            clearAuthData();
+            // The refresh helper clears only revoked credentials. A network
+            // outage must not erase the saved login or a newer tab's login.
+            const retained = getStoredAuthState();
+            if (retained?.user && retained.tokens) setUser(retained.user);
             setIsInitialized(true);
             return;
           }
@@ -92,13 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] Session restored with fresh profile for:', profileResult.user.name || profileResult.user.phone);
         } else {
           // Profile fetch failed but we have stored data - use that
-          setUser(storedState.user);
-          identifyUser(storedState.user);
-          console.log('[Auth] Profile fetch failed, using stored data for:', storedState.user.name || storedState.user.phone);
+          const retained = getStoredAuthState();
+          if (retained?.user && retained.tokens) {
+            setUser(retained.user);
+            identifyUser(retained.user);
+          }
         }
       } catch (error) {
         console.error('[Auth] Init error:', error);
-        clearAuthData();
+        const retained = getStoredAuthState();
+        if (retained?.user && retained.tokens) setUser(retained.user);
       } finally {
         setIsInitialized(true);
       }
