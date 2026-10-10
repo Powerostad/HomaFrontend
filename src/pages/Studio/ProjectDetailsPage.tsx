@@ -192,7 +192,7 @@ export function StudioProjectDetailsPage() {
                 onAddToShoppingList={handleAddToShoppingList}
                 onAddAllToShoppingList={handleAddAllToShoppingList}
                 onLikeProduct={(_id) => toast.info(siteText("محصول به علاقه‌مندی‌ها اضافه شد"))}
-                onCreateNewSession={() => navigate('/studio/upload')}
+                onCreateNewSession={() => navigate('/studio')}
               />
             </motion.div>
           ))}
@@ -211,7 +211,7 @@ export function StudioProjectDetailsPage() {
               <h3 className="text-[20px] font-bold text-foreground mb-2">{siteText("طراحی ویژوال هنوز نهایی نشده")}</h3>
               <p className="text-[14px] text-muted-foreground max-w-[320px] mb-8">
                 {siteText("شما می‌توانید آخرین ران‌های طراحی خود را در اینجا مشاهده و مقایسه کنید.")}</p>
-              <Button onClick={() => navigate('/studio/upload')} className="btn-primary px-10 h-14 rounded-full">
+              <Button onClick={() => navigate('/studio')} className="btn-primary px-10 h-14 rounded-full">
                 {siteText("ورود به ادیتور ویژوال")}</Button>
             </motion.div>
           ))}

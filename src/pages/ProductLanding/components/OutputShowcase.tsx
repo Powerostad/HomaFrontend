@@ -65,7 +65,7 @@ export function OutputShowcase({
     }, []);
 
     const handleStudioStart = () => {
-        navigate("/studio/upload");
+        navigate("/studio");
     };
 
     return (

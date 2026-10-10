@@ -45,7 +45,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
   const navItems = [
     { label: t('nav.home'), href: "/", icon: Home, navId: "home" },
     { label: t('nav.stores'), href: "/explore", icon: ShoppingBag, navId: "explore" },
-    { label: t('nav.studio'), href: "/studio/upload", icon: Palette, navId: "studio" },
+    { label: t('nav.studio'), href: "/studio", icon: Palette, navId: "studio" },
   ];
 
   const accountItems = [

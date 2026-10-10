@@ -10,7 +10,7 @@ export const ARTICLES: Record<string, ArticleContent> = {
       "از عکس اتاق خود برای دیدن ایده‌های تازه دکوراسیون در استودیوی هُما استفاده کنید.",
     eyebrow: "استودیوی هُما",
     examples: true,
-    cta: { label: "شروع با عکس اتاق من", href: "/studio/upload" },
+    cta: { label: "شروع با عکس اتاق من", href: "/studio" },
     sections: [
       {
         heading: "از فضای خودتان شروع کنید",

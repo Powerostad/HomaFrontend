@@ -511,7 +511,7 @@ export function TryOnResultPage() {
             {/* HOMA STUDIO Banner - Refined Editorial Style */}
             <div
                className="relative h-[420px] bg-[#CCFF00] text-[#FF4500] overflow-hidden cursor-pointer group select-none"
-               onClick={() => navigate('/studio/upload')}
+               onClick={() => navigate('/studio')}
             >
                {/* Background Large Text (Minimalist Branding) */}
                <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none">

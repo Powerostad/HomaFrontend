@@ -77,7 +77,7 @@ export function SeoHome() {
             </a>
           </nav>
           <div className="flex flex-wrap items-center justify-center gap-4 text-[13px]">
-            <a href="/studio/upload" className="inline-flex h-12 items-center bg-black text-white px-6">
+            <a href="/studio" className="inline-flex h-12 items-center bg-black text-white px-6">
               {t('seo.home.start', 'طراحی با عکس اتاق')}
             </a>
             <a href="/explore" className="inline-flex h-12 items-center border border-black/15 px-6">

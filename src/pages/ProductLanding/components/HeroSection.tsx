@@ -17,7 +17,7 @@ export function HeroSection({
     const navigate = useNavigate();
 
     const handleStudioStart = () => {
-        navigate("/studio/upload");
+        navigate("/studio");
     };
 
     return (

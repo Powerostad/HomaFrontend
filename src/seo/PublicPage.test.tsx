@@ -36,7 +36,7 @@ describe("public HTML content", () => {
   it("renders a single homepage heading and two crawlable task paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('href="/studio/upload"');
+    expect(html).toContain('href="/studio"');
     expect(html).toContain('href="/ai-interior-design"');
     expect(html).toContain('href="/virtual-product-preview"');
     expect(html).not.toContain("seo.home.");

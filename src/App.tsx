@@ -85,16 +85,21 @@ export default function App() {
               {/* Shared gallery items (public, no auth) */}
               <RouterRoute path="s/:token" element={<SharedPage />} />
 
-              {/* Room Redesign Flow: /redesign is the entry point; each chat has a canonical path */}
+              {/* Legacy chat URLs remain available for existing sessions. */}
               <RouterRoute path="redesign/:sessionId?" element={
                 <ProtectedRoute fallback="modal">
                   <RoomRedesignPage />
                 </ProtectedRoute>
               } />
 
-              {/* Studio Flow (Complex/Dark) */}
-              <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />
-              <RouterRoute path="studio/start" element={<Navigate to="/studio/upload" replace />} />
+              {/* Studio now starts the existing conversational flow. Legacy jobs remain accessible. */}
+              <RouterRoute path="studio" element={
+                <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+              } />
+              <RouterRoute path="studio/chat/:sessionId" element={
+                <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+              } />
+              <RouterRoute path="studio/start" element={<Navigate to="/studio" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />
               <RouterRoute path="studio/progress" element={<StudioProgressPage />} />
               <RouterRoute path="studio/result/:jobId" element={<StudioResultPage />} />

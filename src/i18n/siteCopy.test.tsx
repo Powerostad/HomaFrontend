@@ -52,7 +52,7 @@ describe('complete UI localization', () => {
   it('translates every static SEO guide and leaves protocol paths intact', () => {
     const translated = translateUiTree(seoFa);
     expect(JSON.stringify(translated)).not.toMatch(/[\u0621-\u064a\u067e\u0686\u0698\u06a9\u06af\u06cc]/);
-    expect(translated.articles['/ai-interior-design'].cta?.href).toBe('/studio/upload');
+    expect(translated.articles['/ai-interior-design'].cta?.href).toBe('/studio');
   });
   it('preserves every interpolation variable and contains English-only custom translations', () => {
     for (const [source, target] of Object.entries(extra)) {

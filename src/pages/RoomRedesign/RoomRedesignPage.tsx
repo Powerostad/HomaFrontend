@@ -26,14 +26,14 @@ export function RoomRedesignPage() {
   const index = chat.versions.findIndex(v => v.version_id === chat.viewedId) + 1;
   const actions = useImageActions({ image, originalImage: original, activeVersion: index, isPreview: !!selected });
   useEffect(() => {
-    if (intake && chat.sessionId && !path) navigate(`/redesign/${chat.sessionId}`, { replace: true });
+    if (intake && chat.sessionId && !path) navigate(`/studio/chat/${chat.sessionId}`, { replace: true });
   }, [chat.sessionId, intake, path, navigate]);
   useEffect(() => {
     if (!intake || seeded.current || path) return;
     const timer = setTimeout(() => { seeded.current = true; void chat.sendTurn({ text: composeIntakeText(intake), images: [intake.image.dataUrl], prefsUpdate: intake.prefsUpdate }); }, 0);
     return () => clearTimeout(timer);
   }, [intake, path, chat.sendTurn]);
-  const fresh = () => { setIntake(null); seeded.current = false; setInput(''); navigate('/redesign'); };
+  const fresh = () => { setIntake(null); seeded.current = false; setInput(''); navigate('/studio'); };
   if (chat.hydrating) return <main className="redesign-journey" aria-busy="true">{t('redesignJourney.loading')}</main>;
   if (chat.unavailable) return <main className="redesign-journey"><p role="alert">{t('redesignJourney.unavailable')}</p><button onClick={fresh}>{t('redesignJourney.newRoom')}</button></main>;
   if (!path && !intake) return <HomaIntakeFlow onStartAnalysis={setIntake} />;

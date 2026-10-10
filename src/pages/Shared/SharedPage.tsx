@@ -381,7 +381,7 @@ function StudioSharedView({ item }: { item: SharedStudioItem }) {
           </div>
 
           {/* CTA */}
-          <Link to="/studio/upload" className="w-full mt-2">
+          <Link to="/studio" className="w-full mt-2">
             <Button className="w-full h-12 rounded-full text-[14px] font-bold">
               {t('shared.designYourSpace')}
             </Button>

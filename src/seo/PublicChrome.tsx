@@ -36,7 +36,7 @@ export function PublicChromeHeader({ controllersEnabled = false }: { controllers
         utilities={<><a href="/basket" className={`relative p-2 ${utilityClass}`} aria-label={t("basket.title", "سبد خرید")} data-ph-capture-attribute-nav="basket"><ShoppingBag size={18} strokeWidth={1} /></a><a href="/account/gallery" className={utilityClass} aria-label={t("auth.login")} data-ph-capture-attribute-nav="account"><User size={18} strokeWidth={1} /></a></>}
       />
       <nav id="homa-navigation" className="sr-only" aria-label={t("nav.menu")}>
-        <a href="/">{t("nav.home")}</a><a href="/explore">{t("nav.stores")}</a><a href="/studio/upload">{t("nav.studio")}</a><a href="/contact">{t("nav.contactUs")}</a><a href="/faq">{t("nav.faq")}</a>
+        <a href="/">{t("nav.home")}</a><a href="/explore">{t("nav.stores")}</a><a href="/studio">{t("nav.studio")}</a><a href="/contact">{t("nav.contactUs")}</a><a href="/faq">{t("nav.faq")}</a>
       </nav>
     </>
   );

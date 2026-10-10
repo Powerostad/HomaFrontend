@@ -123,7 +123,7 @@ export function StudioProjectsDashboard() {
           </div>
 
           <button
-            onClick={() => navigate('/studio/upload')}
+            onClick={() => navigate('/studio')}
             data-ph-capture-attribute-action="studio_new_project"
             className="group flex items-center gap-4 text-[var(--jet-black)] hover:text-accent transition-all"
           >
@@ -149,7 +149,7 @@ export function StudioProjectsDashboard() {
               <p className="text-[14px] text-[var(--muted-foreground)]">{siteText("اولین طراحی هوشمند خود را با آپلود تصویر شروع کنید.")}</p>
             </div>
             <button
-              onClick={() => navigate('/studio/upload')}
+              onClick={() => navigate('/studio')}
               className="h-12 px-8 bg-black text-white text-[13px] font-bold uppercase tracking-[0.1em] hover:bg-black/90 transition-all flex items-center gap-2"
             >
               <Plus size={18} />
@@ -228,7 +228,7 @@ export function StudioProjectsDashboard() {
 
             {/* New Project Placeholder (Editorial Style) */}
             <div
-              onClick={() => navigate('/studio/upload')}
+              onClick={() => navigate('/studio')}
               className="md:col-span-4 flex flex-col justify-center items-center p-12 bg-white/50 border border-dashed border-[var(--border-subtle)] hover:bg-white transition-colors cursor-pointer group min-h-[500px]"
             >
               <div className="relative w-24 h-24 mb-10">

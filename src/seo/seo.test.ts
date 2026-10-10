@@ -62,6 +62,17 @@ describe('public route contract', () => {
   it('treats each redesign conversation path as a private route', () => {
     expect(matchRoute('/redesign/00000000-0000-4000-8000-000000000000').kind).toBe('private');
   });
+  it('makes conversational Studio primary without removing legacy sessions', async () => {
+    for (const path of ['/studio', '/studio/chat/00000000-0000-4000-8000-000000000000', '/studio/upload', '/studio/result/old-job']) {
+      const result = await page(path);
+      expect(result.status).toBe(200);
+      expect('data' in result && result.data.kind).toBe('private');
+      expect('data' in result && result.data.seo.robots).toContain('noindex');
+    }
+    expect(await page('/studio/start')).toEqual({ status: 308, redirect: '/studio' });
+    expect(matchRoute('/studio/chat/not-a-session').kind).toBe('missing');
+    expect(matchRoute('/studio/chat/00000000-0000-4000-8000-000000000000/extra').kind).toBe('missing');
+  });
   it('preserves page 2 canonical and data', async () => {
     const read: CatalogReader = async <T>() => ({ count: 21, next: null, results: [product] as T[] });
     const result = await page('/gallery?page=2', read);

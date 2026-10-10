@@ -8,7 +8,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
  *   2. PhotoReviewContextScreen — review the photo + add optional context
  *
  * On "start analysis" it builds a typed HomaIntakePayload and hands it to the
- * owning redesign flow, which creates the canonical `/redesign/:sessionId` URL.
+ * owning Studio flow, which creates the canonical `/studio/chat/:sessionId` URL.
  *
  * The bad-photo warning is shown at the submit gate (not mid-pick), per the V1
  * product decision: warn on small/low-quality photos but always allow continue.
