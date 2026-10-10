@@ -212,7 +212,15 @@ async function refreshAccessToken(): Promise<string | null> {
     console.log('[Auth] Refresh already in flight, awaiting shared result');
     return refreshPromise;
   }
-  refreshPromise = performTokenRefresh().finally(() => {
+  const initialRefresh = getRefreshToken();
+  const refresh = () => {
+    // Another tab may have rotated the single-use token while this tab waited.
+    if (initialRefresh && getRefreshToken() !== initialRefresh) return Promise.resolve(getStoredTokens()?.access || null);
+    return performTokenRefresh();
+  };
+  // The in-module promise guards one tab; Web Locks guards the whole origin.
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  refreshPromise = (async () => locks ? await locks.request('homa:token-refresh', refresh) : await refresh())().finally(() => {
     refreshPromise = null;
   });
   return refreshPromise;
@@ -232,6 +240,8 @@ async function performTokenRefresh(): Promise<string | null> {
     return null;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
   try {
     console.log('[Auth] Refreshing access token...');
 
@@ -243,16 +253,22 @@ async function performTokenRefresh(): Promise<string | null> {
         'Accept': 'application/json',
       },
       body: JSON.stringify({ refresh: refreshToken }),
+      signal: controller.signal,
     });
+
+    // Never let a late refresh (success or failure) replace a newer login/refresh.
+    if (getRefreshToken() !== refreshToken) return getStoredTokens()?.access || null;
 
     if (!response.ok) {
       console.log('[Auth] Refresh failed with status:', response.status);
-      // Refresh token is invalid/expired - clear all auth and notify AuthContext
-      clearAuthData(true);
+      // Network/server outages are not revoked credentials. Keep the account
+      // state so online/focus recovery can retry without forcing a new login.
+      if ([400, 401].includes(response.status)) clearAuthData(true);
       return null;
     }
 
     const data = await response.json();
+    if (getRefreshToken() !== refreshToken) return getStoredTokens()?.access || null;
 
     if (data.access) {
       // Token rotation: backend returns new refresh token along with access token
@@ -273,8 +289,9 @@ async function performTokenRefresh(): Promise<string | null> {
     return null;
   } catch (error) {
     console.error('[Auth] Token refresh error:', error);
-    clearAuthData(true);
-    return null;
+    return getRefreshToken() !== refreshToken ? getStoredTokens()?.access || null : null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -1076,7 +1093,9 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
   const headers: Record<string, string> = {};
 
   // Only our own API needs the JWT; presigned/CDN URLs are self-authenticating.
-  if (imageUrl.startsWith(appConfig.apiBaseUrl)) {
+  const imageTarget = new URL(imageUrl, appConfig.apiBaseUrl);
+  const apiTarget = new URL(appConfig.apiBaseUrl);
+  if (imageTarget.origin === apiTarget.origin && imageTarget.pathname.startsWith('/api/')) {
     const tokens = getStoredTokens();
     if (tokens?.access) {
       headers['Authorization'] = `Bearer ${tokens.access}`;

@@ -232,7 +232,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
         // release it as soon as the turn completes.
         const keepRenderSocket = options.type === 'chat.turn' && !!expectedOperationId;
         if (keepRenderSocket) armTimer(RENDER_IDLE_TIMEOUT_MS);
-        finish({ ok: true, status: 200 }, keepRenderSocket);
+        finish({ ok: true, status: 200 }, !keepRenderSocket);
         return;
       }
       if (frame.type === 'chat.ack') {
@@ -244,7 +244,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
         const terminal = typeof status === 'string' && ['ready', 'succeeded', 'duplicate', 'completed'].includes(status);
         const keepRenderSocket = options.type === 'chat.render' && !terminal && !!expectedOperationId;
         if (keepRenderSocket) armTimer(RENDER_IDLE_TIMEOUT_MS);
-        finish({ ok: true, status: 200, data: frame.data }, keepRenderSocket);
+        finish({ ok: true, status: 200, data: frame.data }, !keepRenderSocket);
         if (
           options.type === 'chat.render'
           && !terminal

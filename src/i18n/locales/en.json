@@ -917,6 +917,8 @@
     "product": "Product"
   },
   "redesignJourney": {
+    "imageUnavailable": "The saved image could not be loaded. Refresh its link without generating another image.",
+    "reloadImage": "Reload saved image",
     "title": "Room redesign",
     "loading": "Loading your room…",
     "unavailable": "This conversation is unavailable.",

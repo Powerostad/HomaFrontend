@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ExecutionPanel } from './components/ExecutionPanel';
+import { StudioImage } from './components/StudioImage';
 import { AnalysisPanel } from './components/panels';
 import { ImageToolbar, useImageActions } from './components/workspace';
 import { useRedesignChat } from './hooks/useRedesignChat';
@@ -41,7 +42,9 @@ export function RoomRedesignPage() {
     <header><strong>{t('redesignJourney.title')}</strong><button disabled={chat.status === 'creating'} onClick={fresh}>{t('redesignJourney.newRoom')}</button></header>
     <div className="redesign-columns">
       <section className="redesign-image-column" aria-label={t('redesignJourney.design')}>
-        {siteValue(image && <img className="redesign-main-image" src={image} alt={siteValue(selected ? t('redesignJourney.design') : t('redesignJourney.original'))} />)}
+        {image && <StudioImage image={image} versionKey={chat.viewedId}
+          alt={selected ? t('redesignJourney.design') : t('redesignJourney.original')}
+          onRefresh={() => chat.selectVersion(chat.viewedId)} />}
         <div className="redesign-image-controls">
           <nav aria-label={t('redesignJourney.history')}>
             <button aria-pressed={chat.viewedId === 'original'} onClick={() => chat.selectVersion('original')}>{t('redesignJourney.original')}</button>

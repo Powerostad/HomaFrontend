@@ -227,6 +227,13 @@ export async function loadChatSession(sessionId: string, versionId?: string): Pr
   return { success: false, statusCode: res.statusCode, error: res.error || siteText("خطا در بارگذاری گفتگو") };
 }
 
+/** Lightweight watchdog: never sends the base64 upload or refreshes the catalogue. */
+export async function loadChatSessionStatus(sessionId: string): Promise<LoadSessionResult> {
+  const res = await apiGet(`/recommendations/chat/sessions/${sessionId}/?status_only=1`);
+  return res.success ? { success: true, data: res.data }
+    : { success: false, statusCode: res.statusCode, error: res.error };
+}
+
 export async function selectChatProduct(params: {
   sessionId: string;
   category: string;
