@@ -29,6 +29,7 @@ interface Props {
   chipGroups: ChipGroup[];
   busy: boolean;
   failed?: boolean;
+  active?: boolean;
   statusText: string;
   value: string;
   onChange: (value: string) => void;
@@ -36,7 +37,7 @@ interface Props {
   onSelectChip: (groupId: string, chipId: string) => void;
 }
 
-export function ConversationPanel({ messages, chipGroups, busy, failed = false, statusText, value, onChange, onSend, onSelectChip }: Props) {
+export function ConversationPanel({ messages, chipGroups, busy, failed = false, active = true, statusText, value, onChange, onSend, onSelectChip }: Props) {
   const { t } = useTranslation();
   const logRef = useRef<HTMLDivElement>(null);
   const following = useRef(true);
@@ -49,10 +50,11 @@ export function ConversationPanel({ messages, chipGroups, busy, failed = false, 
     setShowJump(false);
   };
   useEffect(() => {
+    if (!active) return;
     const log = logRef.current;
     if (following.current && log) log.scrollTop = log.scrollHeight;
     else if (log) setShowJump(true);
-  }, [messages.length, latest, chipGroups, busy]);
+  }, [messages.length, latest, chipGroups, busy, active]);
   useEffect(() => {
     const focus = () => document.getElementById('studio-message')?.focus();
     window.addEventListener('homa-redesign-focus-composer', focus);

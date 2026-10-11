@@ -61,9 +61,9 @@ export function ExecutionPanel({ plan, busy, onPreview, section = 'all' }: Props
         const placement = item.mother_product?.placement_instruction || item.placement_instruction_fa;
         return <article className="studio-purchase" key={item.item_id}>
           <div className="studio-purchase-heading"><h3>{siteValue(item.mother_product?.product_name_generic || item.category)}</h3><span className="studio-quantity">{t('studioChat.quantity')}: {item.quantity.toLocaleString(i18n.language)}</span></div>
+          {item.product ? productCard(item.product, item.item_id) : <div className="studio-concept"><ShoppingBag size={20} aria-hidden="true" /><div><p>{t('studioChat.conceptHint')}</p><strong>{t('redesignJourney.unpriced')}</strong></div></div>}
           <dl className="studio-purchase-rationale"><div><dt>{t('studioChat.reason')}</dt><dd>{siteValue(item.reason_fa || item.mother_product?.why_needed)}</dd></div>{placement && <div className="studio-placement"><dt><MapPin size={16} aria-hidden="true" />{t('studioChat.placement')}</dt><dd>{siteValue(placement)}</dd></div>}</dl>
           <p className="studio-relation">{t(`redesignJourney.${item.relation}`, { defaultValue: t('redesignJourney.similar') })}</p>
-          {item.product ? productCard(item.product, item.item_id) : <div className="studio-concept"><ShoppingBag size={20} aria-hidden="true" /><div><p>{t('studioChat.conceptHint')}</p><strong>{t('redesignJourney.unpriced')}</strong></div></div>}
           {!!item.alternatives.length && <details className="studio-alternatives"><summary>{t('redesignJourney.alternatives')} · {item.alternatives.length.toLocaleString(i18n.language)}</summary><div className="studio-alternative-list">{item.alternatives.map(product => productCard(product, item.item_id))}</div></details>}
         </article>;
       })}</div>

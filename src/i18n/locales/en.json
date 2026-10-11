@@ -1,4 +1,13 @@
 {
+  "studioWorkspace": {
+    "studio": "Studio", "workspace": "Design workspace", "workbenchTitle": "Your space, through Homa’s eyes", "conversation": "Conversation", "products": "Products", "refine": "Refine in conversation", "awaitingDesign": "No design recommendation yet",
+    "entryTitle": "A better version of home starts here.", "entryHint": "Share a photo of your room. Talk through changes with Homa, then explore design recommendations and products that fit your space.",
+    "startSteps": "Start your design", "photoStep": "Room photo", "detailsStep": "Your brief", "uploadTitle": "Start with your own space", "dropHint": "Drop your photo here, or choose one from your device.", "choosePhoto": "Choose a room photo", "takePhoto": "Take a photo", "fileHint": "JPG, PNG, WebP or HEIC · up to 8 MB after conversion",
+    "photoTips": "What makes a good photo?", "photoTipsHint": "Photograph from a corner in good light, showing the floor, walls and main furniture. Avoid blurry photos or close-ups.", "exampleAlt": "Example of a clear room photo showing the floor and main furniture", "exampleLabel": "An example of a good angle", "exampleCaption": "This is an example. Your design starts with your own photo.", "yourRoom": "Your room photo", "photoReady": "Review your photo and brief before starting.",
+    "reviewTitle": "What would you like to change?", "reviewHint": "Start with just your photo, or tell Homa what you like and which pieces should stay.", "briefLabel": "Your brief", "briefPlaceholder": "For example: warmer and brighter, but keep the sofas and the current rug…", "preferences": "Room type, budget and pieces to keep (optional)", "roomType": "Room type", "smallPhoto": "This photo has a low resolution, so some details may be missed. Choose a clearer photo or continue with this one.", "start": "Start designing with Homa", "startHint": "Homa will analyse your space after you start. Refine the recommendation in the same conversation.", "savedHint": "After starting, your conversation is saved to your account. Return and continue from My designs.", "preparing": "Preparing your photo…", "photoError": "The photo could not be read. Choose a valid JPG, PNG or WebP under 8 MB. HEIC is supported after conversion.",
+    "rooms": { "bedroom": "Bedroom", "living_room": "Living room", "kitchen": "Kitchen", "balcony": "Balcony", "full_home": "Whole home", "not_sure": "Not sure" },
+    "goals": { "low_budget": "Low budget", "warmer": "Warmer and cosier", "modernize": "More modern", "declutter": "Less clutter", "improve_for_rent_or_sale": "Improve for sale or rent" }
+  },
   "studioDiagnostics": {
     "title": "Prompt output & costs", "hint": "Private report for this conversation. Viewing it never generates an image.",
     "session": "Conversation ID:", "loading": "Loading report…", "error": "Could not load the report. Close and reopen this panel.",
@@ -18,7 +27,7 @@
   "studioChat": {
     "title": "Design studio",
     "subtitle": "See your room, talk through ideas and refine your design.",
-    "archive": "My conversations",
+    "archive": "My designs",
     "saved": "Saved to your account",
     "saving": "Creating your conversation…",
     "new": "New design",
