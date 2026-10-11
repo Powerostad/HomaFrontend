@@ -16,6 +16,14 @@ export function ExecutionPanel({ plan, busy, onPreview }: { plan: ExecutionPlan;
     {siteValue(p.merchant_url && /^https?:\/\//i.test(p.merchant_url) && <a href={p.merchant_url} target="_blank" rel="noopener noreferrer">{t(p.merchant_destination === 'shop' ? 'redesignJourney.shop' : 'redesignJourney.merchant')}</a>)}
   </details>;
   return <div className="redesign-execution">
+    {Object.entries(plan.studio_documents ?? {}).map(([sceneId, document]) => <section key={sceneId}>
+      <h3>{siteValue(document.user_facing_summary.main_improvement_idea)}</h3>
+      <p>{siteValue(document.user_facing_summary.positive_diagnosis)}</p>
+      <ul>{document.user_facing_summary.top_changes.map((change, index) => <li key={index}>{siteValue(change)}</li>)}</ul>
+      <p>{siteValue(document.user_facing_summary.why_these_changes_work)}</p>
+      <p>{siteValue(document.user_facing_summary.expected_visual_result)}</p>
+      <p>{siteValue(document.user_facing_summary.shopping_message)}</p>
+    </section>)}
     {siteValue(plan.free_actions.length > 0 && <ul>{siteValue(plan.free_actions.map((a, i) => <li key={i}>{siteValue(a.instruction_fa)}{siteValue(a.reason_fa && <p>{siteValue(a.reason_fa)}</p>)}</li>))}</ul>)}
     {siteValue(plan.surface_actions.map((a, i) => <p key={i}>{siteValue(a.change_fa)}</p>))}
     <p>{t('redesignJourney.subtotal')} {siteValue(plan.known_subtotal_rial === 0 ? `${(0).toLocaleString(i18n.language)} ${t('redesignJourney.toman')}` : formatPriceFromRial(plan.known_subtotal_rial))}</p>
@@ -23,7 +31,8 @@ export function ExecutionPanel({ plan, busy, onPreview }: { plan: ExecutionPlan;
     <p>{t(`redesignJourney.budget_${plan.budget_status}`)}</p>
     <p>{t('redesignJourney.excluded')}</p>
     {siteValue(plan.purchases.map(item => <article key={item.item_id}>
-      <h3>{siteValue(item.category)} × {siteValue(item.quantity)}</h3><p>{siteValue(item.reason_fa)}</p><p>{t(`redesignJourney.${item.relation}`)}</p>
+      <h3>{siteValue(item.mother_product?.product_name_generic || item.category)} × {siteValue(item.quantity)}</h3><p>{siteValue(item.reason_fa)}</p><p>{t(`redesignJourney.${item.relation}`)}</p>
+      {(item.mother_product?.placement_instruction || item.placement_instruction_fa) && <p>{siteValue(item.mother_product?.placement_instruction || item.placement_instruction_fa)}</p>}
       {siteValue(item.product && product(item.product, item.item_id))}
       {siteValue(!!item.alternatives.length && <details><summary>{t('redesignJourney.alternatives')}</summary>{siteValue(item.alternatives.map(p => product(p, item.item_id)))}</details>)}
     </article>))}

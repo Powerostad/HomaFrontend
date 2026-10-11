@@ -13,6 +13,7 @@ import { siteText } from '@/i18n/siteCopy';
  */
 import { apiGet, apiPost } from '@/utils/apiClient';
 import { runChatCommand, type ChatErrorKind, type ChatSocketEvent } from './chatWebSocket';
+import type { MotherProduct, StudioMotherDocument } from './motherDocument';
 
 // --------------------------------------------------------------------------- //
 // Backend event payload shapes
@@ -67,6 +68,7 @@ export interface BackendResultScores {
 }
 
 export interface BackendResultItem {
+  mother_product?: MotherProduct | null;
   category_code: string;
   category_fa: string;
   reason_fa: string;
@@ -124,6 +126,8 @@ export interface BackendRoomAnalysis {
 }
 
 export interface BackendScene {
+  studio_document?: StudioMotherDocument | null;
+  render_verification?: { status: string };
   id: string;
   label_fa: string;
   diagnosis_fa: string;
@@ -432,7 +436,8 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
-  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[] }[];
+  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  studio_documents?: Record<string, StudioMotherDocument>;
   free_actions: { instruction_fa: string; reason_fa: string }[];
   surface_actions: { change_fa: string }[];
   known_subtotal_rial: number;
