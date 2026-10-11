@@ -96,3 +96,11 @@ Essential verification: 10 simulated hook/component checks, targeted lint,
 TypeScript and production build. No broad suite, live turn, user-session retry
 or paid image generation. Preserve database/media when moving domains; this
 correction adds no hostname, environment variable or migration.
+
+Published code `74ff69f`, Dokploy run `VF00-_6JvD5vKQnzLgFIB`, completed
+2026-10-11 at 15:19:53 UTC. Container healthy; read-only `/studio/` fetch serves
+`index-DngMcvF3.js` with the failed/processing/idle state copy and without the
+old false-preparing message. Backend companion `4aa7297` is deployed and health
+returns 200. Owner-session recovery is covered by offline regressions only;
+authenticated live detail could not be checked under the available tool policy.
+No live chat or image acceptance test was executed; the user will test it.
