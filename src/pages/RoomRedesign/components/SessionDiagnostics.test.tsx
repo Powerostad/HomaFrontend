@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SessionDiagnostics, JsonValue } from './SessionDiagnostics';
+import { SessionDiagnostics, JsonValue, HandoffDetails } from './SessionDiagnostics';
 import { loadSessionDiagnostics, refreshSessionExpenses, type SessionDiagnosticsReport } from '../services/redesignChatService';
 
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (v:unknown) => v, siteText:(v:string) => v }) }));
@@ -29,6 +29,18 @@ async function open() {
   await act(async () => container.querySelector('button')!.click());
 }
 describe('private session diagnostics', () => {
+  it('separates canonical output, actual image input and execution amendments', async () => {
+    await act(async () => root.render(<HandoffDetails value={{ stage:'image_input', canonical_document:{ full:'MOTHER_OUTPUT' }, actual_prompt:'ACTUAL_SENT_PROMPT', execution_amendments:[{ path:'/add_new_products', reason:'purchase_disabled' }] }} />));
+    expect(container.querySelectorAll('details')).toHaveLength(3);
+    expect(container.textContent).toContain('MOTHER_OUTPUT');
+    expect(container.textContent).toContain('ACTUAL_SENT_PROMPT');
+    expect(container.textContent).toContain('purchase_disabled');
+  });
+  it('shows an explicit oversized-audit marker instead of an empty comparison', async () => {
+    await act(async () => root.render(<HandoffDetails value={{ stage:'image_input', truncated:true, sha256:'digest' }} />));
+    expect(container.querySelectorAll('details')).toHaveLength(0);
+    expect(container.textContent).toContain('"truncated": true');
+  });
   it('loads only on open, preserves exact escaped output and never refreshes billing automatically', async () => {
     await act(async () => root.render(<SessionDiagnostics sessionId="owner-session" />));
     expect(loadSessionDiagnostics).not.toHaveBeenCalled();

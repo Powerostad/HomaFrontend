@@ -78,8 +78,15 @@ export function SessionDiagnostics({ sessionId }: { sessionId: string }) {
           </section>
           <section><h3>{t('studioDiagnostics.current')}</h3><p className="studio-caption">{t('studioDiagnostics.currentHint')}</p><JsonValue value={report.documents} /></section>
           <details><summary>{t('studioDiagnostics.versions')}</summary><JsonValue value={report.versions} /></details>
+          <section><h3>{t('studioDiagnostics.handoffs')}</h3><p className="studio-caption">{t('studioDiagnostics.handoffHint')}</p>
+            {!report.traces.some(trace => trace.payload_name?.startsWith('handoff-')) && <p>{t('studioDiagnostics.noHandoffs')}</p>}
+            {report.traces.filter(trace => trace.payload_name?.startsWith('handoff-')).map(trace =>
+              <details key={trace.id}><summary>{t(`studioDiagnostics.${trace.payload_name.startsWith('handoff-analysis-') ? 'analysisInput' : trace.payload_name.startsWith('handoff-image-') ? 'imageInput' : 'searchInput'}`)} · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary>
+                <HandoffDetails value={trace.payload} />
+              </details>)}
+          </section>
           <section><h3>{t('studioDiagnostics.steps')}</h3><p className="studio-caption">{t('studioDiagnostics.stepsHint')}</p>
-            {report.traces.map(trace => <details key={trace.id}><summary><bdi>{trace.payload_name || trace.step_name}</bdi> · <bdi>{trace.model || trace.status}</bdi> · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary><JsonValue value={trace} /></details>)}
+            {report.traces.filter(trace => !trace.payload_name?.startsWith('handoff-')).map(trace => <details key={trace.id}><summary><bdi>{trace.payload_name || trace.step_name}</bdi> · <bdi>{trace.model || trace.status}</bdi> · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary><JsonValue value={trace} /></details>)}
             {report.next_before && <Button variant="outline" disabled={loading} onClick={() => void more()}>{t('studioDiagnostics.more')}</Button>}
           </section>
           <Button disabled={loading} onClick={download}><Download size={18} aria-hidden="true" />{t('studioDiagnostics.download')}</Button>
@@ -88,6 +95,18 @@ export function SessionDiagnostics({ sessionId }: { sessionId: string }) {
       </div>
     </DialogContent>
   </Dialog>;
+}
+
+export function HandoffDetails({ value }: { value: unknown }) {
+  const { t } = useTranslation();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return <JsonValue value={value} />;
+  const data = value as Record<string, unknown>;
+  if (data.stage !== 'image_input' || data.truncated) return <JsonValue value={value} />;
+  return <>
+    <details><summary>{t('studioDiagnostics.canonicalOutput')}</summary><JsonValue value={data.canonical_document} /></details>
+    <details><summary>{t('studioDiagnostics.actualImagePrompt')}</summary><JsonValue value={data.actual_prompt} /></details>
+    <details><summary>{t('studioDiagnostics.amendments')}</summary><JsonValue value={{ execution_amendments: data.execution_amendments, excluded_products: data.excluded_products, explicit_user_constraints: data.explicit_user_constraints, changes_from_selected_version: data.changes_from_selected_version }} /></details>
+  </>;
 }
 
 export function JsonValue({ value }: { value: unknown }) {

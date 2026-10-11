@@ -9,6 +9,8 @@
     "goals": { "low_budget": "Low budget", "warmer": "Warmer and cosier", "modernize": "More modern", "declutter": "Less clutter", "improve_for_rent_or_sale": "Improve for sale or rent" }
   },
   "studioDiagnostics": {
+    "handoffs": "Actual stage inputs & mother-output comparison", "handoffHint": "Inspect the analysis request, product search intent and image input for each turn. Execution constraints are recorded separately from the mother document.", "noHandoffs": "No handoffs in the loaded steps. Load older steps if available; capture starts with the new release.",
+    "analysisInput": "Analysis & conversation input", "imageInput": "Image generation input", "searchInput": "Product search input & results", "canonicalOutput": "1. Complete original mother output", "actualImagePrompt": "2. Actual prompt sent to the image model", "amendments": "3. Differences, constraints & reasons",
     "title": "Prompt output & costs", "hint": "Private report for this conversation. Viewing it never generates an image.",
     "session": "Conversation ID:", "loading": "Loading report…", "error": "Could not load the report. Close and reopen this panel.",
     "cost": "Conversation API expenses", "total": "Recorded subtotal", "text": "Analysis & chat", "image": "Image generation",
