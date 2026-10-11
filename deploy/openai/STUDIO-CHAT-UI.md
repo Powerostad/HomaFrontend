@@ -70,3 +70,12 @@ The last step can incur the usual AI costs and is left to the user.
 Deploy only OpenAI-Frontend (`lV8z1EMrI0jxZMpggrMQa`) from the isolated branch.
 No backend deploy is needed. Roll back by deploying the previous frontend
 revision; no stored conversations are changed by this patch.
+
+Published 2026-10-11: frontend code revision `98e4242`, Dokploy execution
+`JJ4OKMYO1axOk0gWo_5xt` completed at 14:33:49 UTC. The first queued execution
+`eg552wOwJG2PM4XJtRI0M` was cancelled while the control endpoint temporarily
+timed out/refused connections; no server restart was performed by this change.
+The origin then recovered. Final checks: frontend container healthy,
+backend health HTTP 200, served bundle `index-DDkjVtL3.js` contains the new
+conversation, archive and original-image guidance. This confirms publication,
+not full browser/user-flow acceptance. No new image was generated.
