@@ -1,4 +1,20 @@
 {
+  "studioDiagnostics": {
+    "title": "Prompt output & costs", "hint": "Private report for this conversation. Viewing it never generates an image.",
+    "session": "Conversation ID:", "loading": "Loading report…", "error": "Could not load the report. Close and reopen this panel.",
+    "cost": "Conversation API expenses", "total": "Recorded subtotal", "text": "Analysis & chat", "image": "Image generation",
+    "paid": "Paid from toman balance", "grant": "Grants & packages used", "unknown": "Unknown",
+    "pending": "Awaiting billing receipts", "partial": "Incomplete report; this is not the full conversation cost.",
+    "settled": "Recorded requests have confirmed costs.", "unavailable": "Older billing IDs were not recorded; costs cannot be reconstructed.",
+    "costHint": "Text and image API only; excludes products, infrastructure and auxiliary services. No guessed USD-to-toman exchange rate.",
+    "gaps": "Unmeasured requests: {{unknown}} · Pending receipts: {{pending}}",
+    "refresh": "Fetch actual expenses from AvalAI", "refresh_cooldown": "Wait 35 seconds before refreshing billing again.",
+    "refresh_unavailable": "Billing service is unavailable; previously recorded costs are retained.",
+    "current": "Complete current mother-prompt document", "currentHint": "Accepted model output before UI summarization. Its fields are not translated or rewritten.",
+    "versions": "Output associated with image versions", "steps": "Output and execution by step", "turn": "Turn",
+    "stepsHint": "model-response is model output before technical validation; render-audit is the actual image prompt. The primary step record shows acceptance or rejection. Older traces may be clipped or missing.",
+    "more": "Load older steps", "download": "Download JSON report", "private": "This report contains private room and conversation data. Downloads include loaded steps only; load older steps first to export more."
+  },
   "studioChat": {
     "title": "Design studio",
     "subtitle": "See your room, talk through ideas and refine your design.",

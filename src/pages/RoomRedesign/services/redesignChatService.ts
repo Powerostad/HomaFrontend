@@ -253,6 +253,33 @@ export async function loadChatSessionStatus(sessionId: string): Promise<LoadSess
     : { success: false, statusCode: res.statusCode, error: res.error };
 }
 
+export interface SessionExpenses {
+  status: 'pending' | 'partial' | 'settled' | 'unavailable';
+  known_usd: string | null;
+  text_usd: string | null;
+  image_usd: string | null;
+  known_paid_toman: string | null;
+  known_grant_toman: string | null;
+  unknown_calls: number;
+  pending_receipts: number;
+  checked_at: string | null;
+  refresh_status?: 'cooldown' | 'unavailable';
+}
+export interface SessionDiagnosticsReport {
+  session_id: string;
+  expenses: SessionExpenses;
+  documents: unknown[];
+  versions: unknown[];
+  traces: { id: number; turn_index: number | null; step_name: string; payload_name: string; model: string; status: string; [key: string]: unknown }[];
+  next_before: number | null;
+}
+export const loadSessionDiagnostics = (sessionId: string, before?: number) => apiGet<SessionDiagnosticsReport>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/diagnostics/${before ? `?before=${before}` : ''}`,
+);
+export const refreshSessionExpenses = (sessionId: string) => apiPost<{ expenses: SessionExpenses }>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/diagnostics/`, {},
+);
+
 export async function selectChatProduct(params: {
   sessionId: string;
   category: string;

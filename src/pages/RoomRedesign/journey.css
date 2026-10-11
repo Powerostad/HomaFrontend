@@ -1,4 +1,12 @@
 /* Conversational Studio uses the site's canonical neutral/editorial tokens. */
+.studio-diagnostics-dialog { width:calc(100% - var(--space-8)); max-width:var(--max-width-content); max-height:90dvh; min-width:0; }
+.studio-diagnostics-body { overflow:auto; min-width:0; display:grid; gap:var(--space-5); padding-inline-end:var(--space-2); }
+.studio-diagnostics-body h3 { font-weight:600; margin-bottom:var(--space-2); }
+.studio-diagnostics-body summary { cursor:pointer; padding-block:var(--space-3); overflow-wrap:anywhere; }
+.studio-diagnostics-json { overflow:auto; max-height:50dvh; padding:var(--space-4); border-radius:var(--radius-md); background:var(--color-surface-muted); color:var(--color-content-primary); font-size:var(--text-sm); white-space:pre-wrap; overflow-wrap:anywhere; text-align:left; }
+.studio-diagnostics-cost { border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); padding:var(--space-4); }
+.studio-diagnostics-cost dl { display:grid; gap:var(--space-2); margin-block:var(--space-3); }
+.studio-diagnostics-cost dl > div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-2); }
 .redesign-journey { min-height:100dvh; padding:var(--space-6); background:var(--color-surface-page); color:var(--color-content-primary); }
 .studio-workbench-header { display:flex; align-items:center; gap:var(--space-6); max-width:var(--max-width-content); margin:0 auto var(--space-4); padding-bottom:var(--space-5); border-bottom:1px solid var(--color-border-subtle); }
 .studio-brand { font-size:var(--text-2xl); letter-spacing:.2em; direction:ltr; flex-shrink:0; }

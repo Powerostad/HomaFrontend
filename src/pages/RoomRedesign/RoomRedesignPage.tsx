@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ConversationPanel } from './components/ConversationPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
 import { StudioImage } from './components/StudioImage';
+import { SessionDiagnostics } from './components/SessionDiagnostics';
 import { ImageToolbar, useImageActions } from './components/workspace';
 import { useRedesignChat } from './hooks/useRedesignChat';
 import { HomaIntakeFlow } from './intake/HomaIntakeFlow';
@@ -60,6 +61,7 @@ export function RoomRedesignPage() {
     <Link className="studio-brand" to="/" aria-label="HOMA">HOMA</Link>
     <div className="studio-workbench-title"><h1>{t('studioChat.title')}</h1><p>{t('studioChat.subtitle')}</p></div>
     <nav className="studio-workbench-nav" aria-label={t('studioChat.archive')}>
+      {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} />}
       <Button asChild variant="outline"><Link to="/studio/projects"><History size={18} aria-hidden="true" />{t('studioChat.archive')}</Link></Button>
       <Button variant="outline" disabled={chat.status === 'creating'} onClick={fresh}><Plus size={18} aria-hidden="true" />{t('studioChat.new')}</Button>
     </nav>
