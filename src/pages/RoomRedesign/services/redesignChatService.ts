@@ -224,6 +224,21 @@ export interface LoadSessionResult {
   error?: string;
 }
 
+/** Account-owned, server-persisted conversations, separate from legacy Studio jobs. */
+export interface ChatSessionListItem {
+  id: string;
+  title: string;
+  status: 'active' | 'rendering' | 'failed';
+  turn_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listChatSessions(): Promise<{ success: boolean; sessions: ChatSessionListItem[] }> {
+  const result = await apiGet<{ sessions: ChatSessionListItem[] }>('/recommendations/chat/sessions/');
+  return { success: result.success, sessions: result.success ? result.data?.sessions ?? [] : [] };
+}
+
 /** Resume payload (re-presigned image URLs). Used to resume/hydrate a session. */
 export async function loadChatSession(sessionId: string, versionId?: string): Promise<LoadSessionResult> {
   const res = await apiGet<unknown>(`/recommendations/chat/sessions/${sessionId}/${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`);

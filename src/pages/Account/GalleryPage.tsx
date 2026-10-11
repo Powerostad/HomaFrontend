@@ -12,6 +12,7 @@ import { SidebarMenu } from '../../components/SidebarMenu';
 import { EmptyGallery } from '../../components/account/EmptyGallery';
 import { ResultCard } from '../../components/account/ResultCard';
 import { Button } from '../../components/ui/button';
+import { ChatSessionArchive } from '../RoomRedesign/components/ChatSessionArchive';
 
 // =============================================================================
 // Loading Skeleton Component
@@ -231,6 +232,8 @@ export default function GalleryPage() {
             </div>
           ))}
         </div>
+
+        {activeTab !== 'tryon' && <ChatSessionArchive compact />}
 
         {/* Content */}
         <div className="flex-1">
