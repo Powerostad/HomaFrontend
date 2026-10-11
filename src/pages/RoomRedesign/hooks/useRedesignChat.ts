@@ -52,7 +52,11 @@ export function useRedesignChat(path?: string) {
 
   const apply = useCallback((data: SessionPayload) => {
     const rebuilt = rebuildSessionView(data);
-    setMessages(rebuilt.messages);
+    const failedIntent = intent.current && data.operations?.some(op =>
+      op.idempotency_key === intent.current?.idempotencyKey && op.status === 'failed' && op.kind === 'text_turn')
+      ? intent.current : null;
+    setMessages(failedIntent ? [...rebuilt.messages, { id: failedIntent.idempotencyKey, role: 'user',
+      text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
@@ -289,6 +293,12 @@ export function useRedesignChat(path?: string) {
       await reconcile(sid, ac.signal, failed.operation_id);
     } else if (failed?.status === 'failed' || (!failed && intent.current)) {
       if (intent.current) await execute(intent.current);
+      else if (failed?.kind === 'text_turn' && failed.idempotency_key) {
+        // The server restores the original durable request for this key. Only
+        // the user's explicit Retry action can resubmit it after a reload.
+        await execute({ sessionId: sid, idempotencyKey: failed.idempotency_key,
+          text: '', images: [], baseVersionId: failed.base_version_id || 'original' });
+      }
       else {
         setError(siteText("جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن."));
         locked.current = false;

@@ -6,6 +6,25 @@ import { ConversationPanel } from './ConversationPanel';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t:(key:string) => key }) }));
 describe('chat composer', () => {
+  it('never describes a failed or idle opening as still processing', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const props = { messages: [], chipGroups: [], statusText: 'Working', value: '',
+      onChange: () => undefined, onSend: () => undefined, onSelectChip: () => undefined };
+    try {
+      await act(async () => root.render(<ConversationPanel {...props} busy={false} failed />));
+      expect(container.textContent).toContain('studioChat.emptyChatFailed');
+      expect(container.textContent).not.toContain('studioChat.emptyChatProcessing');
+      expect(container.querySelector('[role=status]')).toBeNull();
+      await act(async () => root.render(<ConversationPanel {...props} busy failed />));
+      expect(container.textContent).toContain('studioChat.emptyChatProcessing');
+      expect(container.textContent).not.toContain('studioChat.emptyChatFailed');
+      await act(async () => root.render(<ConversationPanel {...props} busy={false} />));
+      expect(container.textContent).not.toContain('studioChat.emptyChatProcessing');
+      expect(container.textContent).not.toContain('studioChat.emptyChatFailed');
+    } finally { await act(async () => root.unmount()); }
+  });
   it('keeps the next draft editable but prevents duplicate sends while processing', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div');

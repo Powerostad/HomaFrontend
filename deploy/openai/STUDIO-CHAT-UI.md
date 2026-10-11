@@ -79,3 +79,20 @@ The origin then recovered. Final checks: frontend container healthy,
 backend health HTTP 200, served bundle `index-DDkjVtL3.js` contains the new
 conversation, archive and original-image guidance. This confirms publication,
 not full browser/user-flow acceptance. No new image was generated.
+
+## Failed opening / truthful empty chat — 2026-10-11 follow-up
+
+An opening can fail schema validation before the first assistant turn is saved.
+The chat now distinguishes failed / processing / idle empty states in both
+languages; it no longer claims preparation is underway when processing failed.
+The current failed user message remains visible while reconciling durable status.
+Reopening from the archive performs reads only. Explicit Retry of a failed text
+operation reuses its saved idempotency key; the server restores its request/photo.
+The backend companion exposes the uncommitted original upload on full owner
+detail only, never on compact polling. This follow-up needs both isolated
+backend and frontend deployments, unlike the earlier UI-only release above.
+
+Essential verification: 10 simulated hook/component checks, targeted lint,
+TypeScript and production build. No broad suite, live turn, user-session retry
+or paid image generation. Preserve database/media when moving domains; this
+correction adds no hostname, environment variable or migration.

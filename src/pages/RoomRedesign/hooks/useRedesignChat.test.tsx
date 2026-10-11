@@ -105,4 +105,41 @@ describe('Studio persisted-result recovery', () => {
     expect(chat.status).toBe('error'); expect(chat.error).toBe('خطای تولید تصویر');
     expect(service.requestRender).not.toHaveBeenCalled();
   });
+  it('restores a failed opening after reload and only retries its existing key on explicit action', async () => {
+    const failed: service.DesignOperation = { operation_id: 'opening', kind: 'text_turn',
+      status: 'failed', idempotency_key: 'saved-opening-key', base_version_id: 'original', error: 'تحلیل ناموفق بود' };
+    vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([failed]) });
+    await mount();
+    expect(chat.originalImage).toBe('original-photo');
+    expect(chat.status).toBe('error');
+    expect(service.streamChatTurn).not.toHaveBeenCalled();
+    vi.mocked(service.streamChatTurn).mockImplementation(async () => {
+      vi.mocked(service.loadChatSession).mockResolvedValue({ success: true,
+        data: payload([{ ...failed, status: 'succeeded', error: '' }]) });
+      return { ok: true };
+    });
+    await act(async () => { await chat.retry(); });
+    expect(service.streamChatTurn).toHaveBeenCalledOnce();
+    expect(vi.mocked(service.streamChatTurn).mock.calls[0][0]).toEqual({
+      sessionId: 'session', idempotencyKey: 'saved-opening-key', text: '', images: [], baseVersionId: 'original',
+    });
+    expect(service.requestRender).not.toHaveBeenCalled();
+    expect(chat.status).toBe('idle');
+    expect(chat.error).toBeNull();
+  });
+  it('keeps the failed user message visible when the server has not committed an opening turn', async () => {
+    await mount();
+    vi.mocked(service.streamChatTurn).mockImplementation(async params => {
+      vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([{
+        operation_id: 'opening', kind: 'text_turn', status: 'failed', idempotency_key: params.idempotencyKey,
+        error: 'تحلیل ناموفق بود',
+      }]) });
+      return { ok: false };
+    });
+    await act(async () => { await chat.sendTurn({ text: 'Keep my sofa', images: ['original-photo'] }); });
+    expect(chat.status).toBe('error');
+    expect(chat.messages).toEqual([expect.objectContaining({ role: 'user', text: 'Keep my sofa', imageUrl: 'original-photo' })]);
+    expect(service.streamChatTurn).toHaveBeenCalledOnce();
+    expect(service.requestRender).not.toHaveBeenCalled();
+  });
 });

@@ -100,7 +100,7 @@ export function RoomRedesignPage() {
         </div>
       </section>
       <section className="redesign-conversation" aria-label={t('studioChat.chat')}>
-        <ConversationPanel messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip} busy={chat.busy} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
+        <ConversationPanel messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip} busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
       </section>
     </div>
     {actions.modals}

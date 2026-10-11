@@ -28,6 +28,7 @@ interface Props {
   messages: ChatMessage[];
   chipGroups: ChipGroup[];
   busy: boolean;
+  failed?: boolean;
   statusText: string;
   value: string;
   onChange: (value: string) => void;
@@ -35,7 +36,7 @@ interface Props {
   onSelectChip: (groupId: string, chipId: string) => void;
 }
 
-export function ConversationPanel({ messages, chipGroups, busy, statusText, value, onChange, onSend, onSelectChip }: Props) {
+export function ConversationPanel({ messages, chipGroups, busy, failed = false, statusText, value, onChange, onSend, onSelectChip }: Props) {
   const { t } = useTranslation();
   const logRef = useRef<HTMLDivElement>(null);
   const following = useRef(true);
@@ -70,7 +71,7 @@ export function ConversationPanel({ messages, chipGroups, busy, statusText, valu
         if (following.current) setShowJump(false);
       }
     }}>
-      {!messages.length && <div className="studio-chat-empty"><MessageSquare size={28} aria-hidden="true" /><p>{t('studioChat.emptyChat')}</p></div>}
+      {!messages.length && <div className="studio-chat-empty"><MessageSquare size={28} aria-hidden="true" /><p>{t(busy ? 'studioChat.emptyChatProcessing' : failed ? 'studioChat.emptyChatFailed' : 'studioChat.emptyChat')}</p></div>}
       {messages.map(message => message.kind === 'event'
         ? <p className={`studio-chat-event studio-chat-event--${message.eventKind ?? 'info'}`} key={message.id}>{message.text}</p>
         : <article key={message.id} className={`studio-message studio-message--${message.role}`}>
