@@ -38,6 +38,8 @@ export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImag
   alt,
   style,
   className,
+  onLoad,
+  onError,
   ...rest
 }, ref) {
   const { siteValue, siteText } = useSiteTranslation();
@@ -65,6 +67,8 @@ export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImag
           className={className}
           style={style}
           {...rest}
+          onLoad={onLoad}
+          onError={onError}
         />
       );
     }
@@ -81,28 +85,20 @@ export const AuthenticatedImage = forwardRef<HTMLImageElement, AuthenticatedImag
   }
 
   return (
-    <>
-      {siteValue(isLoading && (
-        <div
-          className={`inline-block image-loading ${className ?? ''}`}
-          style={style}
-          role="img"
-          aria-label={siteValue(alt || siteText("در حال بارگذاری..."))}
-        />
-      ))}
       <img
         ref={ref}
         src={src}
         alt={siteValue(alt)}
-        className={className}
-        style={isLoading ? { ...style, display: 'none' } : style}
+        className={`${className ?? ''}${isLoading ? ' image-loading' : ''}`}
+        style={style}
         {...rest}
-        onLoad={() => setIsLoading(false)}
-        onError={() => {
+        aria-busy={isLoading}
+        onLoad={(event) => { setIsLoading(false); onLoad?.(event); }}
+        onError={(event) => {
           setIsLoading(false);
           setDidError(true);
+          onError?.(event);
         }}
       />
-    </>
   );
 });
