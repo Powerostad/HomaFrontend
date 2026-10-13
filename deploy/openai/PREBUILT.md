@@ -41,3 +41,18 @@ The existing nginx, runtime configuration entrypoint and crawler sidecar remain.
 Keep old assets so already-open tabs can load them. Archive paths are checked
 for traversal, links and environment files before upload. Deploy the same
 prebuilt manifest only after the helper reports the new image registered.
+
+## Latency/media release — 2026-10-14
+
+Code revision `42ac4d4cfd28276ac2d48ea6ab292218d176e4fa` fixes lazy product
+image loading. Immutable tag: `homa_openai_frontend:prebuilt-42ac4d4`.
+Build locally with explicit isolated public VITE values; package only compiled
+dist files with `tools/package-prebuilt-frontend-42ac4d4.py`. Its manifest records
+the bundle entry and archive SHA256. `tools/transfer-prebuilt-frontend.py` uses
+strict known-host verification and a user-entered SSH password (not stored).
+
+The stopped helper now starts from the currently deployed
+`homa_openai_frontend:prebuilt-67a902d`, retaining its old assets for open tabs.
+The previous image is also pinned in `docker-compose.rollback.yml`. Keep the
+same isolated resource, compose path, runtime environment, domains and volumes.
+Do not deploy until the checksum/revision/image-ID verification reports loaded.
