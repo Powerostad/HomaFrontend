@@ -1,6 +1,6 @@
 import { siteText } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
+import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
 import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
 
@@ -28,6 +28,7 @@ export function useRedesignChat(path?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
+  const [currentExecution, setCurrentExecution] = useState<ExecutionPlan | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [viewedId, setViewedId] = useState('original');
   const [readyId, setReadyId] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export function useRedesignChat(path?: string) {
     setMessages(failedIntent ? [...rebuilt.messages, { id: failedIntent.idempotencyKey, role: 'user',
       text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
+    setCurrentExecution(data.current_execution || null);
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
     if (next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
@@ -144,6 +146,7 @@ export function useRedesignChat(path?: string) {
     controller.current?.abort();
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
+    setCurrentExecution(null);
     setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
     operation.current = null; intent.current = null; renderOperationId.current = null; setReadyId(null);
@@ -328,5 +331,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

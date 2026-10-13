@@ -371,6 +371,8 @@ export interface SessionPayload {
   title: string;
   turns: SessionTurn[];
   versions?: DesignVersion[];
+  /** Validated design/retrieval, available before or despite image failure. */
+  current_execution?: ExecutionPlan | null;
   operations?: DesignOperation[];
   original_image?: string | null;
 }

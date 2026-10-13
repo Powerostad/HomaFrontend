@@ -30,6 +30,9 @@ export function RoomRedesignPage() {
   const selected = chat.selectedVersion;
   // Comparing with the original photo must not hide the latest design report.
   const report = selected || chat.versions[chat.versions.length - 1];
+  // Catalogue/design results belong to the validated analysis, not a successful
+  // image. Keep immutable version reports when a rendered version is selected.
+  const execution = report?.execution || (!report ? chat.currentExecution : null);
   const original = chat.originalImage || intake?.image.dataUrl || null;
   const image = selected?.image_url || original;
   const index = chat.versions.findIndex(v => v.version_id === chat.viewedId) + 1;
@@ -95,14 +98,14 @@ export function RoomRedesignPage() {
           <TabsList className="studio-workspace-tablist" aria-label={t('studioWorkspace.workspace')}>
             <TabsTrigger value="conversation"><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.conversation')}</TabsTrigger>
             <TabsTrigger value="plan"><List size={16} aria-hidden="true" />{t('studioChat.plan')}</TabsTrigger>
-            <TabsTrigger value="products"><ShoppingBag size={16} aria-hidden="true" />{t('studioWorkspace.products')}{report?.execution && <span className="studio-count">{report.execution.purchases.length.toLocaleString(i18n.language)}</span>}</TabsTrigger>
+            <TabsTrigger value="products"><ShoppingBag size={16} aria-hidden="true" />{t('studioWorkspace.products')}{execution && <span className="studio-count">{execution.purchases.length.toLocaleString(i18n.language)}</span>}</TabsTrigger>
           </TabsList>
           <TabsContent className="redesign-conversation" value="conversation" forceMount hidden={section !== 'conversation'}>
             <ConversationPanel active={section === 'conversation'} messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip} busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
           </TabsContent>
           {(['plan', 'products'] as const).map(panel => <TabsContent className="studio-workspace-report" value={panel} key={panel}>
-            <div className="studio-report-context"><span>{report ? t('redesignJourney.version', { number: chat.versions.indexOf(report) + 1 }) : t('studioWorkspace.awaitingDesign')}</span><Button variant="ghost" onClick={() => setSection('conversation')}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
-            {report?.execution ? <ExecutionPanel section={panel} plan={report.execution} busy={chat.busy} onPreview={(itemId, productId) => { setSection('conversation'); void chat.sendTurn({ text: t('redesignJourney.preview'), action: 'preview_product', itemId, productId }); }} />
+            <div className="studio-report-context"><span>{report ? t('redesignJourney.version', { number: chat.versions.indexOf(report) + 1 }) : t(execution ? 'studioChat.plan' : 'studioWorkspace.awaitingDesign')}</span><Button variant="ghost" onClick={() => setSection('conversation')}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
+            {execution ? <ExecutionPanel section={panel} plan={execution} busy={chat.busy} onPreview={(itemId, productId) => { setSection('conversation'); void chat.sendTurn({ text: t('redesignJourney.preview'), action: 'preview_product', itemId, productId }); }} />
               : <div className="studio-empty-note">{report?.explanation && <p className="redesign-explanation">{siteValue(report.explanation)}</p>}<p>{t(report ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p></div>}
           </TabsContent>)}
         </Tabs>
