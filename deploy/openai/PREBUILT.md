@@ -26,3 +26,18 @@ the prior image using a no-build manifest; do not rerun the old source-building
 manifest on the memory-constrained VPS. Confirm health before reporting success.
 No database or provider changes are needed. Never restart ERP or original Homa
 services for this isolated frontend rollout.
+
+## Offline registry fallback (2026-10-13)
+
+Local Docker/Arvan pulls timed out. The equivalent low-memory route is to run
+`npm run build` locally with explicit isolated-site public VITE values, package
+only dist files, and record their SHA256. Transfer this archive over verified SSH.
+Use the existing previous runtime image `homa_openai_frontend:c468e5e` as base:
+create a unique stopped, network-none helper container, docker cp the compiled
+dist archive into its html directory, then docker commit with source revision
+and archive checksum labels. Remove only that helper container. No npm, tsc,
+Vite, source compilation or running service restart occurs in this preparation.
+The existing nginx, runtime configuration entrypoint and crawler sidecar remain.
+Keep old assets so already-open tabs can load them. Archive paths are checked
+for traversal, links and environment files before upload. Deploy the same
+prebuilt manifest only after the helper reports the new image registered.
