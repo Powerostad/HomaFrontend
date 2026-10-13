@@ -1,0 +1,11 @@
+# Previous known-good frontend image. No build on the constrained VPS.
+services:
+  openai-frontend:
+    extends:
+      file: docker-compose.prebuilt.yml
+      service: openai-frontend
+    image: homa_openai_frontend:c468e5e
+    pull_policy: never
+networks:
+  dokploy-network:
+    external: true

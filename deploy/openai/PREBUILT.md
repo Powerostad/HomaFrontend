@@ -1,0 +1,28 @@
+# Off-server frontend builds
+
+The 8 GiB VPS experienced a confirmed global OOM during a frontend deployment.
+Dokploy restarted and cancelled the interrupted deployment on startup. Do not
+build this frontend there while memory headroom is exhausted.
+
+For release 67a902d, build the existing Dockerfile on a Linux-amd64 capable local
+Docker engine, tag `homa_openai_frontend:prebuilt-67a902d`, and label
+`org.opencontainers.image.revision=67a902dad048ecf2e6d67b5ef42c29b4ae1c8811`.
+Save the image, record archive SHA256 and image ID, transfer over host-key-verified
+SSH and load it on the VPS. No API keys or local environment files belong in the
+image or archive. The source .dockerignore excludes local environment files.
+
+Only after verifying the image ID on the VPS, change the isolated
+OpenAI-Frontend Compose path to `./deploy/openai/docker-compose.prebuilt.yml`.
+Keep source branch `codex/isolated-development`, autoDeploy false, existing domain,
+environment and volumes. The file has no build section and pull_policy never:
+even Dokploy's normal `up --build` cannot compile or pull this service.
+
+For future releases repeat with a new immutable tag and update this manifest.
+For domain moves update the runtime VITE_API_BASE_URL/private media origin and
+Dokploy domain separately; public catalog media stays on its configured origin.
+
+Rollback: preserve previous image and its deployment configuration. Restore
+the prior image using a no-build manifest; do not rerun the old source-building
+manifest on the memory-constrained VPS. Confirm health before reporting success.
+No database or provider changes are needed. Never restart ERP or original Homa
+services for this isolated frontend rollout.
