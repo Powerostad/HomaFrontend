@@ -1,5 +1,19 @@
 # Off-server frontend builds
 
+## Studio Performance Lab tab — 2026-10-15
+
+Source revision `3360d39b765384efac068efa1d459e89ff8a46d3` adds the bottom-of-Studio
+owner performance tab. Locally compiled and transferred with strict SSH host-key
+verification; no compilation on VPS. Runtime tag `homa_openai_frontend:prebuilt-3360d39`
+was registered before this manifest change. Image ID:
+`sha256:937792b896a972fbff35cf12df334e5c234211e25730e3fa3f76f854298b9f90`.
+Dist archive SHA256: `5baba5d45465ccc130bccca383e3857b9a13218bea1b22e1c9fbd6efba8ec8c3`.
+Entry `/assets/index-Sj-KdTvb.js`, SHA256
+`943a1c787ec97db7e087bf2d95b3b3b9416b9ef787a9bedee520a335aaaa5d21`.
+Previous `prebuilt-42ac4d4` is retained for rollback and old assets remain in the
+new image. Requires backend owner-scoped `/performance/` endpoint (fbca415).
+Historical uncorrelated runs show unavailable rather than fabricated data.
+
 The 8 GiB VPS experienced a confirmed global OOM during a frontend deployment.
 Dokploy restarted and cancelled the interrupted deployment on startup. Do not
 build this frontend there while memory headroom is exhausted.
