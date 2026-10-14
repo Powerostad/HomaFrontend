@@ -265,6 +265,16 @@ export interface SessionExpenses {
   checked_at: string | null;
   refresh_status?: 'cooldown' | 'unavailable';
 }
+export interface StudioPerformanceReport {
+  status: 'ready' | 'pending' | 'unavailable' | 'incomplete';
+  runs: { id: string; workflow: string; status: string; duration_ms: number | null }[];
+  spans: { id: string; name: string; duration_ms: number; status: string }[];
+  summary: { trace_elapsed_timestamp_ms: number | null; api_calls: number; estimated_cost_usd: number | null; tokens: Record<string, number | null> } | null;
+}
+export const loadStudioPerformance = (sessionId: string) => apiGet<StudioPerformanceReport>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/performance/`,
+);
+
 export interface SessionDiagnosticsReport {
   session_id: string;
   expenses: SessionExpenses;

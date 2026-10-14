@@ -1,4 +1,5 @@
 {
+  "studioPerformance": { "title": "Performance report", "hint": "Latest run in this conversation; timing includes queue wait. Unknown cost does not mean zero.", "refresh": "Refresh report", "pending": "The report completes after processing.", "unavailable": "No performance data for this run yet. Historical runs cannot be reconstructed.", "elapsed": "Total time", "calls": "API calls", "cost": "Estimated cost", "input": "Input tokens", "output": "Output tokens", "stages": "Stage details" },
   "studioWorkspace": {
     "studio": "Studio", "workspace": "Design workspace", "workbenchTitle": "Your space, through Homa’s eyes", "conversation": "Conversation", "products": "Products", "refine": "Refine in conversation", "awaitingDesign": "No design recommendation yet",
     "entryTitle": "A better version of home starts here.", "entryHint": "Share a photo of your room. Talk through changes with Homa, then explore design recommendations and products that fit your space.",

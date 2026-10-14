@@ -10,6 +10,7 @@ import { ConversationPanel } from './components/ConversationPanel';
 import { ExecutionPanel } from './components/ExecutionPanel';
 import { StudioImage } from './components/StudioImage';
 import { SessionDiagnostics } from './components/SessionDiagnostics';
+import { PerformancePanel } from './components/PerformancePanel';
 import { ImageToolbar, useImageActions } from './components/workspace';
 import { useRedesignChat } from './hooks/useRedesignChat';
 import { StudioIntake } from './intake/StudioIntake';
@@ -112,6 +113,7 @@ export function RoomRedesignPage() {
       </section>
     </div>
     {actions.modals}
+    {chat.sessionId && (execution || chat.error || report) && <PerformancePanel sessionId={chat.sessionId} busy={chat.busy} />}
   </main></div>;
 }
 
