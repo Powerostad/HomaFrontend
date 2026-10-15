@@ -1,5 +1,19 @@
 # Off-server frontend builds
 
+## Retired intake history and authored provenance — 2026-10-16
+
+Source `b980e45fe4df59601ded985b4f9c259daa51a49b` filters the exact retired
+automatic first-photo message during hydration and sends `text_origin=user`
+only with authored text. Backend `85345d4` also sanitizes read/context/retry
+paths and uses the unchanged mother source with minimal native transport.
+56 frontend tests and TypeScript passed; backend offline regression suites passed.
+Local entry `/assets/index-DOQnvX1H.js`, SHA256
+`71eb254cd691ffea57a7715c2e0e482e2f9e909ebfb7474c02d1fe655b4d22de`.
+Archive SHA256 `5f9292614f7eb00bf04a0dd4545cd633fba475b63588483f13f2f2290f6c8169`.
+Activate `prebuilt-b980e45` only after verified image transfer. Previous
+`prebuilt-66671cb` is retained and pinned for frontend rollback. No VPS build,
+paid model call, original-site or ERP changes. Raw historical audits remain.
+
 ## User-authored request boundary — 2026-10-15
 
 Source revision `66671cbc86b772ebd1e70bf0523dd92da78a59d3` removes invented

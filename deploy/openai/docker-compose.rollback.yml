@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose.prebuilt.yml
       service: openai-frontend
-    image: homa_openai_frontend:prebuilt-3360d39
+    image: homa_openai_frontend:prebuilt-66671cb
     pull_policy: never
 networks:
   dokploy-network:
