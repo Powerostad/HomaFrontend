@@ -37,6 +37,17 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); vi.useRealTimers(); });
 
 describe('Studio persisted-result recovery', () => {
+  it('keeps the safe server failure stage, cause, attempts and tracking reference after reconnect', async () => {
+    const message = 'مرحلهٔ تحلیل و طراحی ناموفق بود. پاسخ مدل دربارهٔ حفظ یا تعویض یک وسیله تناقض داشت. تعداد تلاش‌های این مرحله: 3. شناسهٔ پیگیری: operation-123';
+    vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([
+      { ...operation('failed'), kind: 'text_turn', error: message },
+    ]) });
+    await mount();
+    expect(chat.status).toBe('error');
+    expect(chat.error).toBe(message);
+    expect(service.streamChatTurn).not.toHaveBeenCalled();
+    expect(service.requestRender).not.toHaveBeenCalled();
+  });
   it('polls compact status without reloading unchanged image/history payloads', async () => {
     vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([operation()]) });
     vi.mocked(service.loadChatSessionStatus).mockResolvedValue({ success: true, data: { operations: [operation()], status: 'active' } });

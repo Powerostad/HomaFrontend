@@ -7,6 +7,7 @@ import { RoomRedesignPage } from './RoomRedesignPage';
 
 vi.mock('@/components/Header', () => ({ Header: () => <header>Shared HOMA header</header> }));
 vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => <button>diagnostics</button> }));
+vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
 vi.mock('./components/workspace', () => ({ ImageToolbar: () => null, useImageActions: () => ({ modals: null }) }));
 vi.mock('./components/ExecutionPanel', () => ({ ExecutionPanel: () => <div>Canonical report</div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value }) }));
