@@ -1,4 +1,5 @@
 import { siteText } from '@/i18n/siteCopy';
+import { restoredUserText } from './userText';
 /**
  * Map backend chat events → the frontend Room Redesign view types.
  *
@@ -497,7 +498,7 @@ export function rebuildSessionView(payload: SessionPayload): RebuiltSession {
       messages.push({
         id: `u:r:${rebuildSeq++}`,
         role: 'user',
-        text: (u.text || '').trim(),
+        text: restoredUserText(u.text, messages.every(m => m.role !== 'user') && !!firstImage, turn.text_origin),
         imageUrl: firstImage,
       });
       // A new user turn answers / supersedes any pending chips.

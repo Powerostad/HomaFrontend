@@ -371,6 +371,7 @@ export interface SessionTurnEvent {
 export interface SessionTurn {
   role: string;
   text?: string;
+  text_origin?: 'user' | 'legacy_auto';
   /** Present on user turns: the data-URL photo(s) the user sent. */
   images?: string[];
   events?: SessionTurnEvent[];
@@ -456,7 +457,7 @@ export async function streamChatTurn(
     requestId: params.idempotencyKey,
     payload: {
       session_id: params.sessionId,
-      ...(params.text.trim() ? { text: params.text } : {}),
+      ...(params.text.trim() ? { text: params.text, text_origin: 'user' } : {}),
       images: params.images,
       prefs_update: params.prefsUpdate ?? null,
       base_version_id: params.baseVersionId,
