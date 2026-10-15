@@ -456,7 +456,7 @@ export async function streamChatTurn(
     requestId: params.idempotencyKey,
     payload: {
       session_id: params.sessionId,
-      text: params.text,
+      ...(params.text.trim() ? { text: params.text } : {}),
       images: params.images,
       prefs_update: params.prefsUpdate ?? null,
       base_version_id: params.baseVersionId,

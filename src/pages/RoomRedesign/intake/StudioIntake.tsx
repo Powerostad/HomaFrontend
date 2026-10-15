@@ -25,6 +25,7 @@ export function StudioIntake({ onStartAnalysis }: { onStartAnalysis: (payload: H
     const payload = flow.buildPayload();
     if (!payload || flow.preparing) return;
     onStartAnalysis({ ...payload, prefsUpdate: { ...preferences, goals: payload.goals,
+      room_type: payload.roomType && payload.roomType !== 'not_sure' ? payload.roomType : undefined,
       preserved_items: preferences.preserved_items?.map(value => value.trim()).filter(Boolean),
       style: preferences.style?.map(value => value.trim()).filter(Boolean) } });
   };

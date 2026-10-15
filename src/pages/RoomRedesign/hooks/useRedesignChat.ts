@@ -244,7 +244,9 @@ export function useRedesignChat(path?: string) {
     const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);
-    setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
+    if (args.text.trim() || args.images?.length) {
+      setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
+    }
     return execute(params);
   }, [execute, unavailable]);
 

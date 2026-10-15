@@ -29,14 +29,14 @@ describe('photo-first Studio entry', () => {
   it('submits the original typed intake contract only on explicit confirmation', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     flow.image = { dataUrl: 'data:image/jpeg;base64,photo' };
-    const payload = { image: flow.image, goals: ['warmer'], userNote: 'keep the rug', createdAt: 'now' };
+    const payload = { image: flow.image, roomType: 'living_room', goals: ['warmer'], userNote: 'keep the rug', createdAt: 'now' };
     flow.buildPayload.mockReturnValue(payload);
     const onStart = vi.fn(); const container = document.createElement('div'); const root = createRoot(container);
     try {
       await act(async () => root.render(<MemoryRouter><StudioIntake onStartAnalysis={onStart} /></MemoryRouter>));
       expect(onStart).not.toHaveBeenCalled();
       await act(async () => container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(onStart).toHaveBeenCalledWith({ ...payload, prefsUpdate: { goals: ['warmer'], preserved_items: undefined, style: undefined } });
+      expect(onStart).toHaveBeenCalledWith({ ...payload, prefsUpdate: { room_type: 'living_room', goals: ['warmer'], preserved_items: undefined, style: undefined } });
       flow.preparing = true;
       await act(async () => root.render(<MemoryRouter><StudioIntake onStartAnalysis={onStart} /></MemoryRouter>));
       await act(async () => container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));

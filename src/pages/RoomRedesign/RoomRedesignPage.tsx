@@ -106,7 +106,7 @@ export function RoomRedesignPage() {
           </TabsContent>
           {(['plan', 'products'] as const).map(panel => <TabsContent className="studio-workspace-report" value={panel} key={panel}>
             <div className="studio-report-context"><span>{report ? t('redesignJourney.version', { number: chat.versions.indexOf(report) + 1 }) : t(execution ? 'studioChat.plan' : 'studioWorkspace.awaitingDesign')}</span><Button variant="ghost" onClick={() => setSection('conversation')}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
-            {execution ? <ExecutionPanel section={panel} plan={execution} busy={chat.busy} onPreview={(itemId, productId) => { setSection('conversation'); void chat.sendTurn({ text: t('redesignJourney.preview'), action: 'preview_product', itemId, productId }); }} />
+            {execution ? <ExecutionPanel section={panel} plan={execution} busy={chat.busy} onPreview={(itemId, productId) => { setSection('conversation'); void chat.sendTurn({ text: '', action: 'preview_product', itemId, productId }); }} />
               : <div className="studio-empty-note">{report?.explanation && <p className="redesign-explanation">{siteValue(report.explanation)}</p>}<p>{t(report ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p></div>}
           </TabsContent>)}
         </Tabs>

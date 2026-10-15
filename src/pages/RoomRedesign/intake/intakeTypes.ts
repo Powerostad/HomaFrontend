@@ -6,8 +6,8 @@
  * optional context, then hands a typed `HomaIntakePayload` to RoomRedesignPage
  * which composes the first chat turn from it.
  *
- * English enum values are internal only — the UI always shows the Persian
- * labels below; the composer (composeIntakeText) maps them back to Persian.
+ * Explicit selections travel as structured preferences, not fabricated prose
+ * in the user's chat message.
  */
 
 /** Single-select room/category for the space. */
@@ -47,7 +47,7 @@ export interface HomaIntakePayload {
   roomType?: RoomType;
   goals: Goal[];
   userNote?: string;
-  prefsUpdate?: { goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
+  prefsUpdate?: { room_type?: Exclude<RoomType, 'not_sure'>; goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
   createdAt: string; // ISO 8601
 }
 
