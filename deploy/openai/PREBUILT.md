@@ -1,5 +1,18 @@
 # Off-server frontend builds
 
+## User-authored request boundary — 2026-10-15
+
+Source revision `66671cbc86b772ebd1e70bf0523dd92da78a59d3` removes invented
+intake/product-preview user prose. Empty user text is omitted from the command;
+explicit selections remain structured preferences. Requires backend `4839289`.
+54 frontend tests, 320 offline backend tests and TypeScript passed. No paid AI run.
+Locally built entry `/assets/index-Dd6Edmga.js`, SHA256
+`3484d1f44d7de3d8935477621700323c481977981dffcb8b0be9a3ce7088523e`.
+Dist archive SHA256 `464d5cc01be580234194b130f376c5879167c42785b5080e642c94e501e122e3`.
+Immutable image `homa_openai_frontend:prebuilt-66671cb`; register and verify the
+image before deploying. Previous `prebuilt-3360d39` is pinned for rollback.
+Historical messages are not rewritten. Mother/system prompts are unchanged.
+
 ## Studio Performance Lab tab — 2026-10-15
 
 Source revision `3360d39b765384efac068efa1d459e89ff8a46d3` adds the bottom-of-Studio
