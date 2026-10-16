@@ -42,6 +42,15 @@ const push = (operation = 'render', session = 'session') => ({ type: 'chat.event
   session_id: session, operation_id: operation, event: 'image', data: { url: 'image' } });
 
 describe('durable Studio socket lifecycle', () => {
+  it('waits past three minutes for the actual model result without resending', async () => {
+    const { socket, result, onConnectionLost } = await start();
+    await vi.advanceTimersByTimeAsync(193_000);
+    expect(socket.close).not.toHaveBeenCalled();
+    expect(onConnectionLost).not.toHaveBeenCalled();
+    socket.frame({ type: 'chat.error', request_id: 'request', error: 'پارامتر درخواست نامعتبر است.' });
+    expect(await result).toMatchObject({ ok: false, errorKind: 'server', error: 'پارامتر درخواست نامعتبر است.' });
+    expect(socket.send).toHaveBeenCalledOnce();
+  });
   it('keeps a pending render socket open after text completion and receives the image', async () => {
     const { socket, result, onEvent } = await start();
     socket.frame({ type: 'chat.event', request_id: 'request', event: 'render_pending', data: { operation_id: 'render' } });

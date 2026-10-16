@@ -219,7 +219,9 @@ export function useRedesignChat(path?: string) {
       onConnectionLost: () => {
         if (isCurrent()) void reconcile(params.sessionId, ac.signal, renderOperationId.current || params.idempotencyKey);
       },
-      onError: message => { if (isCurrent()) setError(message); },
+      onError: (message, kind) => {
+        if (isCurrent() && kind !== 'network') setError(message);
+      },
     }, ac.signal);
     if (!isCurrent()) return false;
     // Keep a low-frequency durable watchdog even with a healthy socket: an ack

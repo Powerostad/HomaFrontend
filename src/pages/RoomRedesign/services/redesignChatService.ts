@@ -477,9 +477,9 @@ export async function streamChatTurn(
     if (result.errorKind === 'auth' || result.status === 401) {
       handlers.onError?.(siteText("نشست شما منقضی شده است. لطفاً دوباره وارد شوید."), 'auth');
     } else if (result.errorKind === 'network') {
-      // The client's connection dropped (e.g. ERR_NETWORK_CHANGED) — not the
-      // server's fault. The caller may recover by reconciling the DB-backed session.
-      handlers.onError?.(siteText("ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن."), 'network');
+      handlers.onError?.(result.status === 408
+        ? siteText("انتظار برای پاسخ طولانی شد؛ وضعیت درخواست در حال بررسی است.")
+        : siteText("اتصال به سرور قطع شد؛ وضعیت درخواست در حال بررسی است."), 'network');
     } else {
       // Keep a Persian backend message if present; otherwise a generic one.
       const isPersian = !!result.error && /[؀-ۿ]/.test(result.error);

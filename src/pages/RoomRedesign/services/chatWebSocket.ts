@@ -48,7 +48,9 @@ interface RunChatCommandOptions {
 }
 
 const COMMAND_TIMEOUT_MS = 120_000;
-const TURN_TIMEOUT_MS = 180_000;
+// The server permits 600 seconds per model attempt. Keep the connection long
+// enough to receive that result; disconnect recovery never resubmits a turn.
+const TURN_TIMEOUT_MS = 660_000;
 const RENDER_IDLE_TIMEOUT_MS = 180_000;
 const TERMINAL_RENDER_EVENTS = new Set(['image', 'error']);
 
