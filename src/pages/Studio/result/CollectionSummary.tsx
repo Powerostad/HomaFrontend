@@ -1,6 +1,6 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import { ShoppingBag } from 'lucide-react';
+import { MessageSquare, ShoppingBag } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +14,8 @@ interface CollectionSummaryProps {
   selectedPrice?: number;
   totalCount?: number;
   isAtBasket?: boolean;
+  onOpenChat?: () => void;
+  chatOpen?: boolean;
 }
 
 export function CollectionSummary({
@@ -23,6 +25,8 @@ export function CollectionSummary({
   totalRecommendations,
   selectedPrice = 0,
   isAtBasket = false,
+  onOpenChat,
+  chatOpen = false,
 }: CollectionSummaryProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -61,11 +65,13 @@ export function CollectionSummary({
   return (
     <aside
       ref={summaryRef}
-      className={`studio-summary ${isAtBasket ? 'is-inline' : ''} ${sheetOpen ? 'is-hidden' : ''}`}
+      className={`studio-summary ${isAtBasket ? 'is-inline' : ''} ${sheetOpen || chatOpen ? 'is-hidden' : ''} ${onOpenChat ? 'studio-summary-with-chat' : ''}`}
+      hidden={chatOpen}
       aria-label={t('studio.result.v2.summary.label', 'خلاصه انتخاب‌ها')}
     >
       <div className="studio-summary-inner">
         <nav className="studio-summary-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
+          {onOpenChat && <button type="button" onClick={onOpenChat}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.conversation')}</button>}
           {siteValue(tabs.map((tab) => (
             <button
               type="button"

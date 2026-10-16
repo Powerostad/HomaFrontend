@@ -13,6 +13,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  priceUnknown?: boolean;
   image: string;
   category: string;
   store?: string;
@@ -53,6 +54,8 @@ interface ProductDetailSheetProps {
   onToggleBasket?: () => void;
   isInBasket?: boolean;
   onSelectProduct?: (product: Product) => void;
+  onPreview?: () => void;
+  previewBusy?: boolean;
 }
 
 const TABS = [
@@ -71,6 +74,8 @@ export function ProductDetailSheet({
   onToggleBasket,
   isInBasket = false,
   onSelectProduct,
+  onPreview,
+  previewBusy = false,
 }: ProductDetailSheetProps) {
   const { siteText, siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -93,7 +98,7 @@ export function ProductDetailSheet({
     setActiveTab('details');
     setSelectedSize(null);
     setIsFavorite(false);
-    setIsImageLoading(true);
+    setIsImageLoading(Boolean(product.image));
   }, [isOpen, product]);
 
   const displayPrice = selectedSize && product?.sizePrices?.[selectedSize] != null
@@ -189,8 +194,8 @@ export function ProductDetailSheet({
             <div className="studio-product-sheet-price-row">
               <div>
                 <span>{t('product.price', 'قیمت')}</span>
-                <strong dir="ltr">{siteValue(formatPriceFromRial(displayPrice, false))}</strong>
-                <small>{t('common.toman', 'تومان')}</small>
+                <strong dir="ltr">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(displayPrice, false))}</strong>
+                {!product.priceUnknown && <small>{t('common.toman', 'تومان')}</small>}
               </div>
               <div className="studio-product-sheet-actions">
                 <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={siteValue(isFavorite ? siteText("حذف از علاقه‌مندی‌ها") : siteText("افزودن به علاقه‌مندی‌ها"))} aria-pressed={isFavorite}>
@@ -251,7 +256,7 @@ export function ProductDetailSheet({
                       <AuthenticatedImage src={alternative.image} alt={siteValue(alternative.name)} className="studio-product-alternative-image" />
                       <strong>{siteValue(alternative.name)}</strong>
                       <span>{siteValue(alternative.label)}</span>
-                      <small dir="ltr">{siteValue(formatPriceFromRial(alternative.price, true))}</small>
+                      <small dir="ltr">{alternative.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(alternative.price, true))}</small>
                     </button>
                   </article>
                 )))}
@@ -263,6 +268,7 @@ export function ProductDetailSheet({
         </div>
 
         <div className="studio-product-sheet-footer">
+          {onPreview && <button type="button" className="studio-primary-button" disabled={previewBusy} onClick={onPreview}>{t('redesignJourney.preview')}</button>}
           {siteValue(onToggleBasket ? (
             <button type="button" className={`studio-primary-button ${isInBasket ? 'is-selected' : ''}`} onClick={onToggleBasket} disabled={!product.uniqueLink} aria-pressed={isInBasket}>
               {siteValue(isInBasket ? <Check size={18} /> : <ShoppingBag size={18} />)}

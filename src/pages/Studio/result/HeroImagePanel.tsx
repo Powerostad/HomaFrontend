@@ -35,6 +35,8 @@ interface HeroImagePanelProps {
   onFullscreen: () => void;
   onExit: () => void;
   onMarkerClick?: (itemId: number) => void;
+  showSave?: boolean;
+  onImageError?: () => void;
 }
 
 function GlassButton({
@@ -84,6 +86,8 @@ function HeroImageStage({
   onFullscreen,
   onExit,
   onMarkerClick,
+  showSave = true,
+  onImageError,
 }: HeroImagePanelProps) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
@@ -120,6 +124,7 @@ function HeroImageStage({
             : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما'))}
           skipAuth={resultImage.startsWith('data:')}
           className={`studio-hero-image ${showOriginal && hasGeneratedImage ? 'studio-hero-image-hidden' : ''}`}
+          onError={onImageError}
         />
       ) : (
         <div className="studio-hero-placeholder" role="img" aria-label={t('common.loading', 'در حال بارگذاری...')} />
@@ -141,9 +146,9 @@ function HeroImageStage({
           <ArrowRight size={20} />
         </GlassButton>
         <div className="studio-hero-toolbar-actions">
-          <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
+          {showSave && <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
             <Heart size={19} fill={isSaved ? 'currentColor' : 'none'} />
-          </GlassButton>
+          </GlassButton>}
           {siteValue(!analysisOnly && (
             <GlassButton onClick={onDownload} disabled={isDownloading} ariaLabel={t('common.download', 'دانلود')}>
               {siteValue(isDownloading ? <Loader2 size={19} className="animate-spin" /> : <Download size={19} />)}

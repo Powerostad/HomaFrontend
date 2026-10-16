@@ -5,46 +5,66 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { RoomRedesignPage } from './RoomRedesignPage';
 
-vi.mock('@/components/Header', () => ({ Header: () => <header>Shared HOMA header</header> }));
-vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => <button>diagnostics</button> }));
+vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
+vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ totalRial: 0, itemCount: 0, openBasket: vi.fn() }) }));
+vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => null }));
 vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
-vi.mock('./components/workspace', () => ({ ImageToolbar: () => null, useImageActions: () => ({ modals: null }) }));
-vi.mock('./components/ExecutionPanel', () => ({ ExecutionPanel: () => <div>Canonical report</div> }));
+vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
+vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: () => <div>Original hero</div>, MobileHeroSection: () => null }));
+vi.mock('./components/StudioFlowReport', () => ({ StudioFlowReport: ({ onPreview }: { onPreview: (item: string, product: number) => void }) => <div>Canonical report<button onClick={() => onPreview('lamp', 7)}>Preview lamp</button></div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value }) }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
-const testState = vi.hoisted(() => ({ failedFirstImage: false }));
+vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
+const testState = vi.hoisted(() => ({ failed: false, send: vi.fn(async () => true) }));
 vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: 'saved', messages: [], chipGroups: [],
-  versions: testState.failedFirstImage ? [] : [{ version_id: 'v1', execution: { purchases: [] } }],
-  currentExecution: testState.failedFirstImage ? { purchases: [{ item_id: 'table' }, { item_id: 'cushion' }] } : null,
-  originalImage: 'photo.jpg', selectedVersion: undefined,
-  viewedId: 'original', busy: false, error: testState.failedFirstImage ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: vi.fn(), selectChip: vi.fn() }) }));
+  versions: testState.failed ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: { purchases: [] } }],
+  currentExecution: testState.failed ? { purchases: [{ item_id: 'lamp' }] } : null,
+  originalImage: 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: false,
+  error: testState.failed ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: testState.send, selectChip: vi.fn() }) }));
 
-describe('single Studio workspace', () => {
-  it('shows products from completed analysis even when no image version exists', async () => {
-    testState.failedFirstImage = true;
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    const container = document.createElement('div'); const root = createRoot(container);
+async function mount() {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const container = document.createElement('div'); document.body.append(container);
+  const root = createRoot(container);
+  await act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
+  return { container, cleanup: async () => { await act(async () => root.unmount()); container.remove(); } };
+}
+
+describe('original Studio result flow with conversation', () => {
+  it('keeps the analysis and products available when image generation failed', async () => {
+    testState.failed = true;
+    const ui = await mount();
     try {
-      await act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
-      expect(container.querySelector('.studio-count')?.textContent).toBe((2).toLocaleString('fa'));
-      const tab = container.querySelector<HTMLButtonElement>('[role=tab][value=products], [role=tab]:last-child')!;
-      await act(async () => tab.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 })));
-      expect(container.textContent).toContain('Canonical report');
-      expect(container.textContent).toContain('Image failed');
-    } finally { await act(async () => root.unmount()); testState.failedFirstImage = false; }
+      expect(ui.container.textContent).toContain('Canonical report');
+      expect(ui.container.textContent).toContain('Image failed');
+      expect(document.querySelector('[role=dialog]')).toBeNull();
+    } finally { await ui.cleanup(); testState.failed = false; }
   });
-  it('keeps one mounted composer when switching to the latest report while viewing the original photo', async () => {
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    const container = document.createElement('div'); const root = createRoot(container);
+  it('opens one drawer, preserves an unsent draft, and closes without sending', async () => {
+    testState.send.mockClear();
+    const ui = await mount();
     try {
-      await act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
-      const composer = container.querySelector('textarea');
-      expect(container.querySelectorAll('textarea')).toHaveLength(1);
-      const plan = Array.from(container.querySelectorAll<HTMLButtonElement>('[role=tab]')).find(tab => tab.textContent === 'studioChat.plan')!;
-      await act(async () => plan.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 })));
-      expect(container.textContent).toContain('Canonical report');
-      expect(container.querySelector('textarea')).toBe(composer);
-      expect(container.querySelector('.redesign-conversation')?.hasAttribute('hidden')).toBe(true);
-    } finally { await act(async () => root.unmount()); }
+      const trigger = ui.container.querySelector<HTMLButtonElement>('.studio-flow-chat-trigger')!;
+      await act(async () => trigger.click());
+      expect(document.querySelectorAll('textarea')).toHaveLength(1);
+      const input = document.querySelector<HTMLTextAreaElement>('#studio-message')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, 'Unsent draft');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => document.querySelector<HTMLButtonElement>('.studio-conversation-drawer-heading button')!.click());
+      expect(document.querySelector('[role=dialog]')).toBeNull();
+      await act(async () => trigger.click());
+      expect(document.querySelector<HTMLTextAreaElement>('#studio-message')!.value).toBe('Unsent draft');
+      expect(testState.send).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('only an explicit preview sends the selected item/product, without fabricated text', async () => {
+    testState.send.mockClear();
+    const ui = await mount();
+    try {
+      await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'Preview lamp')!.click());
+      expect(testState.send).toHaveBeenCalledExactlyOnceWith({ text: '', action: 'preview_product', itemId: 'lamp', productId: 7 });
+      expect(document.querySelector('[role=dialog]')).not.toBeNull();
+    } finally { await ui.cleanup(); }
   });
 });
