@@ -35,16 +35,16 @@ export function RoomRedesignPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [phase, setPhase] = useState<'analysis' | 'recommendations' | 'basket'>('analysis');
+  const lastVersion = useRef<string | null>(null);
   const seeded = useRef(false);
   const selected = chat.selectedVersion;
-  const report = selected || chat.versions[chat.versions.length - 1];
+  const report = selected || chat.versions.find(version => version.version_id === lastVersion.current) || chat.versions[chat.versions.length - 1];
   const execution = report?.execution || (!report ? chat.currentExecution : null);
   const original = chat.originalImage || intake?.image.dataUrl || null;
   const image = selected?.image_url || original;
   useEffect(() => setImageFailed(false), [image]);
   const index = chat.versions.findIndex(version => version.version_id === chat.viewedId) + 1;
   const actions = useImageActions({ image, originalImage: original, activeVersion: index, isPreview: !!selected });
-  const lastVersion = useRef<string | null>(null);
   const refreshedVersion = useRef<string | null>(null);
   if (selected) lastVersion.current = selected.version_id;
   useEffect(() => {
@@ -60,7 +60,7 @@ export function RoomRedesignPage() {
   }, [intake, path, chat.sendTurn]);
   const previousPath = useRef(path);
   useEffect(() => {
-    if (previousPath.current && previousPath.current !== path) { setInput(''); setChatOpen(false); }
+    if (previousPath.current && previousPath.current !== path) { setInput(''); setChatOpen(false); lastVersion.current = null; refreshedVersion.current = null; }
     previousPath.current = path;
   }, [path]);
   const fresh = () => { setIntake(null); seeded.current = false; setInput(''); setChatOpen(false); navigate('/studio'); };
@@ -73,6 +73,10 @@ export function RoomRedesignPage() {
   const goToPhase = (next: typeof phase) => {
     setPhase(next);
     document.getElementById(`section-${next === 'recommendations' ? 'products' : next}`)?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  };
+  const openChat = () => {
+    setChatOpen(true);
+    if (!compact) window.scrollTo({ top: 0, behavior: 'instant' });
   };
   useEffect(() => {
     const update = () => {
@@ -99,8 +103,8 @@ export function RoomRedesignPage() {
   if (chat.hydrating || chat.unavailable) return <div className="studio-result-page studio-conversation-flow" dir={i18n.dir()}><Header /><main className="studio-archive-page">{header}<div className="studio-page-state" role={chat.unavailable ? 'alert' : 'status'}>{chat.unavailable ? <><h2>{t('studioChat.unavailableTitle')}</h2><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></> : <><Loader2 className="studio-spinner" aria-hidden="true" /><p>{t('studioChat.loading')}</p></>}</div></main></div>;
   if (!path && !intake) return <StudioIntake onStartAnalysis={setIntake} />;
   const hero = {
-    resultImage: image || '', originalImage: original, showOriginal: !selected,
-    isSaved: !!chat.sessionId, isDownloading: false, analysisOnly: !report?.image_url, showSave: false,
+    resultImage: report?.image_url || original || '', originalImage: original, showOriginal: !selected,
+    isSaved: !!chat.sessionId, isDownloading: actions.isDownloading, analysisOnly: !report?.image_url, showSave: false,
     onToggleOriginal: (show: boolean) => chat.selectVersion(show ? 'original' : lastVersion.current || report?.version_id || 'original'),
     onToggleSaved: () => {}, onDownload: actions.onDownload, onFullscreen: actions.onZoom,
     onExit: () => navigate('/studio/projects'),
@@ -123,26 +127,28 @@ export function RoomRedesignPage() {
             <Button variant="outline" aria-pressed={chat.viewedId === 'original'} onClick={() => chat.selectVersion('original')}>{t('redesignJourney.original')}</Button>
             {chat.versions.map((version, number) => <Button variant="outline" key={version.version_id} aria-pressed={chat.viewedId === version.version_id} onClick={() => chat.selectVersion(version.version_id)}>{t('redesignJourney.version', { number: number + 1 })}</Button>)}
           </nav>
-          <Button className="studio-flow-chat-trigger" onClick={() => setChatOpen(true)} aria-expanded={chatOpen}><MessageSquare size={18} aria-hidden="true" />{t('studioWorkspace.refine')}</Button>
+          <Button className="studio-flow-chat-trigger" onClick={openChat} aria-expanded={chatOpen}><MessageSquare size={18} aria-hidden="true" />{t('studioWorkspace.refine')}</Button>
           {chat.newVersionReady && <Button variant="outline" onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
         </div>
       </section>
-      <section className="studio-result-content studio-flow-content" dir={i18n.dir()} data-chat-covered={chatOpen && !compact}>
+      <section className="studio-result-content studio-flow-content" dir={i18n.dir()} data-chat-open={chatOpen && !compact}>
+        <StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
+          error={chat.error ? siteValue(chat.error) : null} onRetry={() => void chat.retry()}
+          messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
+          busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
+        <div className="studio-flow-report" hidden={chatOpen && !compact}>
         {header}
         <div className="studio-flow-status" role="status">{chat.busy ? <><Loader2 size={16} className="studio-spinner" aria-hidden="true" />{statusText}</> : <><Check size={16} aria-hidden="true" />{t(chat.sessionId ? 'studioChat.saved' : 'studioChat.saving')}</>}</div>
         {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
         {execution ? <StudioFlowReport plan={execution} busy={chat.busy} onOpenBasket={basket.openBasket} onPreview={(itemId, productId) => {
-          setChatOpen(true);
+          openChat();
           void chat.sendTurn({ text: '', action: 'preview_product', itemId, productId });
-        }} /> : <section id="section-analysis" className="studio-empty-state">{report?.explanation && <p>{siteValue(report.explanation)}</p>}<p>{t(report ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p><Button onClick={() => setChatOpen(true)}>{t('studioChat.chat')}</Button></section>}
+        }} /> : <section id="section-analysis" className="studio-empty-state">{report?.explanation && <p>{siteValue(report.explanation)}</p>}<p>{t(report ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p><Button onClick={openChat}>{t('studioChat.chat')}</Button></section>}
         {chat.sessionId && (execution || chat.error || report || chat.messages.length > 0) && <PerformancePanel sessionId={chat.sessionId} busy={chat.busy} />}
+        </div>
       </section>
     </main>
-    <CollectionSummary activePhase={phase} onNavigateToPhase={goToPhase} selectedPrice={basket.totalRial} selectedCount={basket.itemCount} totalRecommendations={execution?.purchases.length || 0} onOpenChat={() => setChatOpen(true)} chatOpen={chatOpen} />
-    <StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
-      error={chat.error ? siteValue(chat.error) : null} onRetry={() => void chat.retry()}
-      messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
-      busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
+    <CollectionSummary activePhase={phase} onNavigateToPhase={goToPhase} selectedPrice={basket.totalRial} selectedCount={basket.itemCount} totalRecommendations={execution?.purchases.length || 0} onOpenChat={openChat} chatOpen={chatOpen} />
     {actions.modals}
   </div>;
 }

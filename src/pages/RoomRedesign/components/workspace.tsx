@@ -14,6 +14,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
  * All visual values come from theme.ts tokens (RD / FRAME). No literals here.
  */
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { SimpleDialog } from '@/components/SimpleDialog';
 import { downloadImage } from '@/utils/downloadUtils';
 import {
@@ -152,7 +153,7 @@ export function ZoomModal({ src, open, onClose }: { src: string; open: boolean; 
           className="w-full h-full flex items-center justify-center rounded-2xl overflow-hidden"
           style={{ backgroundColor: RD.cream }}
         >
-          <img src={src} alt={siteText("پیش‌نمایش")} className="max-w-full max-h-full object-contain" />
+          <AuthenticatedImage src={src} alt={siteText("پیش‌نمایش")} className="max-w-full max-h-full object-contain" />
         </div>
         <ModalClose onClose={onClose} />
       </div>
@@ -223,6 +224,7 @@ export function useImageActions({
   activeVersion: number;
   isPreview: boolean;
 }): {
+  isDownloading: boolean;
   canCompare: boolean;
   onDownload: () => void;
   onShare: () => void;
@@ -233,10 +235,12 @@ export function useImageActions({
   const { siteValue, siteText } = useSiteTranslation();
   const [zoom, setZoom] = useState(false);
   const [compare, setCompare] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const canCompare = !!(originalImage && image && originalImage !== image && isPreview);
 
   const onDownload = async () => {
-    if (!image) return;
+    if (!image || isDownloading) return;
+    setIsDownloading(true);
     toast.loading(siteText("در حال آماده‌سازی دانلود…"), { id: 'dl' });
     try {
       const res = await downloadImage({ imageUrl: image, filename: `homa-${activeVersion}`, useAuth: false });
@@ -244,6 +248,8 @@ export function useImageActions({
       else toast.error(siteText("دانلود ناموفق بود"), { id: 'dl' });
     } catch {
       toast.error(siteText("دانلود ناموفق بود"), { id: 'dl' });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -270,6 +276,7 @@ export function useImageActions({
   );
 
   return {
+    isDownloading,
     canCompare,
     onDownload,
     onShare,

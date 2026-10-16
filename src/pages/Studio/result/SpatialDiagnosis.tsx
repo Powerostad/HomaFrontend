@@ -14,8 +14,11 @@ export interface DetectedContext {
 }
 
 interface SpatialDiagnosisProps {
-  harmonyScore: number;
-  projectedScore: number;
+  harmonyScore?: number;
+  projectedScore?: number;
+  headlineText?: string;
+  detailsContent?: React.ReactNode;
+  priceUnknown?: boolean;
   totalPrice: number;
   selectedPrice: number;
   selectedCount: number;
@@ -49,12 +52,15 @@ export function SpatialDiagnosis({
   diagnosisActions = [],
   onScrollToStep,
   onNavigateToRecommendations,
+  headlineText,
+  detailsContent,
+  priceUnknown = false,
 }: SpatialDiagnosisProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
-  const headline = harmonyScore >= 75
+  const headline = headlineText || (harmonyScore != null && harmonyScore >= 75
     ? t('studio.result.v2.diagnosis.headlineGood', 'فضای شما پایه‌ی هماهنگی خوبی دارد')
-    : t('studio.result.v2.diagnosis.headlinePotential', 'فضای شما ظرفیت زیادی برای یک تغییر حساب‌شده دارد');
+    : t('studio.result.v2.diagnosis.headlinePotential', 'فضای شما ظرفیت زیادی برای یک تغییر حساب‌شده دارد'));
   const detail = diagnosisDetail || t('studio.result.v2.diagnosis.defaultDetail', 'با تمرکز روی چند نقطه کلیدی، می‌شود بدون شلوغ کردن فضا، تعادل و کاربرد آن را بهتر کرد.');
 
   return (
@@ -72,11 +78,11 @@ export function SpatialDiagnosis({
       </div>
 
       <div className="studio-diagnosis-metrics" aria-label={t('studio.result.v2.diagnosis.metrics', 'خلاصه عددی تحلیل')}>
-        <div className="studio-diagnosis-metric">
+        {harmonyScore != null && <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.harmonyScore', 'امتیاز هماهنگی')}</span>
           <strong dir="ltr">{siteValue(toLocalizedDigits(harmonyScore))}<small>/۱۰۰</small></strong>
           <em>{t('studio.result.v2.diagnosis.scoreMethod', 'ترکیب رنگ، سبک و تناسب')}</em>
-        </div>
+        </div>}
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.changeCount', 'تغییر پیشنهادی')}</span>
           <strong>{siteValue(toLocalizedDigits(totalRecommendations))}</strong>
@@ -84,17 +90,17 @@ export function SpatialDiagnosis({
         </div>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.recommendedTotal', 'هزینه همه پیشنهادها')}</span>
-          <strong className="studio-price" dir="ltr">{siteValue(formatPriceFromRial(totalPrice, false))}</strong>
+          <strong className="studio-price" dir="ltr">{priceUnknown && totalPrice <= 0 ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(totalPrice, false))}</strong>
           <em>{t('common.toman', 'تومان')} · {t('studio.result.v2.diagnosis.estimated', 'تخمینی')}</em>
         </div>
         <div className="studio-diagnosis-metric studio-diagnosis-metric-selected">
           <span>{t('studio.result.v2.diagnosis.selectedTotal', 'انتخاب فعلی')}</span>
-          <strong className="studio-price" dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, false))}</strong>
+          <strong className="studio-price" dir="ltr">{selectedCount === 0 ? toLocalizedDigits(0) : siteValue(formatPriceFromRial(selectedPrice, false))}</strong>
           <em>{siteValue(toLocalizedDigits(selectedCount))} {t('studio.result.v2.diagnosis.selectedProducts', 'محصول انتخاب شده')}</em>
         </div>
       </div>
 
-      <div className="studio-diagnosis-actions">
+      {!!diagnosisActions.length && <div className="studio-diagnosis-actions">
         <div className="studio-subsection-heading">
           <h3>{t('studio.result.v2.diagnosis.improvementTitle', 'سه فرصت بهبود')}</h3>
           <span>{t('studio.result.v2.diagnosis.linkHint', 'هر مورد به پیشنهاد متناظر وصل است')}</span>
@@ -122,7 +128,7 @@ export function SpatialDiagnosis({
             </div>
           </article>
         )))}
-      </div>
+      </div>}
 
       <div className="studio-diagnosis-details">
         <button type="button" className="studio-details-toggle" onClick={onToggleDiagnosis} aria-expanded={diagnosisExpanded}>
@@ -139,11 +145,11 @@ export function SpatialDiagnosis({
                 {siteValue(detectedContext.dominantSurfaces && <span>{t('studio.result.v2.diagnosis.surfaces', 'سطوح غالب')}: {siteValue(detectedContext.dominantSurfaces)}</span>)}
               </div>
             ))}
-            <p>{siteValue(detail)}</p>
-            <div className="studio-score-explanation">
+            {detailsContent ?? <p>{siteValue(detail)}</p>}
+            {projectedScore != null && <div className="studio-score-explanation">
               <CheckCircle2 size={16} />
               <span>{t('studio.result.v2.diagnosis.projectedExplanation', 'اگر همه تغییرها اعمال شوند، امتیاز پیش‌بینی‌شده به')} <strong>{siteValue(toLocalizedDigits(projectedScore))}</strong> {t('studio.result.v2.diagnosis.outOf', 'از ۱۰۰ می‌رسد.')}</span>
-            </div>
+            </div>}
           </div>
         ))}
       </div>

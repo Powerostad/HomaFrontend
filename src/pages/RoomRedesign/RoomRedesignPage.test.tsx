@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoomRedesignPage } from './RoomRedesignPage';
 
 vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
@@ -10,7 +10,7 @@ vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ totalRial: 0, it
 vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => null }));
 vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
 vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
-vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: () => <div>Original hero</div>, MobileHeroSection: () => null }));
+vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal }: { resultImage: string; showOriginal: boolean }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}>Original hero</div>, MobileHeroSection: () => null }));
 vi.mock('./components/StudioFlowReport', () => ({ StudioFlowReport: ({ onPreview }: { onPreview: (item: string, product: number) => void }) => <div>Canonical report<button onClick={() => onPreview('lamp', 7)}>Preview lamp</button></div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value }) }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
@@ -30,6 +30,14 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
+  beforeEach(() => { vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); });
+  it('preserves the generated image behind the original-image comparison', async () => {
+    const ui = await mount();
+    try {
+      expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-result')).toBe('render.jpg');
+      expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-original')).toBe('true');
+    } finally { await ui.cleanup(); }
+  });
   it('keeps the analysis and products available when image generation failed', async () => {
     testState.failed = true;
     const ui = await mount();

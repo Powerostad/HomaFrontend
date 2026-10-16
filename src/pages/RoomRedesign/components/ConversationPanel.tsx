@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { ArrowDown, Check, Loader2, MessageSquare, Send, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -78,7 +79,7 @@ export function ConversationPanel({ messages, chipGroups, busy, failed = false, 
         ? <p className={`studio-chat-event studio-chat-event--${message.eventKind ?? 'info'}`} key={message.id}>{message.text}</p>
         : <article key={message.id} className={`studio-message studio-message--${message.role}`}>
           <div className="studio-message-author"><span>{t(message.role === 'user' ? 'studioChat.you' : 'studioChat.homa')}</span>{message.time && <time>{message.time}</time>}</div>
-          {message.imageUrl && <img className="studio-message-photo" src={message.imageUrl} alt={t('redesignJourney.original')} />}
+          {message.imageUrl && <AuthenticatedImage className="studio-message-photo" src={message.imageUrl} alt={t('redesignJourney.original')} onLoad={() => { if (following.current) scrollToLatest(); }} />}
           {message.text && <MessageText text={message.text} />}
         </article>)}
       {!!chipGroups.length && <div className="studio-questions"><h3>{t('studioChat.questions')}</h3>{chipGroups.map(group => <div className="studio-question" key={group.id}>

@@ -51,7 +51,8 @@ export function CollectionSummary({
     if (!summary || typeof ResizeObserver === 'undefined') return;
 
     const updateHeight = () => {
-      document.documentElement.style.setProperty('--studio-summary-height', `${summary.getBoundingClientRect().height}px`);
+      const height = summary.getBoundingClientRect().height;
+      if (height > 0) document.documentElement.style.setProperty('--studio-summary-height', `${height}px`);
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
@@ -91,7 +92,7 @@ export function CollectionSummary({
             <span>{siteValue(toLocalizedDigits(selectedCount))} {t('studio.result.v2.summary.selectedProducts', 'محصول انتخاب شده')}</span>
             <small>{t('studio.result.v2.summary.ofRecommendations', 'از {{count}} پیشنهاد', { count: totalRecommendations })}</small>
           </div>
-          <span className="studio-summary-price" dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, true))}</span>
+          <span className="studio-summary-price" dir="ltr">{selectedCount === 0 ? `${toLocalizedDigits(0)} ${t('common.toman')}` : siteValue(formatPriceFromRial(selectedPrice, true))}</span>
           <button
             type="button"
             className="studio-summary-cta"

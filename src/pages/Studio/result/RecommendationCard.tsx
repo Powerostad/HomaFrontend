@@ -3,6 +3,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { Check, ChevronDown, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { ReactNode } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
 
@@ -27,6 +28,10 @@ interface RecommendationCardProps {
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (newQuantity: number) => void;
   isLast?: boolean;
+  /** Conversation reports keep their canonical copy and authenticated catalogue media. */
+  reportCopy?: ReactNode;
+  productContent?: ReactNode;
+  hideImpact?: boolean;
 }
 
 function impactText(level: CategoryGroup['impactLevel'], t: (key: string, fallback: string) => string) {
@@ -99,6 +104,9 @@ export function RecommendationCard({
   onToggleAccepted,
   onToggleBasketProduct,
   onUpdateQuantity,
+  reportCopy,
+  productContent,
+  hideImpact = false,
 }: RecommendationCardProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -122,16 +130,16 @@ export function RecommendationCard({
           <span>{t('studio.result.v2.card.changeLabel', 'تغییر پیشنهادی')}</span>
           <h3>{siteValue(group.categoryDisplay)}</h3>
         </div>
-        <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>
+        {!hideImpact && <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>}
       </header>
 
-      <div className="studio-recommendation-copy">
+      {reportCopy ?? <div className="studio-recommendation-copy">
         <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {siteValue(problem)}</p>
         <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {siteValue(solution)}</p>
         <p><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}:</strong> {t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر، کاربرد بهتر و خوانایی بالاتر در فضا')}</p>
-      </div>
+      </div>}
 
-      {siteValue(!isActionItem && heroProduct && (
+      {productContent ?? <>{siteValue(!isActionItem && heroProduct && (
         <>
           {siteValue(onUpdateQuantity && (
             <div className="studio-quantity-control" dir="ltr">
@@ -184,13 +192,13 @@ export function RecommendationCard({
             </div>
           ))}
         </div>
-      ))}
+      ))}</>}
 
       <div className="studio-recommendation-actions">
-        <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
+        {onToggleAccepted && <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
           {siteValue(isAccepted ? <Check size={17} /> : null)}
           {siteValue(isAccepted ? t('studio.result.v2.card.accepted', 'تغییر انتخاب شد') : t('studio.result.v2.card.accept', 'انتخاب تغییر'))}
-        </button>
+        </button>}
         <button type="button" className="studio-details-toggle studio-why-button" onClick={onToggleWhy} aria-expanded={isWhyExpanded}>
           <span>{t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span>
           <ChevronDown className={isWhyExpanded ? 'is-open' : ''} size={16} />
