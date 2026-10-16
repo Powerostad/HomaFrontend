@@ -1,4 +1,14 @@
 {
+  "studioCollection": {
+    "workspaceTitle": "مساحتك برؤية جديدة",
+    "image": "الصورة",
+    "eyebrow": "اختيارات لمساحتك",
+    "filter": "فئات المنتجات",
+    "all": "الكل",
+    "whyAndWhere": "لماذا هذا الاختيار؟ وأين يوضع؟",
+    "noPhoto": "صورة المنتج غير متاحة",
+    "exploreProducts": "استكشف المنتجات"
+  },
   "basket": {
     "title": "سلة التسوق",
     "empty": "سلة التسوق فارغة",

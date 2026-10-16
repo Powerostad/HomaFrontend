@@ -1,4 +1,7 @@
 /* Conversational Studio uses the site's canonical neutral/editorial tokens. */
+.studio-toolbar-button { color:var(--color-content-secondary); background:transparent; }
+.studio-toolbar-button[data-active=true] { color:var(--color-feedback-success); background:var(--color-surface-muted); }
+@media(hover:hover) and (pointer:fine) { .studio-toolbar-button:hover { color:var(--color-content-primary); background:var(--color-surface-muted); } }
 .studio-diagnostics-dialog { width:calc(100% - var(--space-8)); max-width:var(--max-width-content); max-height:90dvh; min-width:0; }
 .studio-diagnostics-body { overflow:auto; min-width:0; display:grid; gap:var(--space-5); padding-inline-end:var(--space-2); }
 .studio-diagnostics-body h3 { font-weight:600; margin-bottom:var(--space-2); }

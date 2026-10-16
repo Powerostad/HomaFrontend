@@ -1,4 +1,14 @@
 {
+  "studioCollection": {
+    "workspaceTitle": "Mekânınız, yeniden tasarlandı",
+    "image": "Görsel",
+    "eyebrow": "Mekânınız için seçildi",
+    "filter": "Ürün kategorileri",
+    "all": "Tümü",
+    "whyAndWhere": "Neden bu ürün? Nereye yerleştirilmeli?",
+    "noPhoto": "Ürün görseli mevcut değil",
+    "exploreProducts": "Ürünleri keşfet"
+  },
   "basket": {
     "title": "Sepet",
     "empty": "Sepetiniz boş",

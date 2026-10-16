@@ -55,9 +55,6 @@ function ToolbarButton({
   onClick?: () => void;
 }) {
   const { siteValue } = useSiteTranslation();
-  const [hover, setHover] = useState(false);
-  const bg = active ? RD.accentGreenBg : hover ? RD.hoverOverlay : 'transparent';
-  const color = active ? RD.accentGreen : hover ? RD.ink : RD.inkSoft;
   return (
     <button
       type="button"
@@ -65,10 +62,8 @@ function ToolbarButton({
       title={siteValue(label)}
       disabled={disabled}
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className="w-9 h-9 rounded-[10px] flex items-center justify-center transition disabled:opacity-40 disabled:pointer-events-none"
-      style={{ background: bg, color }}
+      data-active={active}
+      className="studio-toolbar-button w-11 h-11 rounded-md flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
     >
       <Icon size={17} strokeWidth={1.75} />
     </button>

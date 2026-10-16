@@ -1,4 +1,6 @@
 {
+  "انتظار برای پاسخ طولانی شد؛ وضعیت درخواست در حال بررسی است.": "The response is taking longer than expected; checking the request status.",
+  "اتصال به سرور قطع شد؛ وضعیت درخواست در حال بررسی است.": "The connection to the server was interrupted; checking the request status.",
   "تری‌آن": "Try-on",
   "حذف از پین": "Unpin",
   "پین کردن": "Pin",

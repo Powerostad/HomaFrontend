@@ -22,6 +22,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
   vi.mocked(loadSessionDiagnostics).mockResolvedValue({ success:true, data:report });
+  vi.mocked(refreshSessionExpenses).mockResolvedValue({ success:true, data:{ expenses:report.expenses } });
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 async function open() {
@@ -41,22 +42,22 @@ describe('private session diagnostics', () => {
     expect(container.querySelectorAll('details')).toHaveLength(0);
     expect(container.textContent).toContain('"truncated": true');
   });
-  it('loads only on open, preserves exact escaped output and never refreshes billing automatically', async () => {
+  it('loads and reconciles receipts only on open, preserving exact escaped output', async () => {
     await act(async () => root.render(<SessionDiagnostics sessionId="owner-session" />));
     expect(loadSessionDiagnostics).not.toHaveBeenCalled();
     await act(async () => container.querySelector('button')!.click());
     expect(loadSessionDiagnostics).toHaveBeenCalledWith('owner-session');
     expect(document.body.textContent).toContain('EXACT OUTPUT <script>test</script>');
     expect(document.body.querySelector('script')).toBeNull();
-    expect(refreshSessionExpenses).not.toHaveBeenCalled();
+    expect(refreshSessionExpenses).toHaveBeenCalledExactlyOnceWith('owner-session');
     expect(document.body.textContent).toContain('studioDiagnostics.unknown');
   });
-  it('refreshes saved provider billing only on explicit click', async () => {
+  it('refreshes saved provider billing automatically and on explicit click', async () => {
     vi.mocked(refreshSessionExpenses).mockResolvedValue({ success:true, data:{ expenses:{ ...report.expenses, known_usd:'0.125', status:'partial' } } });
     await open();
     const button = [...document.body.querySelectorAll('button')].find(b => b.textContent === 'studioDiagnostics.refresh')!;
     await act(async () => button.click());
-    expect(refreshSessionExpenses).toHaveBeenCalledExactlyOnceWith('owner-session');
+    expect(refreshSessionExpenses).toHaveBeenCalledTimes(2);
     expect(document.body.textContent).toContain('0.125 USD');
   });
   it('shows a failed load instead of an invented report; JSON cannot execute HTML', async () => {

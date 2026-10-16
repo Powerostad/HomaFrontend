@@ -40,7 +40,7 @@ describe('single Studio workspace', () => {
       await act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
       const composer = container.querySelector('textarea');
       expect(container.querySelectorAll('textarea')).toHaveLength(1);
-      const plan = container.querySelector<HTMLButtonElement>('[role=tab][data-state=inactive]')!;
+      const plan = Array.from(container.querySelectorAll<HTMLButtonElement>('[role=tab]')).find(tab => tab.textContent === 'studioChat.plan')!;
       await act(async () => plan.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 })));
       expect(container.textContent).toContain('Canonical report');
       expect(container.querySelector('textarea')).toBe(composer);

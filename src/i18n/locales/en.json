@@ -1,4 +1,14 @@
 {
+  "studioCollection": {
+    "workspaceTitle": "Your space, reimagined",
+    "image": "Room",
+    "eyebrow": "Selected for your space",
+    "filter": "Product categories",
+    "all": "All",
+    "whyAndWhere": "Why this piece? Where does it go?",
+    "noPhoto": "Product photo unavailable",
+    "exploreProducts": "Explore the products"
+  },
   "studioPerformance": { "title": "Performance report", "hint": "Latest run in this conversation; timing includes queue wait. Unknown cost does not mean zero.", "refresh": "Refresh report", "pending": "The report completes after processing.", "unavailable": "No performance data for this run yet. Historical runs cannot be reconstructed.", "elapsed": "Total time", "calls": "API calls", "cost": "Estimated cost", "input": "Input tokens", "output": "Output tokens", "stages": "Stage details" },
   "studioWorkspace": {
     "studio": "Studio", "workspace": "Design workspace", "workbenchTitle": "Your space, through Homa’s eyes", "conversation": "Conversation", "products": "Products", "refine": "Refine in conversation", "awaitingDesign": "No design recommendation yet",

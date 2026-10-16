@@ -13,10 +13,12 @@ import { SessionDiagnostics } from './components/SessionDiagnostics';
 import { PerformancePanel } from './components/PerformancePanel';
 import { ImageToolbar, useImageActions } from './components/workspace';
 import { useRedesignChat } from './hooks/useRedesignChat';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { StudioIntake } from './intake/StudioIntake';
 import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import './journey.css';
+import './workbench.css';
 
 export function RoomRedesignPage() {
   const { siteValue } = useSiteTranslation();
@@ -26,7 +28,13 @@ export function RoomRedesignPage() {
   const chat = useRedesignChat(path);
   const [intake, setIntake] = useState<HomaIntakePayload | null>(null);
   const [input, setInput] = useState('');
-  const [section, setSection] = useState('conversation');
+  const compact = useMediaQuery('(max-width: 767px)');
+  const [section, setSection] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches ? 'image' : 'conversation');
+  const tabList = useRef<HTMLDivElement>(null);
+  const openSection = (value: string) => {
+    setSection(value);
+    if (compact) requestAnimationFrame(() => tabList.current?.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  };
   const seeded = useRef(false);
   const selected = chat.selectedVersion;
   // Comparing with the original photo must not hide the latest design report.
@@ -65,21 +73,29 @@ export function RoomRedesignPage() {
   };
   const statusText = chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking');
   const header = <div className="studio-workbench-header">
-    <div className="studio-workbench-title"><p className="studio-editorial-label">HOMA / {t('studioWorkspace.studio')}</p><h1>{t('studioWorkspace.workbenchTitle')}</h1></div>
+    <div className="studio-workbench-title"><p className="studio-editorial-label">HOMA / {t('studioWorkspace.studio')}</p><h1>{t('studioCollection.workspaceTitle')}</h1></div>
     <nav className="studio-workbench-nav" aria-label={t('studioChat.archive')}>
-      {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} />}
+      {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}
       <Button asChild variant="outline"><Link to="/studio/projects"><History size={18} aria-hidden="true" />{t('studioChat.archive')}</Link></Button>
-      <Button variant="outline" disabled={chat.status === 'creating'} onClick={fresh}><Plus size={18} aria-hidden="true" />{t('studioChat.new')}</Button>
+      <Button disabled={chat.status === 'creating'} onClick={fresh}><Plus size={18} aria-hidden="true" />{t('studioChat.new')}</Button>
     </nav>
   </div>;
   if (chat.hydrating) return <div className="studio-editorial-page" dir={i18n.dir()}><Header /><main className="redesign-journey">{header}<div className="studio-page-state" role="status"><Loader2 size={28} className="studio-spinner" aria-hidden="true" /><h2>{t('studioChat.loading')}</h2></div></main></div>;
   if (chat.unavailable) return <div className="studio-editorial-page" dir={i18n.dir()}><Header /><main className="redesign-journey">{header}<div className="studio-page-state" role="alert"><h2>{t('studioChat.unavailableTitle')}</h2><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></div></main></div>;
   if (!path && !intake) return <StudioIntake onStartAnalysis={setIntake} />;
-  return <div className="studio-editorial-page" dir={i18n.dir()}><Header /><main className="redesign-journey">
+  return <div className="studio-editorial-page studio-workbench-page" dir={i18n.dir()}><Header /><main className="redesign-journey">
     {header}
-    <div className="studio-session-status">{chat.sessionId ? <><Check size={16} aria-hidden="true" />{t('studioChat.saved')}</> : <><Loader2 size={16} className="studio-spinner" aria-hidden="true" />{t('studioChat.saving')}</>}</div>
-    <div className="redesign-columns" dir="ltr">
-      <section className="redesign-image-column" dir={i18n.dir()} aria-label={t('studioChat.room')}>
+    <div className="studio-session-status">{chat.busy ? <span role="status"><Loader2 size={16} className="studio-spinner" aria-hidden="true" />{statusText}</span> : chat.sessionId ? <><Check size={16} aria-hidden="true" />{t('studioChat.saved')}</> : <><Loader2 size={16} className="studio-spinner" aria-hidden="true" />{t('studioChat.saving')}</>}</div>
+    {chat.error && <div className="studio-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
+    <Tabs className="studio-workbench" dir={i18n.dir()} value={section} onValueChange={openSection} data-section={section}>
+      <TabsList ref={tabList} className="studio-workspace-tablist" aria-label={t('studioWorkspace.workspace')}>
+        <TabsTrigger value="image"><Image size={18} aria-hidden="true" />{t('studioCollection.image')}</TabsTrigger>
+        <TabsTrigger value="conversation"><MessageSquare size={18} aria-hidden="true" />{t('studioWorkspace.conversation')}</TabsTrigger>
+        <TabsTrigger value="plan"><List size={18} aria-hidden="true" />{t('studioChat.plan')}</TabsTrigger>
+        <TabsTrigger value="products"><ShoppingBag size={18} aria-hidden="true" />{t('studioWorkspace.products')}{execution && <span className="studio-count">{execution.purchases.length.toLocaleString(i18n.language)}</span>}</TabsTrigger>
+      </TabsList>
+      <div className="redesign-columns" dir="ltr">
+      <TabsContent value="image" forceMount hidden={compact && section !== 'image'} className="redesign-image-column" dir={i18n.dir()} aria-label={t('studioChat.room')}>
         <div className="studio-canvas">
           <div className="studio-canvas-heading"><h2>{selected ? t('redesignJourney.version', { number: index }) : t('redesignJourney.original')}</h2><ImageToolbar variant="bare" canCompare={actions.canCompare} onCompare={actions.onCompare} onZoom={actions.onZoom} onDownload={actions.onDownload} onShare={actions.onShare} /></div>
           {image ? <StudioImage image={image} versionKey={chat.viewedId}
@@ -92,28 +108,22 @@ export function RoomRedesignPage() {
           <p className="studio-canvas-hint">{t('studioChat.previewHint')}</p>
         </div>
         {chat.newVersionReady && <Button onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
-        {chat.error && <div className="studio-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
-      </section>
-      <section className="studio-workspace-panel" dir={i18n.dir()} aria-label={t('studioWorkspace.workspace')}>
-        <Tabs className="studio-workspace-tabs" dir={i18n.dir()} value={section} onValueChange={setSection}>
-          <TabsList className="studio-workspace-tablist" aria-label={t('studioWorkspace.workspace')}>
-            <TabsTrigger value="conversation"><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.conversation')}</TabsTrigger>
-            <TabsTrigger value="plan"><List size={16} aria-hidden="true" />{t('studioChat.plan')}</TabsTrigger>
-            <TabsTrigger value="products"><ShoppingBag size={16} aria-hidden="true" />{t('studioWorkspace.products')}{execution && <span className="studio-count">{execution.purchases.length.toLocaleString(i18n.language)}</span>}</TabsTrigger>
-          </TabsList>
+        <div className="studio-canvas-next"><Button variant="outline" onClick={() => openSection('products')}><ShoppingBag size={18} aria-hidden="true" />{t('studioCollection.exploreProducts')}</Button><Button onClick={() => openSection('conversation')}><MessageSquare size={18} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
+      </TabsContent>
+      <section className="studio-workspace-panel" hidden={section === 'image'} dir={i18n.dir()} aria-label={t('studioWorkspace.workspace')}>
           <TabsContent className="redesign-conversation" value="conversation" forceMount hidden={section !== 'conversation'}>
             <ConversationPanel active={section === 'conversation'} messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip} busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />
           </TabsContent>
           {(['plan', 'products'] as const).map(panel => <TabsContent className="studio-workspace-report" value={panel} key={panel}>
-            <div className="studio-report-context"><span>{report ? t('redesignJourney.version', { number: chat.versions.indexOf(report) + 1 }) : t(execution ? 'studioChat.plan' : 'studioWorkspace.awaitingDesign')}</span><Button variant="ghost" onClick={() => setSection('conversation')}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
-            {execution ? <ExecutionPanel section={panel} plan={execution} busy={chat.busy} onPreview={(itemId, productId) => { setSection('conversation'); void chat.sendTurn({ text: '', action: 'preview_product', itemId, productId }); }} />
+            <div className="studio-report-context"><span>{report ? t('redesignJourney.version', { number: chat.versions.indexOf(report) + 1 }) : t(execution ? 'studioChat.plan' : 'studioWorkspace.awaitingDesign')}</span><Button variant="ghost" onClick={() => openSection('conversation')}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.refine')}</Button></div>
+            {execution ? <ExecutionPanel section={panel} plan={execution} busy={chat.busy} onPreview={(itemId, productId) => { openSection('conversation'); void chat.sendTurn({ text: '', action: 'preview_product', itemId, productId }); }} />
               : <div className="studio-empty-note">{report?.explanation && <p className="redesign-explanation">{siteValue(report.explanation)}</p>}<p>{t(report ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p></div>}
           </TabsContent>)}
-        </Tabs>
       </section>
     </div>
+    </Tabs>
     {actions.modals}
-    {chat.sessionId && (execution || chat.error || report) && <PerformancePanel sessionId={chat.sessionId} busy={chat.busy} />}
+    {chat.sessionId && (execution || chat.error || report || chat.messages.length > 0) && <PerformancePanel sessionId={chat.sessionId} busy={chat.busy} />}
   </main></div>;
 }
 
