@@ -73,9 +73,9 @@ mid-render review, ready while reading, explicit skip/wait, partial image failur
 empty/legacy documents, long prose, RTL/LTR, keyboard focus and mobile widths.
 The final product/service separation and selected-item invoice must remain.
 
-Implementation verified locally: the full suite passed 187 tests across 43
-files; the final linked-recommendation regression also passed (7 page-level
-tests). TypeScript, zero-warning ESLint and the Vite production build passed.
+Implementation verified locally: the full suite passed 188 tests across 43
+files, including the linked-recommendation regression. TypeScript,
+zero-warning ESLint and the Vite production build passed.
 Existing Browserslist/chunk-size/dynamic-import build warnings remain.
 Browser checks covered 320/390px mobile, desktop, RTL/LTR, pending analysis,
 ready without interruption, partial image failure and independent result views.
@@ -84,5 +84,12 @@ No paid model, checkout or consultation submission was performed.
 Local preview: `http://127.0.0.1:3000/tests/fixtures/studio-discovery.html?lang=fa`.
 Screenshots: `tools/studio-progressive-review/discovery-mobile-2026-10-17.png`
 and `discovery-desktop-2026-10-17.png` under the HomaLatest workspace.
-This change is not yet deployed. The currently deployed release remains
-`prebuilt-fc13596`; this implementation does not alter its deployment manifest.
+Deployed on 2026-10-17 at 13:03:48 UTC through isolated OpenAI-Frontend,
+deployment `QRY03eg5FXnE-0t8NxALh`, manifest commit `f54bab4`, image
+`prebuilt-1d8c718`. Container `02184c158af8` is healthy. Public `/studio`
+and `/assets/index-Da8uq2LI.js` return 200; the asset SHA256 matches the
+locally verified build exactly. Initial routing returned 404 while the new
+container's health check was starting; it recovered after becoming healthy.
+Previous `prebuilt-fc13596` is pinned for rollback. No backend, database,
+provider, ERP or original Homa service changes. No paid AI request was made;
+production generation quality/latency has not been measured by this rollout.
