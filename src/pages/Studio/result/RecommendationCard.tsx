@@ -81,7 +81,7 @@ function ProductPreview({
           {isPrimary && (isSelected ? <Check size={16} /> : <ShoppingBag size={16} />)}
           {siteValue(isSelected
             ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
-            : isPrimary ? t('studio.result.v2.card.addToBasket', 'افزودن محصول به سبد') : t('studio.result.v2.card.addAlternative', 'افزودن'))}
+            : isPrimary ? t('studio.result.v2.card.addToBasketShort', 'افزودن به سبد') : t('studio.result.v2.card.addAlternative', 'افزودن'))}
         </button>
       </div>
     </article>

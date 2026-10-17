@@ -600,6 +600,7 @@
           "alternativeCount_one": "One alternative",
           "alternativeCount_other": "{{count}} alternatives",
           "addAlternative": "Add",
+          "addToBasketShort": "Add to basket",
           "viewAllProducts": "View all",
           "alternativesHint": "For a quick comparison",
           "accepted": "Change selected",

@@ -618,6 +618,7 @@
           "alternativeCount_one": "یک جایگزین دیگر",
           "alternativeCount_other": "{{count}} جایگزین دیگر",
           "addAlternative": "افزودن",
+          "addToBasketShort": "افزودن به سبد",
           "viewAllProducts": "مشاهده همه",
           "alternativesHint": "برای مقایسه سریع",
           "whyChange": "چرا تغییر؟",
