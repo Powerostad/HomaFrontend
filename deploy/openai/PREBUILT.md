@@ -1,5 +1,25 @@
 # Off-server frontend builds
 
+## Static Studio products, services and invoice — 2026-10-17
+
+Source revision `fc13596cd215cd766721a849c7b2eb847c284b61` restores the static
+Studio result flow: full alternative product photos, distinct product and
+execution-service sections, and the original selected-items invoice with
+quantity and removal controls. Services and external sourcing are excluded
+from the product total. The consultation CTA retains its existing local-only
+request behavior; no server-side delivery was added.
+
+Build was produced locally; no compilation runs on the memory-constrained VPS.
+The verified image tag is `homa_openai_frontend:prebuilt-fc13596`; transfer
+archive SHA256 is
+`32ef54f0428ea1d962739f1f2313ec1c7f41e2d9081acd3db6479093beec807a`, and the
+entry asset is `/assets/index-9MmaMtit.js` with SHA256
+`d1b70ed65c561037418accbbaed9d3fe335b34697487150e6434398373a2cb8b`.
+The runtime image is based on known-good `prebuilt-743a704`, which is pinned
+in `docker-compose.rollback.yml` for rollback. Keep the isolated OpenAI-Frontend
+compose, environment, domain, and volumes unchanged; ERP and original Homa
+services are not part of this release.
+
 ## Retired intake history and authored provenance — 2026-10-16
 
 Source `b980e45fe4df59601ded985b4f9c259daa51a49b` filters the exact retired
