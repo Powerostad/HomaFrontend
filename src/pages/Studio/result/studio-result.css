@@ -1145,7 +1145,11 @@
   width: 100%;
   min-width: 0;
   height: auto;
+  aspect-ratio: 1;
+  background: var(--color-surface-default);
 }
+
+.studio-alternatives-grid .studio-product-image { object-fit: contain; }
 
 .studio-alternatives-grid .studio-product-copy {
   gap: var(--space-2);
@@ -1200,7 +1204,6 @@
   .studio-alternatives-heading h4 { font-size: var(--text-sm); }
   .studio-alternatives-grid { gap: var(--space-3); }
   .studio-alternatives-grid .studio-product-preview { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding: var(--space-2); }
-  .studio-alternatives-grid .studio-product-image-button { aspect-ratio: 2 / 1; }
   .studio-alternatives-grid .studio-product-copy { gap: var(--space-2); padding: var(--space-1) 0 0; }
   .studio-alternatives-grid .studio-product-name { font-size: var(--text-sm); }
   .studio-alternatives-grid .studio-price { font-size: var(--text-sm); }
