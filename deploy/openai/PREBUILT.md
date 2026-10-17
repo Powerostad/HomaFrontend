@@ -1,5 +1,22 @@
 # Off-server frontend builds
 
+## Progressive Studio discovery — 2026-10-17
+
+Source `1d8c718c60083f1d4d257520ad4a711204ea7e05` shows one saved room finding
+and its linked change at a time while rendering continues. No model payload,
+backend, database or provider setting changes. Existing completed sessions go
+directly to results; products, services and invoice remain available separately.
+All 188 tests, TypeScript, zero-warning ESLint and local production build passed.
+
+Verified server image `homa_openai_frontend:prebuilt-1d8c718`, image ID
+`sha256:b6d9918bd60c9cbc198077ec79455087f297a8739466e7055f30a9ef7a27f2e4`.
+Archive SHA256 `e394cc479ab94c13148ced854c9533a4ca5a51b244aec7bb1c89ea80328b8654`.
+Entry `/assets/index-Da8uq2LI.js`, SHA256
+`a952d824ec2f5f81dbe41768459b03736e08bf5d60614812b928b167b685132e`.
+Built off-server and transferred with verified SSH host key. Previous
+`prebuilt-fc13596` is the runtime base and pinned rollback image. No VPS build,
+paid model test, ERP or original Homa service changes.
+
 ## Static Studio products, services and invoice — 2026-10-17
 
 Source revision `fc13596cd215cd766721a849c7b2eb847c284b61` restores the static
