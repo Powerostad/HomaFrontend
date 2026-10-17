@@ -50,24 +50,23 @@ function ProductPreview({
   onOpen: () => void;
   onToggle: () => void;
 }) {
-  const { siteText, siteValue } = useSiteTranslation();
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const reason = product.persianReason || group.recommendationReasonFa || t('studio.result.v2.card.defaultReason', 'با سبک کلی فضا هماهنگ است.');
 
   return (
-    <article className={`studio-product-preview ${isPrimary ? 'is-primary' : ''}`}>
+    <article className={`studio-product-preview ${isPrimary ? 'is-primary' : ''}`} dir="ltr">
       <button type="button" className="studio-product-image-button" onClick={onOpen} aria-label={siteText("{{v0}}: {{v1}}", { v0: t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول'), v1: product.name })}>
         <AuthenticatedImage src={product.image} alt={siteValue(product.name)} className="studio-product-image" loading="lazy" />
-        {siteValue(isPrimary && <span className="studio-product-badge">{t('studio.result.v2.card.recommendedProduct', 'پیشنهاد اصلی')}</span>)}
       </button>
-      <div className="studio-product-copy">
+      <div className="studio-product-copy" dir={siteDirection()}>
         <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
-        <span className="studio-product-reason">{siteValue(reason)}</span>
+        {isPrimary && <span className="studio-product-reason">{siteValue(reason)}</span>}
         <div className="studio-product-meta">
           <span className="studio-price" dir="ltr">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
           {siteValue(group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>)}
         </div>
-        {siteValue(product.matchHighlights && product.matchHighlights.length > 0 && (
+        {siteValue(isPrimary && product.matchHighlights && product.matchHighlights.length > 0 && (
           <div className="studio-product-highlights">
             {siteValue(product.matchHighlights.slice(0, 2).map((highlight) => <span key={highlight}>{siteValue(highlight)}</span>))}
           </div>
@@ -79,10 +78,10 @@ function ProductPreview({
           disabled={!product.uniqueLink}
           aria-pressed={isSelected}
         >
-          {siteValue(isSelected ? <Check size={16} /> : <ShoppingBag size={16} />)}
+          {isPrimary && (isSelected ? <Check size={16} /> : <ShoppingBag size={16} />)}
           {siteValue(isSelected
             ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
-            : t('studio.result.v2.card.addToBasket', 'افزودن محصول به سبد'))}
+            : isPrimary ? t('studio.result.v2.card.addToBasket', 'افزودن محصول به سبد') : t('studio.result.v2.card.addAlternative', 'افزودن'))}
         </button>
       </div>
     </article>
@@ -104,7 +103,7 @@ export function RecommendationCard({
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const heroProduct = group.products[0] || null;
-  const alternatives = group.products.slice(1, 4);
+  const alternatives = group.products.slice(1, 3);
   const isActionItem = group.actionStatus !== 'available' || !heroProduct;
   const quantity = group.quantity || 1;
   const problem = group.recommendationReasonFa || t('studio.result.v2.card.defaultProblem', 'این بخش از فضا با ظرفیت اصلی اتاق هم‌خوان نیست.');
@@ -143,6 +142,10 @@ export function RecommendationCard({
             </div>
           ))}
 
+          <div className="studio-products-heading">
+            <h4><ChevronDown size={18} aria-hidden="true" />{t('studio.result.v2.card.recommendedProduct', 'محصول پیشنهادی')}</h4>
+            <button type="button" onClick={() => onProductClick(heroProduct)}>{t('studio.result.v2.card.viewAllProducts', 'مشاهده همه')}</button>
+          </div>
           <ProductPreview
             product={heroProduct}
             group={group}
@@ -155,7 +158,7 @@ export function RecommendationCard({
           {siteValue(alternatives.length > 0 && (
             <div className="studio-alternatives">
               <div className="studio-alternatives-heading">
-                <h4>{t('studio.result.v2.card.alternatives', 'دو جایگزین برای مقایسه')}</h4>
+                <h4>{toLocalizedDigits(t('studio.result.v2.card.alternativeCount', { count: alternatives.length, defaultValue: '{{count}} جایگزین دیگر' }))}</h4>
                 <span>{t('studio.result.v2.card.alternativesHint', 'انتخاب محصول مستقل از انتخاب تغییر است')}</span>
               </div>
               <div className="studio-alternatives-grid">
