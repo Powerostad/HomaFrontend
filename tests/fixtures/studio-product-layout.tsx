@@ -13,10 +13,9 @@ const group: CategoryGroup = {
   designRationaleFa: 'استفاده از فرش بزرگ با رنگ‌های خنثی و بافت ملایم برای ایجاد حس تعادل و دلبازی در فضا.',
   recommendedSize: '', quantity: 1, placements: [], positionInImage: null, actionStatus: 'available',
   interventionTier: 'quick_win', impactLevel: 'high', products: [
-    { id: 'main', category: 'rug', name: 'فرش ماشینی ۱۰۰۰ شانه زمینه کرم طوسی', image: '/images/studio/preset-warm-living.webp', price: 4350000, uniqueLink: 'fixture-main', persianReason: 'بافت باکیفیت و رنگ خنثی، مناسب فضاهای مدرن و مینیمال.' },
-    { id: 'alt-1', category: 'rug', name: 'فرش ساده بافت‌دار پرز روشن', image: '/images/studio/example-good.webp', price: 4200000, uniqueLink: 'fixture-alt-1' },
-    { id: 'alt-2', category: 'rug', name: 'فرش مدرن وینتیج طوسی کرم', image: '/images/studio/preset-warm-living.webp', price: 5500000, uniqueLink: 'fixture-alt-2' },
-    { id: 'alt-3', category: 'rug', name: 'گزینه‌های بیشتر در جزئیات محصول', image: '', price: 0, priceUnknown: true },
+    { id: 'main', category: 'rug', name: 'فرش ماشینی ۱۰۰۰ شانه زمینه کرم طوسی', image: 'https://cdn.myhoma.ir/homa/products/20/37b636e9-a3b5-44f8-bc0c-d2499526321d.jpg', price: 4350000, uniqueLink: 'fixture-main', persianReason: 'بافت باکیفیت و رنگ خنثی، مناسب فضاهای مدرن و مینیمال.' },
+    { id: 'alt-1', category: 'rug', name: 'فرش ساده بافت‌دار پرز روشن', image: 'https://cdn.myhoma.ir/homa/products/20/26a1cc77-580b-4aa0-95b2-7378076c5051.jpg', price: 4200000, uniqueLink: 'fixture-alt-1' },
+    { id: 'alt-2', category: 'rug', name: 'فرش مدرن وینتیج طوسی کرم', image: 'https://cdn.myhoma.ir/homa/products/20/d39e4bff-5527-4b5e-b421-fcd12f9d39d5.jpg', price: 5500000, uniqueLink: 'fixture-alt-2' },
   ],
 };
 function Preview() {
