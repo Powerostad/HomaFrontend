@@ -25,6 +25,7 @@ export type IconType =
   | 'default';
 
 export interface DiagnosisAction {
+  impactKnown?: boolean;
   id: number;
   status: DiagnosisStatus;
   title: string;

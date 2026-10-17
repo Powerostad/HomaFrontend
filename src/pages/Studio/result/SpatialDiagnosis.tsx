@@ -78,11 +78,11 @@ export function SpatialDiagnosis({
       </div>
 
       <div className="studio-diagnosis-metrics" aria-label={t('studio.result.v2.diagnosis.metrics', 'خلاصه عددی تحلیل')}>
-        {harmonyScore != null && <div className="studio-diagnosis-metric">
+        <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.harmonyScore', 'امتیاز هماهنگی')}</span>
-          <strong dir="ltr">{siteValue(toLocalizedDigits(harmonyScore))}<small>/۱۰۰</small></strong>
-          <em>{t('studio.result.v2.diagnosis.scoreMethod', 'ترکیب رنگ، سبک و تناسب')}</em>
-        </div>}
+          <strong dir="ltr">{harmonyScore != null ? <>{siteValue(toLocalizedDigits(harmonyScore))}<small>/۱۰۰</small></> : '—'}</strong>
+          <em>{harmonyScore != null ? t('studio.result.v2.diagnosis.scoreMethod', 'ترکیب رنگ، سبک و تناسب') : t('studioDiagnostics.unknown')}</em>
+        </div>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.changeCount', 'تغییر پیشنهادی')}</span>
           <strong>{siteValue(toLocalizedDigits(totalRecommendations))}</strong>
@@ -90,7 +90,7 @@ export function SpatialDiagnosis({
         </div>
         <div className="studio-diagnosis-metric">
           <span>{t('studio.result.v2.diagnosis.recommendedTotal', 'هزینه همه پیشنهادها')}</span>
-          <strong className="studio-price" dir="ltr">{priceUnknown && totalPrice <= 0 ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(totalPrice, false))}</strong>
+          <strong className="studio-price" dir="ltr">{priceUnknown && totalPrice <= 0 ? t('redesignJourney.unpriced') : totalPrice === 0 ? toLocalizedDigits(0) : siteValue(formatPriceFromRial(totalPrice, false))}</strong>
           <em>{t('common.toman', 'تومان')} · {t('studio.result.v2.diagnosis.estimated', 'تخمینی')}</em>
         </div>
         <div className="studio-diagnosis-metric studio-diagnosis-metric-selected">
@@ -111,7 +111,7 @@ export function SpatialDiagnosis({
             <div className="studio-diagnosis-action-copy">
               <div className="studio-diagnosis-action-heading">
                 <h4>{siteValue(action.title)}</h4>
-                <span>{siteValue(impactLabel(action.status, t))}</span>
+                {action.impactKnown !== false && <span>{siteValue(impactLabel(action.status, t))}</span>}
               </div>
               <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {siteValue(action.diagnosis)}</p>
               <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {siteValue(action.solution)}</p>

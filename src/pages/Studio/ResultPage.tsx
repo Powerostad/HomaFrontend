@@ -2,7 +2,7 @@ import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { Bookmark, Download as DownloadIcon, Loader2 } from 'lucide-react';
+import { Bookmark, Download as DownloadIcon, Loader2, MessageSquare } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
@@ -22,15 +22,20 @@ import type { CompletionChecklistItem } from './result/types';
 import { useSimpleTranslation } from './result/types';
 import { UnifiedConsultationCTA } from './result/UnifiedConsultationCTA';
 import { useStudioResult } from './result/useStudioResult';
+import type { StudioResultConversation, StudioResultViewState } from './result/viewState';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
 export function StudioResultPage() {
+  const state = useStudioResult();
+  return <StudioResultView state={state} />;
+}
+
+export function StudioResultView({ state, conversation }: { state: StudioResultViewState; conversation?: StudioResultConversation }) {
   const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
-  const state = useStudioResult();
   const [activePhase, setActivePhase] = useState<Phase>('analysis');
   const [isBasketVisible, setIsBasketVisible] = useState(false);
   const basketSectionRef = useRef<HTMLDivElement>(null);
@@ -51,6 +56,7 @@ export function StudioResultPage() {
       harmonyImpact: group.impactLevel === 'high' ? 80 : group.impactLevel === 'medium' ? 50 : 30,
       iconType: 'default',
       placements: group.placements,
+      impactKnown: group.impactKnown,
     })),
     [state.categoryGroups, t],
   );
@@ -110,7 +116,7 @@ export function StudioResultPage() {
       phase,
     });
     document.getElementById(`section-${phase === 'recommendations' ? 'products' : phase}`)?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: 'instant',
       block: 'start',
     });
   }, [state.activeSessionId, state.sessionId]);
@@ -143,17 +149,18 @@ export function StudioResultPage() {
     onToggleSaved: () => state.setIsSaved(!state.isSaved),
     onDownload: state.handleDownload,
     onFullscreen: () => !state.analysisOnly && state.setIsFullScreen(true),
-    onExit: () => state.setShowExitDecision(true),
+    onExit: conversation?.onExit || (() => state.setShowExitDecision(true)),
     onMarkerClick: handleMarkerClick,
+    onImageError: conversation?.onImageError,
   };
 
   return (
     <div
-      className="studio-result-page"
+      className={`studio-result-page${conversation ? ' studio-result-with-conversation' : ''}`}
       dir={siteDirection()}
       style={{ fontFamily: FONT }}
     >
-      {siteValue(!state.isFullScreen && <Header />)}
+      {siteValue(!state.isFullScreen && <Header hideSpacer />)}
 
       <main className="studio-result-main" dir="ltr">
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
@@ -161,7 +168,9 @@ export function StudioResultPage() {
           <MobileHeroSection {...heroProps} />
         </section>
 
-        <section className="studio-result-content" dir={siteDirection()}>
+        <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>
+          {conversation?.panel}
+          <div className="studio-result-report" hidden={!!conversation?.open && !conversation.compact}>
           <div className="studio-result-heading">
             <div>
               <p className="studio-result-eyebrow">
@@ -178,6 +187,7 @@ export function StudioResultPage() {
               </p>
             </div>
             <div className="studio-result-heading-actions" aria-label={t('studio.result.v2.actions', 'اقدامات نتیجه')}>
+              {conversation && <button type="button" className="studio-icon-button" onClick={conversation.onOpen} aria-label={t('studioChat.chat', 'گفتگو با هما')} aria-expanded={conversation.open}><MessageSquare size={18} /></button>}
               <button
                 type="button"
                 className="studio-icon-button"
@@ -201,12 +211,14 @@ export function StudioResultPage() {
             </div>
           </div>
 
+          {conversation && <><div className="studio-result-conversation-tools">{conversation.toolbar}</div>{conversation.status}</>}
+
           <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title">
             <h2 id="analysis-title" className="sr-only">
               {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
             </h2>
 
-            {siteValue(state.analysisOnly && (
+            {siteValue(state.analysisOnly && !conversation && (
               <div className="studio-analysis-only-callout" role="status">
                 <div>
                   <strong>{t('studio.result.v2.analysisOnly.title', 'این نتیجه، تحلیل اولیه فضای شماست')}</strong>
@@ -252,6 +264,8 @@ export function StudioResultPage() {
               diagnosisActions={diagnosisActions}
               onScrollToStep={state.scrollToCard}
               onNavigateToRecommendations={() => handlePhaseClick('recommendations')}
+              detailsContent={conversation?.details}
+              priceUnknown={conversation?.priceUnknown}
             />
           </section>
 
@@ -325,8 +339,10 @@ export function StudioResultPage() {
             />
 
             <div id="section-feedback" className="studio-result-feedback">
-              <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />
+              {!conversation && <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />}
             </div>
+          </div>
+          {conversation?.afterReport}
           </div>
         </section>
       </main>
@@ -339,6 +355,8 @@ export function StudioResultPage() {
         totalCount={purchasableCount}
         totalRecommendations={state.categoryGroups.length}
         isAtBasket={isBasketVisible}
+        onOpenChat={conversation?.onOpen}
+        chatOpen={conversation?.open}
       />
 
       <AnimatePresence>
@@ -368,6 +386,8 @@ export function StudioResultPage() {
           isInBasket={state.basketProductIds.has(state.selectedProduct.id)}
           onToggleBasket={() => state.toggleBasketProduct(state.selectedProduct!.id)}
           onSelectProduct={state.handleProductClick}
+          onPreview={conversation ? () => { const product = state.selectedProduct; state.setSelectedProduct(null); if (product) conversation.onPreview(product); } : undefined}
+          previewBusy={conversation?.busy}
         />
       ))}
 

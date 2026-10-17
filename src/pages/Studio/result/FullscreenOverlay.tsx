@@ -4,6 +4,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
  * Immersive image viewer with refined glass controls.
  */
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
+import * as Dialog from '@radix-ui/react-dialog';
 import { Bookmark, Download, Loader2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useSimpleTranslation } from './types';
@@ -37,15 +38,19 @@ export function FullscreenOverlay({
   const { t } = useSimpleTranslation();
 
   return (
+    <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
+    <Dialog.Portal>
+    <Dialog.Content asChild aria-describedby={undefined}>
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0 }}
       className="fixed inset-0 z-modal flex items-center justify-center overflow-hidden"
       style={{ background: 'var(--editorial-charcoal)' }}
       onClick={onClose}
     >
+      <Dialog.Title className="sr-only">{siteText("نتیجه طراحی")}</Dialog.Title>
       <motion.div
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
@@ -208,5 +213,8 @@ export function FullscreenOverlay({
         </div>
       </motion.div>
     </motion.div>
+    </Dialog.Content>
+    </Dialog.Portal>
+    </Dialog.Root>
   );
 }

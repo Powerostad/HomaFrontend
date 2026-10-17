@@ -1,9 +1,8 @@
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { Check, ChevronDown, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ReactNode } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
 
@@ -28,10 +27,6 @@ interface RecommendationCardProps {
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (newQuantity: number) => void;
   isLast?: boolean;
-  /** Conversation reports keep their canonical copy and authenticated catalogue media. */
-  reportCopy?: ReactNode;
-  productContent?: ReactNode;
-  hideImpact?: boolean;
 }
 
 function impactText(level: CategoryGroup['impactLevel'], t: (key: string, fallback: string) => string) {
@@ -62,14 +57,14 @@ function ProductPreview({
   return (
     <article className={`studio-product-preview ${isPrimary ? 'is-primary' : ''}`}>
       <button type="button" className="studio-product-image-button" onClick={onOpen} aria-label={siteText("{{v0}}: {{v1}}", { v0: t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول'), v1: product.name })}>
-        <ImageWithFallback src={product.image} alt={siteValue(product.name)} className="studio-product-image" />
+        <AuthenticatedImage src={product.image} alt={siteValue(product.name)} className="studio-product-image" loading="lazy" />
         {siteValue(isPrimary && <span className="studio-product-badge">{t('studio.result.v2.card.recommendedProduct', 'پیشنهاد اصلی')}</span>)}
       </button>
       <div className="studio-product-copy">
         <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
         <span className="studio-product-reason">{siteValue(reason)}</span>
         <div className="studio-product-meta">
-          <span className="studio-price" dir="ltr">{siteValue(formatPriceFromRial(product.price, true))}</span>
+          <span className="studio-price" dir="ltr">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
           {siteValue(group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>)}
         </div>
         {siteValue(product.matchHighlights && product.matchHighlights.length > 0 && (
@@ -81,6 +76,7 @@ function ProductPreview({
           type="button"
           className={`studio-product-select ${isSelected ? 'is-selected' : ''}`}
           onClick={onToggle}
+          disabled={!product.uniqueLink}
           aria-pressed={isSelected}
         >
           {siteValue(isSelected ? <Check size={16} /> : <ShoppingBag size={16} />)}
@@ -104,9 +100,6 @@ export function RecommendationCard({
   onToggleAccepted,
   onToggleBasketProduct,
   onUpdateQuantity,
-  reportCopy,
-  productContent,
-  hideImpact = false,
 }: RecommendationCardProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -130,16 +123,16 @@ export function RecommendationCard({
           <span>{t('studio.result.v2.card.changeLabel', 'تغییر پیشنهادی')}</span>
           <h3>{siteValue(group.categoryDisplay)}</h3>
         </div>
-        {!hideImpact && <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>}
+        {group.impactKnown !== false && <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>}
       </header>
 
-      {reportCopy ?? <div className="studio-recommendation-copy">
+      <div className="studio-recommendation-copy">
         <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {siteValue(problem)}</p>
         <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {siteValue(solution)}</p>
         <p><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}:</strong> {t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر، کاربرد بهتر و خوانایی بالاتر در فضا')}</p>
-      </div>}
+      </div>
 
-      {productContent ?? <>{siteValue(!isActionItem && heroProduct && (
+      {siteValue(!isActionItem && heroProduct && (
         <>
           {siteValue(onUpdateQuantity && (
             <div className="studio-quantity-control" dir="ltr">
@@ -192,7 +185,7 @@ export function RecommendationCard({
             </div>
           ))}
         </div>
-      ))}</>}
+      ))}
 
       <div className="studio-recommendation-actions">
         {onToggleAccepted && <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>

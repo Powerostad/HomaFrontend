@@ -1,4 +1,4 @@
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { ArrowLeft, Check, Loader2, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
@@ -81,7 +81,7 @@ export function InvoiceSummary({
         <div className="studio-invoice-list">
           {siteValue(basketItems.map((item) => (
             <article key={item.product.id} className="studio-invoice-item">
-              <ImageWithFallback src={item.product.image} alt={siteValue(item.product.name)} className="studio-invoice-image" />
+              <AuthenticatedImage src={item.product.image} alt={siteValue(item.product.name)} className="studio-invoice-image" loading="lazy" />
               <div className="studio-invoice-item-copy">
                 <span className="studio-invoice-category">{siteValue(item.group.categoryDisplay)}</span>
                 <strong>{siteValue(item.product.name)}</strong>
@@ -115,7 +115,7 @@ export function InvoiceSummary({
                 </div>
               </div>
               <div className="studio-invoice-item-price">
-                <strong dir="ltr">{siteValue(formatPriceFromRial(item.lineTotal, false))}</strong>
+                <strong dir="ltr">{item.product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(item.lineTotal, false))}</strong>
                 <span>{t('common.toman', 'تومان')}</span>
                 <button
                   type="button"
@@ -136,7 +136,7 @@ export function InvoiceSummary({
           <span>{t('studio.result.v2.basket.selectedTotal', 'جمع انتخاب‌ها')}</span>
           <small>{t('studio.result.v2.basket.estimated', 'هزینه محصولات تخمینی است')}</small>
         </div>
-        <strong dir="ltr">{siteValue(formatPriceFromRial(selectedPrice, true))}</strong>
+        <strong dir="ltr">{basketItems.length === 0 ? `${toLocalizedDigits(0)} ${t('common.toman')}` : selectedPrice <= 0 && basketItems.some(item => item.product.priceUnknown) ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(selectedPrice, true))}</strong>
       </div>
 
       <p className="studio-invoice-note">

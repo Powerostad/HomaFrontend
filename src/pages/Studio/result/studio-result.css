@@ -1,6 +1,6 @@
 .studio-result-page {
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--color-editorial-stone);
   color: var(--color-editorial-charcoal);
 }
@@ -10,6 +10,7 @@
   flex-direction: column;
   min-width: 0;
   width: 100%;
+  padding-top: var(--header-height);
 }
 
 .studio-result-hero,
@@ -102,7 +103,7 @@
 }
 
 .studio-hero-glass-button:hover {
-  transform: translateY(-1px);
+  background-color: var(--glass-light);
 }
 
 .studio-hero-glass-button:disabled {
@@ -1965,6 +1966,12 @@
   }
 }
 
+/* Keep fullscreen clear of the centered before/after switch on narrow media. */
+@media (max-width: 1499px) {
+  .studio-hero-fullscreen { width:44px; padding:0; justify-content:center; }
+  .studio-hero-fullscreen span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+}
+
 @media (min-width: 1200px) {
   .studio-result-main {
     display: grid;
@@ -1993,6 +2000,10 @@
 
   .studio-mobile-hero {
     display: none;
+  }
+
+  .studio-hero-before-after, .studio-hero-fullscreen {
+    bottom:calc(var(--studio-summary-height, 80px) + var(--space-6));
   }
 }
 

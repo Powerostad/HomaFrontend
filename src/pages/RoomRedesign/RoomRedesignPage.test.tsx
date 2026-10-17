@@ -6,18 +6,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoomRedesignPage } from './RoomRedesignPage';
 
 vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
-vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ totalRial: 0, itemCount: 0, openBasket: vi.fn() }) }));
+vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ basket: { shop_groups: [] }, totalRial: 0, itemCount: 0, openBasket: vi.fn(), addItem: vi.fn() }) }));
 vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => null }));
 vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
 vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
 vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal }: { resultImage: string; showOriginal: boolean }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}>Original hero</div>, MobileHeroSection: () => null }));
-vi.mock('./components/StudioFlowReport', () => ({ StudioFlowReport: ({ onPreview }: { onPreview: (item: string, product: number) => void }) => <div>Canonical report<button onClick={() => onPreview('lamp', 7)}>Preview lamp</button></div> }));
-vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value }) }));
+vi.mock('../Studio/components/ProductDetailSheet', () => ({ ProductDetailSheet: ({ onPreview }: { onPreview?: () => void }) => <div><button onClick={onPreview}>Preview lamp</button></div> }));
+vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl' }), siteText: (value: string) => value }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
 const testState = vi.hoisted(() => ({ failed: false, send: vi.fn(async () => true) }));
+const fixturePlan = vi.hoisted(() => ({ purchases: [{ item_id: 'lamp', category: 'Lighting', quantity: 1, reason_fa: 'Canonical report', relation: 'similar', alternatives: [], product: { product_id: 7, name: 'Lamp', price_rial: 100000, image_url: '', unique_link: 'lamp' } }], free_actions: [], surface_actions: [], known_subtotal_rial: 100000, unknown_cost_item_ids: [], budget_ceiling_toman: null, budget_status: 'complete' }));
 vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: 'saved', messages: [], chipGroups: [],
-  versions: testState.failed ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: { purchases: [] } }],
-  currentExecution: testState.failed ? { purchases: [{ item_id: 'lamp' }] } : null,
+  versions: testState.failed ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
+  currentExecution: fixturePlan,
   originalImage: 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: false,
   error: testState.failed ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: testState.send, selectChip: vi.fn() }) }));
 
@@ -30,7 +31,7 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
-  beforeEach(() => { vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); });
+  beforeEach(() => { sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); });
   it('preserves the generated image behind the original-image comparison', async () => {
     const ui = await mount();
     try {
@@ -44,6 +45,10 @@ describe('original Studio result flow with conversation', () => {
     try {
       expect(ui.container.textContent).toContain('Canonical report');
       expect(ui.container.textContent).toContain('Image failed');
+      expect(ui.container.querySelector('.studio-impact-card')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-tier-section')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-invoice')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-flow-content')).toBeNull();
       expect(document.querySelector('[role=dialog]')).toBeNull();
     } finally { await ui.cleanup(); testState.failed = false; }
   });
@@ -51,7 +56,7 @@ describe('original Studio result flow with conversation', () => {
     testState.send.mockClear();
     const ui = await mount();
     try {
-      const trigger = ui.container.querySelector<HTMLButtonElement>('.studio-flow-chat-trigger')!;
+      const trigger = ui.container.querySelector<HTMLButtonElement>('.studio-result-version-row button')!;
       await act(async () => trigger.click());
       expect(document.querySelectorAll('textarea')).toHaveLength(1);
       const input = document.querySelector<HTMLTextAreaElement>('#studio-message')!;
@@ -70,6 +75,7 @@ describe('original Studio result flow with conversation', () => {
     testState.send.mockClear();
     const ui = await mount();
     try {
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-product-image-button')!.click());
       await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'Preview lamp')!.click());
       expect(testState.send).toHaveBeenCalledExactlyOnceWith({ text: '', action: 'preview_product', itemId: 'lamp', productId: 7 });
       expect(document.querySelector('[role=dialog]')).not.toBeNull();

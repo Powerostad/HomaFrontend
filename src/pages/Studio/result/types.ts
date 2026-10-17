@@ -126,6 +126,8 @@ export interface CategoryGroup {
   actionStatus: ActionStatus;
   interventionTier: InterventionTier;
   impactLevel: ImpactLevel;
+  /** False when this data source does not provide an impact measurement. */
+  impactKnown?: boolean;
   actionType?: string;
   actionGuidance?: string;
 }
