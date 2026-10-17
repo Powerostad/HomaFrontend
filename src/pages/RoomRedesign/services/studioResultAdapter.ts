@@ -18,7 +18,8 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
         image: product.image_url || '', price: price ?? 0, priceUnknown: price == null || price <= 0,
         category: product.category_fa || item.category, store: product.merchant_name,
         description: product.description || product.ai_description,
-        persianReason: item.reason_fa || mother?.why_needed, matchHighlights: product.match_notes,
+        // match_notes are search diagnostics, not customer-facing design guidance.
+        persianReason: item.reason_fa || mother?.why_needed,
         uniqueLink: product.unique_link,
         link: product.merchant_url && /^https?:\/\//i.test(product.merchant_url) ? product.merchant_url : undefined,
       }];
@@ -31,7 +32,7 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
       quantity: Math.max(1, Math.min(99, item.quantity || 1)), placements: placement ? [placement] : [],
       positionInImage: null, products, actionStatus: products.length ? 'available' : 'custom_order',
       interventionTier: 'quick_win', impactKnown: Number.isFinite(impact),
-      impactLevel: impact != null && impact >= 70 ? 'high' : impact != null && impact >= 40 ? 'medium' : 'low',
+      impactLevel: impact != null && impact >= 7 ? 'high' : impact != null && impact >= 4 ? 'medium' : 'low',
       actionGuidance: mother?.why_needed || item.reason_fa,
     };
   });

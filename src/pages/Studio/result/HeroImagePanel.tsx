@@ -199,7 +199,7 @@ function HeroImageStage({
         </button>
       ))}
 
-      {siteValue(hasGeneratedImage && visibleMarkers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && visibleMarkers.length > 0 && (
         <div className="studio-hero-markers" aria-label={t('studio.result.v2.hero.markerLabel', 'نشانه‌های پیشنهادها')}>
           {siteValue(visibleMarkers.map((entry) => (
             <button
@@ -216,9 +216,9 @@ function HeroImageStage({
         </div>
       ))}
 
-      {siteValue(hasGeneratedImage && markers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && visibleMarkers.length > 0 && (
         <div className="studio-hero-marker-legend" aria-label={t('studio.result.v2.hero.legend', 'راهنمای پیشنهادها')}>
-          {siteValue(markers.map((entry) => (
+          {siteValue(visibleMarkers.map((entry) => (
             <button type="button" key={entry.itemId} onClick={() => onMarkerClick?.(entry.itemId)}>
               <span>{siteValue(entry.number)}</span>
               {siteValue(entry.label)}
