@@ -1,4 +1,22 @@
 /* Chat additions only. The result, products and basket use studio-result.css. */
+.studio-product-refinement { grid-column:1 / -1; min-width:0; padding:var(--space-3); border-top:1px solid var(--color-border-subtle); }
+.studio-product-refinement > button { min-height:44px; gap:var(--space-2); width:100%; white-space:normal; background:var(--color-surface-default); color:var(--color-content-primary); border:1px solid var(--color-border-subtle); }
+.studio-product-refinement-form { display:grid; min-width:0; gap:var(--space-3); margin-top:var(--space-4); text-align:start; color:var(--color-content-primary); }
+.studio-product-refinement-form button { white-space:normal; height:auto; min-height:44px; }
+.studio-product-refinement-form button[type=button] { background:transparent; color:var(--color-content-primary); }
+.studio-product-refinement-form button[type=submit] { background:var(--color-interactive-primary); color:var(--color-content-inverse); }
+@media (hover:hover) and (pointer:fine) { .studio-product-refinement button[type=button]:hover { background:var(--color-surface-muted); } }
+.studio-product-refinement-form label { font-size:var(--text-sm); font-weight:600; }
+.studio-product-refinement-form textarea { min-height:120px; font-size:var(--text-base); line-height:1.8; resize:vertical; }
+.studio-product-refinement-form p { font-size:var(--text-sm); line-height:1.8; overflow-wrap:anywhere; color:var(--color-content-secondary); }
+.studio-product-refinement-form .studio-product-refinement-context { font-weight:600; color:var(--color-content-primary); }
+.studio-product-refinement-form [role=alert] { color:var(--color-feedback-error); }
+.studio-product-refinement-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
+.studio-product-refinement-actions button { min-height:44px; }
+.studio-product-refinement button:active { transform:scale(.98); }
+.studio-product-refinement button { transition-property:color,background-color,border-color,transform; }
+.studio-alternatives-grid .studio-product-preview:has(.studio-product-refinement-form) { grid-column:1 / -1; }
+@media (prefers-reduced-motion:reduce) { .studio-product-refinement button:active { transform:none; } }
 .studio-result-report[hidden], .studio-summary[hidden] { display:none; }
 .studio-result-with-conversation [hidden] { display:none; }
 .studio-result-conversation-tools { display:grid; gap:var(--space-3); margin-bottom:var(--space-4); }

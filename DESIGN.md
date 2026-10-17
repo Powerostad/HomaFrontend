@@ -152,6 +152,29 @@ Design priorities, in order:
 
 ### Studio discovery and progressive disclosure
 
+Studio uses the Wayfair Next interaction benchmark recorded in
+`docs/wayfair-next-ux-benchmark-2026-10-17.md`: a persistent room image beside
+an independently scrollable desktop task panel, local alternative disclosures,
+and a compact current-selection summary with a contextual mobile sheet. Keep
+HOMA tokens and Persian-first copy; do not copy competitor branding or assets.
+Only one of recommendations, analysis, basket or conversation is active at a
+time. Optional guided intake edits the existing draft and never starts analysis
+or fabricates a user message when a step is skipped.
+
+The connected Studio ends with one collapsed report for performance, prompts and
+costs, available regardless of the active result section. Show measured timing
+separately from reconciled billing; unknown costs must never imply zero. Keep
+long technical documents behind disclosures, with readable LTR code blocks and
+an explicit copy-full-text action that preserves prompt whitespace. Load private
+report data only on expansion, and never generate an AI request to display it.
+
+Offer a separate print/PDF report for the currently viewed design. Use A4 print
+styles with before/after images, saved observed problems, proposed changes and
+product lines. Distinguish selected products from recommendations and separate
+layout work and execution services. Never print prompts, API costs or chat logs
+in the customer report. Preserve full product imagery and mark missing images
+and unknown prices explicitly; the report is not an invoice or a fresh quote.
+
 Before the first result, show real findings as soon as the saved analysis is
 available. Keep the original room photo visible, present one observation and
 its linked proposed change at a time, and let the user move back or skip the

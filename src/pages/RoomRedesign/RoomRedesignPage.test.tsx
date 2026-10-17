@@ -8,7 +8,7 @@ import type { ExecutionPlan } from './services/redesignChatService';
 
 vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
 vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ basket: { shop_groups: [] }, totalRial: 0, itemCount: 0, openBasket: vi.fn(), addItem: vi.fn() }) }));
-vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => null }));
+vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => <section data-testid="unified-report">Unified report</section> }));
 vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
 vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
 vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal }: { resultImage: string; showOriginal: boolean }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}>Original hero</div>, MobileHeroSection: () => null }));
@@ -33,6 +33,33 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
+  it('sends a product-specific edit for the actual alternative, only after explicit submit', async () => {
+    fixturePlan.purchases[0].alternatives = [{ product_id:9, name:'Alternative lamp', price_rial:90000, image_url:'', unique_link:'alternative-lamp' }];
+    const ui = await mount();
+    try {
+      const refinements = ui.container.querySelectorAll<HTMLElement>('.studio-product-refinement');
+      expect(refinements).toHaveLength(2);
+      await act(async () => refinements[1].querySelector<HTMLButtonElement>('button')!.click());
+      expect(testState.send).not.toHaveBeenCalled();
+      const input = refinements[1].querySelector('textarea')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, 'A smaller wooden lamp');
+        input.dispatchEvent(new Event('input', { bubbles:true }));
+      });
+      await act(async () => refinements[1].querySelector<HTMLButtonElement>('button[type=submit]')!.click());
+      expect(testState.send).toHaveBeenCalledExactlyOnceWith({ text:'studioProductEdit.context\nA smaller wooden lamp', action:'chat', itemId:'lamp', productId:9 });
+      expect(document.querySelectorAll('#studio-message')).toHaveLength(1);
+    } finally { await ui.cleanup(); fixturePlan.purchases[0].alternatives = []; }
+  });
+  it('places a single combined report last, outside the product, analysis and basket sections', async () => {
+    const ui = await mount();
+    try {
+      const report = ui.container.querySelector('[data-testid=unified-report]')!;
+      expect(ui.container.querySelectorAll('[data-testid=unified-report]')).toHaveLength(1);
+      expect(report.parentElement?.lastElementChild).toBe(report);
+      expect(report.closest('#section-analysis, #section-products, #section-basket, nav')).toBeNull();
+    } finally { await ui.cleanup(); }
+  });
   it('keeps services and free layout changes out of product cards, sourcing and the shopping invoice', async () => {
     fixturePlan.free_actions = [{ instruction_fa: 'Move sofa', reason_fa: 'Clear walkway' }];
     fixturePlan.surface_actions = [{ change_fa: 'Paint wall' }];

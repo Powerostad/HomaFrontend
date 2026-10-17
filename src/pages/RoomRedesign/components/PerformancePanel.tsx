@@ -2,18 +2,17 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { loadStudioPerformance, type StudioPerformanceReport } from '../services/redesignChatService';
 import { useSessionExpenses } from '../hooks/useSessionExpenses';
 
-export function PerformancePanel({ sessionId, busy }: { sessionId: string; busy: boolean }) {
+export function PerformancePanel({ sessionId, busy, embedded = false }: { sessionId: string; busy: boolean; embedded?: boolean }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const [open, setOpen] = useState('');
+  const [open, setOpen] = useState(embedded ? 'performance' : '');
   const [refresh, setRefresh] = useState(0);
   const [report, setReport] = useState<StudioPerformanceReport | null>(null);
   const [loading, setLoading] = useState(false);
-  const expenses = useSessionExpenses(sessionId, !!open, busy, refresh);
+  const expenses = useSessionExpenses(sessionId, !!open && !embedded, busy, refresh);
   useEffect(() => {
     let active = true;
     setReport(null);
@@ -27,9 +26,8 @@ export function PerformancePanel({ sessionId, busy }: { sessionId: string; busy:
   const number = (value: number | null | undefined) => value == null ? t('studioDiagnostics.unknown') : value.toLocaleString(i18n.language, { maximumFractionDigits: 2 });
   const usd = (value: number | string | null | undefined) => value == null ? t('studioDiagnostics.unknown') : Number(value).toLocaleString(i18n.language, { maximumSignificantDigits: 10 });
   return <section className="studio-plan-summary studio-performance" dir={i18n.dir()}>
-    <Tabs value={open} onValueChange={setOpen}>
-      <TabsList><TabsTrigger value="performance">{t('studioPerformance.title')}</TabsTrigger></TabsList>
-      <TabsContent value="performance">
+      {embedded ? <h3>{t('studioPerformance.title')}</h3> : <Button variant="outline" aria-expanded={!!open} onClick={() => setOpen(value => value ? '' : 'performance')}>{t('studioPerformance.title')}</Button>}
+      {!!open && <div>
         <p>{t('studioPerformance.hint')}</p>
         <Button variant="outline" disabled={loading || busy} onClick={() => setRefresh(value => value + 1)}>{t('studioPerformance.refresh')}</Button>
         {loading || busy ? <p role="status">{t('studioPerformance.pending')}</p> : !report?.summary ? <p>{t('studioPerformance.unavailable')}</p> : <>
@@ -37,7 +35,7 @@ export function PerformancePanel({ sessionId, busy }: { sessionId: string; busy:
           <dl>
             <dt>{t('studioPerformance.elapsed')}</dt><dd>{number(report.summary.trace_elapsed_timestamp_ms)} ms</dd>
             <dt>{t('studioPerformance.calls')}</dt><dd>{number(report.summary.api_calls)}</dd>
-            <dt>{t('studioPerformance.cost')}</dt><dd>{usd(report.summary.estimated_cost_usd)} USD</dd>
+            {!embedded && <><dt>{t('studioPerformance.cost')}</dt><dd>{usd(report.summary.estimated_cost_usd)} USD</dd></>}
             <dt>{t('studioPerformance.input')}</dt><dd>{number(report.summary.tokens.input_tokens)}</dd>
             <dt>{t('studioPerformance.output')}</dt><dd>{number(report.summary.tokens.output_tokens)}</dd>
           </dl>
@@ -55,7 +53,6 @@ export function PerformancePanel({ sessionId, busy }: { sessionId: string; busy:
           <p>{t('studioDiagnostics.gaps', { unknown: expenses.unknown_calls, pending: expenses.pending_receipts })}</p>
           <p>{t('studioDiagnostics.costHint')}</p>
         </section>}
-      </TabsContent>
-    </Tabs>
+      </div>}
   </section>;
 }

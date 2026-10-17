@@ -3,8 +3,10 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { AlertTriangle, BarChart3, Check, ChevronDown, Lightbulb, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
+import { ProductRefinement, type RefineProduct } from './ProductRefinement';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
@@ -27,6 +29,8 @@ interface RecommendationCardProps {
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (newQuantity: number) => void;
   isLast?: boolean;
+  onRefineProduct?: RefineProduct;
+  busy?: boolean;
 }
 
 function impactText(level: CategoryGroup['impactLevel'], t: (key: string, fallback: string) => string) {
@@ -43,6 +47,8 @@ function ProductPreview({
   onOpen,
   onToggle,
   onUpdateQuantity,
+  onRefineProduct,
+  busy = false,
 }: {
   product: Product & { store?: string; matchScore?: number };
   group: CategoryGroup;
@@ -51,6 +57,8 @@ function ProductPreview({
   onOpen: () => void;
   onToggle: () => void;
   onUpdateQuantity?: (quantity: number) => void;
+  onRefineProduct?: RefineProduct;
+  busy?: boolean;
 }) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
@@ -94,6 +102,7 @@ function ProductPreview({
             ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
             : isPrimary ? t('studio.result.v2.card.addToBasket', 'افزودن محصول به سبد') : t('studio.result.v2.card.addToBasketShort', 'افزودن به سبد'))}
         </button>
+      {onRefineProduct && <ProductRefinement key={product.id} product={product} busy={busy} onSubmit={onRefineProduct} />}
     </article>
   );
 }
@@ -109,15 +118,17 @@ export function RecommendationCard({
   onToggleAccepted,
   onToggleBasketProduct,
   onUpdateQuantity,
+  onRefineProduct,
+  busy,
 }: RecommendationCardProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
+  const [alternativesOpen, setAlternativesOpen] = useState(false);
   const heroProduct = group.products[0] || null;
-  const alternatives = group.products.slice(1, 3);
+  const alternatives = group.products.slice(1);
   const isActionItem = group.actionStatus !== 'available' || !heroProduct;
-  const quantity = group.quantity || 1;
-  const problem = group.recommendationReasonFa || t('studio.result.v2.card.defaultProblem', 'این بخش از فضا با ظرفیت اصلی اتاق هم‌خوان نیست.');
-  const solution = group.designRationaleFa || t('studio.result.v2.card.defaultSolution', 'انتخابی هماهنگ با مقیاس، رنگ و سبک فضا.');
+  const problem = group.recommendationReasonFa;
+  const solution = group.designRationaleFa;
 
   return (
     <div className="studio-recommendation" style={{ fontFamily: FONT }}>
@@ -138,15 +149,13 @@ export function RecommendationCard({
         {group.impactKnown !== false && <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>}
       </header>
 
-      <div className="studio-recommendation-copy">
-        <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><AlertTriangle size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}</strong><p>{siteValue(problem)}</p></div>
-        <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><Lightbulb size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}</strong><p>{siteValue(solution)}</p></div>
-        <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><BarChart3 size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}</strong><p>{t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر، کاربرد بهتر و خوانایی بالاتر در فضا')}</p></div>
-      </div>
-
       <div id={`recommendation-detail-${group.itemId}`} hidden={!isWhyExpanded} className="studio-recommendation-detail">
-        <p>{siteValue(group.recommendationReasonFa || problem)}</p>
-        {group.recommendedSize && <span>{t('studio.result.v2.card.budgetHint', 'بودجه تقریبی')}: {siteValue(formatPriceFromRial(heroProduct?.price ? heroProduct.price * quantity : 0, true))}</span>}
+      <div className="studio-recommendation-copy">
+        {problem && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><AlertTriangle size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}</strong><p>{siteValue(problem)}</p></div>}
+        {solution && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><Lightbulb size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}</strong><p>{siteValue(solution)}</p></div>}
+        {group.impactKnown !== false && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><BarChart3 size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}</strong><p>{siteValue(impactText(group.impactLevel, t))}</p></div>}
+      </div>
+        {group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>}
       </div>
 
       {siteValue(!isActionItem && heroProduct && (
@@ -158,6 +167,8 @@ export function RecommendationCard({
             onOpen={() => onProductClick(heroProduct)}
             onToggle={() => onToggleBasketProduct(heroProduct.id)}
             onUpdateQuantity={onUpdateQuantity}
+            onRefineProduct={onRefineProduct}
+            busy={busy}
           />
       ))}
 
@@ -172,23 +183,27 @@ export function RecommendationCard({
         </div>
       ))}
 
-      {onToggleAccepted && <div className="studio-recommendation-actions">
+      {!isActionItem && alternatives.length > 0 && <button type="button" className="studio-swap-toggle studio-secondary-button" aria-expanded={alternativesOpen} aria-controls={`alternatives-${group.itemId}`} onClick={() => setAlternativesOpen(value => !value)}>
+        {t(alternativesOpen ? 'studioBenchmark.closeAlternatives' : 'studioBenchmark.swap')}
+        <ChevronDown size={16} className={alternativesOpen ? 'is-open' : ''} />
+      </button>}
+      {isActionItem && onToggleAccepted && <div className="studio-recommendation-actions">
         <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
           {siteValue(isAccepted ? <Check size={17} /> : null)}
           {siteValue(isAccepted ? t('studio.result.v2.card.accepted', 'تغییر انتخاب شد') : t('studio.result.v2.card.accept', 'انتخاب تغییر'))}
         </button>
       </div>}
     </article>
-    {!isActionItem && alternatives.length > 0 && <section className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>
+    {!isActionItem && alternatives.length > 0 && <section id={`alternatives-${group.itemId}`} hidden={!alternativesOpen} className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>
       <div className="studio-alternatives-heading">
         <h4>{alternatives.length === 2 ? t('studio.result.v2.card.alternatives', 'دو جایگزین') : toLocalizedDigits(t('studio.result.v2.card.alternativeCount', { count: alternatives.length, defaultValue: '{{count}} جایگزین دیگر' }))}</h4>
         <span>{t('studio.result.v2.card.alternativesHint', 'برای مقایسه سریع')}</span>
       </div>
       <div className="studio-alternatives-grid">
         {alternatives.map(product => <ProductPreview key={product.id} product={product} group={group} isPrimary={false}
+          onRefineProduct={onRefineProduct} busy={busy}
           isSelected={basketProductIds.has(product.id)} onOpen={() => onProductClick(product)} onToggle={() => onToggleBasketProduct(product.id)} />)}
       </div>
-      {group.products.length > 3 && <button type="button" className="studio-product-more" onClick={() => onProductClick(heroProduct!)}>{t('studio.result.v2.card.viewAllProducts', 'مشاهده همه')}</button>}
     </section>}
     </div>
   );

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Download, FileJson, Loader2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Download, FileJson, Loader2 } from 'lucide-react';
+import { PerformancePanel } from './PerformancePanel';
 import { loadSessionDiagnostics, type SessionDiagnosticsReport } from '../services/redesignChatService';
 import { useSessionExpenses } from '../hooks/useSessionExpenses';
 
@@ -11,12 +11,14 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const ownerId = user?.id;
+  const contentId = useId();
   const generation = useRef(0);
   const [open, setOpen] = useState(false);
   const [report, setReport] = useState<SessionDiagnosticsReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [billingRevision, setBillingRevision] = useState(0);
+  const [revision, setRevision] = useState(0);
   const liveExpenses = useSessionExpenses(sessionId, open, busy, billingRevision);
   const expenses = liveExpenses ?? report?.expenses;
   useEffect(() => {
@@ -27,9 +29,9 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
     setReport(null); setLoading(true); setError(false);
     void loadSessionDiagnostics(sessionId).then(result => {
       if (active) { setReport(result.data ?? null); setError(!result.success); setLoading(false); }
-    });
+    }).catch(() => { if (active) { setError(true); setLoading(false); } });
     return () => { active = false; };
-  }, [open, sessionId, ownerId, busy]);
+  }, [open, sessionId, ownerId, busy, revision]);
   const money = (value: string | null, currency: string) => value == null
     ? t('studioDiagnostics.unknown')
     : `${Number(value).toLocaleString(i18n.language, currency === 'USD' ? { maximumSignificantDigits: 10 } : { maximumFractionDigits: 2 })} ${currency}`;
@@ -38,11 +40,13 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
     if (!report?.next_before) return;
     const stamp = generation.current;
     setLoading(true); setError(false);
-    const result = await loadSessionDiagnostics(sessionId, report.next_before);
-    if (stamp !== generation.current) return;
-    if (result.success && result.data) setReport({ ...report, traces: [...report.traces, ...result.data.traces], next_before: result.data.next_before });
-    else setError(true);
-    setLoading(false);
+    try {
+      const result = await loadSessionDiagnostics(sessionId, report.next_before);
+      if (stamp !== generation.current) return;
+      if (result.success && result.data) setReport({ ...report, traces: [...report.traces, ...result.data.traces], next_before: result.data.next_before });
+      else setError(true);
+    } catch { if (stamp === generation.current) setError(true); }
+    finally { if (stamp === generation.current) setLoading(false); }
   };
   const download = () => {
     if (!report) return;
@@ -50,14 +54,14 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
     const link = document.createElement('a'); link.href = url; link.download = `homa-session-${sessionId}.json`;
     link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button className="studio-diagnostics-trigger" variant="outline" title={t('studioDiagnostics.title')}><FileJson size={18} aria-hidden="true" /><span>{t('studioDiagnostics.title')}</span></Button></DialogTrigger>
-    <DialogContent className="studio-diagnostics-dialog" dir={i18n.dir()}>
-      <DialogHeader><DialogTitle>{t('studioDiagnostics.title')}</DialogTitle><DialogDescription>{t('studioDiagnostics.hint')}</DialogDescription></DialogHeader>
-      <div className="studio-diagnostics-body">
+  return <section className="studio-unified-report" dir={i18n.dir()}>
+    <Button className="studio-report-trigger" variant="ghost" aria-expanded={open} aria-controls={contentId} onClick={() => setOpen(value => !value)}><FileJson size={20} aria-hidden="true" /><span>{t('studioReport.reportTitle')}</span><ChevronDown size={18} aria-hidden="true" /></Button>
+    {open && <div id={contentId} className="studio-diagnostics-body">
+        <p className="studio-caption">{t('studioDiagnostics.hint')}</p>
         <p className="studio-caption">{t('studioDiagnostics.session')} <bdi>{sessionId}</bdi></p>
+        <PerformancePanel key={`${sessionId}/${ownerId}`} sessionId={sessionId} busy={busy} embedded />
         {loading && <p role="status"><Loader2 size={18} className="studio-spinner" aria-hidden="true" />{t('studioDiagnostics.loading')}</p>}
-        {error && <p role="alert">{t('studioDiagnostics.error')}</p>}
+        {error && <div><p role="alert">{t('studioDiagnostics.error')}</p><Button variant="outline" disabled={loading || busy} onClick={() => setRevision(value => value + 1)}>{t('redesignJourney.retry')}</Button></div>}
         {report && <>
           <section className="studio-diagnostics-cost"><h3>{t('studioDiagnostics.cost')}</h3>
             <p>{t(`studioDiagnostics.${expenses!.status}`)}</p>
@@ -72,7 +76,7 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
             {report.expenses.refresh_status && <p role="status">{t(`studioDiagnostics.refresh_${report.expenses.refresh_status}`)}</p>}
             <Button disabled={loading || busy} variant="outline" onClick={refresh}>{t('studioDiagnostics.refresh')}</Button>
           </section>
-          <section><h3>{t('studioDiagnostics.current')}</h3><p className="studio-caption">{t('studioDiagnostics.currentHint')}</p><JsonValue value={report.documents} /></section>
+          <details><summary>{t('studioDiagnostics.current')}</summary><p className="studio-caption">{t('studioDiagnostics.currentHint')}</p><JsonValue value={report.documents} /></details>
           <details><summary>{t('studioDiagnostics.versions')}</summary><JsonValue value={report.versions} /></details>
           <section><h3>{t('studioDiagnostics.handoffs')}</h3><p className="studio-caption">{t('studioDiagnostics.handoffHint')}</p>
             {!report.traces.some(trace => trace.payload_name?.startsWith('handoff-')) && <p>{t('studioDiagnostics.noHandoffs')}</p>}
@@ -88,9 +92,8 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
           <Button disabled={loading} onClick={download}><Download size={18} aria-hidden="true" />{t('studioDiagnostics.download')}</Button>
           <p className="studio-caption">{t('studioDiagnostics.private')}</p>
         </>}
-      </div>
-    </DialogContent>
-  </Dialog>;
+      </div>}
+  </section>;
 }
 
 export function HandoffDetails({ value }: { value: unknown }) {
@@ -106,6 +109,14 @@ export function HandoffDetails({ value }: { value: unknown }) {
 }
 
 export function JsonValue({ value }: { value: unknown }) {
+  const { t } = useTranslation();
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  useEffect(() => { setCopyState('idle'); }, [value]);
+  const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? '';
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); setCopyState('copied'); }
+    catch { setCopyState('error'); }
+  };
   // Diagnostic data is deliberately not translated, formatted as HTML or run.
-  return <pre className="studio-diagnostics-json" dir="ltr">{JSON.stringify(value, null, 2)}</pre>;
+  return <div className="studio-report-code"><div className="studio-report-copy"><Button variant="outline" disabled={!text} onClick={() => void copy()}>{copyState === 'copied' ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{t(copyState === 'copied' ? 'studioReport.copied' : 'studioReport.copy')}</Button><span role="status">{copyState === 'error' && t('studioReport.copyError')}</span></div><pre className="studio-diagnostics-json" dir="ltr" tabIndex={0}>{text}</pre></div>;
 }

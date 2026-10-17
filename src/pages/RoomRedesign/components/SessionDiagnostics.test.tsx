@@ -7,7 +7,7 @@ import { loadSessionDiagnostics, refreshSessionExpenses, type SessionDiagnostics
 
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (v:unknown) => v, siteText:(v:string) => v }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t:(key:string) => key, i18n:{ language:'en', dir:() => 'ltr' } }) }));
-vi.mock('../services/redesignChatService', () => ({ loadSessionDiagnostics:vi.fn(), refreshSessionExpenses:vi.fn() }));
+vi.mock('../services/redesignChatService', () => ({ loadSessionDiagnostics:vi.fn(), refreshSessionExpenses:vi.fn(), loadStudioPerformance:vi.fn(async () => ({ success:true, data:{ summary:null } })) }));
 let owner = 'owner-1';
 vi.mock('@/context/AuthContext', () => ({ useAuth:() => ({ user:{ id:owner } }) }));
 let root:Root;
@@ -30,6 +30,26 @@ async function open() {
   await act(async () => container.querySelector('button')!.click());
 }
 describe('private session diagnostics', () => {
+  it('copies the exact prompt including internal whitespace and acknowledges failure', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable:true, value:{ writeText } });
+    const prompt = 'natural linen\n  preserve these spaces';
+    await act(async () => root.render(<JsonValue value={prompt} />));
+    await act(async () => container.querySelector('button')!.click());
+    expect(writeText).toHaveBeenCalledWith(prompt);
+    expect(container.textContent).toContain('studioReport.copied');
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    await act(async () => container.querySelector('button')!.click());
+    expect(container.querySelector('[role=status]')?.textContent).toBe('studioReport.copyError');
+  });
+  it('combines performance with prompts inline and clears content when collapsed', async () => {
+    await open();
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+    expect(container.textContent).toContain('studioPerformance.hint');
+    expect(container.textContent).toContain('EXACT OUTPUT');
+    await act(async () => container.querySelector<HTMLButtonElement>('.studio-report-trigger')!.click());
+    expect(container.textContent).not.toContain('EXACT OUTPUT');
+  });
   it('separates canonical output, actual image input and execution amendments', async () => {
     await act(async () => root.render(<HandoffDetails value={{ stage:'image_input', canonical_document:{ full:'MOTHER_OUTPUT' }, actual_prompt:'ACTUAL_SENT_PROMPT', execution_amendments:[{ path:'/add_new_products', reason:'purchase_disabled' }] }} />));
     expect(container.querySelectorAll('details')).toHaveLength(3);

@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { StudioResultView } from '../Studio/ResultPage';
 import { ExecutionPanel } from './components/ExecutionPanel';
-import { PerformancePanel } from './components/PerformancePanel';
 import { SessionDiagnostics } from './components/SessionDiagnostics';
 import { StudioConversationDrawer } from './components/StudioConversationDrawer';
 import { StudioDiscovery } from './components/StudioDiscovery';
@@ -18,6 +17,7 @@ import { StudioIntake } from './intake/StudioIntake';
 import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { ExecutionPlan } from './services/redesignChatService';
+import { buildDiscoveryReview } from './services/discoveryReview';
 import './journey.css';
 import './studio-conversation.css';
 
@@ -37,8 +37,16 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     showOriginal: !chat.selectedVersion, onToggleOriginal, onOpenChat: openChat });
   const statusText = chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking');
   return <StudioResultView state={state} conversation={{
-    open: chatOpen, compact, onOpen: openChat, onExit: () => navigate('/studio/projects'), busy: chat.busy,
+    open: chatOpen, compact, onOpen: openChat, onClose: () => setChatOpen(false), onExit: () => navigate('/studio/projects'), busy: chat.busy,
     priceUnknown: !!plan?.unknown_cost_item_ids.length, onImageError,
+    printReview: buildDiscoveryReview(plan),
+    onRefineProduct: async (product, text) => {
+      const item = plan?.purchases.find(entry => [entry.product, ...entry.alternatives].some(candidate => candidate && `${entry.item_id}/${candidate.product_id}` === product.id));
+      const selected = item && [item.product, ...item.alternatives].find(candidate => candidate && `${item.item_id}/${candidate.product_id}` === product.id);
+      if (!item || !selected || chat.busy || !text.trim()) return false;
+      openChat();
+      return chat.sendTurn({ text, action: 'chat', itemId: item.item_id, productId: selected.product_id });
+    },
     onPreview: product => {
       const item = plan?.purchases.find(entry => [entry.product, ...entry.alternatives].some(candidate => candidate && `${entry.item_id}/${candidate.product_id}` === product.id));
       const selected = item && [item.product, ...item.alternatives].find(candidate => candidate && `${item.item_id}/${candidate.product_id}` === product.id);
@@ -60,7 +68,6 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       <nav className="studio-result-session-tools" aria-label={t('studioChat.archive')}>
         <Link to="/studio/projects" className="studio-text-button"><History size={16} />{t('studioChat.archive')}</Link>
         <button type="button" className="studio-text-button" disabled={chat.status === 'creating'} onClick={fresh}><Plus size={16} />{t('studioChat.new')}</button>
-        {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}
       </nav>
     </>,
     status: <>
@@ -69,7 +76,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
     afterReport: <>{!plan && <p className="studio-empty-state">{t(chat.versions.length ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p>}
-      {chat.sessionId && <PerformancePanel sessionId={chat.sessionId} busy={chat.busy} />}</>,
+      {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
   }} />;
 }
 

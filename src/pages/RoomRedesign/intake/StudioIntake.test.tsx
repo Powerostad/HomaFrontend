@@ -10,10 +10,26 @@ const flow = vi.hoisted(() => ({ image: null as null | { dataUrl: string }, prep
   setRoomType: vi.fn(), toggleGoal: vi.fn(), buildPayload: vi.fn() }));
 vi.mock('./useIntakeFlow', () => ({ useIntakeFlow: () => flow }));
 vi.mock('@/components/Header', () => ({ Header: () => <header>Shared HOMA header</header> }));
+vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue:(value:unknown) => value, siteText:(value:string) => value }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl' } }) }));
 afterEach(() => { vi.clearAllMocks(); flow.image = null; flow.preparing = false; });
 
 describe('photo-first Studio entry', () => {
+  it('allows skipping every guided step without starting analysis or inventing user input', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    flow.image = { dataUrl:'data:image/jpeg;base64,photo' };
+    const onStart = vi.fn(); const container = document.createElement('div'); document.body.append(container); const root = createRoot(container);
+    try {
+      await act(async () => root.render(<MemoryRouter><StudioIntake onStartAnalysis={onStart} /></MemoryRouter>));
+      await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'studioGuide.guidedHelp')!.click());
+      for (let step = 0; step < 4; step++) await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === 'studioGuide.skip')!.click());
+      await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === 'studioGuide.doneGuide')!.click());
+      expect(onStart).not.toHaveBeenCalled();
+      expect(flow.setNote).not.toHaveBeenCalled();
+      expect(flow.setRoomType).not.toHaveBeenCalled();
+      expect(flow.toggleGoal).not.toHaveBeenCalled();
+    } finally { await act(async () => root.unmount()); container.remove(); }
+  });
   it('has a shared header and photo upload, with no second chat composer', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div'); const root = createRoot(container);

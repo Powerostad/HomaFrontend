@@ -4,7 +4,7 @@ import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Bookmark, Download as DownloadIcon, Loader2, MessageSquare } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { CollectionSummary } from './result/CollectionSummary';
 import { ActionRecommendationCard } from './result/ActionRecommendationCard';
@@ -17,7 +17,10 @@ import { DesktopHeroPanel, MobileHeroSection } from './result/HeroImagePanel';
 import { ImpactProgressCard } from './result/ImpactProgressCard';
 import { InvoiceSummary } from './result/InvoiceSummary';
 import { SpatialDiagnosis } from './result/SpatialDiagnosis';
+import { StudioPrintReport } from './result/StudioPrintReport';
+import { CurrentLook } from './result/CurrentLook';
 import './result/studio-result.css';
+import './result/studio-workspace.css';
 import { TierSection } from './result/TierSection';
 import type { CompletionChecklistItem } from './result/types';
 import { useSimpleTranslation } from './result/types';
@@ -37,8 +40,7 @@ export function StudioResultPage() {
 export function StudioResultView({ state, conversation }: { state: StudioResultViewState; conversation?: StudioResultConversation }) {
   const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
-  const [activePhase, setActivePhase] = useState<Phase>(conversation ? 'recommendations' : 'analysis');
-  const [isBasketVisible, setIsBasketVisible] = useState(false);
+  const [activePhase, setActivePhase] = useState<Phase>('recommendations');
   const basketSectionRef = useRef<HTMLDivElement>(null);
 
   const diagnosisActions = useMemo<DiagnosisAction[]>(
@@ -84,36 +86,8 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
     aiReasoning: group.recommendationReasonFa || group.designRationaleFa,
   }));
 
-  useEffect(() => {
-    if (conversation) return;
-    const updateScrollState = () => {
-      const basket = basketSectionRef.current;
-      if (!basket) return;
-
-      const basketTop = basket.getBoundingClientRect().top;
-      const viewportThreshold = window.innerHeight * 0.42;
-      setIsBasketVisible(basketTop <= viewportThreshold && basket.getBoundingClientRect().bottom > 0);
-
-      const recommendationSection = document.getElementById('section-products');
-      if (basketTop <= viewportThreshold) {
-        setActivePhase('basket');
-      } else if (recommendationSection && recommendationSection.getBoundingClientRect().top <= viewportThreshold) {
-        setActivePhase('recommendations');
-      } else {
-        setActivePhase('analysis');
-      }
-    };
-
-    updateScrollState();
-    window.addEventListener('scroll', updateScrollState, { passive: true });
-    window.addEventListener('resize', updateScrollState);
-    return () => {
-      window.removeEventListener('scroll', updateScrollState);
-      window.removeEventListener('resize', updateScrollState);
-    };
-  }, [state.isInitialized, state.categoryGroups.length, conversation]);
-
   const handlePhaseClick = useCallback((phase: Phase) => {
+    conversation?.onClose?.();
     setActivePhase(phase);
     trackStudioResultAction({
       action: 'phase_navigation',
@@ -124,7 +98,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
       behavior: 'instant',
       block: 'start',
     }));
-  }, [state.activeSessionId, state.sessionId]);
+  }, [state.activeSessionId, state.sessionId, conversation]);
 
   const handleMarkerClick = useCallback((itemId: number) => {
     setActivePhase('recommendations');
@@ -171,9 +145,14 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
           <DesktopHeroPanel {...heroProps} />
           <MobileHeroSection {...heroProps} />
+          <CurrentLook state={state} />
         </section>
 
         <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>
+          <nav className="studio-workspace-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
+            {(['recommendations', 'analysis', 'basket'] as const).map(phase => <button type="button" key={phase} aria-current={!conversation?.open && activePhase === phase ? 'page' : undefined} onClick={() => handlePhaseClick(phase)}>{t(`studio.result.v2.phase.${phase}`, phase)}</button>)}
+            {conversation && <button type="button" aria-current={conversation.open ? 'page' : undefined} onClick={conversation.onOpen}><MessageSquare size={16} />{t('studioWorkspace.conversation', 'گفتگو')}</button>}
+          </nav>
           {conversation?.panel}
           <div className="studio-result-report" hidden={!!conversation?.open && !conversation.compact}>
           <div className="studio-result-heading">
@@ -192,6 +171,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               </p>}
             </div>
             <div className="studio-result-heading-actions" aria-label={t('studio.result.v2.actions', 'اقدامات نتیجه')}>
+              <StudioPrintReport state={state} review={conversation?.printReview} busy={conversation?.busy} />
               {conversation && <button type="button" className="studio-icon-button" onClick={conversation.onOpen} aria-label={t('studioChat.chat', 'گفتگو با هما')} aria-expanded={conversation.open}><MessageSquare size={18} /></button>}
               <button
                 type="button"
@@ -218,7 +198,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
 
           {conversation && <><div className="studio-result-conversation-tools">{conversation.toolbar}</div>{conversation.status}</>}
 
-          <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={!!conversation && activePhase !== 'analysis'}>
+          <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={activePhase !== 'analysis'}>
             <h2 id="analysis-title" className="sr-only">
               {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
             </h2>
@@ -274,7 +254,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
             />
           </section>
 
-          <section id="section-products" className="studio-result-section" aria-labelledby="products-title" hidden={!!conversation && activePhase !== 'recommendations'}>
+          <section id="section-products" className="studio-result-section" aria-labelledby="products-title" hidden={activePhase !== 'recommendations'}>
             <div className="studio-section-heading">
               <div>
                 <p className="studio-result-eyebrow">{t('studio.result.v2.phase.recommendations', 'پیشنهادها')}</p>
@@ -298,6 +278,8 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
                 sessionId={state.sessionId ?? state.activeSessionId ?? undefined}
                 onToggleWhy={state.toggleWhyExpanded}
                 onProductClick={state.handleProductClick}
+                onRefineProduct={conversation?.onRefineProduct}
+                busy={conversation?.busy}
                 onToggleSaved={() => state.setIsSaved(!state.isSaved)}
                 onToggleAccepted={state.toggleAcceptedItem}
                 onToggleBasketProduct={state.toggleBasketProduct}
@@ -334,7 +316,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
             />
           </section>
 
-          <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section" hidden={!!conversation && activePhase !== 'basket'}>
+          <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section" hidden={activePhase !== 'basket'}>
             <InvoiceSummary
               categoryGroups={state.categoryGroups}
               acceptedItems={state.acceptedItems}
@@ -353,7 +335,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               {!conversation && <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />}
             </div>
           </div>
-          {activePhase === 'analysis' && conversation?.afterReport}
+          {conversation?.afterReport}
           </div>
         </section>
       </main>
@@ -365,7 +347,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
         selectedCount={state.selectedCount}
         totalCount={purchasableCount}
         totalRecommendations={state.categoryGroups.length}
-        isAtBasket={conversation ? activePhase === 'basket' : isBasketVisible}
+        isAtBasket={activePhase === 'basket'}
         onOpenChat={conversation?.onOpen}
         chatOpen={conversation?.open}
       />

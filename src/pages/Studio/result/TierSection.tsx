@@ -2,6 +2,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
 import { RecommendationCard } from './RecommendationCard';
+import type { RefineProduct } from './ProductRefinement';
 import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 
 interface TierSectionProps {
@@ -22,6 +23,8 @@ interface TierSectionProps {
   onToggleBasketProduct: (productId: string) => void;
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (itemId: number, newQuantity: number) => void;
+  onRefineProduct?: RefineProduct;
+  busy?: boolean;
 }
 
 export function TierSection({
@@ -41,6 +44,8 @@ export function TierSection({
   onToggleBasketProduct,
   onScrollToAnalysis,
   onUpdateQuantity,
+  onRefineProduct,
+  busy,
 }: TierSectionProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -72,6 +77,8 @@ export function TierSection({
             basketProductIds={basketProductIds}
             onToggleWhy={() => onToggleWhy(group.itemId)}
             onProductClick={onProductClick}
+            onRefineProduct={onRefineProduct}
+            busy={busy}
             onToggleSaved={onToggleSaved}
             onToggleAccepted={() => onToggleAccepted(group.itemId)}
             onToggleBasketProduct={onToggleBasketProduct}

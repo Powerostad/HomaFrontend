@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { UseStudioResultReturn } from './useStudioResult';
+import type { RefineProduct } from './ProductRefinement';
+import type { DiscoveryReview } from '../../RoomRedesign/services/discoveryReview';
 
 /** Both Studio data sources render the same result page. */
 export type StudioResultViewState = Pick<UseStudioResultReturn,
@@ -26,6 +28,7 @@ export interface StudioResultConversation {
   open: boolean;
   compact: boolean;
   onOpen: () => void;
+  onClose?: () => void;
   onExit: () => void;
   panel: ReactNode;
   toolbar: ReactNode;
@@ -36,4 +39,6 @@ export interface StudioResultConversation {
   priceUnknown: boolean;
   onImageError: () => void;
   onPreview: (product: Product) => void;
+  onRefineProduct?: RefineProduct;
+  printReview?: DiscoveryReview;
 }

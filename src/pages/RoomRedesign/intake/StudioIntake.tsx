@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { GOALS, ROOM_TYPES, type HomaIntakePayload } from './intakeTypes';
 import { useIntakeFlow } from './useIntakeFlow';
+import { IntakeGuide } from './IntakeGuide';
 
 /** Photo-first Studio entry. Picking a file never starts a paid request. */
 export function StudioIntake({ onStartAnalysis }: { onStartAnalysis: (payload: HomaIntakePayload) => void }) {
@@ -54,6 +55,7 @@ export function StudioIntake({ onStartAnalysis }: { onStartAnalysis: (payload: H
             </div>
             <div className="studio-photo-guidance"><h3>{t('studioWorkspace.photoTips')}</h3><p>{t('studioWorkspace.photoTipsHint')}</p></div>
           </> : <form className="studio-brief" onSubmit={event => { event.preventDefault(); start(); }}>
+            <IntakeGuide flow={flow} preferences={preferences} update={update} />
             <label htmlFor="studio-brief-note">{t('studioWorkspace.briefLabel')} <span>{t('redesignJourney.optional')}</span></label>
             <Textarea id="studio-brief-note" rows={3} maxLength={2000} value={flow.note} onChange={event => flow.setNote(event.target.value)} placeholder={t('studioWorkspace.briefPlaceholder')} />
             <details className="studio-brief-options"><summary>{t('studioWorkspace.preferences')}</summary>
