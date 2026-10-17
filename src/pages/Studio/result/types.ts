@@ -130,6 +130,8 @@ export interface CategoryGroup {
   impactKnown?: boolean;
   actionType?: string;
   actionGuidance?: string;
+  /** Layout changes are not paid execution services or catalogue products. */
+  actionKind?: 'layout' | 'service';
 }
 
 // --- Session type ---

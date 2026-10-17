@@ -1318,6 +1318,62 @@
   font-size: var(--text-sm);
 }
 
+.studio-action-section {
+  margin-block: var(--space-8);
+}
+
+.studio-action-recommendation {
+  padding-block: var(--space-5);
+  border-bottom: 1px solid var(--color-border-subtle);
+  scroll-margin-top: var(--space-24);
+}
+
+.studio-action-heading h3 {
+  margin-block: var(--space-2) var(--space-3);
+  font-size: var(--text-lg);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.studio-action-recommendation p,
+.studio-action-recommendation li {
+  font-size: var(--text-sm);
+  color: var(--color-content-secondary);
+  line-height: 1.8;
+}
+
+.studio-action-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-content-secondary);
+}
+
+.studio-action-metadata > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.studio-action-metadata svg {
+  flex-shrink: 0;
+}
+
+.studio-action-guidance {
+  margin-block: var(--space-2) var(--space-4);
+}
+
+.studio-shopping-line-name {
+  overflow-wrap: anywhere;
+}
+
+.studio-invoice-editorial button:focus-visible {
+  outline: 2px solid var(--color-interactive-primary);
+  outline-offset: 3px;
+}
+
 .studio-invoice {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);

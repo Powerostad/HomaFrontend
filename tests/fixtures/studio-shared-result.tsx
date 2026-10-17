@@ -15,7 +15,7 @@ import '../../src/styles/globals.css';
 const plan: ExecutionPlan = { purchases: [
   { item_id: 'lamp', category: 'روشنایی', quantity: 1, reason_fa: 'نور گرم کنار مبل، روشنایی فضا را کامل می‌کند.', relation: 'similar', product: { product_id: 7, name: 'چراغ ایستاده با پایهٔ چوبی', price_rial: 24000000, unique_link: 'fixture-lamp', image_url: '/images/studio/preset-warm-living.webp' }, alternatives: [{ product_id: 8, name: 'چراغ جایگزین بدون قیمت', price_rial: null, image_url: '' }] },
   { item_id: 'rug', category: 'فرش', quantity: 1, reason_fa: 'اتصال بخش‌های نشیمن با یک بافت طبیعی.', relation: 'concept', product: null, alternatives: [] },
-], free_actions: [{ instruction_fa: 'مبل را به پنجره نزدیک‌تر کن.', reason_fa: 'استفاده از نور طبیعی' }], surface_actions: [], known_subtotal_rial: 24000000, unknown_cost_item_ids: ['rug'], budget_ceiling_toman: null, budget_status: 'incomplete' };
+], free_actions: [{ instruction_fa: 'مبل را به پنجره نزدیک‌تر کن.', reason_fa: 'استفاده از نور طبیعی' }], surface_actions: [{ change_fa: 'رنگ‌آمیزی دیوار نشیمن با رنگ کرم گرم', target: 'wall' }], known_subtotal_rial: 24000000, unknown_cost_item_ids: ['rug', 'surface:0'], budget_ceiling_toman: null, budget_status: 'incomplete' };
 const original = '/images/studio/example-good.webp';
 const result = '/images/studio/preset-warm-living.webp';
 function Preview() {

@@ -19,7 +19,6 @@ import {
   Phone,
   Puzzle,
   Send,
-  Wallet,
   Wrench,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -185,7 +184,7 @@ export function UnifiedConsultationCTA({
                   {siteValue(item.categoryDisplay)}
                 </span>
               </div>
-              {siteValue(item.designRationaleFa && (
+              {(
                 <span
                   className="flex items-center gap-1 tabular-nums"
                   style={{
@@ -195,10 +194,9 @@ export function UnifiedConsultationCTA({
                     color: 'var(--editorial-taupe)',
                   }}
                 >
-                  <Wallet size={9} strokeWidth={1.5} />
-                  {siteValue(item.designRationaleFa)}
+                  {siteText('هزینه نیازمند استعلام')}
                 </span>
-              ))}
+              )}
             </div>
           )))}
         </div>
@@ -402,7 +400,7 @@ function UnifiedConsultationSheet({
         serviceItems: selectedServices.map(item => ({
           type: item.actionType || siteText("اقدام پیشنهادی"),
           category: item.actionType || item.categoryDisplay,
-          estimate: item.designRationaleFa || ''
+          estimate: '' // Design rationale is not a monetary estimate.
         })),
         sourcingItems: selectedSourcing.map(item => ({
           name: item.name,
@@ -595,15 +593,14 @@ function UnifiedConsultationSheet({
                             · {siteValue(item.actionType || siteText("اقدام پیشنهادی"))}
                           </span>
                         </span>
-                        {siteValue(item.designRationaleFa && (
+                        {(
                           <span className="flex items-center gap-1" style={{
                             fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
                             fontFamily: FONT, color: 'var(--editorial-taupe)',
                           }}>
-                            <Wallet size={10} strokeWidth={1.5} />
-                            {siteValue(item.designRationaleFa)}
+                            {siteText('هزینه نیازمند استعلام')}
                           </span>
-                        ))}
+                        )}
                       </div>
                     )))}
                   </div>

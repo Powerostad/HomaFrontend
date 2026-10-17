@@ -4,6 +4,19 @@ import type { MotherProduct } from './motherDocument';
 import { toStudioCategoryGroups } from './studioResultAdapter';
 
 describe('conversation Studio presentation adapter', () => {
+  it('separates layout improvements, execution services and externally sourced products without inventing costs', () => {
+    const plan: ExecutionPlan = { purchases: [{ item_id: 'rug', quantity: 1, category: 'فرش', reason_fa: 'بافت طبیعی', relation: 'concept', product: null, alternatives: [] }],
+      free_actions: [{ instruction_fa: 'جابه‌جایی مبل', reason_fa: 'باز شدن مسیر' }],
+      surface_actions: [{ change_fa: 'رنگ‌آمیزی دیوار', target: 'wall' }], known_subtotal_rial: 0,
+      budget_ceiling_toman: null, budget_status: 'incomplete', unknown_cost_item_ids: ['rug', 'surface:0'] };
+    const groups = toStudioCategoryGroups(plan);
+    expect(groups.map(group => group.itemId)).toEqual([1, 2, 3]);
+    expect(groups[0].actionStatus).toBe('custom_order');
+    expect(groups[1]).toMatchObject({ actionKind: 'layout', interventionTier: 'enhancement' });
+    expect(groups[2]).toMatchObject({ actionKind: 'service', actionStatus: 'architectural', interventionTier: 'structural' });
+    expect(groups.every(group => !group.products.length)).toBe(true);
+    expect(plan.surface_actions[0].target).toBe('wall');
+  });
   it('uses the mother contract 1–10 impact scale and keeps search diagnostics out of product copy', () => {
     const plan: ExecutionPlan = { purchases: [2, 5, 8].map((impact, index) => ({
       item_id: `item-${index}`, quantity: 1, category: 'lighting', reason_fa: 'Design reason', relation: 'similar',

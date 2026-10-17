@@ -494,7 +494,7 @@ export interface ExecutionPlan {
   purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
   studio_documents?: Record<string, StudioMotherDocument>;
   free_actions: { instruction_fa: string; reason_fa: string }[];
-  surface_actions: { change_fa: string }[];
+  surface_actions: { change_fa: string; target?: string }[];
   known_subtotal_rial: number;
   budget_ceiling_toman: number | null;
   budget_status: string;

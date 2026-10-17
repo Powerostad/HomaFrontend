@@ -442,10 +442,10 @@ export function useStudioResult(): UseStudioResultReturn {
     return tiers.filter(tg => tg.items.length > 0);
   }, [categoryGroups]);
 
-  // Completion checklist: items with NO matched products (non-purchasable actions)
+  // External sourcing only; execution services have their own consultation path.
   // Derived from categoryGroups to avoid duplicating mapping logic
   const completionChecklistItems = useMemo<CategoryGroup[]>(() => {
-    return categoryGroups.filter(g => g.products.length === 0);
+    return categoryGroups.filter(g => g.actionStatus === 'custom_order');
   }, [categoryGroups]);
 
   // Flat product list (backward compat for context bar, etc.)

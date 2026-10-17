@@ -7,6 +7,7 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
 import { CollectionSummary } from './result/CollectionSummary';
+import { ActionRecommendationCard } from './result/ActionRecommendationCard';
 import { CompletionChecklist } from './result/CompletionChecklist';
 import type { DiagnosisAction } from './result/DiagnosisActionCard';
 import { DownloadReadyModal } from './result/DownloadReadyModal';
@@ -63,7 +64,10 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
 
   const tierStepOffsets: number[] = [];
   let runningStep = 0;
-  for (const { items } of state.tierGroups) {
+  const productTierGroups = state.tierGroups.map(group => ({ ...group, items: group.items.filter(item => item.actionStatus === 'available') })).filter(group => group.items.length > 0);
+  const layoutItems = state.categoryGroups.filter(group => group.actionKind === 'layout');
+  const serviceItems = state.categoryGroups.filter(group => group.actionStatus === 'architectural' && group.actionKind !== 'layout');
+  for (const { items } of productTierGroups) {
     tierStepOffsets.push(runningStep);
     runningStep += items.length;
   }
@@ -72,7 +76,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
     (group) => group.actionStatus === 'available' && group.products.length > 0,
   ).length;
 
-  const checklistItems: CompletionChecklistItem[] = state.completionChecklistItems.map((group) => ({
+  const checklistItems: CompletionChecklistItem[] = state.completionChecklistItems.filter(group => group.actionStatus === 'custom_order').map((group) => ({
     id: group.itemId,
     name: group.categoryDisplay,
     category: group.category,
@@ -278,7 +282,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               <span className="studio-count-badge">{siteValue(state.categoryGroups.length)} {t('studio.result.v2.changeCount', 'تغییر')}</span>
             </div>
 
-            {siteValue(state.tierGroups.map(({ tier, items }, tierIndex) => (
+            {siteValue(productTierGroups.map(({ tier, items }, tierIndex) => (
               <TierSection
                 key={tier}
                 tier={tier}
@@ -301,7 +305,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               />
             )))}
 
-            {siteValue(state.tierGroups.length === 0 && (
+            {siteValue(state.categoryGroups.length === 0 && (
               <div className="studio-empty-state">
                 <p>{t('studio.result.v2.noRecommendations', 'هنوز پیشنهادی برای این جلسه آماده نشده است.')}</p>
               </div>
@@ -313,10 +317,16 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               onToggleItem={state.toggleChecklistItem}
             />
 
+            {[
+              { key: 'layout', title: 'بهبود چیدمان', items: layoutItems },
+              { key: 'services', title: 'خدمات اجرایی و تغییرات کالبدی', items: serviceItems },
+            ].map(section => section.items.length > 0 && <section key={section.key} className="studio-action-section" aria-labelledby={`studio-${section.key}-title`}>
+              <div className="studio-tier-heading"><h3 id={`studio-${section.key}-title`}>{siteValue(section.title)}</h3><span>{siteValue(section.items.length)}</span></div>
+              {section.items.map(group => <ActionRecommendationCard key={group.itemId} group={group} selected={state.acceptedItems.has(group.itemId)} onToggle={() => state.toggleAcceptedItem(group.itemId)} />)}
+            </section>)}
+
             <UnifiedConsultationCTA
-              serviceItems={state.categoryGroups.filter(
-                (group) => group.actionStatus === 'custom_order' || group.actionStatus === 'architectural',
-              )}
+              serviceItems={serviceItems}
               acceptedServiceIds={state.acceptedItems}
               sourcingItems={checklistItems}
               checkedSourcingIds={state.checklistCheckedIds}

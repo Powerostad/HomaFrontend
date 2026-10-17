@@ -36,12 +36,13 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
       actionGuidance: mother?.why_needed || item.reason_fa,
     };
   });
-  const actions: CategoryGroup[] = [...plan.free_actions.map(action => ({ reason: action.reason_fa, instruction: action.instruction_fa })),
-    ...plan.surface_actions.map(action => ({ reason: '', instruction: action.change_fa }))].map((action, index) => ({
+  const actions: CategoryGroup[] = [...plan.free_actions.map(action => ({ reason: action.reason_fa, instruction: action.instruction_fa, kind: 'layout' as const })),
+    ...plan.surface_actions.map(action => ({ reason: '', instruction: action.change_fa, kind: 'service' as const }))].map((action, index) => ({
     itemId: purchases.length + index + 1, category: 'action', categoryDisplay: action.instruction,
     recommendationReasonFa: action.reason, designRationaleFa: action.instruction,
     recommendedSize: '', quantity: 1, placements: [], positionInImage: null, products: [],
-    actionStatus: 'architectural', interventionTier: 'enhancement', impactLevel: 'low', impactKnown: false,
+    actionStatus: 'architectural', interventionTier: action.kind === 'service' ? 'structural' : 'enhancement', impactLevel: 'low', impactKnown: false,
+    actionKind: action.kind,
     actionGuidance: action.instruction,
   }));
   return [...purchases, ...actions];
