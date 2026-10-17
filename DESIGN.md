@@ -150,6 +150,22 @@ Design priorities, in order:
 4. Reuse shared tokens and primitives before introducing local styling.
 5. Prefer clarity and speed over ornamental effects.
 
+### Studio discovery and progressive disclosure
+
+Before the first result, show real findings as soon as the saved analysis is
+available. Keep the original room photo visible, present one observation and
+its linked proposed change at a time, and let the user move back or skip the
+review. Long explanations belong behind disclosure. Never fabricate a finding,
+certainty score, user message, or artificial processing delay to fill this flow.
+
+Image generation and product preparation continue during the review. A ready
+result must be available immediately without requiring every finding to be read;
+do not interrupt someone still reading. On the connected result page, show one
+task section at a time: suggestions, analysis, or basket. Preserve the product,
+service, sourcing, and invoice distinctions inside those sections. Optional
+conversation must retain explicit user authorship. Reuse the saved mother
+document for display rather than making another model call for narration.
+
 ## Colors
 
 Use semantic roles rather than choosing colors by appearance.

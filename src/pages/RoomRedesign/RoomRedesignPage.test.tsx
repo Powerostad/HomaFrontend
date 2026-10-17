@@ -13,22 +13,23 @@ vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>P
 vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
 vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal }: { resultImage: string; showOriginal: boolean }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}>Original hero</div>, MobileHeroSection: () => null }));
 vi.mock('../Studio/components/ProductDetailSheet', () => ({ ProductDetailSheet: ({ onPreview }: { onPreview?: () => void }) => <div><button onClick={onPreview}>Preview lamp</button></div> }));
-vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl' }), siteText: (value: string) => value }));
+vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }), siteText: (value: string) => value }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
-const testState = vi.hoisted(() => ({ failed: false, send: vi.fn(async () => true) }));
+const testState = vi.hoisted(() => ({ failed: false, processing: false, send: vi.fn(async () => true) }));
 const fixturePlan = vi.hoisted((): ExecutionPlan => ({ purchases: [{ item_id: 'lamp', category: 'Lighting', quantity: 1, reason_fa: 'Canonical report', relation: 'similar', alternatives: [], product: { product_id: 7, name: 'Lamp', price_rial: 100000, image_url: '', unique_link: 'lamp' } }], free_actions: [], surface_actions: [], known_subtotal_rial: 100000, unknown_cost_item_ids: [], budget_ceiling_toman: null, budget_status: 'complete' }));
 vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: 'saved', messages: [], chipGroups: [],
-  versions: testState.failed ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
+  versions: testState.failed || testState.processing ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
   currentExecution: fixturePlan,
-  originalImage: 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: false,
+  originalImage: 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: testState.processing,
   error: testState.failed ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: testState.send, selectChip: vi.fn() }) }));
 
 async function mount() {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const container = document.createElement('div'); document.body.append(container);
   const root = createRoot(container);
-  await act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
-  return { container, cleanup: async () => { await act(async () => root.unmount()); container.remove(); } };
+  const render = async () => act(async () => root.render(<MemoryRouter initialEntries={['/studio/chat/saved']}><Routes><Route path="/studio/chat/:sessionId" element={<RoomRedesignPage />} /></Routes></MemoryRouter>));
+  await render();
+  return { container, render, cleanup: async () => { await act(async () => root.unmount()); container.remove(); } };
 }
 
 describe('original Studio result flow with conversation', () => {
@@ -48,7 +49,7 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.studio-invoice')?.textContent).toContain('هنوز محصولی انتخاب نکردید');
     } finally { await ui.cleanup(); fixturePlan.free_actions = []; fixturePlan.surface_actions = []; }
   });
-  beforeEach(() => { sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); });
+  beforeEach(() => { testState.failed = false; testState.processing = false; testState.send.mockClear(); sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }); vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
   it('preserves the generated image behind the original-image comparison', async () => {
     const ui = await mount();
     try {
@@ -62,12 +63,29 @@ describe('original Studio result flow with conversation', () => {
     try {
       expect(ui.container.textContent).toContain('Canonical report');
       expect(ui.container.textContent).toContain('Image failed');
-      expect(ui.container.querySelector('.studio-impact-card')).not.toBeNull();
+      await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'دیدن پیشنهادهای آماده')!.click());
+      expect(ui.container.querySelector('.studio-impact-card')).toBeNull();
       expect(ui.container.querySelector('.studio-tier-section')).not.toBeNull();
       expect(ui.container.querySelector('.studio-invoice')).not.toBeNull();
       expect(ui.container.querySelector('.studio-flow-content')).toBeNull();
       expect(document.querySelector('[role=dialog]')).toBeNull();
     } finally { await ui.cleanup(); testState.failed = false; }
+  });
+  it('reviews a first analysis during rendering and does not jump away when the image arrives', async () => {
+    testState.processing = true;
+    const ui = await mount();
+    try {
+      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-invoice')).toBeNull();
+      testState.processing = false;
+      await ui.render();
+      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
+      await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'دیدن تصویر و پیشنهادها')!.click());
+      expect(ui.container.querySelector('#section-products')?.hasAttribute('hidden')).toBe(false);
+      expect(ui.container.querySelector('#section-analysis')?.hasAttribute('hidden')).toBe(true);
+      expect(ui.container.querySelector('#section-basket')?.hasAttribute('hidden')).toBe(true);
+      expect(testState.send).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
   });
   it('opens one drawer, preserves an unsent draft, and closes without sending', async () => {
     testState.send.mockClear();
@@ -86,6 +104,17 @@ describe('original Studio result flow with conversation', () => {
       await act(async () => trigger.click());
       expect(document.querySelector<HTMLTextAreaElement>('#studio-message')!.value).toBe('Unsent draft');
       expect(testState.send).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('opens a linked recommendation from the separate analysis view', async () => {
+    const ui = await mount();
+    try {
+      const analysis = Array.from(ui.container.querySelectorAll<HTMLButtonElement>('.studio-summary-nav button')).find(button => button.textContent === 'studio.result.v2.phase.analysis')!;
+      await act(async () => analysis.click());
+      expect(ui.container.querySelector('#section-products')?.hasAttribute('hidden')).toBe(true);
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-diagnosis-action button')!.click());
+      expect(ui.container.querySelector('#section-products')?.hasAttribute('hidden')).toBe(false);
+      expect(ui.container.querySelector('#section-analysis')?.hasAttribute('hidden')).toBe(true);
     } finally { await ui.cleanup(); }
   });
   it('only an explicit preview sends the selected item/product, without fabricated text', async () => {

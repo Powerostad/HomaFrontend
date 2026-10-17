@@ -10,6 +10,7 @@ import { ExecutionPanel } from './components/ExecutionPanel';
 import { PerformancePanel } from './components/PerformancePanel';
 import { SessionDiagnostics } from './components/SessionDiagnostics';
 import { StudioConversationDrawer } from './components/StudioConversationDrawer';
+import { StudioDiscovery } from './components/StudioDiscovery';
 import { useConversationStudioResult } from './hooks/useConversationStudioResult';
 import { useRedesignChat } from './hooks/useRedesignChat';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -81,6 +82,8 @@ export function RoomRedesignPage() {
   const [intake, setIntake] = useState<HomaIntakePayload | null>(null);
   const [input, setInput] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
+  const [reviewActive, setReviewActive] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const lastVersion = useRef<string | null>(null);
   const refreshedVersion = useRef<string | null>(null);
@@ -90,6 +93,9 @@ export function RoomRedesignPage() {
   const report = selected || chat.versions.find(version => version.version_id === lastVersion.current) || chat.versions[chat.versions.length - 1];
   const plan = selected?.execution || chat.currentExecution || report?.execution || null;
   const original = chat.originalImage || intake?.image.dataUrl || null;
+  useEffect(() => {
+    if (!chat.hydrating && !reviewDismissed && !chat.versions.length && (chat.busy || chat.currentExecution || chat.error)) setReviewActive(true);
+  }, [chat.hydrating, chat.busy, chat.currentExecution, chat.error, chat.versions.length, reviewDismissed]);
   useEffect(() => setImageFailed(false), [selected?.image_url, original]);
   useEffect(() => { if (chat.sessionId && !path) navigate(`/studio/chat/${chat.sessionId}`, { replace: true }); }, [chat.sessionId, path, navigate]);
   useEffect(() => {
@@ -102,10 +108,10 @@ export function RoomRedesignPage() {
   }, [intake, path, chat.sendTurn]);
   const previousPath = useRef(path);
   useEffect(() => {
-    if (previousPath.current && previousPath.current !== path) { setInput(''); setChatOpen(false); lastVersion.current = null; refreshedVersion.current = null; }
+    if (previousPath.current && previousPath.current !== path) { setInput(''); setChatOpen(false); setReviewActive(false); setReviewDismissed(false); lastVersion.current = null; refreshedVersion.current = null; }
     previousPath.current = path;
   }, [path]);
-  const fresh = () => { setIntake(null); seeded.current = false; setInput(''); setChatOpen(false); navigate('/studio'); };
+  const fresh = () => { setIntake(null); seeded.current = false; setInput(''); setChatOpen(false); setReviewActive(false); setReviewDismissed(false); navigate('/studio'); };
   const sendMessage = () => {
     const draft = input.trim();
     if (!draft || chat.busy) return;
@@ -115,7 +121,16 @@ export function RoomRedesignPage() {
   if (chat.hydrating || chat.unavailable) return <div className="studio-result-page" dir={i18n.dir()}><Header /><main className="studio-archive-page"><div className="studio-page-state" role={chat.unavailable ? 'alert' : 'status'}>
     {chat.unavailable ? <><h1>{t('studioChat.unavailableTitle')}</h1><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></> : <><Loader2 className="studio-spinner" /><p>{t('studioChat.loading')}</p></>}
   </div></main></div>;
-  if (!path && !intake) return <StudioIntake onStartAnalysis={setIntake} />;
+  if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
+  const discovering = !reviewDismissed && (reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
+  if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} originalImage={original}
+    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url}
+    onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
+    onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+    panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
+      messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
+      busy={chat.busy} failed={!!chat.error} statusText={chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking')}
+      value={input} onChange={setInput} onSend={sendMessage} />} />;
   return <>
     <ConversationResult key={`${chat.sessionId || path || 'new'}:${report?.version_id || 'analysis'}`} chat={chat} plan={plan}
       versionId={report?.version_id || 'analysis'} resultImage={report?.image_url || original || ''} originalImage={original}

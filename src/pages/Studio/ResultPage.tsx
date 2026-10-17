@@ -37,7 +37,7 @@ export function StudioResultPage() {
 export function StudioResultView({ state, conversation }: { state: StudioResultViewState; conversation?: StudioResultConversation }) {
   const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
-  const [activePhase, setActivePhase] = useState<Phase>('analysis');
+  const [activePhase, setActivePhase] = useState<Phase>(conversation ? 'recommendations' : 'analysis');
   const [isBasketVisible, setIsBasketVisible] = useState(false);
   const basketSectionRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +85,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
   }));
 
   useEffect(() => {
+    if (conversation) return;
     const updateScrollState = () => {
       const basket = basketSectionRef.current;
       if (!basket) return;
@@ -110,7 +111,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
       window.removeEventListener('scroll', updateScrollState);
       window.removeEventListener('resize', updateScrollState);
     };
-  }, [state.isInitialized, state.categoryGroups.length]);
+  }, [state.isInitialized, state.categoryGroups.length, conversation]);
 
   const handlePhaseClick = useCallback((phase: Phase) => {
     setActivePhase(phase);
@@ -119,15 +120,15 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
       session_id: state.sessionId || state.activeSessionId || '',
       phase,
     });
-    document.getElementById(`section-${phase === 'recommendations' ? 'products' : phase}`)?.scrollIntoView({
+    requestAnimationFrame(() => document.getElementById(`section-${phase === 'recommendations' ? 'products' : phase}`)?.scrollIntoView({
       behavior: 'instant',
       block: 'start',
-    });
+    }));
   }, [state.activeSessionId, state.sessionId]);
 
   const handleMarkerClick = useCallback((itemId: number) => {
     setActivePhase('recommendations');
-    state.handleImageMarkerClick(itemId);
+    requestAnimationFrame(() => state.handleImageMarkerClick(itemId));
   }, [state.handleImageMarkerClick]);
 
   const markers = useMemo(
@@ -186,9 +187,9 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
                 {siteValue(state.projectName || t('studio.result.v2.roomFallback', 'فضای شما'))}
                 {siteValue(state.targetStyle && <span className="studio-result-heading-style">، {siteValue(state.targetStyle)}</span>)}
               </h1>
-              <p className="studio-result-heading-description">
+              {!conversation && <p className="studio-result-heading-description">
                 {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
-              </p>
+              </p>}
             </div>
             <div className="studio-result-heading-actions" aria-label={t('studio.result.v2.actions', 'اقدامات نتیجه')}>
               {conversation && <button type="button" className="studio-icon-button" onClick={conversation.onOpen} aria-label={t('studioChat.chat', 'گفتگو با هما')} aria-expanded={conversation.open}><MessageSquare size={18} /></button>}
@@ -217,7 +218,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
 
           {conversation && <><div className="studio-result-conversation-tools">{conversation.toolbar}</div>{conversation.status}</>}
 
-          <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title">
+          <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={!!conversation && activePhase !== 'analysis'}>
             <h2 id="analysis-title" className="sr-only">
               {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
             </h2>
@@ -241,13 +242,13 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               </div>
             ))}
 
-            <ImpactProgressCard
+            {(!conversation || state.harmonyScore != null) && <ImpactProgressCard
               currentScore={state.harmonyScore}
               liveProjectedScore={state.liveProjectedScore}
               maxProjectedScore={state.projectedScore}
               acceptedCount={state.acceptedItems.size}
               totalCount={state.categoryGroups.length}
-            />
+            />}
 
             <SpatialDiagnosis
               harmonyScore={state.harmonyScore}
@@ -266,18 +267,18 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
                 dominantSurfaces: '',
               }}
               diagnosisActions={diagnosisActions}
-              onScrollToStep={state.scrollToCard}
+              onScrollToStep={handleMarkerClick}
               onNavigateToRecommendations={() => handlePhaseClick('recommendations')}
               detailsContent={conversation?.details}
               priceUnknown={conversation?.priceUnknown}
             />
           </section>
 
-          <section id="section-products" className="studio-result-section" aria-labelledby="products-title">
+          <section id="section-products" className="studio-result-section" aria-labelledby="products-title" hidden={!!conversation && activePhase !== 'recommendations'}>
             <div className="studio-section-heading">
               <div>
                 <p className="studio-result-eyebrow">{t('studio.result.v2.phase.recommendations', 'پیشنهادها')}</p>
-                <h2 id="products-title">{t('studio.result.v2.recommendationsTitle', 'سه تغییر برای شروع')}</h2>
+                <h2 id="products-title">{conversation ? siteValue('پیشنهادهای هما برای فضای شما') : t('studio.result.v2.recommendationsTitle', 'سه تغییر برای شروع')}</h2>
               </div>
               <span className="studio-count-badge">{siteValue(state.categoryGroups.length)} {t('studio.result.v2.changeCount', 'تغییر')}</span>
             </div>
@@ -333,7 +334,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
             />
           </section>
 
-          <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section">
+          <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section" hidden={!!conversation && activePhase !== 'basket'}>
             <InvoiceSummary
               categoryGroups={state.categoryGroups}
               acceptedItems={state.acceptedItems}
@@ -352,7 +353,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               {!conversation && <InlineFeedbackWidget flow="studio" sessionId={state.activeSessionId || state.sessionId} />}
             </div>
           </div>
-          {conversation?.afterReport}
+          {activePhase === 'analysis' && conversation?.afterReport}
           </div>
         </section>
       </main>
@@ -364,7 +365,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
         selectedCount={state.selectedCount}
         totalCount={purchasableCount}
         totalRecommendations={state.categoryGroups.length}
-        isAtBasket={isBasketVisible}
+        isAtBasket={conversation ? activePhase === 'basket' : isBasketVisible}
         onOpenChat={conversation?.onOpen}
         chatOpen={conversation?.open}
       />
