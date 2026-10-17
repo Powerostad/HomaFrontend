@@ -161,6 +161,13 @@ Only one of recommendations, analysis, basket or conversation is active at a
 time. Optional guided intake edits the existing draft and never starts analysis
 or fabricates a user message when a step is skipped.
 
+Studio product recommendations use compact horizontal cards: complete product
+image, identity, price, short reason, and explicit basket, swap and detail actions.
+Alternatives and product-specific feedback open inline. Below 1200px the room
+photo precedes the content and only the fixed bottom task navigation is visible;
+desktop retains its image/sidebar layout and top task navigation. Keep bottom
+navigation fixed on the basket tab too, with safe-area and content clearance.
+
 The connected Studio ends with one collapsed report for performance, prompts and
 costs, available regardless of the active result section. Show measured timing
 separately from reconciled billing; unknown costs must never imply zero. Keep

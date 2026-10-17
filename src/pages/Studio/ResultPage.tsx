@@ -2,7 +2,8 @@ import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { Bookmark, Download as DownloadIcon, Loader2, MessageSquare } from 'lucide-react';
+import { Bookmark, Download as DownloadIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ProductDetailSheet } from './components/ProductDetailSheet';
@@ -21,6 +22,7 @@ import { StudioPrintReport } from './result/StudioPrintReport';
 import { CurrentLook } from './result/CurrentLook';
 import './result/studio-result.css';
 import './result/studio-workspace.css';
+import './result/studio-product-layout.css';
 import { TierSection } from './result/TierSection';
 import type { CompletionChecklistItem } from './result/types';
 import { useSimpleTranslation } from './result/types';
@@ -41,6 +43,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
   const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [activePhase, setActivePhase] = useState<Phase>('recommendations');
+  const [updateDismissed, setUpdateDismissed] = useState(false);
   const basketSectionRef = useRef<HTMLDivElement>(null);
 
   const diagnosisActions = useMemo<DiagnosisAction[]>(
@@ -146,6 +149,10 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
           <DesktopHeroPanel {...heroProps} />
           <MobileHeroSection {...heroProps} />
           <CurrentLook state={state} />
+          {conversation && !updateDismissed && <div className="studio-mobile-update" dir={siteDirection()}>
+            <div><strong><Sparkles size={18} aria-hidden="true" />{t('studioProductLayout.updateTitle', 'این چیدمان را به‌روزرسانی کنیم؟')}</strong><p>{t('studioProductLayout.updateHint', 'برای تغییر محصولات یا سبک فضا، با هما گفتگو کنید.')}</p></div>
+            <div className="studio-mobile-update-actions"><Button onClick={conversation.onOpen}>{t('studioProductLayout.yes', 'بله')}</Button><Button variant="outline" onClick={() => setUpdateDismissed(true)}>{t('studioProductLayout.no', 'خیر')}</Button></div>
+          </div>}
         </section>
 
         <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>

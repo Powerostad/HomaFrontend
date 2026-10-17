@@ -1,6 +1,6 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import { MessageSquare, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, MessageSquare, ShoppingBag, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,10 +32,10 @@ export function CollectionSummary({
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const summaryRef = useRef<HTMLElement>(null);
-  const tabs: { id: Phase; label: string }[] = [
-    { id: 'analysis', label: t('studio.result.v2.phase.analysis', 'تحلیل فضا') },
-    { id: 'recommendations', label: t('studio.result.v2.phase.recommendations', 'پیشنهادها') },
-    { id: 'basket', label: t('studio.result.v2.phase.basket', 'سبد خرید') },
+  const tabs = [
+    { id: 'analysis' as const, icon: LayoutGrid, label: t('studio.result.v2.phase.analysis', 'تحلیل فضا') },
+    { id: 'recommendations' as const, icon: Sparkles, label: t('studio.result.v2.phase.recommendations', 'پیشنهادها') },
+    { id: 'basket' as const, icon: ShoppingBag, label: t('studio.result.v2.phase.basket', 'سبد خرید') },
   ];
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export function CollectionSummary({
               aria-current={tab.id === activePhase ? 'step' : undefined}
               className={tab.id === activePhase ? 'is-active' : ''}
             >
-              {siteValue(tab.label)}
+              <tab.icon size={21} aria-hidden="true" />{siteValue(tab.label)}
             </button>
           )))}
         </nav>

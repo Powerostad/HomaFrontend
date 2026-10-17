@@ -20,7 +20,7 @@ describe('Studio product and alternative presentation', () => {
     const onOpen = vi.fn(); const onToggle = vi.fn(); const onQuantity = vi.fn(); const onWhy = vi.fn();
     try {
       await act(async () => root.render(<RecommendationCard group={group} tier="quick_win" isTopPriority priorityRank={1}
-        isWhyExpanded={false} isSaved={false} basketProductIds={new Set(['1'])} onToggleWhy={onWhy}
+        isWhyExpanded={false} isSaved={false} basketProductIds={new Set(['0', '1'])} onToggleWhy={onWhy}
         onProductClick={onOpen} onToggleSaved={vi.fn()} onToggleBasketProduct={onToggle} onUpdateQuantity={onQuantity} />));
       expect(container.querySelectorAll('.studio-product-preview')).toHaveLength(4);
       expect(container.querySelectorAll('.is-primary')).toHaveLength(1);
@@ -39,8 +39,8 @@ describe('Studio product and alternative presentation', () => {
       expect(container.querySelector('.studio-recommendation > .studio-alternatives')).not.toBeNull();
       expect(container.querySelectorAll('.studio-recommendation-fact')).toHaveLength(3);
       expect(container.querySelector('.is-primary .studio-product-copy .studio-quantity-control')).not.toBeNull();
-      expect(container.querySelector('.is-primary > .studio-product-select')).not.toBeNull();
-      expect(container.querySelector('.studio-recommendation-header .studio-why-button')).not.toBeNull();
+      expect(container.querySelector('.is-primary .studio-product-row-actions .studio-product-select')).not.toBeNull();
+      expect(container.querySelector('.is-primary .studio-why-button')).not.toBeNull();
       expect(container.querySelector<HTMLElement>('.studio-recommendation-detail')!.hidden).toBe(true);
       const toggles = Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-select'));
       expect(toggles[1].getAttribute('aria-pressed')).toBe('true');
