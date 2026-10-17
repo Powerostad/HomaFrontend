@@ -2,7 +2,7 @@
 # This immutable tag ignores legacy HOMA_IMAGE_TAG from the environment.
 services:
   openai-frontend:
-    image: homa_openai_frontend:prebuilt-1d8c718
+    image: homa_openai_frontend:prebuilt-50beafb
     pull_policy: never
     restart: unless-stopped
     expose: ["80"]
