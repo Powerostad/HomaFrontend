@@ -175,7 +175,10 @@ and selection sheets. External sourcing choices default to collapsed and never
 show an error-image placeholder for a missing catalog image.
 Alternatives and product-specific feedback open inline. Below 1200px the room
 photo precedes the content and only the fixed bottom task navigation is visible;
-desktop retains its image/sidebar layout and top task navigation. Keep bottom
+desktop retains its image/sidebar layout and top task navigation. Above 1200px,
+the task sidebar is clamped to 440–560px (34vw preferred), rather than stretching
+to almost half of a wide monitor. The room image uses the remaining width.
+Keep bottom
 navigation fixed on the basket tab too, with safe-area and content clearance.
 
 The connected Studio ends with one collapsed report for performance, prompts and
@@ -193,6 +196,14 @@ in the customer report. Preserve full product imagery and mark missing images
 and unknown prices explicitly; the report is not an invoice or a fresh quote.
 
 Before the first result, show real findings as soon as the saved analysis is
+available. Initial analysis reuses the original Studio `ProgressScreen` with
+the uploaded room as a blurred background, the segmented journey, and live
+service status. Live mode disables timed diagnostic claims and estimates. Do
+not show educational cards or review steps until the initial analysis arrives.
+After analysis, retain the interactive one-finding review. Never use
+timer-driven completion percentages or diagnostic claims. Stop loading motion
+on failure and respect reduced-motion preferences. Alternatives show up to ten
+actual returned products, not duplicated placeholders. Analysis becomes
 available. Keep the original room photo visible, present one observation and
 its linked proposed change at a time, and let the user move back or skip the
 review. Long explanations belong behind disclosure. Never fabricate a finding,

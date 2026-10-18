@@ -7,7 +7,7 @@ import type { ExecutionPlan } from '../services/redesignChatService';
 
 vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
 vi.mock('@/components/figma/AuthenticatedImage', () => ({ AuthenticatedImage: (props: { src: string; alt: string }) => <img {...props} /> }));
-vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (value: string) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }) }));
+vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (value: string) => value, siteValue: (value: unknown) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }) }));
 const source: ExecutionPlan = { purchases: [], free_actions: [
   { reason_fa: 'نور طبیعی فضا مناسب است.', instruction_fa: 'صندلی را نزدیک پنجره بگذار.' },
   { reason_fa: 'مسیر رفت‌وآمد باریک است.', instruction_fa: 'میز را از مسیر ورودی کنار ببر.' },
@@ -28,7 +28,19 @@ beforeEach(() => { vi.stubGlobal('requestAnimationFrame', (callback: () => void)
 describe('one-finding discovery', () => {
   it('shows no invented findings before the saved analysis arrives', async () => {
     const ui = await mount({ plan: null });
-    try { expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull(); expect(ui.props.onComplete).not.toHaveBeenCalled(); }
+    try {
+      expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull();
+      expect(ui.container.querySelector('.studio-initial-loading[aria-busy=true]')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-original-loader')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-tip, .studio-discovery-steps')).toBeNull();
+      expect(ui.container.querySelector('[role=progressbar]')).toBeNull();
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      await ui.render({ stage: 'مرحلهٔ واقعی سرویس', plan: null });
+      expect(ui.container.querySelector('[role=status]')?.textContent).toBe('مرحلهٔ واقعی سرویس');
+      await ui.render({ plan: source });
+      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
+    }
     finally { await ui.cleanup(); }
   });
   it('only shows the current finding and allows back navigation without sending anything', async () => {

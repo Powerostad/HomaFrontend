@@ -13,6 +13,14 @@ const group: CategoryGroup = { itemId: 2, category: 'rug', categoryDisplay: 'Rug
   products: Array.from({ length: 4 }, (_, index) => ({ id: String(index), name: `Product ${index}`, category: 'rug', image: '', price: index * 10000, uniqueLink: index === 2 ? undefined : `link-${index}`, priceUnknown: index === 2 })) };
 
 describe('Studio product and alternative presentation', () => {
+  it('shows up to ten alternatives instead of two', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div'); const root = createRoot(container);
+    try {
+      await act(async () => root.render(<RecommendationCard group={{ ...group, products: Array.from({length: 13}, (_, i) => ({...group.products[0], id: String(i)})) }} tier="quick_win" isTopPriority={false} priorityRank={1} isWhyExpanded={false} isSaved={false} basketProductIds={new Set()} onToggleWhy={vi.fn()} onProductClick={vi.fn()} onToggleSaved={vi.fn()} onToggleBasketProduct={vi.fn()} />));
+      expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(10);
+    } finally { await act(async () => root.unmount()); }
+  });
   it('discloses all alternatives locally and never changes selection merely by opening them', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div');

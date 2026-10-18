@@ -134,7 +134,7 @@ export function RecommendationCard({
   const { t } = useTranslation();
   const [alternativesOpen, setAlternativesOpen] = useState(false);
   const heroProduct = group.products[0] || null;
-  const alternatives = group.products.slice(1);
+  const alternatives = group.products.slice(1, 11);
   const isActionItem = group.actionStatus !== 'available' || !heroProduct;
   const problem = group.recommendationReasonFa;
   const solution = group.designRationaleFa;

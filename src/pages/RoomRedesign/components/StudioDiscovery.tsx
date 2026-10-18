@@ -8,6 +8,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { ExecutionPlan } from '../services/redesignChatService';
 import { buildDiscoveryReview, type DiscoveryTrack } from '../services/discoveryReview';
 import '../discovery.css';
+import { DiscoveryLoading } from './DiscoveryLoading';
+import { InitialAnalysisLoading } from './InitialAnalysisLoading';
 
 const trackLabels: Record<DiscoveryTrack, string> = {
   layout: 'چیدمان و تناسب', harmony: 'هماهنگی فضا', function: 'کارکرد روزمره', surfaces: 'نور و سطوح', idea: 'ایدهٔ تغییر',
@@ -22,9 +24,10 @@ function FindingText({ value, className = '' }: { value: string; className?: str
   </div>;
 }
 
-export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel }: {
+export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel, stage }: {
   plan: ExecutionPlan | null; originalImage: string | null; sessionId: string | null; busy: boolean; error: string | null;
   resultAvailable: boolean;
+  stage?: string | null;
   onRetry: () => void; onComplete: () => void; onNew: () => void; onDiscuss: () => void; panel?: ReactNode;
 }) {
   const { siteText: copy, siteDirection, siteLocale } = useSiteTranslation();
@@ -68,6 +71,13 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
     requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
   };
 
+  if (!plan && busy && !error) return <div className="studio-discovery-page studio-discovery-initial" dir={siteDirection()}>
+    <Header />
+    <main className="studio-initial-main"><InitialAnalysisLoading image={originalImage} stage={stage} />
+      {panel && <div className="studio-initial-preview-controls">{panel}</div>}
+    </main>
+  </div>;
+
   return <div className="studio-discovery-page" dir={siteDirection()}>
     <Header />
     <main className="studio-discovery-main">
@@ -80,13 +90,14 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
       <div className="studio-discovery-layout">
         <figure className="studio-discovery-photo">
           {originalImage ? <AuthenticatedImage src={originalImage} alt={copy('عکس اصلی فضای شما')} /> : <div className="studio-discovery-photo-empty"><ImageIcon size={32} aria-hidden="true" /><p>{copy('تصویر فضای شما')}</p></div>}
+          {busy && !error && <div className="studio-discovery-photo-scan" aria-hidden="true" />}
           <figcaption>{copy('فضای شما')}<small>{copy('همهٔ پیشنهادها از همین عکس شروع می‌شوند.')}</small></figcaption>
         </figure>
         <section className="studio-discovery-content" aria-label={copy('برداشت هما از فضا')}>
-          <div className="studio-discovery-status" role="status">
+          {(!!plan || !busy || !!error) && <div className="studio-discovery-status" role="status">
             {busy ? <Loader2 size={16} className="studio-spinner" aria-hidden="true" /> : error ? <ImageIcon size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
             <span>{copy(error ? 'این مرحله به بررسی نیاز دارد.' : !plan ? 'در حال بررسی فضای شما…' : ready ? 'نتیجه آماده است؛ هر وقت خواستی آن را باز کن.' : completeAvailable ? 'پیشنهادها آماده‌اند؛ تصویر تازه‌ای ثبت نشده است.' : 'تصویر و پیشنهادها در حال آماده‌شدن‌اند.')}</span>
-          </div>
+          </div>}
           {error && <div className="studio-flow-error" role="alert"><p>{error}</p><Button variant="outline" disabled={busy} onClick={onRetry}>{copy('تلاش دوباره')}</Button>{plan && <Button disabled={busy} onClick={complete}>{copy('دیدن پیشنهادهای آماده')}</Button>}</div>}
           {!plan ? <div className="studio-discovery-pending">
             <span className="studio-discovery-kicker">{copy('یک نگاه تازه به فضای شما')}</span>
@@ -94,14 +105,16 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
             <p>{copy('وقتی تحلیل آماده شد، نکته‌ها را یکی‌یکی مرور می‌کنیم؛ بعد تصویر و پیشنهادهای مرتبط را می‌بینی.')}</p>
             {busy && <div className="studio-discovery-skeleton" aria-hidden="true"><i /><i /><i /></div>}
           </div> : waiting ? <div className="studio-discovery-pending">
-            <span className="studio-discovery-kicker">{copy('قدم بعد، دیدن نتیجه')}</span>
-            <h1>{copy('تصویر و پیشنهادهای فضای شما')}</h1>
+            {busy && !error && <DiscoveryLoading stage={stage || undefined} waiting />}
+            {!busy && <span className="studio-discovery-kicker">{copy('قدم بعد، دیدن نتیجه')}</span>}
+            {!busy && <h1>{copy('تصویر و پیشنهادهای فضای شما')}</h1>}
             <p>{copy('پس از آماده‌شدن، نتیجه همین‌جا باز می‌شود. لازم نیست درخواست تازه‌ای بفرستی.')}</p>
             <Button variant="outline" onClick={() => setWaiting(false)}>{copy('بازگشت به نکته‌ها')}</Button>
           </div> : <>
             <h1>{copy('چه چیزی بهتر می‌شود؟')}</h1>
             {finding ? <article className="studio-discovery-finding" aria-labelledby="studio-finding-title">
               <div className="studio-discovery-finding-meta"><span>{copy(trackLabels[finding.track])}</span><span>{number(index + 1)} / {number(review.findings.length)}</span></div>
+              <nav className="studio-discovery-finding-nav" aria-label={copy('مرور نکته‌ها')}>{review.findings.map((item, step) => <button type="button" key={item.id} aria-label={copy('نکتهٔ {{number}}', { number: number(step + 1) })} aria-current={step === index ? 'step' : undefined} onClick={() => choose(step)}><span /></button>)}</nav>
               <h2 id="studio-finding-title" tabIndex={-1} ref={heading}>{copy(finding.isObservation ? 'چیزی که در عکس دیدیم' : 'ایده‌ای برای این فضا')}</h2>
               {finding.observation && <FindingText key={`${finding.id}:observation`} value={finding.observation} className="studio-discovery-observation" />}
               {finding.suggestion && <div className="studio-discovery-suggestion"><Sparkles size={20} aria-hidden="true" /><div><h3>{copy('پیشنهاد تغییر')}</h3><FindingText key={`${finding.id}:suggestion`} value={finding.suggestion} /></div></div>}

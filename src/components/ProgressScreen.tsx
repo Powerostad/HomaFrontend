@@ -26,6 +26,8 @@ export interface ProgressScreenProps {
   uploadProgress?: number | null;
   isUploading?: boolean;
   statusOverride?: React.ReactNode;
+  /** Live mode disables timed diagnostic claims and completion estimates. */
+  liveStatus?: React.ReactNode;
 }
 
 /* ── Component ── */
@@ -38,6 +40,7 @@ export function ProgressScreen({
   uploadProgress,
   isUploading,
   statusOverride,
+  liveStatus,
 }: ProgressScreenProps) {
   const { siteText, siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -57,6 +60,7 @@ export function ProgressScreen({
 
   // When maxStep advances, schedule new sub-messages and mark previous ones as done
   useEffect(() => {
+    if (liveStatus !== undefined) return;
     // Mark all previous step messages as done
     setVisibleMessages((prev) =>
       prev.map((msg) =>
@@ -93,7 +97,7 @@ export function ProgressScreen({
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
     };
-  }, [maxStep, steps]);
+  }, [maxStep, steps, liveStatus]);
 
   // Auto-scroll feed
   useEffect(() => {
@@ -120,7 +124,7 @@ export function ProgressScreen({
   return (
     <>
       {/* Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" aria-hidden="true">
         {siteValue(bgImage ? (
           <>
             <img
@@ -195,7 +199,9 @@ export function ProgressScreen({
           </div>
         ))}
 
+        {liveStatus !== undefined && <div className="studio-progress-live">{liveStatus}</div>}
         {/* Micro-feed */}
+        {liveStatus === undefined &&
         <div
           ref={feedRef}
           className="w-full max-h-[180px] overflow-hidden mb-6 flex flex-col gap-2"
@@ -229,7 +235,7 @@ export function ProgressScreen({
               </motion.div>
             )))}
           </AnimatePresence>
-        </div>
+        </div>}
 
         {/* Status override (e.g. retrying amber message) */}
         {siteValue(statusOverride && (
@@ -237,7 +243,7 @@ export function ProgressScreen({
         ))}
 
         {/* Time estimate */}
-        {siteValue(remainingSec > 0 && (
+        {siteValue(liveStatus === undefined && remainingSec > 0 && (
           <p className="text-[12px] font-medium text-content-muted mb-4">
             {t('progress.timeEstimate', {
               seconds: toLocalizedDigits(remainingSec),
