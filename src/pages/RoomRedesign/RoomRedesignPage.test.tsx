@@ -33,22 +33,51 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
-  it('sends a product-specific edit for the actual alternative, only after explicit submit', async () => {
+  it('keeps product feedback on the RTL main card and details visible without nested disclosures', async () => {
+    const ui = await mount();
+    try {
+      const card = ui.container.querySelector<HTMLElement>('.studio-product-preview')!;
+      expect(card.dir).toBe('rtl');
+      const feedback = ui.container.querySelector<HTMLButtonElement>('.studio-recommendation-card > .studio-product-refinement > button')!;
+      expect(feedback).not.toBeNull();
+      await act(async () => feedback.click());
+      expect(ui.container.querySelector('.studio-product-refinement textarea')).not.toBeNull();
+      expect(testState.send).not.toHaveBeenCalled();
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-product-image-button')!.click());
+      const sheet = document.querySelector<HTMLElement>('.studio-selection-sheet')!;
+      expect(sheet.dir).toBe('rtl');
+      expect(sheet.querySelector('details, summary')).toBeNull();
+      expect(sheet.querySelector('.studio-selection-sheet-description')).not.toBeNull();
+      expect(sheet.querySelector('.studio-product-refinement')).toBeNull();
+      expect(testState.send).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('keeps utility actions in one disclosure and removes repeated result controls', async () => {
+    const ui = await mount();
+    try {
+      const more = ui.container.querySelector<HTMLDetailsElement>('.studio-result-more')!;
+      expect(more.open).toBe(false);
+      expect(more.querySelectorAll('.studio-print-trigger')).toHaveLength(1);
+      expect(more.querySelectorAll('select')).toHaveLength(1);
+      expect(ui.container.querySelector('.studio-result-version-row button')).toBeNull();
+      expect(ui.container.querySelector('.studio-current-look')).toBeNull();
+      expect(ui.container.querySelector('.studio-mobile-update')).toBeNull();
+      expect(ui.container.querySelector('.studio-product-row-actions')?.querySelectorAll('button')).toHaveLength(1);
+      expect(testState.send).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('promotes an alternative locally without showing alternative chat forms or calling the model', async () => {
     fixturePlan.purchases[0].alternatives = [{ product_id:9, name:'Alternative lamp', price_rial:90000, image_url:'', unique_link:'alternative-lamp' }];
     const ui = await mount();
     try {
-      const refinements = ui.container.querySelectorAll<HTMLElement>('.studio-product-refinement');
-      expect(refinements).toHaveLength(2);
-      await act(async () => refinements[1].querySelector<HTMLButtonElement>('button')!.click());
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-swap-toggle')!.click());
+      expect(ui.container.querySelector('.studio-alternatives .studio-product-refinement')).toBeNull();
+      expect(ui.container.querySelector('.studio-alternatives .studio-product-select')).toBeNull();
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-swap-option > button:last-child')!.click());
+      expect(ui.container.querySelector('.is-primary .studio-product-name')?.textContent).toBe('Alternative lamp');
+      expect(ui.container.querySelector('.studio-swap-name')?.textContent).toBe('Lamp');
+      expect(ui.container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
       expect(testState.send).not.toHaveBeenCalled();
-      const input = refinements[1].querySelector('textarea')!;
-      await act(async () => {
-        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, 'A smaller wooden lamp');
-        input.dispatchEvent(new Event('input', { bubbles:true }));
-      });
-      await act(async () => refinements[1].querySelector<HTMLButtonElement>('button[type=submit]')!.click());
-      expect(testState.send).toHaveBeenCalledExactlyOnceWith({ text:'studioProductEdit.context\nA smaller wooden lamp', action:'chat', itemId:'lamp', productId:9 });
-      expect(document.querySelectorAll('#studio-message')).toHaveLength(1);
     } finally { await ui.cleanup(); fixturePlan.purchases[0].alternatives = []; }
   });
   it('places a single combined report last, outside the product, analysis and basket sections', async () => {
@@ -118,7 +147,7 @@ describe('original Studio result flow with conversation', () => {
     testState.send.mockClear();
     const ui = await mount();
     try {
-      const trigger = ui.container.querySelector<HTMLButtonElement>('.studio-result-version-row button')!;
+      const trigger = ui.container.querySelector<HTMLButtonElement>('.studio-workspace-nav button:last-child')!;
       await act(async () => trigger.click());
       expect(document.querySelectorAll('textarea')).toHaveLength(1);
       const input = document.querySelector<HTMLTextAreaElement>('#studio-message')!;
@@ -149,7 +178,7 @@ describe('original Studio result flow with conversation', () => {
     const ui = await mount();
     try {
       await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-product-image-button')!.click());
-      await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'Preview lamp')!.click());
+      await act(async () => Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'redesignJourney.preview')!.click());
       expect(testState.send).toHaveBeenCalledExactlyOnceWith({ text: '', action: 'preview_product', itemId: 'lamp', productId: 7 });
       expect(document.querySelector('[role=dialog]')).not.toBeNull();
     } finally { await ui.cleanup(); }

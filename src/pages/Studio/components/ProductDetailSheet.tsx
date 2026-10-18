@@ -4,7 +4,7 @@ import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial } from '@/utils/formatters';
-import { Bookmark, Check, ExternalLink, LayoutGrid, Loader2, Share2, ShoppingBag, Sparkles, Truck, X } from 'lucide-react';
+import { Bookmark, Check, ExternalLink, LayoutGrid, Loader2, Share2, ShoppingBag, Sparkles, Truck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -147,9 +147,6 @@ export function ProductDetailSheet({
           {t('studio.result.v2.product.sheetDescription', 'مشخصات، دلیل پیشنهاد و جایگزین‌های محصول')}
         </DialogDescription>
 
-        <button type="button" className="studio-product-sheet-close" onClick={onClose} aria-label={t('common.close', 'بستن')}>
-          <X size={20} />
-        </button>
 
         <div className="studio-product-sheet-header">
           <span>{t('studio.result.v2.product.detailsLabel', 'جزئیات محصول')}</span>

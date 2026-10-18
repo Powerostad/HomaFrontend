@@ -36,6 +36,7 @@ interface HeroImagePanelProps {
   onExit: () => void;
   onMarkerClick?: (itemId: number) => void;
   showSave?: boolean;
+  showActions?: boolean;
   onImageError?: () => void;
 }
 
@@ -87,6 +88,7 @@ function HeroImageStage({
   onExit,
   onMarkerClick,
   showSave = true,
+  showActions = true,
   onImageError,
 }: HeroImagePanelProps) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
@@ -145,7 +147,7 @@ function HeroImageStage({
         <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
           <ArrowRight size={20} />
         </GlassButton>
-        <div className="studio-hero-toolbar-actions">
+        {showActions && <div className="studio-hero-toolbar-actions">
           {showSave && <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
             <Heart size={19} fill={isSaved ? 'currentColor' : 'none'} />
           </GlassButton>}
@@ -157,7 +159,7 @@ function HeroImageStage({
           <GlassButton onClick={handleShare} ariaLabel={shareState === 'copied' ? t('common.copied', 'کپی شد') : t('common.share', 'اشتراک‌گذاری')}>
             <Share2 size={19} />
           </GlassButton>
-        </div>
+        </div>}
       </div>
 
       {siteValue(analysisOnly && (

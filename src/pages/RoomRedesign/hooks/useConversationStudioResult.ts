@@ -8,6 +8,7 @@ import type { StudioResultViewState } from '../../Studio/result/viewState';
 import { useImageActions } from '../components/workspace';
 import type { ExecutionPlan } from '../services/redesignChatService';
 import { toStudioCategoryGroups } from '../services/studioResultAdapter';
+import { applyPrimaryProducts } from '../../Studio/result/productChoices';
 
 interface Selection {
   accepted: number[];
@@ -15,14 +16,15 @@ interface Selection {
   quantities: Record<number, number>;
   productQuantities: Record<string, number>;
   checklist: number[];
+  primary: Record<number, string>;
 }
-const emptySelection = (): Selection => ({ accepted: [], products: [], quantities: {}, productQuantities: {}, checklist: [] });
+const emptySelection = (): Selection => ({ accepted: [], products: [], quantities: {}, productQuantities: {}, checklist: [], primary: {} });
 function restoreSelection(key: string): Selection {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) || 'null') as Partial<Selection> | null;
     if (!value || !Array.isArray(value.accepted) || !Array.isArray(value.products)) return emptySelection();
     return { accepted: value.accepted.filter(Number.isInteger), products: value.products.filter(id => typeof id === 'string'),
-      quantities: value.quantities || {}, productQuantities: value.productQuantities || {}, checklist: Array.isArray(value.checklist) ? value.checklist.filter(Number.isInteger) : [] };
+      quantities: value.quantities || {}, productQuantities: value.productQuantities || {}, checklist: Array.isArray(value.checklist) ? value.checklist.filter(Number.isInteger) : [], primary: value.primary && typeof value.primary === 'object' ? value.primary : {} };
   } catch { return emptySelection(); }
 }
 function toggle<T>(items: T[], value: T) { return items.includes(value) ? items.filter(item => item !== value) : [...items, value]; }
@@ -46,7 +48,7 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const [isFinalizing, setIsFinalizing] = useState(false);
   const finalizing = useRef(false);
   const baseGroups = useMemo(() => toStudioCategoryGroups(plan), [plan]);
-  const categoryGroups = useMemo(() => baseGroups.map(group => ({ ...group, quantity: quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities]);
+  const categoryGroups = useMemo(() => applyPrimaryProducts(baseGroups, selection.primary).map(group => ({ ...group, quantity: quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities, selection.primary]);
   const tierGroups = useMemo<TierGroup[]>(() => (['quick_win', 'enhancement', 'structural'] as const)
     .map(tier => ({ tier, items: categoryGroups.filter(group => group.interventionTier === tier) })).filter(group => group.items.length), [categoryGroups]);
   const validIds = new Set(categoryGroups.map(group => group.itemId));
@@ -89,6 +91,16 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
     acceptedItems, basketProductIds, expandedWhyGroups, isFinalizing, handleFinalize,
     toggleAcceptedItem: id => setSelection(previous => ({ ...previous, accepted: toggle(previous.accepted, id) })),
     toggleBasketProduct: id => { if (products.some(product => product.id === id && product.uniqueLink)) setSelection(previous => ({ ...previous, products: toggle(previous.products, id) })); },
+    makePrimaryProduct: (itemId, productId) => setSelection(previous => {
+      const group = applyPrimaryProducts(baseGroups, previous.primary).find(item => item.itemId === itemId);
+      const next = group?.products.find(product => product.id === productId);
+      const old = group?.products[0];
+      if (!group || !next || !old || old.id === next.id) return previous;
+      const selected = previous.products.includes(old.id);
+      return { ...previous, primary: { ...previous.primary, [itemId]: next.id },
+        products: selected ? [...previous.products.filter(id => id !== old.id && id !== next.id), ...(next.uniqueLink ? [next.id] : [])] : previous.products,
+        productQuantities: { ...previous.productQuantities, [old.id]: quantity(previous.quantities[itemId] ?? group.quantity) } };
+    }),
     toggleWhyExpanded: id => setExpandedWhyGroups(previous => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; }),
     updateItemQuantity: (id, count) => setSelection(previous => ({ ...previous, quantities: { ...previous.quantities, [id]: quantity(count) } })),
     updateProductQuantity: (id, count) => setSelection(previous => ({ ...previous, productQuantities: { ...previous.productQuantities, [id]: quantity(count) } })),

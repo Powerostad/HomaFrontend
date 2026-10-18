@@ -26,6 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { applyPrimaryProducts } from './productChoices';
 // formatPriceFromRial available for consumers: import from '@/utils/formatters'
 import {
   trackStudioProductClicked,
@@ -107,6 +108,7 @@ export interface UseStudioResultReturn {
   // Basket product selection
   basketProductIds: Set<string>;
   toggleBasketProduct: (productId: string) => void;
+  makePrimaryProduct: (itemId: number, productId: string) => void;
 
   // Quantity controls
   quantityOverrides: Map<number, number>;
@@ -208,6 +210,8 @@ export function useStudioResult(): UseStudioResultReturn {
   basketProductIdsRef.current = basketProductIds;
   const [quantityOverrides, setQuantityOverrides] = useState<Map<number, number>>(new Map());
   const [productQuantityOverrides, setProductQuantityOverrides] = useState<Map<string, number>>(new Map());
+  const [primaryProducts, setPrimaryProducts] = useState<Record<number, string>>({});
+  useEffect(() => { setPrimaryProducts({}); }, [sessionId, activeSessionId]);
   const [checklistCheckedIds, setChecklistCheckedIds] = useState<Set<number>>(new Set());
 
   // =========================================================================
@@ -398,7 +402,7 @@ export function useStudioResult(): UseStudioResultReturn {
   // Build category groups from session items
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
     if (!activeSession?.items?.length) return [];
-    return activeSession.items
+    return applyPrimaryProducts(activeSession.items
       .map(item => ({
         category: item.category || item.type,
         categoryDisplay: item.categoryDisplay || item.type,
@@ -420,8 +424,23 @@ export function useStudioResult(): UseStudioResultReturn {
         impactLevel: (item.impactLevel || 'medium') as CategoryGroup['impactLevel'],
         actionType: item.actionType,
         actionGuidance: item.actionGuidance,
-      }));
-  }, [activeSession, quantityOverrides]);
+      })), primaryProducts);
+  }, [activeSession, quantityOverrides, primaryProducts]);
+
+  const makePrimaryProduct = useCallback((itemId: number, productId: string) => {
+    const group = categoryGroups.find(item => item.itemId === itemId);
+    const next = group?.products.find(product => product.id === productId);
+    const old = group?.products[0];
+    if (!group || !next || !old || old.id === next.id) return;
+    setPrimaryProducts(previous => ({ ...previous, [itemId]: next.id }));
+    setBasketProductIds(previous => {
+      if (!previous.has(old.id)) return previous;
+      const result = new Set(previous); result.delete(old.id);
+      if (next.uniqueLink) result.add(next.id);
+      return result;
+    });
+    setProductQuantityOverrides(previous => new Map(previous).set(old.id, group.quantity));
+  }, [categoryGroups]);
 
   // Keep a ref for use in callbacks that should not trigger re-renders
   // when categoryGroups change (e.g. acceptAllItems)
@@ -895,6 +914,7 @@ export function useStudioResult(): UseStudioResultReturn {
     // Basket product selection
     basketProductIds,
     toggleBasketProduct,
+    makePrimaryProduct,
 
     // Quantity controls
     quantityOverrides,

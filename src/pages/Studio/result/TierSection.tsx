@@ -25,6 +25,8 @@ interface TierSectionProps {
   onUpdateQuantity?: (itemId: number, newQuantity: number) => void;
   onRefineProduct?: RefineProduct;
   busy?: boolean;
+  hideHeading?: boolean;
+  onMakePrimary?: (itemId: number, productId: string) => void;
 }
 
 export function TierSection({
@@ -46,6 +48,8 @@ export function TierSection({
   onUpdateQuantity,
   onRefineProduct,
   busy,
+  hideHeading = false,
+  onMakePrimary,
 }: TierSectionProps) {
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
@@ -54,18 +58,19 @@ export function TierSection({
 
   return (
     <section className="studio-tier-section" aria-label={siteValue(config.label)}>
-      <div className="studio-tier-heading">
+      {!hideHeading && <div className="studio-tier-heading">
         <div>
           <p className="studio-result-eyebrow">{t(`studio.result.v2.tier.${tier === 'quick_win' ? 'quickWin' : tier}`, config.label)}</p>
           <h3>{siteValue(config.label)}</h3>
         </div>
         <span>{siteValue(items.length)} {t('studio.result.v2.card.options', 'گزینه')}</span>
-      </div>
+      </div>}
       <div>
         {siteValue(items.map((group, index) => (
           <RecommendationCard
             key={group.itemId}
             group={group}
+            onMakePrimary={onMakePrimary ? productId => onMakePrimary(group.itemId, productId) : undefined}
             tier={tier}
             isTopPriority={priorityRankedIds[0] === group.itemId}
             priorityRank={priorityRankedIds.indexOf(group.itemId) + 1}

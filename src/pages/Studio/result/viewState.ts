@@ -21,7 +21,7 @@ export type StudioResultViewState = Pick<UseStudioResultReturn,
   | 'setShowOriginal' | 'showDownloadReady' | 'showExitDecision' | 'showOriginal'
   | 'targetStyle' | 'tierGroups' | 'toggleAcceptedItem' | 'toggleBasketProduct'
   | 'toggleChecklistItem' | 'toggleWhyExpanded' | 'updateItemQuantity'
-  | 'updateProductQuantity'
+  | 'updateProductQuantity' | 'makePrimaryProduct'
 > & Partial<Pick<UseStudioResultReturn, 'harmonyScore' | 'projectedScore' | 'liveProjectedScore'>>;
 
 export interface StudioResultConversation {

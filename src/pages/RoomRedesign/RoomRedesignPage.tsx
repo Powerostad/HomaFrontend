@@ -1,7 +1,7 @@
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { Check, History, Loader2, MessageSquare, Plus } from 'lucide-react';
+import { History, Loader2, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -62,7 +62,6 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
           <option value="original">{t('redesignJourney.original')}</option>
           {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{t('redesignJourney.version', { number: index + 1 })}</option>)}
         </select></label>
-        <button type="button" className="studio-secondary-button" onClick={openChat} aria-expanded={chatOpen}><MessageSquare size={17} />{t('studioWorkspace.refine')}</button>
       </div>
       {chat.newVersionReady && <Button variant="outline" onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
       <nav className="studio-result-session-tools" aria-label={t('studioChat.archive')}>
@@ -71,7 +70,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </nav>
     </>,
     status: <>
-      <div className="studio-conversation-status" role="status">{chat.busy ? <><Loader2 size={16} className="studio-spinner" />{statusText}</> : <><Check size={16} />{t(chat.sessionId ? 'studioChat.saved' : 'studioChat.saving')}</>}</div>
+      {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,

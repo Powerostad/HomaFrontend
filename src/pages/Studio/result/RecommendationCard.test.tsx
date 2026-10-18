@@ -17,16 +17,15 @@ describe('Studio product and alternative presentation', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div');
     const root = createRoot(container);
-    const onOpen = vi.fn(); const onToggle = vi.fn(); const onQuantity = vi.fn(); const onWhy = vi.fn();
+    const onOpen = vi.fn(); const onToggle = vi.fn(); const onQuantity = vi.fn(); const onWhy = vi.fn(); const onPrimary = vi.fn();
     try {
       await act(async () => root.render(<RecommendationCard group={group} tier="quick_win" isTopPriority priorityRank={1}
         isWhyExpanded={false} isSaved={false} basketProductIds={new Set(['0', '1'])} onToggleWhy={onWhy}
-        onProductClick={onOpen} onToggleSaved={vi.fn()} onToggleBasketProduct={onToggle} onUpdateQuantity={onQuantity} />));
-      expect(container.querySelectorAll('.studio-product-preview')).toHaveLength(4);
+        onProductClick={onOpen} onToggleSaved={vi.fn()} onToggleBasketProduct={onToggle} onUpdateQuantity={onQuantity} onMakePrimary={onPrimary} />));
+      expect(container.querySelectorAll('.studio-product-preview')).toHaveLength(1);
       expect(container.querySelectorAll('.is-primary')).toHaveLength(1);
-      expect(container.querySelectorAll('.studio-alternatives-grid .studio-product-preview')).toHaveLength(3);
-      expect(container.querySelectorAll('.studio-product-preview[dir=ltr]')).toHaveLength(4);
-      expect(container.querySelectorAll('.studio-product-copy[dir=rtl]')).toHaveLength(4);
+      expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(3);
+      expect(container.querySelector('.studio-alternatives .studio-product-refinement')).toBeNull();
       const swap = container.querySelector<HTMLButtonElement>('.studio-swap-toggle')!;
       expect(swap.getAttribute('aria-expanded')).toBe('false');
       expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
@@ -35,16 +34,16 @@ describe('Studio product and alternative presentation', () => {
       expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(false);
       expect(onToggle).not.toHaveBeenCalled();
       expect(onOpen).not.toHaveBeenCalled();
-      expect(container.querySelector('.studio-recommendation-card .studio-alternatives')).toBeNull();
-      expect(container.querySelector('.studio-recommendation > .studio-alternatives')).not.toBeNull();
-      expect(container.querySelectorAll('.studio-recommendation-fact')).toHaveLength(3);
+      expect(container.querySelector('.studio-recommendation-card .studio-alternatives')).not.toBeNull();
+      expect(container.querySelectorAll('.studio-recommendation-fact')).toHaveLength(0);
       expect(container.querySelector('.is-primary .studio-product-copy .studio-quantity-control')).not.toBeNull();
       expect(container.querySelector('.is-primary .studio-product-row-actions .studio-product-select')).not.toBeNull();
-      expect(container.querySelector('.is-primary .studio-why-button')).not.toBeNull();
-      expect(container.querySelector<HTMLElement>('.studio-recommendation-detail')!.hidden).toBe(true);
+      expect(container.querySelector('.is-primary .studio-why-button')).toBeNull();
+      expect(container.querySelector('.is-primary .studio-product-reason')).toBeNull();
+      expect(container.querySelector('.is-primary .studio-product-details')).toBeNull();
+      expect(container.querySelector('.studio-recommendation-detail')).toBeNull();
       const toggles = Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-select'));
-      expect(toggles[1].getAttribute('aria-pressed')).toBe('true');
-      expect(toggles[2].disabled).toBe(true);
+      expect(toggles).toHaveLength(1);
       await act(async () => toggles[0].click());
       expect(onToggle).toHaveBeenCalledExactlyOnceWith('0');
       expect(onOpen).not.toHaveBeenCalled();
@@ -55,8 +54,10 @@ describe('Studio product and alternative presentation', () => {
       expect(quantityButtons[0].disabled).toBe(true);
       await act(async () => quantityButtons[1].click());
       expect(onQuantity).toHaveBeenCalledExactlyOnceWith(2);
-      await act(async () => container.querySelector<HTMLButtonElement>('.studio-why-button')!.click());
-      expect(onWhy).toHaveBeenCalledOnce();
+      expect(onWhy).not.toHaveBeenCalled();
+      await act(async () => container.querySelector<HTMLButtonElement>('.studio-swap-option > button:last-child')!.click());
+      expect(onPrimary).toHaveBeenCalledExactlyOnceWith('1');
+      expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
     } finally { await act(async () => root.unmount()); }
   });
 });

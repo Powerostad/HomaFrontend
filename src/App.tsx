@@ -1,5 +1,5 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { Navigate, BrowserRouter as Router, Route as RouterRoute, Routes as RouterRoutes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -50,6 +50,10 @@ import SharedPage from "./pages/Shared/SharedPage";
 
 // Loading Component - Now using HOMA Loader
 const PageLoader = () => <HomaLoader />;
+// Preview is compiled out of production and can only be activated on loopback.
+const LocalStudioPreview = import.meta.env.DEV && import.meta.env.VITE_LOCAL_STUDIO_PREVIEW === 'true'
+  && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+  ? lazy(() => import('./pages/Studio/dev/LocalStudioPreview')) : null;
 
 export default function App() {
   const { siteText } = useSiteTranslation();
@@ -61,7 +65,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <RouterRoutes>
             <RouterRoute path="/" element={<Layout />}>
-              <RouterRoute index element={<ProductLandingPage />} />
+              <RouterRoute index element={LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProductLandingPage />} />
               <RouterRoute path="gallery" element={<GalleryPage />} />
               <RouterRoute path="explore" element={<ExplorePage />} />
               <RouterRoute path="shop" element={<ExplorePage />} /> {/* Alias for ExplorePage */}
@@ -94,10 +98,10 @@ export default function App() {
 
               {/* Studio now starts the existing conversational flow. Legacy jobs remain accessible. */}
               <RouterRoute path="studio" element={
-                <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+                LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
               } />
               <RouterRoute path="studio/chat/:sessionId" element={
-                <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+                LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
               } />
               <RouterRoute path="studio/start" element={<Navigate to="/studio" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />
@@ -105,7 +109,7 @@ export default function App() {
               <RouterRoute path="studio/result/:jobId" element={<StudioResultPage />} />
               {/* Studio Projects - requires login */}
               <RouterRoute path="studio/projects" element={
-                <ProtectedRoute fallback="modal">
+                LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProtectedRoute fallback="modal">
                   <StudioProjectsDashboard />
                 </ProtectedRoute>
               } />

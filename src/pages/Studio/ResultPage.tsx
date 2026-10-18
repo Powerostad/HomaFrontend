@@ -2,11 +2,11 @@ import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { Bookmark, Download as DownloadIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import { Bookmark, ChevronDown, Download as DownloadIcon, Loader2, MessageSquare, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'motion/react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ProductDetailSheet } from './components/ProductDetailSheet';
+import { StudioProductSheet } from './result/StudioProductSheet';
 import { CollectionSummary } from './result/CollectionSummary';
 import { ActionRecommendationCard } from './result/ActionRecommendationCard';
 import { CompletionChecklist } from './result/CompletionChecklist';
@@ -19,7 +19,6 @@ import { ImpactProgressCard } from './result/ImpactProgressCard';
 import { InvoiceSummary } from './result/InvoiceSummary';
 import { SpatialDiagnosis } from './result/SpatialDiagnosis';
 import { StudioPrintReport } from './result/StudioPrintReport';
-import { CurrentLook } from './result/CurrentLook';
 import './result/studio-result.css';
 import './result/studio-workspace.css';
 import './result/studio-product-layout.css';
@@ -43,7 +42,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
   const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [activePhase, setActivePhase] = useState<Phase>('recommendations');
-  const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const basketSectionRef = useRef<HTMLDivElement>(null);
 
   const diagnosisActions = useMemo<DiagnosisAction[]>(
@@ -134,6 +133,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
     onExit: conversation?.onExit || (() => state.setShowExitDecision(true)),
     onMarkerClick: handleMarkerClick,
     onImageError: conversation?.onImageError,
+    showActions: false,
   };
 
   return (
@@ -148,11 +148,6 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
           <DesktopHeroPanel {...heroProps} />
           <MobileHeroSection {...heroProps} />
-          <CurrentLook state={state} />
-          {conversation && !updateDismissed && <div className="studio-mobile-update" dir={siteDirection()}>
-            <div><strong><Sparkles size={18} aria-hidden="true" />{t('studioProductLayout.updateTitle', 'این چیدمان را به‌روزرسانی کنیم؟')}</strong><p>{t('studioProductLayout.updateHint', 'برای تغییر محصولات یا سبک فضا، با هما گفتگو کنید.')}</p></div>
-            <div className="studio-mobile-update-actions"><Button onClick={conversation.onOpen}>{t('studioProductLayout.yes', 'بله')}</Button><Button variant="outline" onClick={() => setUpdateDismissed(true)}>{t('studioProductLayout.no', 'خیر')}</Button></div>
-          </div>}
         </section>
 
         <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>
@@ -177,33 +172,23 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
                 {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
               </p>}
             </div>
-            <div className="studio-result-heading-actions" aria-label={t('studio.result.v2.actions', 'اقدامات نتیجه')}>
-              <StudioPrintReport state={state} review={conversation?.printReview} busy={conversation?.busy} />
-              {conversation && <button type="button" className="studio-icon-button" onClick={conversation.onOpen} aria-label={t('studioChat.chat', 'گفتگو با هما')} aria-expanded={conversation.open}><MessageSquare size={18} /></button>}
-              <button
-                type="button"
-                className="studio-icon-button"
-                onClick={() => state.setIsSaved(!state.isSaved)}
-                aria-label={siteValue(state.isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره'))}
-                aria-pressed={state.isSaved}
-              >
-                <Bookmark size={18} fill={state.isSaved ? 'currentColor' : 'none'} />
-              </button>
-              {siteValue(!state.analysisOnly && (
-                <button
-                  type="button"
-                  className="studio-icon-button"
-                  onClick={state.handleDownload}
-                  disabled={state.isDownloading}
-                  aria-label={t('common.download', 'دانلود')}
-                >
-                  {siteValue(state.isDownloading ? <Loader2 size={18} className="animate-spin" /> : <DownloadIcon size={18} />)}
-                </button>
-              ))}
-            </div>
+            <details className="studio-result-more">
+              <summary>{t('studioProductLayout.more', 'بیشتر')}<ChevronDown size={16} aria-hidden="true" /></summary>
+              <div className="studio-result-more-content">
+                <StudioPrintReport state={state} review={conversation?.printReview} busy={conversation?.busy} />
+                <Button variant="outline" onClick={() => state.setIsSaved(!state.isSaved)} aria-pressed={state.isSaved}><Bookmark size={16} aria-hidden="true" />{t(state.isSaved ? 'studio.result.v2.saved' : 'common.save', state.isSaved ? 'ذخیره شده' : 'ذخیره')}</Button>
+                {!state.analysisOnly && <Button variant="outline" onClick={state.handleDownload} disabled={state.isDownloading}><DownloadIcon size={16} aria-hidden="true" />{t('common.download', 'دانلود')}</Button>}
+                <Button variant="outline" onClick={async () => {
+                  try {
+                    if (navigator.share) await navigator.share({ title: state.projectName, url: window.location.href });
+                    else { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); }
+                  } catch { /* Cancelled or unavailable sharing leaves the design unchanged. */ }
+                }}><Share2 size={16} aria-hidden="true" />{linkCopied ? t('common.copied', 'کپی شد') : t('common.share', 'اشتراک‌گذاری')}</Button>
+                {conversation?.toolbar}
+              </div>
+            </details>
           </div>
-
-          {conversation && <><div className="studio-result-conversation-tools">{conversation.toolbar}</div>{conversation.status}</>}
+          {conversation?.status}
 
           <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={activePhase !== 'analysis'}>
             <h2 id="analysis-title" className="sr-only">
@@ -265,17 +250,19 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
             <div className="studio-section-heading">
               <div>
                 <p className="studio-result-eyebrow">{t('studio.result.v2.phase.recommendations', 'پیشنهادها')}</p>
-                <h2 id="products-title">{conversation ? siteValue('پیشنهادهای هما برای فضای شما') : t('studio.result.v2.recommendationsTitle', 'سه تغییر برای شروع')}</h2>
+                <h2 id="products-title">{t('studioProductLayout.title', 'محصولات پیشنهادی')}</h2>
               </div>
-              <span className="studio-count-badge">{siteValue(state.categoryGroups.length)} {t('studio.result.v2.changeCount', 'تغییر')}</span>
+              <span className="studio-count-badge">{siteValue(purchasableCount)}</span>
             </div>
 
             {siteValue(productTierGroups.map(({ tier, items }, tierIndex) => (
               <TierSection
                 key={tier}
+                hideHeading
                 tier={tier}
                 items={items}
                 allCategoryGroups={state.categoryGroups}
+                onMakePrimary={state.makePrimaryProduct}
                 stepStartIndex={tierStepOffsets[tierIndex] || 0}
                 priorityRankedIds={state.priorityRankedIds}
                 expandedWhyGroups={state.expandedWhyGroups}
@@ -315,12 +302,12 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               {section.items.map(group => <ActionRecommendationCard key={group.itemId} group={group} selected={state.acceptedItems.has(group.itemId)} onToggle={() => state.toggleAcceptedItem(group.itemId)} />)}
             </section>)}
 
-            <UnifiedConsultationCTA
+            {(serviceItems.some(item => state.acceptedItems.has(item.itemId)) || checklistItems.some(item => state.checklistCheckedIds.has(item.id))) && <UnifiedConsultationCTA
               serviceItems={serviceItems}
               acceptedServiceIds={state.acceptedItems}
               sourcingItems={checklistItems}
               checkedSourcingIds={state.checklistCheckedIds}
-            />
+            />}
           </section>
 
           <div id="section-basket" ref={basketSectionRef} className="studio-result-section studio-result-basket-section" hidden={activePhase !== 'basket'}>
@@ -376,16 +363,19 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
       </AnimatePresence>
 
       {siteValue(state.selectedProduct && (
-        <ProductDetailSheet
+        <StudioProductSheet
           product={state.selectedProduct}
           isOpen
           onClose={() => state.setSelectedProduct(null)}
-          onReplace={() => undefined}
-          alternatives={state.productAlternatives}
-          redesignSessionId={state.activeSessionId ?? state.sessionId}
+          onRefineProduct={conversation?.onRefineProduct}
+          onMakePrimary={() => {
+            const group = state.categoryGroups.find(item => item.products.some(product => product.id === state.selectedProduct!.id));
+            if (group) state.makePrimaryProduct(group.itemId, state.selectedProduct!.id);
+            state.setSelectedProduct(null);
+          }}
+          isAlternative={state.categoryGroups.some(group => group.products.slice(1).some(product => product.id === state.selectedProduct!.id))}
           isInBasket={state.basketProductIds.has(state.selectedProduct.id)}
           onToggleBasket={() => state.toggleBasketProduct(state.selectedProduct!.id)}
-          onSelectProduct={state.handleProductClick}
           onPreview={conversation ? () => { const product = state.selectedProduct; state.setSelectedProduct(null); if (product) conversation.onPreview(product); } : undefined}
           previewBusy={conversation?.busy}
         />

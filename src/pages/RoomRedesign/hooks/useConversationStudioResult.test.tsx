@@ -58,6 +58,29 @@ describe('conversation data in the original Studio', () => {
     try { expect(second.state.selectedPrice).toBe(300000); expect(basket.addItem).not.toHaveBeenCalled(); }
     finally { await second.unmount(); }
   });
+  it('swaps the primary product, transfers selected quantity and restores it after reload', async () => {
+    const previous = plan.purchases[0].alternatives;
+    plan.purchases[0].alternatives = [{ product_id: 8, name: 'Alternative', price_rial: 150000, unique_link: 'lamp-8' }];
+    const ui = await mount();
+    try {
+      await act(async () => { ui.state.toggleBasketProduct('lamp/7'); ui.state.updateItemQuantity(1, 3); });
+      await act(async () => ui.state.makePrimaryProduct(1, 'lamp/8'));
+      expect(ui.state.categoryGroups[0].products.map(product => product.id)).toEqual(['lamp/8', 'lamp/7']);
+      expect(ui.state.basketProductIds).toEqual(new Set(['lamp/8']));
+      expect(ui.state.selectedPrice).toBe(450000);
+      expect(basket.addItem).not.toHaveBeenCalled();
+      await ui.unmount();
+      const restored = await mount();
+      try {
+        expect(restored.state.categoryGroups[0].products[0].id).toBe('lamp/8');
+        expect(restored.state.selectedPrice).toBe(450000);
+        await act(async () => restored.state.makePrimaryProduct(1, 'lamp/7'));
+        expect(restored.state.basketProductIds).toEqual(new Set(['lamp/7']));
+        expect(restored.state.selectedPrice).toBe(300000);
+        expect(basket.addItem).not.toHaveBeenCalled();
+      } finally { await restored.unmount(); }
+    } finally { plan.purchases[0].alternatives = previous; }
+  });
   it('does not increment an existing server quantity or open checkout after an add failure', async () => {
     const ui = await mount();
     try {

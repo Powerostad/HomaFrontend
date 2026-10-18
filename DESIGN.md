@@ -162,7 +162,17 @@ time. Optional guided intake edits the existing draft and never starts analysis
 or fabricates a user message when a step is skipped.
 
 Studio product recommendations use compact horizontal cards: complete product
-image, identity, price, short reason, and explicit basket, swap and detail actions.
+image, short category, identity, price, and explicit basket and swap actions.
+Open product details through the photo or name and display their descriptions
+directly, without another disclosure. Keep product-specific feedback visible
+on each main recommendation card, never on alternatives. Quantity controls
+stay compact, with only the numeric stepper LTR; card content follows the active
+language direction. Sourcing and layout sections use clear, readable item cards.
+Keep
+download, saved status, PDF and version/history tools in a single More disclosure.
+Avoid duplicate hero utility buttons, conversation CTAs, recommendation headings
+and selection sheets. External sourcing choices default to collapsed and never
+show an error-image placeholder for a missing catalog image.
 Alternatives and product-specific feedback open inline. Below 1200px the room
 photo precedes the content and only the fixed bottom task navigation is visible;
 desktop retains its image/sidebar layout and top task navigation. Keep bottom

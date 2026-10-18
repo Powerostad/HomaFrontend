@@ -7,12 +7,12 @@ import { ACTION_DIFFICULTY_MAP, type CategoryGroup } from './types';
 export function ActionRecommendationCard({ group, selected, onToggle }: {
   group: CategoryGroup; selected: boolean; onToggle: () => void;
 }) {
-  const { siteText, siteValue } = useSiteTranslation();
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const [showGuidance, setShowGuidance] = useState(false);
   const isLayout = group.actionKind === 'layout';
   const difficulty = ACTION_DIFFICULTY_MAP[isLayout ? 'simple' : group.interventionTier === 'structural' ? 'professional' : 'moderate'];
   const DifficultyIcon = difficulty.icon;
-  return <article id={`recommendation-${group.itemId}`} className="studio-action-recommendation" tabIndex={-1}>
+  return <article id={`recommendation-${group.itemId}`} className="studio-action-recommendation" dir={siteDirection()} tabIndex={-1}>
     <div className="studio-action-heading">
       <span className="studio-result-eyebrow">{siteValue(group.actionType || (isLayout ? siteText('بهبود چیدمان') : siteText('خدمات اجرایی')))}</span>
       <h3>{siteValue(group.categoryDisplay)}</h3>
