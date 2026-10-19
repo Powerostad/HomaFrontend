@@ -11,6 +11,7 @@ afterEach(() => vi.clearAllMocks());
 it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'false');
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
@@ -20,6 +21,18 @@ it('opts new local sessions into V3 and leaves V2 selectable with its flag off',
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
     design_version: 'studio-design-v2', search_version: 'studio-search-v2',
+  });
+  vi.unstubAllEnvs();
+});
+
+it('selects partitioned V4 for new sessions while preserving the full-policy V3 option', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
+  await createChatSession();
+  expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
+    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v4',
   });
   vi.unstubAllEnvs();
 });

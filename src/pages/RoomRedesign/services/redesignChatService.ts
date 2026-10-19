@@ -244,7 +244,9 @@ export async function createChatSession(): Promise<CreateSessionResult> {
     {
       ...(import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
         ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {}),
-      ...(import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V4 === 'true'
+        ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v4' }
+        : import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
     },
   );
