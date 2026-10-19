@@ -5,12 +5,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ExecutionPlan } from '../services/redesignChatService';
 import { useConversationStudioResult } from './useConversationStudioResult';
+import { checkStudioPurchase } from '../services/redesignChatService';
 
-const basket = vi.hoisted(() => ({ basket: { shop_groups: [] as { items: { product_unique_link: string; id: string; quantity: number }[] }[] },
+const basket = vi.hoisted(() => ({ basket: { shop_groups: [] as { items: { product_unique_link: string; variant_id?: number; id: string; quantity: number }[] }[] },
   addItem: vi.fn(async (_input: unknown) => true), updateQuantity: vi.fn(), openBasket: vi.fn() }));
 vi.mock('@/context/BasketContext', () => ({ useBasket: () => basket }));
 vi.mock('../components/workspace', () => ({ useImageActions: () => ({ isDownloading: false, onDownload: vi.fn() }) }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('../services/redesignChatService', () => ({ checkStudioPurchase: vi.fn() }));
 
 const plan: ExecutionPlan = { purchases: [{ item_id: 'lamp', quantity: 2, category: 'Lighting', reason_fa: 'Light', relation: 'similar',
   product: { product_id: 7, name: 'Lamp', price_toman: 10000, unique_link: 'lamp-7' },
@@ -18,13 +20,13 @@ const plan: ExecutionPlan = { purchases: [{ item_id: 'lamp', quantity: 2, catego
   free_actions: [{ instruction_fa: 'Move the sofa', reason_fa: 'Space' }], surface_actions: [],
   known_subtotal_rial: 200000, budget_ceiling_toman: null, budget_status: 'incomplete', unknown_cost_item_ids: [] };
 
-async function mount() {
+async function mount(currentPlan = plan) {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const container = document.createElement('div');
   const root = createRoot(container);
   let state: ReturnType<typeof useConversationStudioResult>;
   function Harness() {
-    state = useConversationStudioResult({ plan, sessionId: 'conversation-uuid', versionId: 'v1', resultImage: 'render.jpg', originalImage: 'original.jpg', showOriginal: false, onToggleOriginal: vi.fn(), onOpenChat: vi.fn() });
+    state = useConversationStudioResult({ plan: currentPlan, sessionId: 'conversation-uuid', versionId: 'v1', resultImage: 'render.jpg', originalImage: 'original.jpg', showOriginal: false, onToggleOriginal: vi.fn(), onOpenChat: vi.fn() });
     return null;
   }
   await act(async () => root.render(<MemoryRouter><Harness /></MemoryRouter>));
@@ -93,6 +95,35 @@ describe('conversation data in the original Studio', () => {
       expect(basket.addItem).toHaveBeenCalledTimes(1);
       expect(basket.updateQuantity).not.toHaveBeenCalled();
       expect(basket.openBasket).toHaveBeenCalledOnce();
+    } finally { await ui.unmount(); }
+  });
+  it('rechecks every V2 SKU and keeps two variants of the same family separate in the basket', async () => {
+    const current: ExecutionPlan = { ...plan, search_version: 'studio-search-v2', purchases: [10, 11].map((variant, index) => ({
+      ...plan.purchases[0], item_id: `line-${index}`, source_item_id: 'lamp', placement_id: `place-${index}`, quantity: 1, alternatives: [],
+      product: { ...plan.purchases[0].product!, candidate: { variant_id: variant, variant_label: `Size ${variant}`, dimensions_cm: { width_cm: variant }, quantity: 1,
+        eligibility: 'eligible', purchase_status: 'ready', known_total_rial: 100000, verification_reasons: [], missing_costs: [] } },
+    })) };
+    const checked = current.purchases.map(p => ({ item_id: 'lamp', placement_id: p.placement_id, product_id: 7, variant_id: p.product!.candidate!.variant_id,
+      quantity: 1, product_unique_link: 'lamp-7', unit_price_rial: 100000 }));
+    vi.mocked(checkStudioPurchase).mockResolvedValue({ success: true, data: { ready: true, lines: checked, reasons: [] } });
+    const ui = await mount(current);
+    try {
+      await act(async () => ui.state.categoryGroups.slice(0, 2).forEach(group => ui.state.toggleBasketProduct(group.products[0].id)));
+      await act(async () => ui.state.handleFinalize());
+      expect(checkStudioPurchase).toHaveBeenCalledWith('conversation-uuid', 'v1', checked.map(({ product_unique_link: _link, unit_price_rial: _price, ...line }) => line));
+      expect(basket.addItem.mock.calls.map(call => call[0])).toEqual([10, 11].map(variant => ({ product_unique_link: 'lamp-7', variant_id: variant, quantity: 1, source_context: 'studio' })));
+    } finally { await ui.unmount(); }
+  });
+  it('does not add a V2 item when fresh verification fails', async () => {
+    const current: ExecutionPlan = { ...plan, search_version: 'studio-search-v2' };
+    vi.mocked(checkStudioPurchase).mockResolvedValue({ success: true, data: { ready: false, lines: [], reasons: [] } });
+    const ui = await mount(current);
+    try {
+      await act(async () => ui.state.toggleBasketProduct(ui.state.categoryGroups[0].products[0].id));
+      await act(async () => ui.state.handleFinalize());
+      expect(checkStudioPurchase).toHaveBeenCalledOnce();
+      expect(basket.addItem).not.toHaveBeenCalled();
+      expect(basket.openBasket).not.toHaveBeenCalled();
     } finally { await ui.unmount(); }
   });
 });

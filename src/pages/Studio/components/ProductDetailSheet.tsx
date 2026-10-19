@@ -10,6 +10,13 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 export interface Product {
+  studioItemId?: string;
+  studioPlacementId?: string | null;
+  studioProductId?: number;
+  variantId?: number | null;
+  variantLabel?: string;
+  dimensionsCm?: Record<string, number>;
+  purchaseStatus?: 'ready' | 'needs_verification' | 'unavailable';
   id: string;
   name: string;
   price: number;
@@ -151,6 +158,11 @@ export function ProductDetailSheet({
         <div className="studio-product-sheet-header">
           <span>{t('studio.result.v2.product.detailsLabel', 'جزئیات محصول')}</span>
           <h2>{siteValue(product.name)}</h2>
+          {product.studioItemId && <>
+            {product.variantLabel && <p>{siteValue(product.variantLabel)}</p>}
+            {!!Object.keys(product.dimensionsCm || {}).length && <p>{Object.entries(product.dimensionsCm || {}).map(([key, value]) => `${t(`studioV2.attribute.${key}`, { defaultValue: t('studioV2.specification') })}: ${value}`).join(' · ')} {t('studioV2.cm')}</p>}
+            {product.purchaseStatus && <p>{t(`studioV2.purchase.${product.purchaseStatus}`)}</p>}
+          </>}
           <p>{siteValue(product.category)}{siteValue(product.store ? ` · ${product.store}` : '')}</p>
         </div>
 

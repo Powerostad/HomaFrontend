@@ -6,7 +6,9 @@ import type { Product } from '../../Studio/components/ProductDetailSheet';
 import type { TierGroup } from '../../Studio/result/types';
 import type { StudioResultViewState } from '../../Studio/result/viewState';
 import { useImageActions } from '../components/workspace';
-import type { ExecutionPlan } from '../services/redesignChatService';
+import { checkStudioPurchase, type ExecutionPlan, type StudioPurchaseLine } from '../services/redesignChatService';
+import { mergeCheckedLines, sameSelections } from '../services/studioPurchase';
+import { toast } from 'sonner';
 import { toStudioCategoryGroups } from '../services/studioResultAdapter';
 import { applyPrimaryProducts } from '../../Studio/result/productChoices';
 
@@ -30,9 +32,10 @@ function restoreSelection(key: string): Selection {
 function toggle<T>(items: T[], value: T) { return items.includes(value) ? items.filter(item => item !== value) : [...items, value]; }
 function quantity(value: number) { return Number.isFinite(value) ? Math.max(1, Math.min(99, Math.round(value))) : 1; }
 
-export function useConversationStudioResult({ plan, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat }: {
+export function useConversationStudioResult({ plan, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat, onChooseProduct }: {
   plan: ExecutionPlan | null; sessionId: string | null; versionId: string; resultImage: string; originalImage: string | null;
   showOriginal: boolean; onToggleOriginal: (show: boolean) => void; onOpenChat: () => void;
+  onChooseProduct?: (product: Product) => void;
 }): StudioResultViewState {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -47,8 +50,9 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const [expandedWhyGroups, setExpandedWhyGroups] = useState<Set<number>>(new Set());
   const [isFinalizing, setIsFinalizing] = useState(false);
   const finalizing = useRef(false);
+  const isV2 = plan?.search_version === 'studio-search-v2' || !!plan?.purchases.some(item => item.product?.search_version === 'studio-search-v2');
   const baseGroups = useMemo(() => toStudioCategoryGroups(plan), [plan]);
-  const categoryGroups = useMemo(() => applyPrimaryProducts(baseGroups, selection.primary).map(group => ({ ...group, quantity: quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities, selection.primary]);
+  const categoryGroups = useMemo(() => (isV2 && onChooseProduct ? baseGroups : applyPrimaryProducts(baseGroups, selection.primary)).map(group => ({ ...group, quantity: isV2 ? group.quantity : quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities, selection.primary, isV2, onChooseProduct]);
   const tierGroups = useMemo<TierGroup[]>(() => (['quick_win', 'enhancement', 'structural'] as const)
     .map(tier => ({ tier, items: categoryGroups.filter(group => group.interventionTier === tier) })).filter(group => group.items.length), [categoryGroups]);
   const validIds = new Set(categoryGroups.map(group => group.itemId));
@@ -56,7 +60,7 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const products = categoryGroups.flatMap(group => group.products);
   const basketProductIds = new Set(selection.products.filter(id => products.some(product => product.id === id && product.uniqueLink)));
   const selectedLines = categoryGroups.flatMap(group => group.products.flatMap((product, index) => basketProductIds.has(product.id)
-    ? [{ product, quantity: index === 0 ? group.quantity : quantity(selection.productQuantities[product.id] ?? group.quantity) }] : []));
+    ? [{ product, quantity: isV2 || index === 0 ? group.quantity : quantity(selection.productQuantities[product.id] ?? group.quantity) }] : []));
   const selectedPrice = selectedLines.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
   const imageActions = useImageActions({ image: showOriginal ? originalImage : resultImage, originalImage, activeVersion: 1, isPreview: !showOriginal });
   const productAlternatives = selectedProduct ? categoryGroups.find(group => group.products.some(product => product.id === selectedProduct.id))?.products.filter(product => product.id !== selectedProduct.id) || [] : [];
@@ -72,15 +76,35 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
     finalizing.current = true;
     setIsFinalizing(true);
     try {
-      const desired = new Map<string, number>();
-      for (const { product, quantity: count } of selectedLines) if (product.uniqueLink) desired.set(product.uniqueLink, (desired.get(product.uniqueLink) || 0) + count);
-      for (const [link, count] of desired) {
-        const existing = basket.basket.shop_groups.flatMap(group => group.items).find(item => item.product_unique_link === link);
+      let desired: { link: string; variantId: number | null; quantity: number }[];
+      if (isV2) {
+        if (!sessionId || selectedLines.some(l => !l.product.studioItemId || !l.product.studioProductId)) return;
+        const requested: StudioPurchaseLine[] = selectedLines.map(({ product, quantity: count }) => ({
+          item_id: product.studioItemId!, placement_id: product.studioPlacementId, product_id: product.studioProductId!,
+          variant_id: product.variantId ?? null, quantity: count,
+        }));
+        const checked = await checkStudioPurchase(sessionId, versionId, requested);
+        if (!checked.success || !checked.data?.ready || !sameSelections(requested, checked.data.lines)) {
+          toast.error(t('studioV2.purchaseBlocked')); onOpenChat(); return;
+        }
+        if (checked.data.lines.some(line => selectedLines.find(l => l.product.studioItemId === line.item_id &&
+          (l.product.studioPlacementId ?? null) === (line.placement_id ?? null))?.product.price !== line.unit_price_rial)) {
+          toast.error(t('studioV2.priceChanged')); onOpenChat(); return;
+        }
+        desired = mergeCheckedLines(checked.data.lines);
+      } else {
+        const grouped = new Map<string, number>();
+        for (const { product, quantity: count } of selectedLines) if (product.uniqueLink) grouped.set(product.uniqueLink, (grouped.get(product.uniqueLink) || 0) + count);
+        desired = [...grouped].map(([link, count]) => ({ link, variantId: null, quantity: count }));
+      }
+      for (const { link, variantId, quantity: count } of desired) {
+        const existing = basket.basket.shop_groups.flatMap(group => group.items).find(item => item.product_unique_link === link && (item.variant_id ?? null) === variantId);
         if (existing) {
-          if (existing.quantity < count) await basket.updateQuantity(existing.id, count);
-        } else if (!await basket.addItem({ product_unique_link: link, source_context: 'studio', quantity: count })) return;
+          if (existing.quantity < count && !await basket.updateQuantity(existing.id, count)) return;
+        } else if (!await basket.addItem({ product_unique_link: link, ...(isV2 ? { variant_id: variantId } : {}), source_context: 'studio', quantity: count })) return;
       }
       basket.openBasket();
+    } catch { toast.error(t('studioV2.purchaseBlocked'));
     } finally { finalizing.current = false; setIsFinalizing(false); }
   };
   return {
@@ -90,20 +114,33 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
     diagnosisExpanded, setDiagnosisExpanded, selectedProduct, setSelectedProduct, productAlternatives,
     acceptedItems, basketProductIds, expandedWhyGroups, isFinalizing, handleFinalize,
     toggleAcceptedItem: id => setSelection(previous => ({ ...previous, accepted: toggle(previous.accepted, id) })),
-    toggleBasketProduct: id => { if (products.some(product => product.id === id && product.uniqueLink)) setSelection(previous => ({ ...previous, products: toggle(previous.products, id) })); },
-    makePrimaryProduct: (itemId, productId) => setSelection(previous => {
-      const group = applyPrimaryProducts(baseGroups, previous.primary).find(item => item.itemId === itemId);
-      const next = group?.products.find(product => product.id === productId);
-      const old = group?.products[0];
-      if (!group || !next || !old || old.id === next.id) return previous;
-      const selected = previous.products.includes(old.id);
-      return { ...previous, primary: { ...previous.primary, [itemId]: next.id },
-        products: selected ? [...previous.products.filter(id => id !== old.id && id !== next.id), ...(next.uniqueLink ? [next.id] : [])] : previous.products,
-        productQuantities: { ...previous.productQuantities, [old.id]: quantity(previous.quantities[itemId] ?? group.quantity) } };
-    }),
+    toggleBasketProduct: id => {
+      const product = products.find(p => p.id === id && p.uniqueLink);
+      if (product?.purchaseStatus && product.purchaseStatus !== 'ready' && !selection.products.includes(id)) { toast.error(t('studioV2.purchaseBlocked')); return; }
+      if (product) setSelection(previous => ({ ...previous, products: isV2 && !previous.products.includes(id)
+        ? [...previous.products.filter(selected => !products.some(p => p.id === selected && p.studioItemId === product.studioItemId && p.studioPlacementId === product.studioPlacementId)), id]
+        : toggle(previous.products, id) }));
+    },
+    makePrimaryProduct: (itemId, productId) => {
+      if (isV2 && onChooseProduct) {
+        const product = categoryGroups.find(g => g.itemId === itemId)?.products.find(p => p.id === productId);
+        if (product) onChooseProduct(product);
+        return;
+      }
+      setSelection(previous => {
+        const group = applyPrimaryProducts(baseGroups, previous.primary).find(item => item.itemId === itemId);
+        const next = group?.products.find(product => product.id === productId);
+        const old = group?.products[0];
+        if (!group || !next || !old || old.id === next.id) return previous;
+        const selected = previous.products.includes(old.id);
+        return { ...previous, primary: { ...previous.primary, [itemId]: next.id },
+          products: selected ? [...previous.products.filter(id => id !== old.id && id !== next.id), ...(next.uniqueLink ? [next.id] : [])] : previous.products,
+          productQuantities: { ...previous.productQuantities, [old.id]: quantity(previous.quantities[itemId] ?? group.quantity) } };
+      });
+    },
     toggleWhyExpanded: id => setExpandedWhyGroups(previous => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; }),
-    updateItemQuantity: (id, count) => setSelection(previous => ({ ...previous, quantities: { ...previous.quantities, [id]: quantity(count) } })),
-    updateProductQuantity: (id, count) => setSelection(previous => ({ ...previous, productQuantities: { ...previous.productQuantities, [id]: quantity(count) } })),
+    updateItemQuantity: (id, count) => { if (isV2) onOpenChat(); else setSelection(previous => ({ ...previous, quantities: { ...previous.quantities, [id]: quantity(count) } })); },
+    updateProductQuantity: (id, count) => { if (isV2) onOpenChat(); else setSelection(previous => ({ ...previous, productQuantities: { ...previous.productQuantities, [id]: quantity(count) } })); },
     productQuantityOverrides: new Map(Object.entries(selection.productQuantities).map(([id, count]) => [id, quantity(count)])),
     checklistCheckedIds: new Set(selection.checklist),
     toggleChecklistItem: id => setSelection(previous => ({ ...previous, checklist: toggle(previous.checklist, id) })),

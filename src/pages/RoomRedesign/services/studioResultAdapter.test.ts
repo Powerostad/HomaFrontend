@@ -4,6 +4,20 @@ import type { MotherProduct } from './motherDocument';
 import { toStudioCategoryGroups } from './studioResultAdapter';
 
 describe('conversation Studio presentation adapter', () => {
+  it('retains two variants of a family, placement identity and unknown verification status', () => {
+    const product = { product_id: 1, name: 'Lamp', candidate: { variant_id: 10, variant_label: 'Small', dimensions_cm: { width_cm: 10 }, quantity: 1,
+      eligibility: 'eligible' as const, purchase_status: 'needs_verification' as const, known_total_rial: null, verification_reasons: ['stock_unknown'], missing_costs: [] } };
+    const plan: ExecutionPlan = { search_version: 'studio-search-v2', purchases: [{ item_id: 'line', source_item_id: 'room:lamp', placement_id: 'left', quantity: 1,
+      category: 'lamp', reason_fa: '', relation: 'similar', product, alternatives: [{ ...product, candidate: { ...product.candidate, variant_id: 11 } }],
+      review_candidates: [{ ...product, product_id: 2 }] }], free_actions: [], surface_actions: [], known_subtotal_rial: 0, budget_ceiling_toman: null,
+      budget_status: 'incomplete', unknown_cost_item_ids: ['line'] };
+    const products = toStudioCategoryGroups(plan)[0].products;
+    expect(products.map(p => p.id)).toEqual(['line/1/10', 'line/1/11']);
+    expect(products[0]).toMatchObject({ studioItemId: 'room:lamp', studioPlacementId: 'left', variantId: 10, priceUnknown: true, purchaseStatus: 'needs_verification' });
+    expect(products.some(p => p.studioProductId === 2)).toBe(false);
+    plan.purchases[0].product = null;
+    expect(toStudioCategoryGroups(plan)[0].products[0].purchaseStatus).toBe('needs_verification');
+  });
   it('separates layout improvements, execution services and externally sourced products without inventing costs', () => {
     const plan: ExecutionPlan = { purchases: [{ item_id: 'rug', quantity: 1, category: 'فرش', reason_fa: 'بافت طبیعی', relation: 'concept', product: null, alternatives: [] }],
       free_actions: [{ instruction_fa: 'جابه‌جایی مبل', reason_fa: 'باز شدن مسیر' }],

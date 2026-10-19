@@ -4,6 +4,7 @@ import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
 import { AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, Crown, Lightbulb, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
+import { StudioSkuDetails } from './StudioSkuDetails';
 import { useState } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
@@ -76,6 +77,7 @@ function ProductPreview({
       <div className="studio-product-copy" dir={siteDirection()}>
         <span className="studio-product-category">{siteValue(product.category || group.category)}</span>
         <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
+        <StudioSkuDetails product={product} />
         <div className="studio-product-meta">
           <span className="studio-price">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
           {siteValue(group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>)}
@@ -88,9 +90,9 @@ function ProductPreview({
         {isPrimary && isSelected && onUpdateQuantity && <div className="studio-quantity-control">
           <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
           <div className="studio-quantity-stepper" dir="ltr">
-          <button type="button" onClick={() => onUpdateQuantity(Math.max(1, group.quantity - 1))} disabled={group.quantity <= 1} aria-label={t('basket.decrease', 'کاهش تعداد')}><Minus size={16} /></button>
+          <button type="button" onClick={() => onUpdateQuantity(Math.max(1, group.quantity - 1))} disabled={!!product.purchaseStatus || group.quantity <= 1} aria-label={t('basket.decrease', 'کاهش تعداد')}><Minus size={16} /></button>
           <strong>{siteValue(toLocalizedDigits(group.quantity || 1))}</strong>
-          <button type="button" onClick={() => onUpdateQuantity(Math.min(99, (group.quantity || 1) + 1))} disabled={group.quantity >= 99} aria-label={t('basket.increase', 'افزایش تعداد')}><Plus size={16} /></button>
+          <button type="button" onClick={() => onUpdateQuantity(Math.min(99, (group.quantity || 1) + 1))} disabled={!!product.purchaseStatus || group.quantity >= 99} aria-label={t('basket.increase', 'افزایش تعداد')}><Plus size={16} /></button>
           </div>
         </div>}
       </div>
@@ -99,7 +101,7 @@ function ProductPreview({
           type="button"
           className={`studio-product-select ${isSelected ? 'is-selected' : ''}`}
           onClick={onToggle}
-          disabled={!product.uniqueLink}
+          disabled={!product.uniqueLink || (!!product.purchaseStatus && product.purchaseStatus !== 'ready' && !isSelected)}
           aria-pressed={isSelected}
           dir={siteDirection()}
         >
@@ -209,6 +211,7 @@ export function RecommendationCard({
           <button type="button" className="studio-swap-image" onClick={() => onProductClick(product)} aria-label={product.name}><AuthenticatedImage src={product.image} alt={siteValue(product.name)} loading="lazy" /></button>
           <strong>{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</strong>
           <button type="button" className="studio-swap-name" onClick={() => onProductClick(product)}>{siteValue(product.name)}</button>
+          <StudioSkuDetails product={product} />
           <Button variant="outline" onClick={() => { onMakePrimary?.(product.id); setAlternativesOpen(false); }} disabled={!onMakePrimary}>{t('studioProductLayout.makePrimary')}</Button>
         </article>)}
       </div>

@@ -45,7 +45,7 @@ interface BasketContextValue {
   closeBasket: () => void;
   refresh: () => Promise<void>;
   addItem: (input: AddToBasketInput) => Promise<boolean>;
-  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => Promise<boolean>;
   acceptPrice: (itemId: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clear: () => Promise<void>;
@@ -127,7 +127,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   );
 
   const updateQuantity = useCallback(
-    (itemId: string, quantity: number): Promise<void> =>
+    (itemId: string, quantity: number): Promise<boolean> =>
       runExclusive(async () => {
         const prev = basketRef.current;
         setBasket(applyQuantity(prev, itemId, quantity)); // optimistic
@@ -135,9 +135,11 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         if (res.success && res.data) {
           setBasket(res.data);
           trackEvent('basket_qty_changed', { item_id: itemId, quantity });
+          return true;
         } else {
           setBasket(prev); // rollback
           toast.error(res.error || siteText("خطا در به‌روزرسانی سبد خرید"));
+          return false;
         }
       }),
     [runExclusive, setBasket]

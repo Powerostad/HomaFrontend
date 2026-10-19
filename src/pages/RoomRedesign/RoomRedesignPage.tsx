@@ -18,6 +18,7 @@ import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { ExecutionPlan } from './services/redesignChatService';
 import { buildDiscoveryReview } from './services/discoveryReview';
+import { StudioReviewPanel } from './components/StudioReviewPanel';
 import './journey.css';
 import './studio-conversation.css';
 
@@ -34,23 +35,27 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   const navigate = useNavigate();
   const openChat = () => { setChatOpen(true); if (!compact) window.scrollTo({ top: 0, behavior: 'instant' }); };
   const state = useConversationStudioResult({ plan, sessionId: chat.sessionId, versionId, resultImage, originalImage,
-    showOriginal: !chat.selectedVersion, onToggleOriginal, onOpenChat: openChat });
+    showOriginal: chat.viewedId === 'original', onToggleOriginal, onOpenChat: openChat,
+    onChooseProduct: product => {
+      if (chat.busy || !product.studioItemId || !product.studioProductId) return;
+      openChat();
+      void chat.sendTurn({ text: '', action: 'select_product', itemId: product.studioItemId, productId: product.studioProductId,
+        variantId: product.variantId, placementId: product.studioPlacementId });
+    } });
   const statusText = chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking');
   return <StudioResultView state={state} conversation={{
     open: chatOpen, compact, onOpen: openChat, onClose: () => setChatOpen(false), onExit: () => navigate('/studio/projects'), busy: chat.busy,
     priceUnknown: !!plan?.unknown_cost_item_ids.length, onImageError,
     printReview: buildDiscoveryReview(plan),
     onRefineProduct: async (product, text) => {
-      const item = plan?.purchases.find(entry => [entry.product, ...entry.alternatives].some(candidate => candidate && `${entry.item_id}/${candidate.product_id}` === product.id));
-      const selected = item && [item.product, ...item.alternatives].find(candidate => candidate && `${item.item_id}/${candidate.product_id}` === product.id);
-      if (!item || !selected || chat.busy || !text.trim()) return false;
+      if (!product.studioItemId || !product.studioProductId || chat.busy || !text.trim()) return false;
       openChat();
-      return chat.sendTurn({ text, action: 'chat', itemId: item.item_id, productId: selected.product_id });
+      return chat.sendTurn({ text, action: plan?.search_version ? 'review_product' : 'chat',
+        itemId: product.studioItemId, productId: product.studioProductId, variantId: product.variantId,
+        placementId: product.studioPlacementId, reviewKind: 'verify_specification' });
     },
     onPreview: product => {
-      const item = plan?.purchases.find(entry => [entry.product, ...entry.alternatives].some(candidate => candidate && `${entry.item_id}/${candidate.product_id}` === product.id));
-      const selected = item && [item.product, ...item.alternatives].find(candidate => candidate && `${item.item_id}/${candidate.product_id}` === product.id);
-      if (item && selected && !chat.busy) { openChat(); void chat.sendTurn({ text: '', action: 'preview_product', itemId: item.item_id, productId: selected.product_id }); }
+      if (product.studioItemId && product.studioProductId && !chat.busy) { openChat(); void chat.sendTurn({ text: '', action: 'preview_product', itemId: product.studioItemId, productId: product.studioProductId, variantId: product.variantId, placementId: product.studioPlacementId }); }
     },
     panel: <StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
       error={chat.error ? siteValue(chat.error) : null} onRetry={() => void chat.retry()}
@@ -60,6 +65,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       <div className="studio-result-version-row">
         <label>{t('redesignJourney.history')}<select aria-label={t('redesignJourney.history')} value={chat.viewedId} onChange={event => chat.selectVersion(event.target.value)}>
           <option value="original">{t('redesignJourney.original')}</option>
+          {plan?.search_version && <option value="current">{t('studioV2.currentPlan')}</option>}
           {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{t('redesignJourney.version', { number: index + 1 })}</option>)}
         </select></label>
       </div>
@@ -75,6 +81,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
     afterReport: <>{!plan && <p className="studio-empty-state">{t(chat.versions.length ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p>}
+      {plan?.search_version && <StudioReviewPanel plan={plan} busy={chat.busy} onAction={args => { openChat(); void chat.sendTurn({ ...args, text: args.text || '' }); }} />}
       {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
   }} />;
 }
@@ -96,8 +103,9 @@ export function RoomRedesignPage() {
   const seeded = useRef(false);
   const selected = chat.selectedVersion;
   if (selected) lastVersion.current = selected.version_id;
-  const report = selected || chat.versions.find(version => version.version_id === lastVersion.current) || chat.versions[chat.versions.length - 1];
-  const plan = selected?.execution || chat.currentExecution || report?.execution || null;
+  const report = chat.viewedId === 'current' ? chat.versions.find(version => version.version_id === chat.currentBaseVersionId)
+    : selected || chat.versions.find(version => version.version_id === lastVersion.current) || chat.versions[chat.versions.length - 1];
+  const plan = chat.viewedId === 'current' ? chat.currentExecution : selected?.execution || chat.currentExecution || report?.execution || null;
   const original = chat.originalImage || intake?.image.dataUrl || null;
   useEffect(() => {
     if (!chat.hydrating && !reviewDismissed && !chat.versions.length && (chat.busy || chat.currentExecution || chat.error)) setReviewActive(true);
@@ -139,7 +147,7 @@ export function RoomRedesignPage() {
       value={input} onChange={setInput} onSend={sendMessage} />} />;
   return <>
     <ConversationResult key={`${chat.sessionId || path || 'new'}:${report?.version_id || 'analysis'}`} chat={chat} plan={plan}
-      versionId={report?.version_id || 'analysis'} resultImage={report?.image_url || original || ''} originalImage={original}
+      versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={report?.image_url || original || ''} originalImage={original}
       onToggleOriginal={show => chat.selectVersion(show ? 'original' : lastVersion.current || report?.version_id || 'original')}
       onImageError={() => {
         setImageFailed(true);
