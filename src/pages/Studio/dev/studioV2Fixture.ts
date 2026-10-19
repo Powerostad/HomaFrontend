@@ -5,6 +5,7 @@ const product = (variant: number): BackendProduct => ({ product_id: 1, name: 'ف
   unique_link: 'sample-only', image_url: '/images/comparison/rug/after.webp',
   candidate: { variant_id: variant, variant_label: variant === 10 ? 'اندازهٔ کوچک' : 'اندازهٔ بزرگ', dimensions_cm: { width_cm: variant === 10 ? 150 : 200, length_cm: 300 },
     quantity: 1, eligibility: 'eligible', purchase_status: 'needs_verification', known_total_rial: 43500000,
+    order_quote: { status: 'quoted', sales_unit: 'piece', order_quantity: 1, demand_quantity: '1', demand_unit: 'piece', supplied_quantity: '1' },
     verification_reasons: ['stock_unknown'], missing_costs: [] } });
 export const studioV2Fixture: ExecutionPlan = {
   search_version: 'studio-search-v2', purchases: [{ item_id: 'rug@left', source_item_id: 'rug', placement_id: 'left',

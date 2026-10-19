@@ -69,11 +69,23 @@ export interface StudioCandidate {
   variant_label: string;
   dimensions_cm: Record<string, number>;
   quantity: number;
+  catalog_revision?: string | null;
+  order_quote?: StudioOrderQuote | null;
   eligibility: 'eligible' | 'needs_verification' | 'rejected';
   purchase_status: 'ready' | 'needs_verification' | 'unavailable';
   known_total_rial: number | null;
   verification_reasons: string[];
   missing_costs: string[];
+}
+export interface StudioOrderQuote {
+  status: 'quoted' | 'needs_verification';
+  sales_unit?: 'piece' | 'pair' | 'pack' | 'roll' | 'm' | 'm2' | 'litre';
+  order_quantity?: number;
+  demand_quantity?: string;
+  demand_unit?: string;
+  required_with_waste?: string;
+  supplied_quantity?: string;
+  reason?: string;
 }
 export type ReviewKind = 'wrong_size' | 'wrong_style' | 'verify_specification' | 'request_alternative';
 

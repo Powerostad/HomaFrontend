@@ -8,6 +8,7 @@ import { Bookmark, Check, ExternalLink, LayoutGrid, Loader2, Share2, ShoppingBag
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import type { StudioOrderQuote } from '../../RoomRedesign/services/redesignChatService';
 
 export interface Product {
   studioItemId?: string;
@@ -17,6 +18,7 @@ export interface Product {
   variantLabel?: string;
   dimensionsCm?: Record<string, number>;
   purchaseStatus?: 'ready' | 'needs_verification' | 'unavailable';
+  orderQuote?: StudioOrderQuote | null;
   id: string;
   name: string;
   price: number;

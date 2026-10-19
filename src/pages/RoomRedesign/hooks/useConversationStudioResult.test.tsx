@@ -126,4 +126,24 @@ describe('conversation data in the original Studio', () => {
       expect(basket.openBasket).not.toHaveBeenCalled();
     } finally { await ui.unmount(); }
   });
+  it('buys two packs for five design pieces and rejects a changed commercial quantity', async () => {
+    const current: ExecutionPlan = { ...plan, search_version: 'studio-search-v2', purchases: [{ ...plan.purchases[0],
+      item_id: 'line', source_item_id: 'panels', placement_id: 'wall', quantity: 2, alternatives: [],
+      product: { ...plan.purchases[0].product!, candidate: { variant_id: 10, variant_label: 'Pack of four', dimensions_cm: {},
+        quantity: 5, order_quote: { status: 'quoted', sales_unit: 'pack', order_quantity: 2, demand_quantity: '5', demand_unit: 'piece' },
+        eligibility: 'eligible', purchase_status: 'ready', known_total_rial: 200000, verification_reasons: [], missing_costs: [] } } }] };
+    const line = { item_id: 'panels', placement_id: 'wall', product_id: 7, variant_id: 10, quantity: 2,
+      product_unique_link: 'lamp-7', unit_price_rial: 100000 };
+    vi.mocked(checkStudioPurchase).mockResolvedValue({ success: true, data: { ready: true, lines: [{ ...line, quantity: 5 }], reasons: [] } });
+    const ui = await mount(current);
+    try {
+      await act(async () => ui.state.toggleBasketProduct(ui.state.categoryGroups[0].products[0].id));
+      expect(ui.state.selectedPrice).toBe(200000);
+      await act(async () => ui.state.handleFinalize());
+      expect(basket.addItem).not.toHaveBeenCalled();
+      vi.mocked(checkStudioPurchase).mockResolvedValue({ success: true, data: { ready: true, lines: [line], reasons: [] } });
+      await act(async () => ui.state.handleFinalize());
+      expect(basket.addItem).toHaveBeenCalledExactlyOnceWith({ product_unique_link: 'lamp-7', variant_id: 10, quantity: 2, source_context: 'studio' });
+    } finally { await ui.unmount(); }
+  });
 });

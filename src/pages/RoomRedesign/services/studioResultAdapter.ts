@@ -20,6 +20,7 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
         studioItemId: item.source_item_id || item.item_id, studioPlacementId: item.placement_id,
         studioProductId: product.product_id, variantId: product.candidate?.variant_id,
         variantLabel: product.candidate?.variant_label, dimensionsCm: product.candidate?.dimensions_cm,
+        orderQuote: product.candidate?.order_quote,
         purchaseStatus: plan.search_version && !item.product ? 'needs_verification' : product.candidate?.purchase_status,
         image: product.image_url || '', price: price ?? 0, priceUnknown: price == null || price <= 0,
         category: product.category_fa || item.category, store: product.merchant_name,
