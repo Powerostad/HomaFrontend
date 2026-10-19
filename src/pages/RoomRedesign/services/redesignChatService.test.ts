@@ -8,6 +8,20 @@ vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => vi.clearAllMocks());
 
+it('selects concept rules ahead of V2 only on explicitly enabled V5 sessions', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
+  vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');
+  vi.stubEnv('VITE_STUDIO_RULES_V3', 'true');
+  try {
+    await createChatSession();
+    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).toMatchObject({ rules_version: 'studio-rules-v3' });
+    vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'false');
+    await createChatSession();
+    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('rules_version');
+  } finally { vi.unstubAllEnvs(); }
+});
+
 it('selects balanced rules only for explicitly enabled V5 sessions', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');

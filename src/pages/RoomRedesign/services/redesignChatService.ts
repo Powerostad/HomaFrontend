@@ -282,8 +282,10 @@ export async function createChatSession(): Promise<CreateSessionResult> {
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v4' }
         : import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
-      ...(import.meta.env.VITE_STUDIO_PIPELINE_V5 === 'true' && import.meta.env.VITE_STUDIO_RULES_V2 === 'true'
-        ? { rules_version: 'studio-rules-v2' } : {}),
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V5 === 'true'
+        ? import.meta.env.VITE_STUDIO_RULES_V3 === 'true' ? { rules_version: 'studio-rules-v3' }
+          : import.meta.env.VITE_STUDIO_RULES_V2 === 'true' ? { rules_version: 'studio-rules-v2' } : {}
+        : {}),
     },
   );
   if (res.success && res.data) {
@@ -596,6 +598,7 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
+  visualization?: { mode: 'concept'; purchase_independent: true };
   rule_findings?: { scene_id: string; rule_id: string; level: 'blocked' | 'warning' | 'repaired'; kind: string; target_id: string; action_id: string; label_fa: string; message_fa: string }[];
   image_review?: { status: string; checks: { aspect: string; status: string; explanation_fa: string }[]; exact_variant_verified: boolean };
   search_version?: 'studio-search-v2';
