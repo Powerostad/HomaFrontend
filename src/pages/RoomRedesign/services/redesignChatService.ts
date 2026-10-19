@@ -64,7 +64,22 @@ export interface BackendProduct {
   unique_link?: string;
 }
 
+export interface StudioProductIdentity {
+  version: 'product-identity-v1';
+  requested_subtype: string;
+  expected_subtype: string;
+  expected_label_fa: string;
+  catalogue_category: string | null;
+  status: 'resolved' | 'category_unavailable' | 'unmapped';
+  mapping_source: 'subtype_alias' | 'need_family_alias' | 'exact_catalogue_code' | 'unmapped';
+  observed_subtype: string | null;
+  observed_status: 'unobserved' | 'observed' | 'unknown' | 'ambiguous';
+  observed_candidates: string[];
+  observations: { subtype: string; source: 'catalogue_fact' | 'catalogue_title' | 'catalogue_category'; source_ref: string }[];
+}
+
 export interface StudioCandidate {
+  product_identity?: StudioProductIdentity;
   variant_id: number | null;
   variant_label: string;
   dimensions_cm: Record<string, number>;
@@ -286,6 +301,8 @@ export async function createChatSession(): Promise<CreateSessionResult> {
         ? import.meta.env.VITE_STUDIO_RULES_V3 === 'true' ? { rules_version: 'studio-rules-v3' }
           : import.meta.env.VITE_STUDIO_RULES_V2 === 'true' ? { rules_version: 'studio-rules-v2' } : {}
         : {}),
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V5 === 'true' && import.meta.env.VITE_STUDIO_PRODUCT_IDENTITY_V1 === 'true'
+        ? { product_identity_version: 'product-identity-v1' } : {}),
     },
   );
   if (res.success && res.data) {
@@ -602,7 +619,7 @@ export interface ExecutionPlan {
   rule_findings?: { scene_id: string; rule_id: string; level: 'blocked' | 'warning' | 'repaired'; kind: string; target_id: string; action_id: string; label_fa: string; message_fa: string }[];
   image_review?: { status: string; checks: { aspect: string; status: string; explanation_fa: string }[]; exact_variant_verified: boolean };
   search_version?: 'studio-search-v2';
-  purchases: { item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  purchases: { product_identity?: StudioProductIdentity; item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
   cost_gaps?: { item_id: string; reasons: string[] }[];
   verification_gaps?: { item_id: string; reasons: string[] }[];
   evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];

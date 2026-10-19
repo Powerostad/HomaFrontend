@@ -8,6 +8,23 @@ vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => vi.clearAllMocks());
 
+it('enables versioned product identity independently of design rules for new V5 sessions', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
+  vi.stubEnv('VITE_STUDIO_PRODUCT_IDENTITY_V1', 'true');
+  vi.stubEnv('VITE_STUDIO_RULES_V3', 'false');
+  vi.stubEnv('VITE_STUDIO_RULES_V2', 'false');
+  try {
+    await createChatSession();
+    const request = vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1];
+    expect(request).toMatchObject({ product_identity_version: 'product-identity-v1' });
+    expect(request).not.toHaveProperty('rules_version');
+    vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'false');
+    await createChatSession();
+    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('product_identity_version');
+  } finally { vi.unstubAllEnvs(); }
+});
+
 it('selects concept rules ahead of V2 only on explicitly enabled V5 sessions', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
