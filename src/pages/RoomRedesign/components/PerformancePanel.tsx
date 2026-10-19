@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { loadStudioPerformance, type StudioPerformanceReport } from '../services/redesignChatService';
 import { useSessionExpenses } from '../hooks/useSessionExpenses';
+import { TokenCostEstimate } from './TokenCostEstimate';
 
 export function PerformancePanel({ sessionId, busy, embedded = false }: { sessionId: string; busy: boolean; embedded?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -52,6 +53,7 @@ export function PerformancePanel({ sessionId, busy, embedded = false }: { sessio
           </dl>
           <p>{t('studioDiagnostics.gaps', { unknown: expenses.unknown_calls, pending: expenses.pending_receipts })}</p>
           <p>{t('studioDiagnostics.costHint')}</p>
+          <TokenCostEstimate estimate={expenses.token_estimate} />
         </section>}
       </div>}
   </section>;

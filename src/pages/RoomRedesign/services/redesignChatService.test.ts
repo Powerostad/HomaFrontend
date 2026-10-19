@@ -1,11 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { streamChatTurn } from './redesignChatService';
+import { createChatSession, streamChatTurn } from './redesignChatService';
+import { apiPost } from '@/utils/apiClient';
 import { runChatCommand } from './chatWebSocket';
 
 vi.mock('./chatWebSocket', () => ({ runChatCommand: vi.fn() }));
 vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => vi.clearAllMocks());
+
+it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
+  await createChatSession();
+  expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
+    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v3',
+  });
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'false');
+  await createChatSession();
+  expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
+    design_version: 'studio-design-v2', search_version: 'studio-search-v2',
+  });
+  vi.unstubAllEnvs();
+});
 
 describe('chat transport user text boundary', () => {
   it.each(['', ' \n\t '])('omits empty text without replacing it: %s', async (text) => {

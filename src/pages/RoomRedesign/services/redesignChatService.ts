@@ -241,8 +241,12 @@ export interface CreateSessionResult {
 export async function createChatSession(): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
-    import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
-      ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {},
+    {
+      ...(import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
+        ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {}),
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
+        ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
+    },
   );
   if (res.success && res.data) {
     return { success: true, data: { sessionId: res.data.session_id, status: res.data.status } };
@@ -287,6 +291,14 @@ export async function loadChatSessionStatus(sessionId: string): Promise<LoadSess
 }
 
 export interface SessionExpenses {
+  token_estimate?: {
+    status: 'complete' | 'partial' | 'unavailable';
+    lower_usd: string | null;
+    upper_usd: string | null;
+    estimated_calls: number;
+    unknown_calls: number;
+    stages: { stage: string; calls: number; estimated_calls: number; unknown_calls: number; low: string; high: string }[];
+  };
   status: 'pending' | 'partial' | 'settled' | 'unavailable';
   known_usd: string | null;
   text_usd: string | null;

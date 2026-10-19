@@ -26,6 +26,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env.studio-local
+studio-pipeline-v3-*.log
 /docs/validation/screenshots/studio-v2-local-live.jpg
 
 # typescript
