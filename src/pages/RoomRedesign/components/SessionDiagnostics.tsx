@@ -73,6 +73,21 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
               <div><dt>{t('studioDiagnostics.grant')}</dt><dd>{money(expenses!.known_grant_toman, t('redesignJourney.toman'))}</dd></div></dl>
             <p className="studio-caption">{t('studioDiagnostics.costHint')}</p>
             <TokenCostEstimate estimate={expenses!.token_estimate} />
+            {!!expenses?.receipts?.length && <details>
+              <summary>{t('studioDiagnostics.cost')} · {t('studioDiagnostics.steps')}</summary>
+              <ul>{expenses.receipts.map(receipt => <li key={receipt.request_id}>
+                <bdi>{t(`studioDiagnostics.stage_${receipt.stage}`, { defaultValue: receipt.stage || receipt.kind })}</bdi>
+                {' · '}<bdi>{receipt.model}</bdi>
+                {' · '}{t('studioDiagnostics.turn')} {receipt.turn_index ?? '—'}
+                {receipt.attempt != null && <> · #{receipt.attempt}</>}
+                <dl>
+                  <dt>{t('studioDiagnostics.total')}</dt><dd>{money(receipt.usd, 'USD')}</dd>
+                  <dt>{t('studioDiagnostics.paid')}</dt><dd>{money(receipt.paid_toman ?? null, t('redesignJourney.toman'))}</dd>
+                  <dt>{t('studioDiagnostics.grant')}</dt><dd>{money(receipt.grant_toman ?? null, t('redesignJourney.toman'))}</dd>
+                </dl>
+                <small><bdi>{receipt.request_id}</bdi></small>
+              </li>)}</ul>
+            </details>}
             <p>{t('studioDiagnostics.gaps', { unknown: expenses!.unknown_calls, pending: expenses!.pending_receipts })}</p>
             {expenses!.checked_at && <p className="studio-caption">{new Date(expenses!.checked_at).toLocaleString(i18n.language)}</p>}
             {report.expenses.refresh_status && <p role="status">{t(`studioDiagnostics.refresh_${report.expenses.refresh_status}`)}</p>}

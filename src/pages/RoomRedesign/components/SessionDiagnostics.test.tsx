@@ -95,4 +95,15 @@ describe('private session diagnostics', () => {
     await act(async () => root.render(<SessionDiagnostics sessionId="owner-session" />));
     expect(document.body.textContent).not.toContain('EXACT OUTPUT');
   });
+  it('shows each provider receipt with its stage, model, attempt and billed amounts', async () => {
+    const expenses={...report.expenses,receipts:[{request_id:'receipt-analysis-1',kind:'text',
+      stage:'studio_analysis_v3',model:'gpt-6-luna',turn_index:1,attempt:2,usd:'0.0123',paid_toman:'123',grant_toman:'0'}]};
+    vi.mocked(refreshSessionExpenses).mockResolvedValue({success:true,data:{expenses}});
+    await open();
+    expect(container.textContent).toContain('gpt-6-luna');
+    expect(container.textContent).toContain('studioDiagnostics.stage_studio_analysis_v3');
+    expect(container.textContent).toContain('#2');
+    expect(container.textContent).toContain('0.0123 USD');
+    expect(container.textContent).toContain('receipt-analysis-1');
+  });
 });

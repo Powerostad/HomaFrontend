@@ -350,6 +350,9 @@ export async function loadChatSessionStatus(sessionId: string): Promise<LoadSess
 }
 
 export interface SessionExpenses {
+  receipts?: { request_id: string; kind: string; model?: string; stage?: string;
+    turn_index?: number | null; attempt?: number | null; usd: string;
+    paid_toman?: string | null; grant_toman?: string | null }[];
   token_estimate?: {
     status: 'complete' | 'partial' | 'unavailable';
     lower_usd: string | null;
