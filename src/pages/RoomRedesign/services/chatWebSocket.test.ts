@@ -42,6 +42,30 @@ const push = (operation = 'render', session = 'session') => ({ type: 'chat.event
   session_id: session, operation_id: operation, event: 'image', data: { url: 'image' } });
 
 describe('durable Studio socket lifecycle', () => {
+  it('streams durable text previews after acknowledgement then follows only its child render', async () => {
+    const { socket, result, onEvent } = await start();
+    socket.frame({ type: 'chat.ack', request_id: 'request', data: { status: 'running', operation_id: 'text' } });
+    expect(await result).toMatchObject({ ok: true });
+    expect(socket.close).not.toHaveBeenCalled();
+    socket.frame({ ...push('text'), event: 'analysis_ready', data: { analysis: { message_fa: 'تحلیل آماده' } } });
+    expect(onEvent).toHaveBeenLastCalledWith(expect.objectContaining({ event: 'analysis_ready', operationId: 'text' }));
+    socket.frame({ ...push('text'), event: 'render_pending', data: { operation_id: 'child' } });
+    socket.frame({ ...push('text'), event: 'text_done', data: {} });
+    expect(socket.close).not.toHaveBeenCalled();
+    const calls = onEvent.mock.calls.length;
+    socket.frame(push('other'));
+    expect(onEvent).toHaveBeenCalledTimes(calls);
+    socket.frame(push('child'));
+    expect(onEvent).toHaveBeenLastCalledWith(expect.objectContaining({ event: 'image', operationId: 'child' }));
+    expect(socket.close).toHaveBeenCalledOnce();
+  });
+  it('closes a durable text-only command on the exact text operation completion', async () => {
+    const { socket, result } = await start();
+    socket.frame({ type: 'chat.ack', request_id: 'request', data: { status: 'running', operation_id: 'text' } });
+    await result;
+    socket.frame({ ...push('text'), event: 'text_done', data: {} });
+    expect(socket.close).toHaveBeenCalledOnce();
+  });
   it('waits past three minutes for the actual model result without resending', async () => {
     const { socket, result, onConnectionLost } = await start();
     await vi.advanceTimersByTimeAsync(193_000);
@@ -108,7 +132,7 @@ describe('durable Studio socket lifecycle', () => {
     const { socket, result, onConnectionLost } = await start('chat.render');
     socket.frame({ type: 'chat.ack', request_id: 'request', data: { status: 'running', operation_id: 'render' } });
     await result;
-    await vi.advanceTimersByTimeAsync(180_001);
+    await vi.advanceTimersByTimeAsync(1_260_001);
     expect(onConnectionLost).toHaveBeenCalledOnce();
     expect(socket.close).toHaveBeenCalledOnce();
   });

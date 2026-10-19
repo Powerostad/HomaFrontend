@@ -5,8 +5,9 @@ import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ImageIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { ExecutionPlan } from '../services/redesignChatService';
-import { buildDiscoveryReview, type DiscoveryTrack } from '../services/discoveryReview';
+import type { ExecutionPlan, WorkflowPreview } from '../services/redesignChatService';
+import { buildDiscoveryReview, buildWorkflowReview, type DiscoveryTrack } from '../services/discoveryReview';
+import { StudioPipelineProgress } from './StudioPipelineProgress';
 import '../discovery.css';
 import { DiscoveryLoading } from './DiscoveryLoading';
 import { InitialAnalysisLoading } from './InitialAnalysisLoading';
@@ -24,14 +25,17 @@ function FindingText({ value, className = '' }: { value: string; className?: str
   </div>;
 }
 
-export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel, stage }: {
+export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel, stage, workflow }: {
   plan: ExecutionPlan | null; originalImage: string | null; sessionId: string | null; busy: boolean; error: string | null;
   resultAvailable: boolean;
   stage?: string | null;
+  workflow?: WorkflowPreview | null;
   onRetry: () => void; onComplete: () => void; onNew: () => void; onDiscuss: () => void; panel?: ReactNode;
 }) {
   const { siteText: copy, siteDirection, siteLocale } = useSiteTranslation();
-  const review = useMemo(() => buildDiscoveryReview(plan), [plan]);
+  const review = useMemo(() => busy && (workflow?.previews?.analysis_ready || workflow?.previews?.design_ready)
+    ? buildWorkflowReview(workflow) : plan ? buildDiscoveryReview(plan) : buildWorkflowReview(workflow), [plan, workflow, busy]);
+  const hasReview = !!plan || !!workflow?.previews?.analysis_ready || !!workflow?.previews?.design_ready;
   const [findingId, setFindingId] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -71,9 +75,9 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
     requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
   };
 
-  if (!plan && busy && !error) return <div className="studio-discovery-page studio-discovery-initial" dir={siteDirection()}>
+  if (!hasReview && busy && !error) return <div className="studio-discovery-page studio-discovery-initial" dir={siteDirection()}>
     <Header />
-    <main className="studio-initial-main"><InitialAnalysisLoading image={originalImage} stage={stage} />
+    <main className="studio-initial-main"><InitialAnalysisLoading image={originalImage} stage={stage} /><StudioPipelineProgress workflow={workflow} />
       {panel && <div className="studio-initial-preview-controls">{panel}</div>}
     </main>
   </div>;
@@ -83,8 +87,8 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
     <main className="studio-discovery-main">
       <div className="studio-discovery-topline"><span>HOMA / {copy('فضای شما، قدم‌به‌قدم')}</span><button type="button" onClick={onNew}>{copy('طراحی جدید')}</button></div>
       <ol className="studio-discovery-steps" aria-label={copy('مسیر طراحی')}>
-        {['تحلیل فضا', 'مرور تغییرها', 'تصویر و پیشنهادها'].map((label, step) => <li key={label} aria-current={step === (!plan ? 0 : waiting ? 2 : 1) ? 'step' : undefined} data-complete={!!plan && step === 0}>
-          <span>{plan && step === 0 ? <Check size={15} aria-hidden="true" /> : number(step + 1)}</span>{copy(label)}
+        {['تحلیل فضا', 'مرور تغییرها', 'تصویر و پیشنهادها'].map((label, step) => <li key={label} aria-current={step === (!hasReview ? 0 : waiting ? 2 : 1) ? 'step' : undefined} data-complete={hasReview && step === 0}>
+          <span>{hasReview && step === 0 ? <Check size={15} aria-hidden="true" /> : number(step + 1)}</span>{copy(label)}
         </li>)}
       </ol>
       <div className="studio-discovery-layout">
@@ -99,7 +103,7 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
             <span>{copy(error ? 'این مرحله به بررسی نیاز دارد.' : !plan ? 'در حال بررسی فضای شما…' : ready ? 'نتیجه آماده است؛ هر وقت خواستی آن را باز کن.' : completeAvailable ? 'پیشنهادها آماده‌اند؛ تصویر تازه‌ای ثبت نشده است.' : 'تصویر و پیشنهادها در حال آماده‌شدن‌اند.')}</span>
           </div>}
           {error && <div className="studio-flow-error" role="alert"><p>{error}</p><Button variant="outline" disabled={busy} onClick={onRetry}>{copy('تلاش دوباره')}</Button>{plan && <Button disabled={busy} onClick={complete}>{copy('دیدن پیشنهادهای آماده')}</Button>}</div>}
-          {!plan ? <div className="studio-discovery-pending">
+          {!hasReview ? <div className="studio-discovery-pending">
             <span className="studio-discovery-kicker">{copy('یک نگاه تازه به فضای شما')}</span>
             <h1>{copy('اول می‌فهمیم چه چیزی می‌تواند بهتر شود.')}</h1>
             <p>{copy('وقتی تحلیل آماده شد، نکته‌ها را یکی‌یکی مرور می‌کنیم؛ بعد تصویر و پیشنهادهای مرتبط را می‌بینی.')}</p>
@@ -127,6 +131,7 @@ export function StudioDiscovery({ plan, originalImage, sessionId, busy, error, r
             <button className="studio-discovery-discuss" type="button" onClick={() => { onDiscuss(); requestAnimationFrame(() => document.getElementById('studio-discovery-conversation')?.scrollIntoView({ block: 'nearest', behavior: 'instant' })); }}><MessageSquare size={17} aria-hidden="true" />{copy('سؤال یا اصلاحی داری؟ با هما در میان بگذار.')}</button>
           </>}
           {plan && !waiting && !error && <div className="studio-discovery-result-action"><Button onClick={() => completeAvailable ? complete() : setWaiting(true)}>{copy(ready ? 'دیدن تصویر و پیشنهادها' : completeAvailable ? 'دیدن پیشنهادهای آماده' : 'مستقیم به نتیجه')}</Button><small>{copy('مرور همهٔ نکته‌ها اجباری نیست.')}</small></div>}
+          <StudioPipelineProgress workflow={workflow} />
           {panel && <div className="studio-discovery-conversation" id="studio-discovery-conversation">{panel}</div>}
         </section>
       </div>

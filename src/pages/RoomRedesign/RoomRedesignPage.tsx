@@ -76,6 +76,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </nav>
     </>,
     status: <>
+      {plan?.image_review && plan.image_review.status !== 'accepted' && <p className="studio-flow-error" role="status">{siteValue('تصویر آماده است؛ نتیجهٔ بازبینی آن هنوز نیاز به بررسی دارد.')}</p>}
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
@@ -138,7 +139,7 @@ export function RoomRedesignPage() {
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
   const discovering = !reviewDismissed && (reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
   if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} originalImage={original}
-    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url} stage={chat.stage}
+    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url} stage={chat.stage} workflow={chat.workflow}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
     panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}

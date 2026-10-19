@@ -190,11 +190,43 @@ export interface RenderPendingEvent {
 
 /** Transient progress hint for the live loading screen (not persisted). */
 export interface StageEvent {
+  parallel?: boolean;
   key?: string;
   label_fa: string;
 }
 
+export interface StageProgress {
+  status: 'running' | 'succeeded' | 'failed';
+  label_fa: string;
+  started_at: string;
+  finished_at?: string;
+}
+export interface ProductReadyEvent {
+  item_id: string;
+  scene_id: string;
+  category: string;
+  status: string;
+  products: { product_id: number; variant_id: number | null; name: string; image_url: string }[];
+  review_count: number;
+  provisional: boolean;
+}
+export interface WorkflowPreview {
+  operation_id?: string;
+  status?: string;
+  revision?: number;
+  progress?: Record<string, StageProgress>;
+  deadline_at?: string;
+  previews?: {
+    analysis_ready?: { analysis: unknown; provisional: boolean; revised?: boolean };
+    design_ready?: { studio_documents: Record<string, StudioMotherDocument>; provisional: boolean };
+    products_ready?: Record<string, ProductReadyEvent>;
+  };
+}
+
 export interface StreamTurnHandlers {
+  onAnalysisReady?: (e: NonNullable<NonNullable<WorkflowPreview['previews']>['analysis_ready']>) => void;
+  onDesignReady?: (e: NonNullable<NonNullable<WorkflowPreview['previews']>['design_ready']>) => void;
+  onProductsReady?: (e: ProductReadyEvent) => void;
   onSession?: (e: SessionEvent) => void;
   onSay?: (delta: string) => void;
   onQuestions?: (e: QuestionsEvent) => void;
@@ -244,7 +276,9 @@ export async function createChatSession(): Promise<CreateSessionResult> {
     {
       ...(import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
         ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {}),
-      ...(import.meta.env.VITE_STUDIO_PIPELINE_V4 === 'true'
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V5 === 'true'
+        ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v5' }
+        : import.meta.env.VITE_STUDIO_PIPELINE_V4 === 'true'
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v4' }
         : import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
@@ -430,6 +464,7 @@ export interface SessionTurn {
   events?: SessionTurnEvent[];
 }
 export interface SessionPayload {
+  workflow?: WorkflowPreview | null;
   design_version?: string;
   search_version?: string;
   session_id: string;
@@ -466,8 +501,17 @@ export async function streamChatTurn(
   signal: AbortSignal,
 ): Promise<{ ok: boolean; aborted?: boolean }> {
   const onEvent = (e: ChatSocketEvent) => {
-    if (e.operationId) handlers.onRenderEvent?.(e);
+    if (e.operationId && ['image', 'error', 'text_done'].includes(e.event)) handlers.onRenderEvent?.(e);
     switch (e.event) {
+      case 'analysis_ready':
+        handlers.onAnalysisReady?.(e.data as NonNullable<NonNullable<WorkflowPreview['previews']>['analysis_ready']>);
+        break;
+      case 'design_ready':
+        handlers.onDesignReady?.(e.data as NonNullable<NonNullable<WorkflowPreview['previews']>['design_ready']>);
+        break;
+      case 'products_ready':
+        handlers.onProductsReady?.(e.data as ProductReadyEvent);
+        break;
       case 'session':
         handlers.onSession?.(e.data as SessionEvent);
         break;
@@ -550,11 +594,13 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
+  image_review?: { status: string; checks: { aspect: string; status: string; explanation_fa: string }[]; exact_variant_verified: boolean };
   search_version?: 'studio-search-v2';
   purchases: { item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
   cost_gaps?: { item_id: string; reasons: string[] }[];
   verification_gaps?: { item_id: string; reasons: string[] }[];
   evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
+    visual_review?: { status: string; not_reviewed_count?: number; assessments?: { reference_id: string; status: string; explanation_fa: string }[] };
     coherence?: { status: string; summary_fa: string; assessments: { aspect: string; status: string; explanation_fa: string; item_ids: string[]; source_refs: string[] }[] } };
   review_tasks?: { id: string; item_id: string; placement_id: string | null; route: string; missing_attributes: string[] }[];
   studio_documents?: Record<string, StudioMotherDocument>;
@@ -590,6 +636,9 @@ export interface DesignVersion {
   legacy_incomplete: boolean;
 }
 export interface DesignOperation {
+  progress?: Record<string, StageProgress>;
+  progress_revision?: number;
+  deadline_at?: string;
   operation_id: string;
   kind: string;
   status: string;

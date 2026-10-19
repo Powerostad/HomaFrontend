@@ -1,4 +1,4 @@
-import type { ExecutionPlan } from './redesignChatService';
+import type { ExecutionPlan, WorkflowPreview } from './redesignChatService';
 
 export type DiscoveryTrack = 'layout' | 'harmony' | 'function' | 'surfaces' | 'idea';
 export interface DiscoveryFinding {
@@ -25,8 +25,8 @@ function text(value: unknown): string { return typeof value === 'string' ? value
 function ids(value: unknown): string[] { return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []; }
 
 /** Read-only presentation of saved mother output. Never changes model input or invents findings. */
-export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryReview {
-  if (!plan) return { summary: '', direction: '', findings: [] };
+export function buildDiscoveryReview(plan: ExecutionPlan | null, earlyDocuments?: Record<string, unknown>): DiscoveryReview {
+  if (!plan && !earlyDocuments) return { summary: '', direction: '', findings: [] };
   const findings: DiscoveryFinding[] = [];
   const seen = new Set<string>();
   const append = (finding: DiscoveryFinding) => {
@@ -35,7 +35,7 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
     seen.add(signature);
     findings.push(finding);
   };
-  const documents = Object.entries(plan.studio_documents || {}).map(([scene, document]) => [scene, record(document)] as const);
+  const documents = Object.entries(earlyDocuments || plan?.studio_documents || {}).map(([scene, document]) => [scene, record(document)] as const);
   for (const [scene, document] of documents) {
     const analysis = record(document.room_analysis);
     const groups: Array<[DiscoveryTrack, string, Record<string, unknown>[]]> = [
@@ -59,7 +59,7 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
     }
   }
   // Legacy plans may have no diagnostic document. Label their changes as ideas, not observed problems.
-  if (!findings.length) {
+  if (!findings.length && plan) {
     plan.free_actions.forEach((action, index) => append({ id: `layout:${index}`, track: 'layout',
       observation: action.reason_fa, suggestion: action.instruction_fa, isObservation: false }));
     plan.purchases.forEach(item => append({ id: `product:${item.item_id}`, track: 'idea',
@@ -73,4 +73,15 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
     direction: documents.map(([, document]) => text(record(document.user_facing_summary).main_improvement_idea)).find(Boolean) || '',
     findings,
   };
+}
+
+export function buildWorkflowReview(workflow?: WorkflowPreview | null): DiscoveryReview {
+  const design = workflow?.previews?.design_ready;
+  if (design) return buildDiscoveryReview(null, design.studio_documents);
+  const analysis = record(workflow?.previews?.analysis_ready?.analysis);
+  const documents = Object.fromEntries(rows(analysis.scenes).map((scene, index) => [
+    text(scene.scene_key) || String(index), record(scene.facts),
+  ]));
+  const review = buildDiscoveryReview(null, documents);
+  return { ...review, summary: text(analysis.message_fa) || review.summary };
 }

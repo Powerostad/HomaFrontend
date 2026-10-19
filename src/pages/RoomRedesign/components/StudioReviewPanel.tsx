@@ -10,12 +10,23 @@ export function StudioReviewPanel({ plan, busy, onAction }: {
   plan: ExecutionPlan; busy: boolean; onAction: (args: SendTurnArgs) => void;
 }) {
   const { t } = useTranslation();
-  const { siteValue } = useSiteTranslation();
+  const { siteValue, siteText: copy } = useSiteTranslation();
   const review = (item: ExecutionPlan['purchases'][number], product: BackendProduct, kind: ReviewKind) =>
     onAction({ text: '', action: 'review_product', itemId: item.source_item_id || item.item_id,
       placementId: item.placement_id, productId: product.product_id, variantId: product.candidate?.variant_id, reviewKind: kind });
   return <section className="studio-plan-summary studio-v2-review" aria-label={t('studioV2.reviewTitle')}>
     <h3>{t('studioV2.reviewTitle')}</h3>
+    {plan.image_review && <div role="status">
+      <h4>{copy('بازبینی تصویر')}</h4>
+      <p>{copy(plan.image_review.status === 'accepted' ? 'بررسی بصری انجام شد؛ اندازهٔ واقعی و تطابق دقیق واریانت تأیید نشده است.'
+        : plan.image_review.status === 'conflict' ? 'در اجرای تصویر مغایرت دیده شد؛ نکته‌های بازبینی را بررسی کن.' : 'بخشی از اجرای تصویر هنوز نیاز به بررسی دارد.')}</p>
+      {plan.image_review.checks.filter(check => check.status !== 'pass').map(check => <p key={check.aspect}>{siteValue(check.explanation_fa)}</p>)}
+    </div>}
+    {plan.evaluation?.visual_review && <details><summary>{copy('بازبینی بصری محصولات')}</summary>
+      <p>{copy('این بررسی بر اساس عکس خانوادهٔ محصول است و مشخصات واقعی واریانت را تأیید نمی‌کند.')}</p>
+      {plan.evaluation.visual_review.status === 'unavailable' && <p>{copy('بازبینی بصری در دسترس نبود؛ انتخاب‌ها تأیید نهایی نشده‌اند.')}</p>}
+      {plan.evaluation.visual_review.assessments?.map(row => <p key={row.reference_id}>{siteValue(row.explanation_fa)}</p>)}
+    </details>}
     <p role="status">{t(`studioV2.status.${plan.evaluation?.status || 'needs_information'}`)}</p>
     <p>{t('studioPrint.knownSubtotal')}: {formatPriceFromRial(plan.known_subtotal_rial)}</p>
     <p>{t('studioV2.costGaps', { count: plan.cost_gaps?.length || 0 })}</p>

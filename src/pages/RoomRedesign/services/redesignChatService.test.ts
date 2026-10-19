@@ -8,6 +8,19 @@ vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => vi.clearAllMocks());
 
+it('selects V5 explicitly for new sessions with V4 rollback available', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
+  vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
+  try {
+    await createChatSession();
+    expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
+      design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v5',
+    });
+  } finally { vi.unstubAllEnvs(); }
+});
+
 it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');

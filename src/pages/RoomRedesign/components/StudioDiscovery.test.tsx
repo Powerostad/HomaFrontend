@@ -26,6 +26,22 @@ async function mount(overrides: Partial<ComponentProps<typeof StudioDiscovery>> 
 }
 beforeEach(() => { vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
 describe('one-finding discovery', () => {
+  it('shows validated early analysis during design and retains it after a later failure', async () => {
+    const ui = await mount({ plan: null, resultAvailable: false, workflow: { previews: { analysis_ready: {
+      provisional: true, analysis: { message_fa: 'تحلیل آماده است', scenes: [{ scene_key: 'room', facts: {
+        room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'entry', evidence: 'میز مسیر ورودی را محدود کرده است.' }] } },
+      } }] },
+    } } } });
+    try {
+      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.textContent).toContain('میز مسیر ورودی را محدود کرده است.');
+      expect(ui.container.textContent).not.toContain('پیشنهاد تغییر');
+      await ui.render({ busy: false, error: 'طراحی نیازمند تلاش دوباره است.' });
+      expect(ui.container.textContent).toContain('میز مسیر ورودی را محدود کرده است.');
+      expect(ui.container.textContent).toContain('طراحی نیازمند تلاش دوباره است.');
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
   it('replaces initial analysis loading with the terminal error and an explicit retry', async () => {
     const ui = await mount({ plan: null, resultAvailable: false });
     try {

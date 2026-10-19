@@ -51,7 +51,9 @@ const COMMAND_TIMEOUT_MS = 120_000;
 // The server permits 600 seconds per model attempt. Keep the connection long
 // enough to receive that result; disconnect recovery never resubmits a turn.
 const TURN_TIMEOUT_MS = 660_000;
-const RENDER_IDLE_TIMEOUT_MS = 180_000;
+// A durable worker owns a 20-minute deadline. Silence during a model call is
+// recovered through status polling, never interpreted as proof of failure.
+const RENDER_IDLE_TIMEOUT_MS = 1_260_000;
 const TERMINAL_RENDER_EVENTS = new Set(['image', 'error']);
 
 function websocketUrl(ticket: string): string {
@@ -204,7 +206,8 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
         // browser. Hold only its terminal frame until the ack identifies the
         // requested operation; older same-session operations remain ignored.
         if (!expectedOperationId) {
-          if (options.type === 'chat.render' && TERMINAL_RENDER_EVENTS.has(frame.event || '')) {
+          if ((options.type === 'chat.render' || options.type === 'chat.turn')
+              && (TERMINAL_RENDER_EVENTS.has(frame.event || '') || frame.event === 'text_done')) {
             earlyTerminalPush = frame;
           }
           return;
@@ -222,10 +225,14 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
           sessionId: frame.session_id,
           operationId,
         });
+        if (frame.event === 'render_pending') {
+          const childId = operationIdFromData(frame.data);
+          if (childId) expectedOperationId = childId;
+        }
         if (operationId && (options.type === 'chat.turn' || options.type === 'chat.render')) {
           armTimer(RENDER_IDLE_TIMEOUT_MS);
         }
-        if (isPush && TERMINAL_RENDER_EVENTS.has(frame.event)) close('render complete');
+        if (isPush && (TERMINAL_RENDER_EVENTS.has(frame.event) || frame.event === 'text_done')) close('operation complete');
         return;
       }
       if (frame.type === 'chat.done') {
@@ -239,16 +246,16 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
       }
       if (frame.type === 'chat.ack') {
         const operationId = operationIdFromData(frame.data);
-        if (options.type === 'chat.render' && operationId) expectedOperationId = operationId;
+        if ((options.type === 'chat.render' || options.type === 'chat.turn') && operationId) expectedOperationId = operationId;
         const status = typeof frame.data === 'object' && frame.data
           ? (frame.data as { status?: unknown }).status
           : undefined;
         const terminal = typeof status === 'string' && ['ready', 'succeeded', 'duplicate', 'completed'].includes(status);
-        const keepRenderSocket = options.type === 'chat.render' && !terminal && !!expectedOperationId;
+        const keepRenderSocket = (options.type === 'chat.render' || options.type === 'chat.turn') && !terminal && !!expectedOperationId;
         if (keepRenderSocket) armTimer(RENDER_IDLE_TIMEOUT_MS);
         finish({ ok: true, status: 200, data: frame.data }, !keepRenderSocket);
         if (
-          options.type === 'chat.render'
+          (options.type === 'chat.render' || options.type === 'chat.turn')
           && !terminal
           && earlyTerminalPush
           && frameOperationId
