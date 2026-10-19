@@ -282,6 +282,8 @@ export async function createChatSession(): Promise<CreateSessionResult> {
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v4' }
         : import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
         ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
+      ...(import.meta.env.VITE_STUDIO_PIPELINE_V5 === 'true' && import.meta.env.VITE_STUDIO_RULES_V2 === 'true'
+        ? { rules_version: 'studio-rules-v2' } : {}),
     },
   );
   if (res.success && res.data) {
@@ -594,6 +596,7 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
+  rule_findings?: { scene_id: string; rule_id: string; level: 'blocked' | 'warning' | 'repaired'; kind: string; target_id: string; action_id: string; label_fa: string; message_fa: string }[];
   image_review?: { status: string; checks: { aspect: string; status: string; explanation_fa: string }[]; exact_variant_verified: boolean };
   search_version?: 'studio-search-v2';
   purchases: { item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];

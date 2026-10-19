@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPriceFromRial } from '@/utils/formatters';
 import type { SendTurnArgs } from '../hooks/useRedesignChat';
 import type { BackendProduct, ExecutionPlan, ReviewKind } from '../services/redesignChatService';
+import { StudioRuleFindings } from './StudioRuleFindings';
 
 /** Unresolved catalogue evidence is visible alongside the design, never a SKU approval. */
 export function StudioReviewPanel({ plan, busy, onAction }: {
@@ -16,6 +17,7 @@ export function StudioReviewPanel({ plan, busy, onAction }: {
       placementId: item.placement_id, productId: product.product_id, variantId: product.candidate?.variant_id, reviewKind: kind });
   return <section className="studio-plan-summary studio-v2-review" aria-label={t('studioV2.reviewTitle')}>
     <h3>{t('studioV2.reviewTitle')}</h3>
+    <StudioRuleFindings findings={plan.rule_findings} />
     {plan.image_review && <div role="status">
       <h4>{copy('بازبینی تصویر')}</h4>
       <p>{copy(plan.image_review.status === 'accepted' ? 'بررسی بصری انجام شد؛ اندازهٔ واقعی و تطابق دقیق واریانت تأیید نشده است.'
