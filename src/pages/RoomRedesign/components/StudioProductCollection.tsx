@@ -3,11 +3,11 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
 import { MapPin, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ExecutionPlan } from '../services/redesignChatService';
+import type { BackendProduct, ExecutionPlan } from '../services/redesignChatService';
 import { StudioProductCard } from './StudioProductCard';
 
 export function StudioProductCollection({ items, busy, onPreview }: {
-  items: ExecutionPlan['purchases']; busy: boolean; onPreview: (itemId: string, productId: number) => void;
+  items: ExecutionPlan['purchases']; busy: boolean; onPreview: (itemId: string, productId: number, variantId?: number | null, placementId?: string | null) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { siteValue } = useSiteTranslation();
@@ -24,10 +24,13 @@ export function StudioProductCollection({ items, busy, onPreview }: {
     </div>}
     {!items.length && <div className="studio-products-empty"><ShoppingBag size={32} aria-hidden="true" /><p>{t('studioChat.noProducts')}</p></div>}
     <div className="studio-purchase-list">{visible.map(item => {
-      const placement = item.mother_product?.placement_instruction || item.placement_instruction_fa;
+      const preview = (product: BackendProduct) => item.source_item_id
+        ? onPreview(item.source_item_id, product.product_id, product.candidate?.variant_id, item.placement_id)
+        : onPreview(item.item_id, product.product_id);
+      const placement = item.source_item_id ? item.placement_instruction_fa : item.mother_product?.placement_instruction || item.placement_instruction_fa;
       return <article className="studio-purchase" key={item.item_id}>
         <div className="studio-purchase-heading"><h3>{siteValue(item.mother_product?.product_name_generic || item.category)}</h3><span className="studio-quantity">{t('studioChat.quantity')}: {item.quantity.toLocaleString(i18n.language)}</span></div>
-        {item.product ? <StudioProductCard product={item.product} busy={busy} onPreview={() => onPreview(item.item_id, item.product!.product_id)} />
+        {item.product ? <StudioProductCard product={item.product} busy={busy} onPreview={() => preview(item.product!)} />
           : <div className="studio-concept"><ShoppingBag size={28} aria-hidden="true" /><p>{t('studioChat.conceptHint')}</p><strong>{t('redesignJourney.unpriced')}</strong></div>}
         <div className="studio-purchase-footer">
           <p className="studio-relation">{t(`redesignJourney.${item.relation}`, { defaultValue: t('redesignJourney.similar') })}</p>
@@ -35,7 +38,7 @@ export function StudioProductCollection({ items, busy, onPreview }: {
             <summary>{t('studioCollection.whyAndWhere')}</summary>
             <dl className="studio-purchase-rationale"><div><dt>{t('studioChat.reason')}</dt><dd>{siteValue(item.reason_fa || item.mother_product?.why_needed)}</dd></div>{placement && <div className="studio-placement"><dt><MapPin size={16} aria-hidden="true" />{t('studioChat.placement')}</dt><dd>{siteValue(placement)}</dd></div>}</dl>
           </details>
-          {!!item.alternatives.length && <details className="studio-alternatives"><summary>{t('redesignJourney.alternatives')} · {item.alternatives.length.toLocaleString(i18n.language)}</summary><div className="studio-alternative-list">{item.alternatives.map(product => <StudioProductCard key={product.product_id} product={product} busy={busy} onPreview={() => onPreview(item.item_id, product.product_id)} />)}</div></details>}
+          {!!item.alternatives.length && <details className="studio-alternatives"><summary>{t('redesignJourney.alternatives')} · {item.alternatives.length.toLocaleString(i18n.language)}</summary><div className="studio-alternative-list">{item.alternatives.map(product => <StudioProductCard key={`${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`} product={product} busy={busy} onPreview={() => preview(product)} />)}</div></details>}
         </div>
       </article>;
     })}</div>

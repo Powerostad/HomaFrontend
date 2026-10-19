@@ -8,13 +8,19 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
   const purchases: CategoryGroup[] = plan.purchases.map((item, index) => {
     const mother = item.mother_product;
     const impact = mother?.scores?.impact_score;
-    const seen = new Set<number>();
+    const seen = new Set<string>();
     const products: Product[] = [item.product, ...item.alternatives].flatMap(product => {
-      if (!product || seen.has(product.product_id)) return [];
-      seen.add(product.product_id);
+      if (!product) return [];
+      const key = `${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
       const price = product.price_rial ?? (product.price_toman != null ? product.price_toman * 10 : null);
       return [{
-        id: `${item.item_id}/${product.product_id}`, name: product.name,
+        id: plan.search_version ? `${item.item_id}/${key}` : `${item.item_id}/${product.product_id}`, name: product.name,
+        studioItemId: item.source_item_id || item.item_id, studioPlacementId: item.placement_id,
+        studioProductId: product.product_id, variantId: product.candidate?.variant_id,
+        variantLabel: product.candidate?.variant_label, dimensionsCm: product.candidate?.dimensions_cm,
+        purchaseStatus: plan.search_version && !item.product ? 'needs_verification' : product.candidate?.purchase_status,
         image: product.image_url || '', price: price ?? 0, priceUnknown: price == null || price <= 0,
         category: product.category_fa || item.category, store: product.merchant_name,
         description: product.description || product.ai_description,
@@ -24,12 +30,12 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
         link: product.merchant_url && /^https?:\/\//i.test(product.merchant_url) ? product.merchant_url : undefined,
       }];
     });
-    const placement = mother?.placement_instruction || item.placement_instruction_fa || '';
+    const placement = (plan.search_version ? item.placement_instruction_fa : mother?.placement_instruction) || item.placement_instruction_fa || '';
     return {
       itemId: index + 1, category: item.category, categoryDisplay: mother?.product_name_generic || item.category,
       recommendationReasonFa: item.reason_fa || mother?.why_needed || '',
       designRationaleFa: placement || mother?.why_needed || '', recommendedSize: '',
-      quantity: Math.max(1, Math.min(99, item.quantity || 1)), placements: placement ? [placement] : [],
+      quantity: plan.search_version ? item.quantity : Math.max(1, Math.min(99, item.quantity || 1)), placements: placement ? [placement] : [],
       positionInImage: null, products, actionStatus: products.length ? 'available' : 'custom_order',
       interventionTier: 'quick_win', impactKnown: Number.isFinite(impact),
       impactLevel: impact != null && impact >= 7 ? 'high' : impact != null && impact >= 4 ? 'medium' : 'low',

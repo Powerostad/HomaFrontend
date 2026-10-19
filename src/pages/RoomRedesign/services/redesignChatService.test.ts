@@ -29,4 +29,11 @@ describe('chat transport user text boundary', () => {
     expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).toMatchObject({ action: 'preview_product', item_id: 'item', product_id: 12 });
     expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).not.toHaveProperty('text');
   });
+  it('transports exact variant, placement and typed review without fabricated user text', async () => {
+    vi.mocked(runChatCommand).mockResolvedValue({ ok: true, status: 200 });
+    await streamChatTurn({ sessionId: 'session', idempotencyKey: 'request', text: '', images: [], action: 'review_product',
+      itemId: 'sc1:lamp', productId: 12, variantId: 120, placementId: 'left', reviewKind: 'wrong_size' }, {}, new AbortController().signal);
+    expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).toMatchObject({ variant_id: 120, placement_id: 'left', review_kind: 'wrong_size' });
+    expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).not.toHaveProperty('text');
+  });
 });

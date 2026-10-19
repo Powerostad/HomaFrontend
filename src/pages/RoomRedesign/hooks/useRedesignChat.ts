@@ -19,9 +19,12 @@ export interface SendTurnArgs {
   text: string;
   images?: string[];
   prefsUpdate?: unknown;
-  action?: 'chat' | 'preview_product';
+  action?: StreamTurnParams['action'];
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: StreamTurnParams['reviewKind'];
 }
 export function useRedesignChat(path?: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -29,6 +32,7 @@ export function useRedesignChat(path?: string) {
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
   const [currentExecution, setCurrentExecution] = useState<ExecutionPlan | null>(null);
+  const [currentBaseVersionId, setCurrentBaseVersionId] = useState('original');
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [viewedId, setViewedId] = useState('original');
   const [readyId, setReadyId] = useState<string | null>(null);
@@ -60,6 +64,7 @@ export function useRedesignChat(path?: string) {
       text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
     setCurrentExecution(data.current_execution || null);
+    setCurrentBaseVersionId(data.current_base_version_id || 'original');
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
     if (next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
@@ -159,7 +164,7 @@ export function useRedesignChat(path?: string) {
       if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || siteText("این گفتگو در دسترس نیست.")); return; }
       try {
         const saved = sessionStorage.getItem(`redesign-view:${path}`);
-        if (saved && (saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
+        if (saved && (saved === 'current' || saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
       } catch { /* optional view memory */ }
       apply(loaded.data as SessionPayload);
       locked.current = true;
@@ -203,6 +208,14 @@ export function useRedesignChat(path?: string) {
       },
       onStage: event => { if (isCurrent()) setStage(event.label_fa); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
+      onResult: event => {
+        if (!isCurrent()) return;
+        if (event.execution) setCurrentExecution(event.execution);
+        if (params.action === 'retry_search' || params.action === 'review_product' || params.action === 'select_product') {
+          following.current = false; viewedRef.current = 'current'; setViewedId('current');
+          try { sessionStorage.setItem(`redesign-view:${params.sessionId}`, 'current'); } catch { /* optional view memory */ }
+        }
+      },
       onRenderPending: event => {
         if (!isCurrent()) return;
         renderOperationId.current = event.operation_id || null;
@@ -335,5 +348,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, currentExecution, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { formatPriceFromRial } from '@/utils/formatters';
 import type { Product } from '../components/ProductDetailSheet';
 import type { RefineProduct } from './ProductRefinement';
+import { StudioSkuDetails } from './StudioSkuDetails';
 
 /** A single portal above the workspace: photo first, one contextual action. */
 export function StudioProductSheet({ product, isOpen, onClose, isAlternative, onMakePrimary, isInBasket, onToggleBasket, onPreview, previewBusy = false }: {
@@ -20,6 +21,7 @@ export function StudioProductSheet({ product, isOpen, onClose, isAlternative, on
       <div className="studio-selection-sheet-scroll">
         <AuthenticatedImage src={product.image} alt={product.name} className="studio-selection-sheet-image" />
         <div className="studio-selection-sheet-copy"><h2>{product.name}</h2><strong>{product.priceUnknown ? t('redesignJourney.unpriced') : formatPriceFromRial(product.price, true)}</strong>
+          <StudioSkuDetails product={product} />
           <div className="studio-selection-sheet-description">
             {product.description && <p>{product.description}</p>}
             {product.persianReason && <p>{product.persianReason}</p>}
@@ -29,7 +31,7 @@ export function StudioProductSheet({ product, isOpen, onClose, isAlternative, on
         </div>
       </div>
       <footer className="studio-selection-sheet-footer">
-        {isAlternative ? <Button onClick={onMakePrimary}>{t('studioProductLayout.makePrimary')}</Button> : <Button onClick={onToggleBasket} aria-pressed={isInBasket} disabled={!product.uniqueLink}>{t(isInBasket ? 'studio.result.v2.card.removeFromBasket' : 'studio.result.v2.card.addToBasketShort')}</Button>}
+        {isAlternative ? <Button onClick={onMakePrimary}>{t('studioProductLayout.makePrimary')}</Button> : <Button onClick={onToggleBasket} aria-pressed={isInBasket} disabled={!product.uniqueLink || (!!product.purchaseStatus && product.purchaseStatus !== 'ready' && !isInBasket)}>{t(isInBasket ? 'studio.result.v2.card.removeFromBasket' : 'studio.result.v2.card.addToBasketShort')}</Button>}
         {product.link && <a href={product.link} target="_blank" rel="noopener noreferrer">{t('product.viewInStore')}</a>}
       </footer>
     </DialogContent>

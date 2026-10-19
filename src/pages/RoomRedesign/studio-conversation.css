@@ -64,3 +64,8 @@
   .studio-result-with-conversation .studio-summary-nav svg { display:none; }
   .studio-conversation-drawer .studio-chat-log { padding:var(--space-4); }
 }
+.studio-v2-review { margin-block:var(--space-6); padding:var(--space-5); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); background:var(--color-surface-default); }
+.studio-v2-review-item { display:grid; gap:var(--space-2); padding-block:var(--space-4); border-top:1px solid var(--color-border-subtle); overflow-wrap:anywhere; }
+.studio-v2-review-item article { display:grid; gap:var(--space-2); padding:var(--space-3); background:var(--color-surface-muted); border-radius:var(--radius-md); }
+.studio-v2-review .studio-product-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
+.studio-v2-review button { min-height:44px; white-space:normal; }

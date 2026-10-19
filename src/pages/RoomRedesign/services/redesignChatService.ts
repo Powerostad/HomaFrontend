@@ -41,6 +41,9 @@ export interface QuestionsEvent {
 }
 
 export interface BackendProduct {
+  search_version?: 'studio-search-v2';
+  candidate?: StudioCandidate;
+  variant_options?: { variant_id: number | null; price_rial: number | null; details: StudioCandidate }[];
   product_id: number;
   name: string;
   category_fa?: string;
@@ -60,6 +63,19 @@ export interface BackendProduct {
   /** Present only once the backend exposes it (see plan §6); optional for safety. */
   unique_link?: string;
 }
+
+export interface StudioCandidate {
+  variant_id: number | null;
+  variant_label: string;
+  dimensions_cm: Record<string, number>;
+  quantity: number;
+  eligibility: 'eligible' | 'needs_verification' | 'rejected';
+  purchase_status: 'ready' | 'needs_verification' | 'unavailable';
+  known_total_rial: number | null;
+  verification_reasons: string[];
+  missing_costs: string[];
+}
+export type ReviewKind = 'wrong_size' | 'wrong_style' | 'verify_specification' | 'request_alternative';
 
 export interface BackendResultScores {
   impact_score?: number;
@@ -137,6 +153,7 @@ export interface BackendScene {
 }
 
 export interface ResultEvent {
+  execution?: ExecutionPlan;
   message_fa: string;
   items: BackendResultItem[];
   existing_item_decisions: BackendExistingDecision[];
@@ -191,9 +208,12 @@ export interface StreamTurnParams {
   images: string[];
   prefsUpdate?: unknown;
   baseVersionId?: string;
-  action?: 'chat' | 'preview_product';
+  action?: 'chat' | 'preview_product' | 'select_product' | 'retry_search' | 'review_product';
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: ReviewKind;
   idempotencyKey: string;
 }
 
@@ -209,7 +229,8 @@ export interface CreateSessionResult {
 export async function createChatSession(): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
-    {},
+    import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
+      ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {},
   );
   if (res.success && res.data) {
     return { success: true, data: { sessionId: res.data.session_id, status: res.data.status } };
@@ -294,6 +315,9 @@ export async function selectChatProduct(params: {
   sessionId: string;
   category: string;
   productId: number;
+  itemId?: string;
+  variantId?: number | null;
+  placementId?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   const res = await runChatCommand({
     type: 'chat.select',
@@ -303,6 +327,9 @@ export async function selectChatProduct(params: {
       session_id: params.sessionId,
       category: params.category,
       product_id: params.productId,
+      item_id: params.itemId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
     },
     signal: new AbortController().signal,
   });
@@ -377,6 +404,8 @@ export interface SessionTurn {
   events?: SessionTurnEvent[];
 }
 export interface SessionPayload {
+  design_version?: string;
+  search_version?: string;
   session_id: string;
   status: string;
   title: string;
@@ -384,6 +413,7 @@ export interface SessionPayload {
   versions?: DesignVersion[];
   /** Validated design/retrieval, available before or despite image failure. */
   current_execution?: ExecutionPlan | null;
+  current_base_version_id?: string;
   operations?: DesignOperation[];
   original_image?: string | null;
 }
@@ -464,6 +494,9 @@ export async function streamChatTurn(
       action: params.action ?? 'chat',
       item_id: params.itemId,
       product_id: params.productId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
+      review_kind: params.reviewKind,
       idempotency_key: params.idempotencyKey,
     },
     onEvent,
@@ -491,7 +524,13 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
-  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  search_version?: 'studio-search-v2';
+  purchases: { item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  cost_gaps?: { item_id: string; reasons: string[] }[];
+  verification_gaps?: { item_id: string; reasons: string[] }[];
+  evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
+    coherence?: { status: string; summary_fa: string; assessments: { aspect: string; status: string; explanation_fa: string; item_ids: string[]; source_refs: string[] }[] } };
+  review_tasks?: { id: string; item_id: string; placement_id: string | null; route: string; missing_attributes: string[] }[];
   studio_documents?: Record<string, StudioMotherDocument>;
   free_actions: { instruction_fa: string; reason_fa: string }[];
   surface_actions: { change_fa: string; target?: string }[];
@@ -500,6 +539,22 @@ export interface ExecutionPlan {
   budget_status: string;
   unknown_cost_item_ids: string[];
 }
+
+export interface StudioPurchaseLine {
+  item_id: string;
+  placement_id?: string | null;
+  product_id: number;
+  variant_id: number | null;
+  quantity: number;
+}
+export interface PurchaseCheckResult {
+  ready: boolean;
+  checked_at?: string;
+  reasons: { item_id?: string; reason: string }[];
+  lines: (StudioPurchaseLine & { product_unique_link: string; unit_price_rial: number })[];
+}
+export const checkStudioPurchase = (sessionId: string, versionId: string, lines: StudioPurchaseLine[]) =>
+  apiPost<PurchaseCheckResult>(`/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/purchase-check/`, { version_id: versionId, lines });
 export interface DesignVersion {
   version_id: string;
   base_version_id: string;

@@ -9,7 +9,7 @@ import { StudioProductCollection } from './StudioProductCollection';
 interface Props {
   plan: ExecutionPlan;
   busy: boolean;
-  onPreview: (itemId: string, productId: number) => void;
+  onPreview: (itemId: string, productId: number, variantId?: number | null, placementId?: string | null) => void;
   section?: 'all' | 'plan' | 'products';
 }
 

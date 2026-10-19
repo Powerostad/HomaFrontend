@@ -9,6 +9,8 @@ import type { BackendProduct, ExecutionPlan } from '../../RoomRedesign/services/
 import type { ChatMessage } from '../../RoomRedesign/types';
 import '../../RoomRedesign/studio-conversation.css';
 import { StudioDiscovery } from '../../RoomRedesign/components/StudioDiscovery';
+import { StudioReviewPanel } from '../../RoomRedesign/components/StudioReviewPanel';
+import { studioV2Fixture } from './studioV2Fixture';
 
 // Illustrative data only. Never represents an account, quote or model result.
 const product = (id: number, name: string, category: string, price: number, image: string): BackendProduct => ({
@@ -16,7 +18,7 @@ const product = (id: number, name: string, category: string, price: number, imag
   image_url: image, unique_link: `local-preview-${id}`,
   description: 'محصول و قیمت نمونه برای بررسی رابط کاربری؛ قابل سفارش نیست.',
 });
-const plan: ExecutionPlan = {
+const legacyPlan: ExecutionPlan = {
   purchases: [
     { item_id: 'table', quantity: 1, category: 'میز جلو مبلی', relation: 'sample', reason_fa: 'فرم ساده و بافت چوب با نشیمن هماهنگ است.',
       product: product(1, 'میز جلو مبلی چوبی مدرن', 'میز جلو مبلی', 115900000, '/images/studio/preset-modern-living.webp'),
@@ -32,6 +34,7 @@ const plan: ExecutionPlan = {
 };
 
 export default function LocalStudioPreview() {
+  const plan = new URLSearchParams(window.location.search).get('preview') === 'v2' ? studioV2Fixture : legacyPlan;
   const { t } = useTranslation();
   const compact = useMediaQuery('(max-width: 1199px)');
   const [open, setOpen] = useState(false);
@@ -61,6 +64,6 @@ export default function LocalStudioPreview() {
     toolbar: <p>{t('studioLocal.hint')}</p>,
     status: <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div>,
     details: <p>{t('studioLocal.analysis')}</p>,
-    afterReport: <details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details>,
+    afterReport: <>{plan.search_version && <StudioReviewPanel plan={plan} busy={false} onAction={() => setNotice(t('studioLocal.noModel'))} />}<details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,
   }} />;
 }
