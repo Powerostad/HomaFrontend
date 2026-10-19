@@ -4,6 +4,21 @@ import type { MotherProduct } from './motherDocument';
 import { toStudioCategoryGroups } from './studioResultAdapter';
 
 describe('conversation Studio presentation adapter', () => {
+  it('keeps commercial pack count separate from design demand and price per pack', () => {
+    const orderQuote = { status: 'quoted' as const, sales_unit: 'pack' as const, order_quantity: 2,
+      demand_quantity: '5', demand_unit: 'piece', supplied_quantity: '8' };
+    const plan: ExecutionPlan = { search_version: 'studio-search-v2', purchases: [{ item_id: 'line', source_item_id: 'room:panels',
+      placement_id: 'wall', quantity: 2, category: 'wall_panels', reason_fa: '', relation: 'similar', alternatives: [],
+      product: { product_id: 1, name: 'Panels', price_rial: 100, candidate: { variant_id: 10, variant_label: 'Pack of four',
+        dimensions_cm: {}, quantity: 5, order_quote: orderQuote, eligibility: 'eligible', purchase_status: 'ready',
+        known_total_rial: 200, verification_reasons: [], missing_costs: [] } } }],
+      free_actions: [], surface_actions: [], known_subtotal_rial: 200, budget_ceiling_toman: null,
+      budget_status: 'unspecified', unknown_cost_item_ids: [] };
+    const group = toStudioCategoryGroups(plan)[0];
+    expect(group.quantity).toBe(2);
+    expect(group.products[0]).toMatchObject({ price: 100, orderQuote });
+    expect(plan.purchases[0].product?.candidate?.quantity).toBe(5);
+  });
   it('retains two variants of a family, placement identity and unknown verification status', () => {
     const product = { product_id: 1, name: 'Lamp', candidate: { variant_id: 10, variant_label: 'Small', dimensions_cm: { width_cm: 10 }, quantity: 1,
       eligibility: 'eligible' as const, purchase_status: 'needs_verification' as const, known_total_rial: null, verification_reasons: ['stock_unknown'], missing_costs: [] } };
