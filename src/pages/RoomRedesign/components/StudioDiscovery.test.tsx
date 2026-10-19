@@ -26,6 +26,18 @@ async function mount(overrides: Partial<ComponentProps<typeof StudioDiscovery>> 
 }
 beforeEach(() => { vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
 describe('one-finding discovery', () => {
+  it('replaces initial analysis loading with the terminal error and an explicit retry', async () => {
+    const ui = await mount({ plan: null, resultAvailable: false });
+    try {
+      expect(ui.container.querySelector('.studio-initial-loading')).not.toBeNull();
+      await ui.render({ busy: false, error: 'پاسخ مدل با قواعد طراحی سازگار نبود.' });
+      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.textContent).toContain('پاسخ مدل با قواعد طراحی سازگار نبود.');
+      expect(ui.props.onRetry).not.toHaveBeenCalled();
+      await ui.click('تلاش دوباره');
+      expect(ui.props.onRetry).toHaveBeenCalledOnce();
+    } finally { await ui.cleanup(); }
+  });
   it('shows no invented findings before the saved analysis arrives', async () => {
     const ui = await mount({ plan: null });
     try {
