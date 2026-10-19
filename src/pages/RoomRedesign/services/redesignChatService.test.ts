@@ -8,6 +8,23 @@ vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => vi.clearAllMocks());
 
+it('opts new sessions into shared taxonomy with concept-preserving rules and leaves legacy selectable', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
+  vi.stubEnv('VITE_STUDIO_PRODUCT_TAXONOMY_V1', 'true');
+  vi.stubEnv('VITE_STUDIO_RULES_V3', 'false');
+  vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');
+  try {
+    await createChatSession();
+    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).toMatchObject({
+      product_taxonomy_version: 'product-taxonomy-v1', rules_version: 'studio-rules-v3',
+    });
+    vi.stubEnv('VITE_STUDIO_PRODUCT_TAXONOMY_V1', 'false');
+    await createChatSession();
+    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('product_taxonomy_version');
+  } finally { vi.unstubAllEnvs(); }
+});
+
 it('enables versioned product identity independently of design rules for new V5 sessions', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');

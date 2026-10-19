@@ -4,6 +4,20 @@ import type { MotherProduct } from './motherDocument';
 import { toStudioCategoryGroups } from './studioResultAdapter';
 
 describe('conversation Studio presentation adapter', () => {
+  it('carries concrete external sourcing guidance without inventing a purchasable product', () => {
+    const explanation = 'برای کنار پنجره، پردهٔ کتانی روشن با رنگ کرم جست‌وجو کنید.';
+    const plan: ExecutionPlan = { purchases: [{ item_id: 'curtain', category: 'drapery_panel', quantity: 1,
+      reason_fa: 'نرم شدن نور', relation: 'concept', product: null, alternatives: [],
+      sourcing_guidance: { mode: 'external_search', title_fa: 'پرده', explanation_fa: explanation,
+        search_query: 'پرده کتانی کرم', specifications_fa: ['رنگ: کرم'], placement_fa: 'کنار پنجره',
+        design_preserved: true, image_status: 'concept', catalogue_status: 'no_match' } }],
+      free_actions: [], surface_actions: [], known_subtotal_rial: 0, budget_ceiling_toman: null,
+      budget_status: 'incomplete', unknown_cost_item_ids: ['curtain'] };
+    const group = toStudioCategoryGroups(plan)[0];
+    expect(group).toMatchObject({ actionStatus: 'custom_order', products: [], actionGuidance: explanation,
+      webSearchQuery: 'پرده کتانی کرم' });
+    expect(plan.known_subtotal_rial).toBe(0);
+  });
   it('keeps commercial pack count separate from design demand and price per pack', () => {
     const orderQuote = { status: 'quoted' as const, sales_unit: 'pack' as const, order_quantity: 2,
       demand_quantity: '5', demand_unit: 'piece', supplied_quantity: '8' };

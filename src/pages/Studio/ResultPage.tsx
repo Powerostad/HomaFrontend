@@ -85,7 +85,8 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
     name: group.categoryDisplay,
     category: group.category,
     imageUrl: group.products[0]?.image || '',
-    aiReasoning: group.recommendationReasonFa || group.designRationaleFa,
+    aiReasoning: group.actionGuidance || group.recommendationReasonFa || group.designRationaleFa,
+    webSearchQuery: group.webSearchQuery,
   }));
 
   const handlePhaseClick = useCallback((phase: Phase) => {

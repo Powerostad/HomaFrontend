@@ -40,7 +40,8 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
       positionInImage: null, products, actionStatus: products.length ? 'available' : 'custom_order',
       interventionTier: 'quick_win', impactKnown: Number.isFinite(impact),
       impactLevel: impact != null && impact >= 7 ? 'high' : impact != null && impact >= 4 ? 'medium' : 'low',
-      actionGuidance: mother?.why_needed || item.reason_fa,
+      actionGuidance: item.sourcing_guidance?.explanation_fa || mother?.why_needed || item.reason_fa,
+      webSearchQuery: item.sourcing_guidance?.search_query,
     };
   });
   const actions: CategoryGroup[] = [...plan.free_actions.map(action => ({ reason: action.reason_fa, instruction: action.instruction_fa, kind: 'layout' as const })),

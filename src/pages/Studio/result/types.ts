@@ -130,6 +130,7 @@ export interface CategoryGroup {
   impactKnown?: boolean;
   actionType?: string;
   actionGuidance?: string;
+  webSearchQuery?: string;
   /** Layout changes are not paid execution services or catalogue products. */
   actionKind?: 'layout' | 'service';
 }
@@ -161,6 +162,7 @@ export interface ResultSession {
     interventionTier?: InterventionTier;
     impactLevel?: ImpactLevel;
     actionGuidance?: string;
+  webSearchQuery?: string;
   }[];
 }
 
