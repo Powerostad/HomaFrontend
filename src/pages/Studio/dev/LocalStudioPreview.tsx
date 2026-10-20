@@ -9,7 +9,6 @@ import type { BackendProduct, ExecutionPlan } from '../../RoomRedesign/services/
 import type { ChatMessage } from '../../RoomRedesign/types';
 import '../../RoomRedesign/studio-conversation.css';
 import { StudioDiscovery } from '../../RoomRedesign/components/StudioDiscovery';
-import { StudioReviewPanel } from '../../RoomRedesign/components/StudioReviewPanel';
 import { studioV2Fixture } from './studioV2Fixture';
 
 // Illustrative data only. Never represents an account, quote or model result.
@@ -64,6 +63,6 @@ export default function LocalStudioPreview() {
     toolbar: <p>{t('studioLocal.hint')}</p>,
     status: <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div>,
     details: <p>{t('studioLocal.analysis')}</p>,
-    afterReport: <>{plan.search_version && <StudioReviewPanel plan={plan} busy={false} onAction={() => setNotice(t('studioLocal.noModel'))} />}<details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,
+    afterReport: <><details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,
   }} />;
 }

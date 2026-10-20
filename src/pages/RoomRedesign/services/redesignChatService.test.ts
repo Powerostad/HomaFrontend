@@ -6,81 +6,7 @@ import { runChatCommand } from './chatWebSocket';
 vi.mock('./chatWebSocket', () => ({ runChatCommand: vi.fn() }));
 vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
-afterEach(() => vi.clearAllMocks());
-
-it('opts new sessions into shared taxonomy with concept-preserving rules and leaves legacy selectable', async () => {
-  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
-  vi.stubEnv('VITE_STUDIO_PRODUCT_TAXONOMY_V1', 'true');
-  vi.stubEnv('VITE_STUDIO_RULES_V3', 'false');
-  vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');
-  try {
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).toMatchObject({
-      product_taxonomy_version: 'product-taxonomy-v1', rules_version: 'studio-rules-v3',
-    });
-    vi.stubEnv('VITE_STUDIO_PRODUCT_TAXONOMY_V1', 'false');
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('product_taxonomy_version');
-  } finally { vi.unstubAllEnvs(); }
-});
-
-it('enables versioned product identity independently of design rules for new V5 sessions', async () => {
-  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
-  vi.stubEnv('VITE_STUDIO_PRODUCT_IDENTITY_V1', 'true');
-  vi.stubEnv('VITE_STUDIO_RULES_V3', 'false');
-  vi.stubEnv('VITE_STUDIO_RULES_V2', 'false');
-  try {
-    await createChatSession();
-    const request = vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1];
-    expect(request).toMatchObject({ product_identity_version: 'product-identity-v1' });
-    expect(request).not.toHaveProperty('rules_version');
-    vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'false');
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('product_identity_version');
-  } finally { vi.unstubAllEnvs(); }
-});
-
-it('selects concept rules ahead of V2 only on explicitly enabled V5 sessions', async () => {
-  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
-  vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');
-  vi.stubEnv('VITE_STUDIO_RULES_V3', 'true');
-  try {
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).toMatchObject({ rules_version: 'studio-rules-v3' });
-    vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'false');
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('rules_version');
-  } finally { vi.unstubAllEnvs(); }
-});
-
-it('selects balanced rules only for explicitly enabled V5 sessions', async () => {
-  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
-  vi.stubEnv('VITE_STUDIO_RULES_V2', 'true');
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
-  try {
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).toMatchObject({ rules_version: 'studio-rules-v2' });
-    vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'false');
-    await createChatSession();
-    expect(vi.mocked(apiPost).mock.calls.slice(-1)[0]?.[1]).not.toHaveProperty('rules_version');
-  } finally { vi.unstubAllEnvs(); }
-});
-
-it('selects V5 explicitly for new sessions with V4 rollback available', async () => {
-  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
-  vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
-  vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
-  try {
-    await createChatSession();
-    expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-      design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v5',
-    });
-  } finally { vi.unstubAllEnvs(); }
-});
+afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
 
 it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
@@ -139,5 +65,19 @@ describe('chat transport user text boundary', () => {
       itemId: 'sc1:lamp', productId: 12, variantId: 120, placementId: 'left', reviewKind: 'wrong_size' }, {}, new AbortController().signal);
     expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).toMatchObject({ variant_id: 120, placement_id: 'left', review_kind: 'wrong_size' });
     expect(vi.mocked(runChatCommand).mock.calls[0][0].payload).not.toHaveProperty('text');
+  });
+});
+
+it('keeps taxonomy and identity with V4 without V5 or rule options', async () => {
+  vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
+  vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
+  vi.stubEnv('VITE_STUDIO_PIPELINE_V5', 'true');
+  vi.stubEnv('VITE_STUDIO_PRODUCT_TAXONOMY_V1', 'true');
+  vi.stubEnv('VITE_STUDIO_PRODUCT_IDENTITY_V1', 'true');
+  await createChatSession();
+  expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
+    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v4',
+    product_taxonomy_version: 'product-taxonomy-v1', product_identity_version: 'product-identity-v1',
   });
 });

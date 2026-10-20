@@ -6,7 +6,6 @@ import { Check, ChevronDown, Copy, Download, FileJson, Loader2 } from 'lucide-re
 import { PerformancePanel } from './PerformancePanel';
 import { loadSessionDiagnostics, type SessionDiagnosticsReport } from '../services/redesignChatService';
 import { useSessionExpenses } from '../hooks/useSessionExpenses';
-import { TokenCostEstimate } from './TokenCostEstimate';
 
 export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: string; busy?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -72,22 +71,6 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
               <div><dt>{t('studioDiagnostics.paid')}</dt><dd>{money(expenses!.known_paid_toman, t('redesignJourney.toman'))}</dd></div>
               <div><dt>{t('studioDiagnostics.grant')}</dt><dd>{money(expenses!.known_grant_toman, t('redesignJourney.toman'))}</dd></div></dl>
             <p className="studio-caption">{t('studioDiagnostics.costHint')}</p>
-            <TokenCostEstimate estimate={expenses!.token_estimate} />
-            {!!expenses?.receipts?.length && <details>
-              <summary>{t('studioDiagnostics.cost')} · {t('studioDiagnostics.steps')}</summary>
-              <ul>{expenses.receipts.map(receipt => <li key={receipt.request_id}>
-                <bdi>{t(`studioDiagnostics.stage_${receipt.stage}`, { defaultValue: receipt.stage || receipt.kind })}</bdi>
-                {' · '}<bdi>{receipt.model}</bdi>
-                {' · '}{t('studioDiagnostics.turn')} {receipt.turn_index ?? '—'}
-                {receipt.attempt != null && <> · #{receipt.attempt}</>}
-                <dl>
-                  <dt>{t('studioDiagnostics.total')}</dt><dd>{money(receipt.usd, 'USD')}</dd>
-                  <dt>{t('studioDiagnostics.paid')}</dt><dd>{money(receipt.paid_toman ?? null, t('redesignJourney.toman'))}</dd>
-                  <dt>{t('studioDiagnostics.grant')}</dt><dd>{money(receipt.grant_toman ?? null, t('redesignJourney.toman'))}</dd>
-                </dl>
-                <small><bdi>{receipt.request_id}</bdi></small>
-              </li>)}</ul>
-            </details>}
             <p>{t('studioDiagnostics.gaps', { unknown: expenses!.unknown_calls, pending: expenses!.pending_receipts })}</p>
             {expenses!.checked_at && <p className="studio-caption">{new Date(expenses!.checked_at).toLocaleString(i18n.language)}</p>}
             {report.expenses.refresh_status && <p role="status">{t(`studioDiagnostics.refresh_${report.expenses.refresh_status}`)}</p>}
@@ -98,7 +81,7 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
           <section><h3>{t('studioDiagnostics.handoffs')}</h3><p className="studio-caption">{t('studioDiagnostics.handoffHint')}</p>
             {!report.traces.some(trace => trace.payload_name?.startsWith('handoff-')) && <p>{t('studioDiagnostics.noHandoffs')}</p>}
             {report.traces.filter(trace => trace.payload_name?.startsWith('handoff-')).map(trace =>
-              <details key={trace.id}><summary>{t(`studioDiagnostics.${trace.payload_name.startsWith('handoff-compiled-') ? 'compiledOutput' : trace.payload_name.startsWith('handoff-analysis-') ? 'analysisInput' : trace.payload_name.startsWith('handoff-image-') ? 'imageInput' : 'searchInput'}`)} · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary>
+              <details key={trace.id}><summary>{t(`studioDiagnostics.${trace.payload_name.startsWith('handoff-analysis-') ? 'analysisInput' : trace.payload_name.startsWith('handoff-image-') ? 'imageInput' : 'searchInput'}`)} · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary>
                 <HandoffDetails value={trace.payload} />
               </details>)}
           </section>

@@ -18,7 +18,6 @@ import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { ExecutionPlan } from './services/redesignChatService';
 import { buildDiscoveryReview } from './services/discoveryReview';
-import { StudioReviewPanel } from './components/StudioReviewPanel';
 import './journey.css';
 import './studio-conversation.css';
 
@@ -76,14 +75,12 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </nav>
     </>,
     status: <>
-      {plan?.evaluation?.model_reviews_enabled !== false && plan?.image_review && plan.image_review.status !== 'accepted' && <p className="studio-flow-error" role="status">{siteValue('تصویر آماده است؛ نتیجهٔ بازبینی آن هنوز نیاز به بررسی دارد.')}</p>}
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
     afterReport: <>{!plan && <p className="studio-empty-state">{t(chat.versions.length ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p>}
-      {plan?.search_version && <StudioReviewPanel plan={plan} busy={chat.busy} onAction={args => { openChat(); void chat.sendTurn({ ...args, text: args.text || '' }); }} />}
-      {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
+            {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
   }} />;
 }
 
@@ -139,7 +136,7 @@ export function RoomRedesignPage() {
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
   const discovering = !reviewDismissed && (reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
   if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} originalImage={original}
-    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url} stage={chat.stage} workflow={chat.workflow}
+    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url} stage={chat.stage}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
     panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}

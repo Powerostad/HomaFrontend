@@ -1,11 +1,11 @@
 import { siteText } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams, type WorkflowPreview } from '../services/redesignChatService';
+import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
 import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
 
-const RECONCILE_MAX_ATTEMPTS = 720;
-const RECONCILE_MAX_MS = 1_800_000;
+const RECONCILE_MAX_ATTEMPTS = 120;
+const RECONCILE_MAX_MS = 600_000;
 const RECONCILE_INTERVAL_MS = 5000;
 const GENERIC_PROCESSING_ERROR = 'پردازش ناموفق بود. دوباره تلاش کن.';
 
@@ -38,7 +38,6 @@ export function useRedesignChat(path?: string) {
   const [readyId, setReadyId] = useState<string | null>(null);
   const [status, setStatus] = useState('idle');
   const [stage, setStage] = useState<string | null>(null);
-  const [workflow, setWorkflow] = useState<WorkflowPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [hydrating, setHydrating] = useState(!!path);
@@ -57,11 +56,6 @@ export function useRedesignChat(path?: string) {
   const recovery = useRef<{ signal: AbortSignal; promise: Promise<void> } | null>(null);
 
   const apply = useCallback((data: SessionPayload) => {
-    setWorkflow(data.workflow || null);
-    const active = data.operations?.find(op => op.status === 'running');
-    const progress = active?.progress || data.workflow?.progress || {};
-    const currentStage = Object.values(progress).find(value => value.status === 'running');
-    if (currentStage) setStage(currentStage.label_fa);
     const rebuilt = rebuildSessionView(data);
     const failedIntent = intent.current && data.operations?.some(op =>
       op.idempotency_key === intent.current?.idempotencyKey && op.status === 'failed' && op.kind === 'text_turn')
@@ -99,7 +93,7 @@ export function useRedesignChat(path?: string) {
       if (signal.aborted) done();
     });
     const run = async () => {
-      let deadline = Date.now() + RECONCILE_MAX_MS;
+      const deadline = Date.now() + RECONCILE_MAX_MS;
       let previousStamp: string | null = null;
       for (let i = 0; i < RECONCILE_MAX_ATTEMPTS && Date.now() < deadline && current(); i++) {
         const loaded = await loadChatSessionStatus(sid);
@@ -123,10 +117,6 @@ export function useRedesignChat(path?: string) {
         const ops = data.operations || [];
         const tracked = key ? ops.find(o => o.idempotency_key === key || o.operation_id === key) : undefined;
         const active = ops.find(o => o.status === 'running');
-        if (active?.deadline_at) {
-          const serverDeadline = Date.parse(active.deadline_at);
-          if (Number.isFinite(serverDeadline)) deadline = Math.max(deadline, serverDeadline + 60_000);
-        }
         const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
         const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
         if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
@@ -162,7 +152,7 @@ export function useRedesignChat(path?: string) {
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
     setCurrentExecution(null);
-    setOriginalImage(null); setWorkflow(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
+    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
     operation.current = null; intent.current = null; renderOperationId.current = null; setReadyId(null);
     if (!path) { setHydrating(false); return; }
@@ -206,21 +196,17 @@ export function useRedesignChat(path?: string) {
       && sidRef.current === params.sessionId
       && !ac.signal.aborted;
     completed.current = false;
-    locked.current = true; setError(null); setStage(null); setWorkflow(null); setStatus('streaming');
+    locked.current = true; setError(null); setStage(null); setStatus('streaming');
     const messageId = crypto.randomUUID();
     setChipGroups([]);
     const transport = await streamChatTurn(params, {
-      onAnalysisReady: event => { if (isCurrent()) setWorkflow(old => ({ ...old, previews: { ...old?.previews, analysis_ready: event } })); },
-      onDesignReady: event => { if (isCurrent()) setWorkflow(old => ({ ...old, previews: { ...old?.previews, design_ready: event } })); },
-      onProductsReady: event => { if (isCurrent()) setWorkflow(old => ({ ...old, previews: { ...old?.previews,
-        products_ready: { ...old?.previews?.products_ready, [event.item_id]: event } } })); },
       onSay: delta => {
         if (!isCurrent()) return;
         setMessages(old => old.some(m => m.id === messageId)
           ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
-      onStage: event => { if (isCurrent() && !event.parallel) setStage(event.label_fa); },
+      onStage: event => { if (isCurrent()) setStage(event.label_fa); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
       onResult: event => {
         if (!isCurrent()) return;
@@ -239,7 +225,7 @@ export function useRedesignChat(path?: string) {
         if (!isCurrent()) return;
         if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
         if (event.operationId) renderOperationId.current = event.operationId;
-        if (event.event === 'image' || event.event === 'error' || event.event === 'text_done') {
+        if (event.event === 'image' || event.event === 'error') {
           void reconcile(params.sessionId, ac.signal, event.operationId || params.idempotencyKey);
         }
       },
@@ -362,5 +348,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, currentExecution, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, workflow, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }
