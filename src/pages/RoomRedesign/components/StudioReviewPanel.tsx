@@ -12,6 +12,7 @@ export function StudioReviewPanel({ plan, busy, onAction }: {
 }) {
   const { t } = useTranslation();
   const { siteValue, siteText: copy } = useSiteTranslation();
+  if (plan.evaluation?.model_reviews_enabled === false) return null;
   const concept = plan.visualization?.purchase_independent === true;
   const review = (item: ExecutionPlan['purchases'][number], product: BackendProduct, kind: ReviewKind) =>
     onAction({ text: '', action: 'review_product', itemId: item.source_item_id || item.item_id,

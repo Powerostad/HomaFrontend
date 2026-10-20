@@ -76,7 +76,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </nav>
     </>,
     status: <>
-      {plan?.image_review && plan.image_review.status !== 'accepted' && <p className="studio-flow-error" role="status">{siteValue('تصویر آماده است؛ نتیجهٔ بازبینی آن هنوز نیاز به بررسی دارد.')}</p>}
+      {plan?.evaluation?.model_reviews_enabled !== false && plan?.image_review && plan.image_review.status !== 'accepted' && <p className="studio-flow-error" role="status">{siteValue('تصویر آماده است؛ نتیجهٔ بازبینی آن هنوز نیاز به بررسی دارد.')}</p>}
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,

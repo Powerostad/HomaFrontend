@@ -629,7 +629,7 @@ export interface ExecutionPlan {
     product_identity?: StudioProductIdentity; item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
   cost_gaps?: { item_id: string; reasons: string[] }[];
   verification_gaps?: { item_id: string; reasons: string[] }[];
-  evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
+  evaluation?: { model_reviews_enabled?: boolean; status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
     visual_review?: { status: string; not_reviewed_count?: number; assessments?: { reference_id: string; status: string; explanation_fa: string }[] };
     coherence?: { status: string; summary_fa: string; assessments: { aspect: string; status: string; explanation_fa: string; item_ids: string[]; source_refs: string[] }[] } };
   review_tasks?: { id: string; item_id: string; placement_id: string | null; route: string; missing_attributes: string[] }[];
