@@ -258,13 +258,10 @@ export async function createChatSession(): Promise<CreateSessionResult> {
     '/recommendations/chat/sessions/',
     {
       ...(import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
-        ? { design_version: 'studio-design-v2', search_version: 'studio-search-v2' } : {}),
+        ? { search_version: 'studio-search-v2' } : {}),
       ...(import.meta.env.VITE_STUDIO_PRODUCT_TAXONOMY_V1 === 'true' ? { product_taxonomy_version: 'product-taxonomy-v1' } : {}),
       ...(import.meta.env.VITE_STUDIO_PRODUCT_IDENTITY_V1 === 'true' ? { product_identity_version: 'product-identity-v1' } : {}),
-      ...(import.meta.env.VITE_STUDIO_PIPELINE_V4 === 'true'
-        ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v4' }
-        : import.meta.env.VITE_STUDIO_PIPELINE_V3 === 'true'
-        ? { design_version: 'studio-design-v2', pipeline_version: 'studio-pipeline-v3' } : {}),
+      prompt_split: 'server-split-v1',
     },
   );
   if (res.success && res.data) {

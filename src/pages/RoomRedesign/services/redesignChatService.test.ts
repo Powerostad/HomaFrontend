@@ -15,12 +15,12 @@ it('opts new local sessions into V3 and leaves V2 selectable with its flag off',
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v3',
+    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
   });
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'false');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    design_version: 'studio-design-v2', search_version: 'studio-search-v2',
+    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
   });
   vi.unstubAllEnvs();
 });
@@ -32,7 +32,7 @@ it('selects partitioned V4 for new sessions while preserving the full-policy V3 
   vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v4',
+    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
   });
   vi.unstubAllEnvs();
 });
@@ -77,7 +77,7 @@ it('keeps taxonomy and identity with V4 without V5 or rule options', async () =>
   vi.stubEnv('VITE_STUDIO_PRODUCT_IDENTITY_V1', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    design_version: 'studio-design-v2', search_version: 'studio-search-v2', pipeline_version: 'studio-pipeline-v4',
+    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
     product_taxonomy_version: 'product-taxonomy-v1', product_identity_version: 'product-identity-v1',
   });
 });
