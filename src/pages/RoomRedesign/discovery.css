@@ -103,8 +103,8 @@
   .studio-discovery-steps { gap:var(--space-2); margin-bottom:var(--space-5); font-size:var(--text-xs); }
   .studio-discovery-steps li { flex-direction:column; align-items:start; gap:var(--space-2); }
   .studio-discovery-layout { grid-template-columns:minmax(0,1fr); gap:var(--space-5); }
-  .studio-discovery-photo { position:static; display:flex; align-items:center; border-radius:var(--radius-lg); }
-  .studio-discovery-photo > img { width:35%; height:120px; aspect-ratio:auto; object-fit:contain; flex-shrink:0; }
+  .studio-discovery-photo { position:static; display:block; border-radius:var(--radius-lg); }
+  .studio-discovery-photo > img { width:100%; height:clamp(220px,42svh,420px); aspect-ratio:auto; object-fit:contain; background:var(--color-editorial-charcoal); }
   .studio-discovery-photo figcaption { flex:1; min-width:0; padding:var(--space-3); background:transparent; }
   .studio-discovery-status { margin-bottom:var(--space-4); }
   .studio-discovery-finding { padding:var(--space-5); }

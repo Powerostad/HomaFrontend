@@ -90,7 +90,8 @@ function HeroImageStage({
   showSave = true,
   showActions = true,
   onImageError,
-}: HeroImagePanelProps) {
+  mobile = false,
+}: HeroImagePanelProps & { mobile?: boolean }) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
@@ -117,7 +118,7 @@ function HeroImageStage({
   }, [sessionId, t]);
 
   return (
-    <div className="studio-hero-stage" dir={siteDirection()}>
+    <div className="studio-hero-stage" dir={siteDirection()} data-actions={showActions}>
       {siteValue(resultImage ? (
         <AuthenticatedImage
           src={resultImage}
@@ -142,6 +143,15 @@ function HeroImageStage({
       ))}
 
       <div className="studio-hero-scrim" aria-hidden="true" />
+
+      {mobile && hasGeneratedImage && (
+        <button
+          type="button"
+          className="studio-hero-image-open"
+          aria-label={t('studio.result.v2.fullscreenView', 'نمای تمام‌صفحه')}
+          onClick={onFullscreen}
+        />
+      )}
 
       <div className="studio-hero-toolbar studio-hero-toolbar-top">
         <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
@@ -174,6 +184,7 @@ function HeroImageStage({
           <button
             type="button"
             className={!showOriginal ? 'is-active' : ''}
+            aria-pressed={!showOriginal}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'after' });
               onToggleOriginal(false);
@@ -184,6 +195,7 @@ function HeroImageStage({
           <button
             type="button"
             className={showOriginal ? 'is-active' : ''}
+            aria-pressed={showOriginal}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'before' });
               onToggleOriginal(true);
@@ -243,7 +255,7 @@ export function DesktopHeroPanel(props: HeroImagePanelProps) {
 export function MobileHeroSection(props: HeroImagePanelProps) {
   return (
     <div className="studio-mobile-hero">
-      <HeroImageStage {...props} />
+      <HeroImageStage {...props} mobile />
     </div>
   );
 }
