@@ -26,7 +26,7 @@ export function StudioProductCard({ product, busy, onPreview }: {
       {product.candidate && <p>{siteValue(product.candidate.variant_label)} · {t(`studioV2.purchase.${product.candidate.purchase_status}`)}</p>}
       <p className="studio-product-price">{siteValue(rial != null && rial > 0 ? formatPriceFromRial(rial) : t('redesignJourney.unpriced'))}</p>
       <div className="studio-product-actions">
-        <Button disabled={busy || (product.candidate != null && product.candidate.eligibility !== 'eligible')} onClick={onPreview}><ScanLine size={16} aria-hidden="true" />{t('redesignJourney.preview')}</Button>
+        <Button disabled={busy || product.candidate?.eligibility === 'rejected'} onClick={onPreview}><ScanLine size={16} aria-hidden="true" />{t('redesignJourney.preview')}</Button>
         {product.merchant_url && /^https?:\/\//i.test(product.merchant_url) && <Button asChild variant="outline"><a href={product.merchant_url} target="_blank" rel="noopener noreferrer">{t(product.merchant_destination === 'shop' ? 'redesignJourney.shop' : 'redesignJourney.merchant')}<ExternalLink size={16} aria-hidden="true" /></a></Button>}
       </div>
       {(product.description || product.ai_description || checked) && <details className="studio-product-details">
