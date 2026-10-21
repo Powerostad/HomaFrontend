@@ -65,7 +65,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
         <label>{t('redesignJourney.history')}<select aria-label={t('redesignJourney.history')} value={chat.viewedId} onChange={event => chat.selectVersion(event.target.value)}>
           <option value="original">{t('redesignJourney.original')}</option>
           {plan?.search_version && <option value="current">{t('studioV2.currentPlan')}</option>}
-          {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{t('redesignJourney.version', { number: index + 1 })}</option>)}
+          {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{t(version.image_status === 'failed' ? 'studioAudit.versionFailed' : version.image_pending ? 'studioAudit.versionPending' : 'studioAudit.versionReady', { number: index + 1 })}</option>)}
         </select></label>
       </div>
       {chat.newVersionReady && <Button variant="outline" onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
@@ -103,7 +103,7 @@ export function RoomRedesignPage() {
   if (selected) lastVersion.current = selected.version_id;
   const report = chat.viewedId === 'current' ? chat.versions.find(version => version.version_id === chat.currentBaseVersionId)
     : selected || chat.versions.find(version => version.version_id === lastVersion.current) || chat.versions[chat.versions.length - 1];
-  const plan = chat.viewedId === 'current' ? chat.currentExecution : selected?.execution || chat.currentExecution || report?.execution || null;
+  const plan = chat.viewedId === 'current' ? chat.currentExecution : selected ? selected.execution : report?.execution || chat.currentExecution || null;
   const original = chat.originalImage || intake?.image.dataUrl || null;
   useEffect(() => {
     if (!chat.hydrating && !reviewDismissed && !chat.versions.length && (chat.busy || chat.currentExecution || chat.error)) setReviewActive(true);
@@ -136,7 +136,7 @@ export function RoomRedesignPage() {
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
   const discovering = !reviewDismissed && (reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
   if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} originalImage={original}
-    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url} stage={chat.stage}
+    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
     panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
@@ -144,8 +144,8 @@ export function RoomRedesignPage() {
       busy={chat.busy} failed={!!chat.error} statusText={chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking')}
       value={input} onChange={setInput} onSend={sendMessage} />} />;
   return <>
-    <ConversationResult key={`${chat.sessionId || path || 'new'}:${report?.version_id || 'analysis'}`} chat={chat} plan={plan}
-      versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={report?.image_url || original || ''} originalImage={original}
+    <ConversationResult key={`${chat.sessionId || path || 'new'}:${chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'}`} chat={chat} plan={plan}
+      versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={(report?.image_pending ? original : report?.image_url) || original || ''} originalImage={original}
       onToggleOriginal={show => chat.selectVersion(show ? 'original' : lastVersion.current || report?.version_id || 'original')}
       onImageError={() => {
         setImageFailed(true);

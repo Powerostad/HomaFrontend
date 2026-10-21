@@ -217,7 +217,11 @@ export function useRedesignChat(path?: string) {
       onResult: event => {
         if (!isCurrent()) return;
         if (event.execution) setCurrentExecution(event.execution);
-        if (params.action === 'retry_search' || params.action === 'review_product' || params.action === 'select_product') {
+        if (event.design_version_id) {
+          following.current = true;
+          viewedRef.current = 'current'; setViewedId('current');
+        }
+        if (!event.design_version_id && (params.action === 'retry_search' || params.action === 'review_product' || params.action === 'select_product')) {
           following.current = false; viewedRef.current = 'current'; setViewedId('current');
           try { sessionStorage.setItem(`redesign-view:${params.sessionId}`, 'current'); } catch { /* optional view memory */ }
         }
@@ -263,6 +267,7 @@ export function useRedesignChat(path?: string) {
       sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
     }
     const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    following.current = true;
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);
     if (args.text.trim() || args.images?.length) {

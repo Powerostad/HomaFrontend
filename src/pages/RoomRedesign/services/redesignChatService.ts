@@ -180,6 +180,7 @@ export interface BackendScene {
 }
 
 export interface ResultEvent {
+  design_version_id?: string | null;
   execution?: ExecutionPlan;
   message_fa: string;
   items: BackendResultItem[];
@@ -308,6 +309,7 @@ export async function loadChatSessionStatus(sessionId: string): Promise<LoadSess
 }
 
 export interface SessionExpenses {
+  receipts?: { request_id: string; kind: 'text' | 'image'; model?: string; stage?: string; turn_index?: number | null; usd: string; paid_toman?: string | null }[];
   token_estimate?: {
     status: 'complete' | 'partial' | 'unavailable';
     lower_usd: string | null;
@@ -329,8 +331,8 @@ export interface SessionExpenses {
 }
 export interface StudioPerformanceReport {
   status: 'ready' | 'pending' | 'unavailable' | 'incomplete';
-  runs: { id: string; workflow: string; status: string; duration_ms: number | null }[];
-  spans: { id: string; name: string; duration_ms: number; status: string }[];
+  runs: { id: string; workflow: string; status: string; duration_ms: number | null; started_at?: string; trace_id?: string }[];
+  spans: { id: string; name: string; duration_ms: number; status: string; started_at?: string; run_id?: string; metrics?: Record<string, string | number | null> }[];
   summary: { trace_elapsed_timestamp_ms: number | null; api_calls: number; estimated_cost_usd: number | null; tokens: Record<string, number | null> } | null;
 }
 export const loadStudioPerformance = (sessionId: string) => apiGet<StudioPerformanceReport>(
@@ -603,6 +605,9 @@ export interface PurchaseCheckResult {
 export const checkStudioPurchase = (sessionId: string, versionId: string, lines: StudioPurchaseLine[]) =>
   apiPost<PurchaseCheckResult>(`/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/purchase-check/`, { version_id: versionId, lines });
 export interface DesignVersion {
+  image_status?: 'pending' | 'failed' | 'ready';
+  image_pending?: boolean;
+  render_version_id?: string | null;
   version_id: string;
   base_version_id: string;
   image_url: string;

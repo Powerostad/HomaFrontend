@@ -42,6 +42,7 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const basket = useBasket();
   const storageKey = `homa.studio.selection:${sessionId || 'new'}:${versionId}`;
   const [selection, setSelection] = useState(() => restoreSelection(storageKey));
+  const selectionKey = useRef(storageKey);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSaved, setIsSaved] = useState(!!sessionId);
   const [showExitDecision, setShowExitDecision] = useState(false);
@@ -65,7 +66,14 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const imageActions = useImageActions({ image: showOriginal ? originalImage : resultImage, originalImage, activeVersion: 1, isPreview: !showOriginal });
   const productAlternatives = selectedProduct ? categoryGroups.find(group => group.products.some(product => product.id === selectedProduct.id))?.products.filter(product => product.id !== selectedProduct.id) || [] : [];
   const summaries = Object.values(plan?.studio_documents || {}).map(document => document.user_facing_summary);
-  useEffect(() => { try { sessionStorage.setItem(storageKey, JSON.stringify(selection)); } catch { /* Selection still works without storage. */ } }, [selection, storageKey]);
+  useEffect(() => {
+    if (selectionKey.current !== storageKey) {
+      selectionKey.current = storageKey;
+      setSelection(restoreSelection(storageKey));
+      return;
+    }
+    try { sessionStorage.setItem(storageKey, JSON.stringify(selection)); } catch { /* Selection still works without storage. */ }
+  }, [selection, storageKey]);
   const scrollToCard = useCallback((id: number) => {
     const card = document.getElementById(`recommendation-${id}`);
     card?.scrollIntoView({ block: 'start', behavior: 'instant' });

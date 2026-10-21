@@ -1,4 +1,27 @@
 /* Conversational Studio uses the site's canonical neutral/editorial tokens. */
+.studio-audit-nav { display:flex; flex-wrap:wrap; gap:var(--space-2); padding-bottom:var(--space-3); border-bottom:1px solid var(--color-border-subtle); }
+.studio-audit-nav a { display:inline-flex; align-items:center; min-height:44px; padding:var(--space-2) var(--space-4); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); color:var(--color-content-primary); background:var(--color-surface-muted); font-weight:600; }
+.studio-unified-report .studio-metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:var(--space-3); margin-block:var(--space-4); }
+.studio-unified-report .studio-metric-grid > div { display:block; min-width:0; border:1px solid var(--color-border-subtle); background:var(--color-surface-default); padding:var(--space-4); border-radius:var(--radius-md); }
+.studio-metric-grid dt { color:var(--color-content-secondary); font-size:var(--text-sm); }
+.studio-unified-report .studio-metric-grid dd { margin:var(--space-2) 0 0; text-align:start; font-size:var(--text-lg); font-weight:600; overflow-wrap:anywhere; }
+.studio-audit-table-wrap { overflow-x:auto; min-width:0; margin-block:var(--space-4); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); }
+.studio-audit-table { width:100%; border-collapse:collapse; text-align:start; font-size:var(--text-sm); }
+.studio-audit-table caption { text-align:start; font-weight:600; padding:var(--space-3) var(--space-4); }
+.studio-audit-table th,.studio-audit-table td { padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--color-border-subtle); text-align:start; vertical-align:top; font-variant-numeric:tabular-nums; }
+.studio-audit-table thead { background:var(--color-surface-muted); color:var(--color-content-secondary); }
+.studio-audit-table small { display:block; font-weight:400; color:var(--color-content-secondary); overflow-wrap:anywhere; }
+.studio-audit-status { white-space:nowrap; }
+.studio-audit-status[data-status=success] { color:var(--color-feedback-success); }
+.studio-audit-status[data-status=failed] { color:var(--color-feedback-error); }
+.studio-audit-notice { padding:var(--space-3); border-inline-start:3px solid var(--color-feedback-warning); background:var(--color-surface-default); }
+.studio-audit-data-heading { padding-top:var(--space-5); border-top:1px solid var(--color-border-subtle); scroll-margin-top:var(--space-8); }
+.studio-audit-filters { display:flex; align-items:end; gap:var(--space-3); flex-wrap:wrap; }
+.studio-audit-filters label { display:grid; gap:var(--space-1); font-size:var(--text-sm); }
+.studio-audit-filters select { min-height:44px; padding:var(--space-2) var(--space-3); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); background:var(--color-surface-default); color:var(--color-content-primary); }
+.studio-audit-record { border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); margin-block:var(--space-2); padding-inline:var(--space-3); }
+.studio-audit-record summary { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
+.studio-audit-record summary small { color:var(--color-content-secondary); margin-inline-start:auto; }
 .studio-unified-report { min-width:0; margin-block:var(--space-8); border:1px solid var(--color-border-subtle); border-radius:var(--radius-xl); background:var(--color-surface-default); color:var(--color-content-primary); overflow:hidden; }
 .studio-report-trigger { display:flex; width:100%; height:auto; min-height:64px; justify-content:flex-start; gap:var(--space-3); padding:var(--space-5); white-space:normal; text-align:start; font-size:var(--text-base); }
 .studio-report-trigger span { flex:1; }

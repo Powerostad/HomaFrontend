@@ -6,6 +6,7 @@ import { Check, ChevronDown, Copy, Download, FileJson, Loader2 } from 'lucide-re
 import { PerformancePanel } from './PerformancePanel';
 import { loadSessionDiagnostics, type SessionDiagnosticsReport } from '../services/redesignChatService';
 import { useSessionExpenses } from '../hooks/useSessionExpenses';
+import { stageKey } from '../services/diagnosticFormatting';
 
 export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: string; busy?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -19,6 +20,8 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
   const [error, setError] = useState(false);
   const [billingRevision, setBillingRevision] = useState(0);
   const [revision, setRevision] = useState(0);
+  const [turn, setTurn] = useState('all');
+  const [dataKind, setDataKind] = useState('all');
   const liveExpenses = useSessionExpenses(sessionId, open, busy, billingRevision);
   const expenses = liveExpenses ?? report?.expenses;
   useEffect(() => {
@@ -36,6 +39,11 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
     ? t('studioDiagnostics.unknown')
     : `${Number(value).toLocaleString(i18n.language, currency === 'USD' ? { maximumSignificantDigits: 10 } : { maximumFractionDigits: 2 })} ${currency}`;
   const refresh = () => setBillingRevision(value => value + 1);
+  const turns = [...new Set(report?.traces.map(trace => trace.turn_index).filter(value => value != null) || [])].sort((a, b) => a! - b!);
+  const traces = (report?.traces || []).filter(trace => (turn === 'all' || String(trace.turn_index) === turn)
+    && (dataKind === 'all' || dataKind === 'input' && trace.payload_name?.startsWith('handoff-')
+      || dataKind === 'output' && !trace.payload_name?.startsWith('handoff-')
+      || dataKind === 'search' && trace.payload_name?.startsWith('handoff-search-')));
   const more = async () => {
     if (!report?.next_before) return;
     const stamp = generation.current;
@@ -57,36 +65,40 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
   return <section className="studio-unified-report" dir={i18n.dir()}>
     <Button className="studio-report-trigger" variant="ghost" aria-expanded={open} aria-controls={contentId} onClick={() => setOpen(value => !value)}><FileJson size={20} aria-hidden="true" /><span>{t('studioReport.reportTitle')}</span><ChevronDown size={18} aria-hidden="true" /></Button>
     {open && <div id={contentId} className="studio-diagnostics-body">
+        <nav className="studio-audit-nav" aria-label={t('studioReport.reportTitle')}>{['cost', 'time', 'data'].map(key => <a key={key} href={`#${contentId}-${key}`}>{t(`studioAudit.${key}`)}</a>)}</nav>
         <p className="studio-caption">{t('studioDiagnostics.hint')}</p>
         <p className="studio-caption">{t('studioDiagnostics.session')} <bdi>{sessionId}</bdi></p>
-        <PerformancePanel key={`${sessionId}/${ownerId}`} sessionId={sessionId} busy={busy} embedded />
         {loading && <p role="status"><Loader2 size={18} className="studio-spinner" aria-hidden="true" />{t('studioDiagnostics.loading')}</p>}
         {error && <div><p role="alert">{t('studioDiagnostics.error')}</p><Button variant="outline" disabled={loading || busy} onClick={() => setRevision(value => value + 1)}>{t('redesignJourney.retry')}</Button></div>}
         {report && <>
-          <section className="studio-diagnostics-cost"><h3>{t('studioDiagnostics.cost')}</h3>
+          <section id={`${contentId}-cost`} className="studio-diagnostics-cost"><h3>{t('studioDiagnostics.cost')}</h3>
             <p>{t(`studioDiagnostics.${expenses!.status}`)}</p>
-            <dl><div><dt>{t('studioDiagnostics.total')}</dt><dd>{money(expenses!.known_usd, 'USD')}</dd></div>
+            <dl className="studio-metric-grid"><div><dt>{t('studioDiagnostics.total')}</dt><dd>{money(expenses!.known_usd, 'USD')}</dd></div>
               <div><dt>{t('studioDiagnostics.text')}</dt><dd>{money(expenses!.text_usd, 'USD')}</dd></div>
               <div><dt>{t('studioDiagnostics.image')}</dt><dd>{money(expenses!.image_usd, 'USD')}</dd></div>
               <div><dt>{t('studioDiagnostics.paid')}</dt><dd>{money(expenses!.known_paid_toman, t('redesignJourney.toman'))}</dd></div>
               <div><dt>{t('studioDiagnostics.grant')}</dt><dd>{money(expenses!.known_grant_toman, t('redesignJourney.toman'))}</dd></div></dl>
             <p className="studio-caption">{t('studioDiagnostics.costHint')}</p>
+            {expenses!.status !== 'settled' && <p className="studio-audit-notice">{t('studioAudit.partialCost')}</p>}
             <p>{t('studioDiagnostics.gaps', { unknown: expenses!.unknown_calls, pending: expenses!.pending_receipts })}</p>
             {expenses!.checked_at && <p className="studio-caption">{new Date(expenses!.checked_at).toLocaleString(i18n.language)}</p>}
-            {report.expenses.refresh_status && <p role="status">{t(`studioDiagnostics.refresh_${report.expenses.refresh_status}`)}</p>}
+            {expenses!.refresh_status && <p role="status">{t(`studioDiagnostics.refresh_${expenses!.refresh_status}`)}</p>}
             <Button disabled={loading || busy} variant="outline" onClick={refresh}>{t('studioDiagnostics.refresh')}</Button>
+            {!!expenses?.receipts?.length && <div className="studio-audit-table-wrap"><table className="studio-audit-table"><caption>{t('studioAudit.calls')}</caption><thead><tr><th>{t('studioDiagnostics.turn')}</th><th>{t('studioAudit.stage')}</th><th>{t('studioAudit.model')}</th><th>USD</th><th>{t('studioDiagnostics.paid')}</th></tr></thead><tbody>{expenses.receipts.map(receipt => <tr key={receipt.request_id}><td>{receipt.turn_index ?? '—'}</td><th scope="row">{t(`studioAudit.${receipt.kind === 'image' ? 'image' : stageKey(receipt.stage || 'text')}`)}</th><td><bdi>{receipt.model || '—'}</bdi></td><td>{money(receipt.usd, 'USD')}</td><td>{money(receipt.paid_toman ?? null, t('redesignJourney.toman'))}</td></tr>)}</tbody></table></div>}
           </section>
+          <div id={`${contentId}-time`}><PerformancePanel key={`${sessionId}/${ownerId}`} sessionId={sessionId} busy={busy} embedded /></div>
+          <div id={`${contentId}-data`} className="studio-audit-data-heading"><h3>{t('studioAudit.data')}</h3><div className="studio-audit-filters"><label>{t('studioDiagnostics.turn')}<select value={turn} onChange={event => setTurn(event.target.value)}><option value="all">{t('studioAudit.allTurns')}</option>{turns.map(value => <option value={String(value)} key={value}>{value}</option>)}</select></label><label>{t('studioAudit.data')}<select value={dataKind} onChange={event => setDataKind(event.target.value)}>{[['all', 'allData'], ['input', 'inputs'], ['output', 'outputs'], ['search', 'searches']].map(([value, key]) => <option key={value} value={value}>{t(`studioAudit.${key}`)}</option>)}</select></label><span>{t('studioAudit.records', { count: traces.length })}</span></div></div>
           <details><summary>{t('studioDiagnostics.current')}</summary><p className="studio-caption">{t('studioDiagnostics.currentHint')}</p><JsonValue value={report.documents} /></details>
           <details><summary>{t('studioDiagnostics.versions')}</summary><JsonValue value={report.versions} /></details>
           <section><h3>{t('studioDiagnostics.handoffs')}</h3><p className="studio-caption">{t('studioDiagnostics.handoffHint')}</p>
             {!report.traces.some(trace => trace.payload_name?.startsWith('handoff-')) && <p>{t('studioDiagnostics.noHandoffs')}</p>}
-            {report.traces.filter(trace => trace.payload_name?.startsWith('handoff-')).map(trace =>
-              <details key={trace.id}><summary>{t(`studioDiagnostics.${trace.payload_name.startsWith('handoff-analysis-') ? 'analysisInput' : trace.payload_name.startsWith('handoff-image-') ? 'imageInput' : 'searchInput'}`)} · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary>
+            {traces.filter(trace => trace.payload_name?.startsWith('handoff-')).map(trace =>
+              <details key={trace.id} className="studio-audit-record"><summary><strong>{t(`studioAudit.${stageKey(trace.payload_name)}`)}</strong><span>{t('studioAudit.readInput')}</span><small>{t('studioDiagnostics.turn')} {trace.turn_index ?? '—'} · <bdi>{trace.model}</bdi></small></summary>
                 <HandoffDetails value={trace.payload} />
               </details>)}
           </section>
           <section><h3>{t('studioDiagnostics.steps')}</h3><p className="studio-caption">{t('studioDiagnostics.stepsHint')}</p>
-            {report.traces.filter(trace => !trace.payload_name?.startsWith('handoff-')).map(trace => <details key={trace.id}><summary><bdi>{trace.payload_name || trace.step_name}</bdi> · <bdi>{trace.model || trace.status}</bdi> · {t('studioDiagnostics.turn')} {trace.turn_index ?? '—'}</summary><JsonValue value={trace} /></details>)}
+            {traces.filter(trace => !trace.payload_name?.startsWith('handoff-')).map(trace => <details key={trace.id} className="studio-audit-record"><summary><strong>{t(`studioAudit.${stageKey(trace.payload_name || trace.step_name)}`)}</strong><span>{t('studioAudit.readOutput')}</span><small>{t('studioDiagnostics.turn')} {trace.turn_index ?? '—'} · <bdi>{trace.model || trace.status}</bdi></small></summary><JsonValue value={trace} /></details>)}
             {report.next_before && <Button variant="outline" disabled={loading} onClick={() => void more()}>{t('studioDiagnostics.more')}</Button>}
           </section>
           <Button disabled={loading} onClick={download}><Download size={18} aria-hidden="true" />{t('studioDiagnostics.download')}</Button>
@@ -100,6 +112,10 @@ export function HandoffDetails({ value }: { value: unknown }) {
   const { t } = useTranslation();
   if (!value || typeof value !== 'object' || Array.isArray(value)) return <JsonValue value={value} />;
   const data = value as Record<string, unknown>;
+  if (typeof data.system_prompt === 'string' && !data.truncated) return <>
+    <details open><summary>{t('studioAudit.readInput')}</summary><JsonValue value={data.system_prompt} /></details>
+    <details><summary>{t('studioDiagnostics.current')}</summary><JsonValue value={{ messages: data.messages, output_schema: data.output_schema }} /></details>
+  </>;
   if (data.stage !== 'image_input' || data.truncated) return <JsonValue value={value} />;
   return <>
     <details><summary>{t('studioDiagnostics.canonicalOutput')}</summary><JsonValue value={data.canonical_document} /></details>
@@ -109,7 +125,7 @@ export function HandoffDetails({ value }: { value: unknown }) {
 }
 
 export function JsonValue({ value }: { value: unknown }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   useEffect(() => { setCopyState('idle'); }, [value]);
   const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? '';
@@ -118,5 +134,5 @@ export function JsonValue({ value }: { value: unknown }) {
     catch { setCopyState('error'); }
   };
   // Diagnostic data is deliberately not translated, formatted as HTML or run.
-  return <div className="studio-report-code"><div className="studio-report-copy"><Button variant="outline" disabled={!text} onClick={() => void copy()}>{copyState === 'copied' ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{t(copyState === 'copied' ? 'studioReport.copied' : 'studioReport.copy')}</Button><span role="status">{copyState === 'error' && t('studioReport.copyError')}</span></div><pre className="studio-diagnostics-json" dir="ltr" tabIndex={0}>{text}</pre></div>;
+  return <div className="studio-report-code"><div className="studio-report-copy"><Button variant="outline" disabled={!text} onClick={() => void copy()}>{copyState === 'copied' ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{t(copyState === 'copied' ? 'studioReport.copied' : 'studioReport.copy')}</Button><small>{text.length.toLocaleString(i18n.language)} {t('studioAudit.characters')}</small><span role="status">{copyState === 'error' && t('studioReport.copyError')}</span></div><pre className="studio-diagnostics-json" dir={typeof value === 'string' ? 'auto' : 'ltr'} tabIndex={0}>{text}</pre></div>;
 }

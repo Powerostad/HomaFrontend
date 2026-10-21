@@ -30,6 +30,19 @@ async function open() {
   await act(async () => container.querySelector('button')!.click());
 }
 describe('private session diagnostics', () => {
+  it('filters readable data by turn and separates exact prompt from its schema', async () => {
+    vi.mocked(loadSessionDiagnostics).mockResolvedValue({ success: true, data: { ...report, traces: [
+      { id: 1, turn_index: 1, step_name: 'payload', payload_name: 'handoff-analysis-server_scene_analysis-1', model: 'luna', status: 'payload', payload: { system_prompt: 'EXACT_PROMPT\n  spaces', output_schema: { required: ['original'] } } },
+      { id: 2, turn_index: 2, step_name: 'payload', payload_name: 'model-response-server_scene_design-1', model: 'luna', status: 'payload', payload: { output: 'SECOND_TURN_OUTPUT' } },
+    ] } });
+    await open();
+    expect(container.querySelectorAll('.studio-audit-nav a')).toHaveLength(3);
+    expect(container.textContent).toContain('EXACT_PROMPT');
+    const turn = container.querySelector<HTMLSelectElement>('.studio-audit-filters select')!;
+    await act(async () => { turn.value = '1'; turn.dispatchEvent(new Event('change', { bubbles: true })); });
+    expect(container.textContent).not.toContain('SECOND_TURN_OUTPUT');
+    expect([...container.querySelectorAll('.studio-diagnostics-json')].some(node => node.textContent === 'EXACT_PROMPT\n  spaces')).toBe(true);
+  });
   it('copies the exact prompt including internal whitespace and acknowledges failure', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable:true, value:{ writeText } });
