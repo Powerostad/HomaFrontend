@@ -8,7 +8,7 @@ vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({
   siteText: (text: string) => text, siteValue: (text: string) => text, siteDirection: () => 'rtl',
 }) }));
 
-it('shows the designer brief and encoded search link without claiming a completed image or stock', async () => {
+it('uses the server sourcing display with the designer reason, consultation and search link', async () => {
   const host = document.createElement('div');
   const root = createRoot(host);
   const select = vi.fn();
@@ -17,9 +17,10 @@ it('shows the designer brief and encoded search link without claiming a complete
     aiReasoning: 'برای نرم شدن نور، پرده کتانی کرم را کنار پنجره نصب کنید.', webSearchQuery: 'پرده کتانی کرم',
   }]} checkedIds={new Set()} onToggleItem={select} />));
   expect(host.textContent).toContain('کنار پنجره');
-  expect(host.textContent).toContain('عبارت پیشنهادی برای جست‌وجو');
+  expect(host.textContent).not.toContain('عبارت پیشنهادی برای جست‌وجو');
   expect(host.querySelector('a')?.href).toBe('https://www.google.com/search?q=' + encodeURIComponent('پرده کتانی کرم'));
-  expect(host.textContent).not.toContain('در تصویر طراحی شما دیده');
+  expect(host.textContent).toContain('در تصویر طراحی شما دیده');
+  expect(host.textContent).toContain('می‌خوام تهیه کنم');
   expect(select).not.toHaveBeenCalled();
   await act(async () => root.unmount());
 });
