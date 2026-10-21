@@ -69,3 +69,9 @@
 .studio-v2-review-item article { display:grid; gap:var(--space-2); padding:var(--space-3); background:var(--color-surface-muted); border-radius:var(--radius-md); }
 .studio-v2-review .studio-product-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
 .studio-v2-review button { min-height:44px; white-space:normal; }
+.studio-image-export { display:grid; gap:var(--space-3); padding:var(--space-5); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); background:var(--color-surface-default); }
+.studio-image-export p { font-size:var(--text-sm); line-height:1.8; color:var(--color-content-secondary); }
+.studio-image-export label { display:grid; gap:var(--space-2); }
+.studio-image-export select { width:100%; padding:var(--space-3); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); background:var(--color-surface-muted); color:var(--color-content-primary); }
+.studio-image-export-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); padding-block:var(--space-3); border-bottom:1px solid var(--color-border-subtle); }
+.studio-image-export-row > span { flex-basis:100%; overflow-wrap:anywhere; font-size:var(--text-sm); }

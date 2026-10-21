@@ -235,7 +235,7 @@ export function useRedesignChat(path?: string) {
         if (!isCurrent()) return;
         if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
         if (event.operationId) renderOperationId.current = event.operationId;
-        if (event.event === 'image' || event.event === 'error') {
+        if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
           void reconcile(params.sessionId, ac.signal, event.operationId || params.idempotencyKey);
         }
       },
@@ -308,7 +308,7 @@ export function useRedesignChat(path?: string) {
             const data = event.data as { delta?: unknown };
             if (typeof data?.delta === 'string') setStage(data.delta.trim());
           }
-          if (event.event === 'image' || event.event === 'error') {
+          if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
             void reconcile(sid, ac.signal, event.operationId || failed.operation_id);
           }
         },

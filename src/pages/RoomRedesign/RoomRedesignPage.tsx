@@ -8,6 +8,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { StudioResultView } from '../Studio/ResultPage';
 import { ExecutionPanel } from './components/ExecutionPanel';
 import { SessionDiagnostics } from './components/SessionDiagnostics';
+import { StudioImageExport } from './components/StudioImageExport';
 import { StudioConversationDrawer } from './components/StudioConversationDrawer';
 import { StudioDiscovery } from './components/StudioDiscovery';
 import { useConversationStudioResult } from './hooks/useConversationStudioResult';
@@ -30,7 +31,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   sendMessage: () => void; fresh: () => void;
 }) {
   const { t } = useTranslation();
-  const { siteValue } = useSiteTranslation();
+  const { siteValue, siteText } = useSiteTranslation();
   const navigate = useNavigate();
   const openChat = () => { setChatOpen(true); if (!compact) window.scrollTo({ top: 0, behavior: 'instant' }); };
   const state = useConversationStudioResult({ plan, sessionId: chat.sessionId, versionId, resultImage, originalImage,
@@ -65,7 +66,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
         <label>{t('redesignJourney.history')}<select aria-label={t('redesignJourney.history')} value={chat.viewedId} onChange={event => chat.selectVersion(event.target.value)}>
           <option value="original">{t('redesignJourney.original')}</option>
           {plan?.search_version && <option value="current">{t('studioV2.currentPlan')}</option>}
-          {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{t(version.image_status === 'failed' ? 'studioAudit.versionFailed' : version.image_pending ? 'studioAudit.versionPending' : 'studioAudit.versionReady', { number: index + 1 })}</option>)}
+          {chat.versions.map((version, index) => <option key={version.version_id} value={version.version_id}>{version.image_status === 'exported' ? siteText('نسخهٔ {{number}} — بستهٔ تصویر آماده', { number: index + 1 }) : t(version.image_status === 'failed' ? 'studioAudit.versionFailed' : version.image_pending ? 'studioAudit.versionPending' : 'studioAudit.versionReady', { number: index + 1 })}</option>)}
         </select></label>
       </div>
       {chat.newVersionReady && <Button variant="outline" onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
@@ -80,6 +81,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
     afterReport: <>{!plan && <p className="studio-empty-state">{t(chat.versions.length ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p>}
+            {chat.sessionId && import.meta.env.MODE === 'studio-local' && <StudioImageExport key={`export-${chat.sessionId}`} sessionId={chat.sessionId} busy={chat.busy} />}
             {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
   }} />;
 }
@@ -139,10 +141,10 @@ export function RoomRedesignPage() {
     sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
-    panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
+    panel={<>{chat.sessionId && import.meta.env.MODE === 'studio-local' && <StudioImageExport key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
       messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
       busy={chat.busy} failed={!!chat.error} statusText={chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking')}
-      value={input} onChange={setInput} onSend={sendMessage} />} />;
+      value={input} onChange={setInput} onSend={sendMessage} /></>} />;
   return <>
     <ConversationResult key={`${chat.sessionId || path || 'new'}:${chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'}`} chat={chat} plan={plan}
       versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={(report?.image_pending ? original : report?.image_url) || original || ''} originalImage={original}

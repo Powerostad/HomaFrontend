@@ -52,7 +52,7 @@ const COMMAND_TIMEOUT_MS = 120_000;
 // enough to receive that result; disconnect recovery never resubmits a turn.
 const TURN_TIMEOUT_MS = 660_000;
 const RENDER_IDLE_TIMEOUT_MS = 180_000;
-const TERMINAL_RENDER_EVENTS = new Set(['image', 'error']);
+const TERMINAL_RENDER_EVENTS = new Set(['image', 'render_export', 'error']);
 
 function websocketUrl(ticket: string): string {
   const url = new URL(appConfig.apiBaseUrl);

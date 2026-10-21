@@ -605,7 +605,7 @@ export interface PurchaseCheckResult {
 export const checkStudioPurchase = (sessionId: string, versionId: string, lines: StudioPurchaseLine[]) =>
   apiPost<PurchaseCheckResult>(`/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/purchase-check/`, { version_id: versionId, lines });
 export interface DesignVersion {
-  image_status?: 'pending' | 'failed' | 'ready';
+  image_status?: 'pending' | 'failed' | 'ready' | 'exported';
   image_pending?: boolean;
   render_version_id?: string | null;
   version_id: string;
