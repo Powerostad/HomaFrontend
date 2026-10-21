@@ -26,6 +26,20 @@ async function mount(overrides: Partial<ComponentProps<typeof StudioDiscovery>> 
 }
 beforeEach(() => { vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
 describe('one-finding discovery', () => {
+  it('shows accepted analysis while design and product search have not completed', async () => {
+    const ui = await mount({ plan: null, resultAvailable: false });
+    try {
+      await ui.render({ analysisPreview: { studio_documents: { img0: {
+        room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'issue1', evidence: 'مسیر کنار مبل باریک است.' }] } },
+        user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
+      } } }, stage: 'در حال طراحی تغییرات' });
+      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      await ui.render({ plan: source, busy: true });
+      expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
+    } finally { await ui.cleanup(); }
+  });
   it('replaces initial analysis loading with the terminal error and an explicit retry', async () => {
     const ui = await mount({ plan: null, resultAvailable: false });
     try {

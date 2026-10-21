@@ -8,6 +8,19 @@ vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (value: string) => value }));
 afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
 
+it('delivers intermediate analysis without treating it as a completed execution', async () => {
+  const onAnalysis = vi.fn(), onResult = vi.fn();
+  const preview = { studio_documents: { img0: { room_analysis: { observation: 'accepted' } } } };
+  vi.mocked(runChatCommand).mockImplementation(async options => {
+    options.onEvent?.({ event: 'analysis', data: preview });
+    expect(onAnalysis).toHaveBeenCalledWith(preview);
+    expect(onResult).not.toHaveBeenCalled();
+    return { ok: true, status: 200 };
+  });
+  await streamChatTurn({ sessionId: 'session', idempotencyKey: 'request', text: '', images: [] },
+    { onAnalysis, onResult }, new AbortController().signal);
+});
+
 it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');

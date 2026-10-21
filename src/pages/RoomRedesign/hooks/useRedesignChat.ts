@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
 import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
+import type { AnalysisPreview } from '../services/discoveryReview';
 
 const RECONCILE_MAX_ATTEMPTS = 120;
 const RECONCILE_MAX_MS = 600_000;
@@ -32,6 +33,7 @@ export function useRedesignChat(path?: string) {
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
   const [currentExecution, setCurrentExecution] = useState<ExecutionPlan | null>(null);
+  const [analysisPreview, setAnalysisPreview] = useState<AnalysisPreview | null>(null);
   const [currentBaseVersionId, setCurrentBaseVersionId] = useState('original');
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [viewedId, setViewedId] = useState('original');
@@ -64,6 +66,7 @@ export function useRedesignChat(path?: string) {
       text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
     setCurrentExecution(data.current_execution || null);
+    setAnalysisPreview(data.analysis_preview || null);
     setCurrentBaseVersionId(data.current_base_version_id || 'original');
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
@@ -152,6 +155,7 @@ export function useRedesignChat(path?: string) {
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
     setCurrentExecution(null);
+    setAnalysisPreview(null);
     setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
     operation.current = null; intent.current = null; renderOperationId.current = null; setReadyId(null);
@@ -197,6 +201,7 @@ export function useRedesignChat(path?: string) {
       && !ac.signal.aborted;
     completed.current = false;
     locked.current = true; setError(null); setStage(null); setStatus('streaming');
+    setAnalysisPreview(null);
     const messageId = crypto.randomUUID();
     setChipGroups([]);
     const transport = await streamChatTurn(params, {
@@ -207,6 +212,7 @@ export function useRedesignChat(path?: string) {
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
       onStage: event => { if (isCurrent()) setStage(event.label_fa); },
+      onAnalysis: event => { if (isCurrent()) setAnalysisPreview(event); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
       onResult: event => {
         if (!isCurrent()) return;
@@ -348,5 +354,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, currentExecution, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

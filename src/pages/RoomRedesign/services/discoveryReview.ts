@@ -1,6 +1,7 @@
 import type { ExecutionPlan } from './redesignChatService';
 
 export type DiscoveryTrack = 'layout' | 'harmony' | 'function' | 'surfaces' | 'idea';
+export interface AnalysisPreview { studio_documents: Record<string, unknown> }
 export interface DiscoveryFinding {
   id: string;
   track: DiscoveryTrack;
@@ -25,7 +26,7 @@ function text(value: unknown): string { return typeof value === 'string' ? value
 function ids(value: unknown): string[] { return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []; }
 
 /** Read-only presentation of saved mother output. Never changes model input or invents findings. */
-export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryReview {
+export function buildDiscoveryReview(plan: ExecutionPlan | AnalysisPreview | null): DiscoveryReview {
   if (!plan) return { summary: '', direction: '', findings: [] };
   const findings: DiscoveryFinding[] = [];
   const seen = new Set<string>();
@@ -60,12 +61,12 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
   }
   // Legacy plans may have no diagnostic document. Label their changes as ideas, not observed problems.
   if (!findings.length) {
-    plan.free_actions.forEach((action, index) => append({ id: `layout:${index}`, track: 'layout',
+    ('free_actions' in plan ? plan.free_actions : []).forEach((action, index) => append({ id: `layout:${index}`, track: 'layout',
       observation: action.reason_fa, suggestion: action.instruction_fa, isObservation: false }));
-    plan.purchases.forEach(item => append({ id: `product:${item.item_id}`, track: 'idea',
+    ('purchases' in plan ? plan.purchases : []).forEach(item => append({ id: `product:${item.item_id}`, track: 'idea',
       observation: item.reason_fa || item.mother_product?.why_needed || '',
       suggestion: item.placement_instruction_fa || item.mother_product?.placement_instruction || '', isObservation: false }));
-    plan.surface_actions.forEach((action, index) => append({ id: `surface:${index}`, track: 'surfaces',
+    ('surface_actions' in plan ? plan.surface_actions : []).forEach((action, index) => append({ id: `surface:${index}`, track: 'surfaces',
       observation: '', suggestion: action.change_fa, isObservation: false }));
   }
   return {
