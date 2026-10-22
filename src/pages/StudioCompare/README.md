@@ -104,3 +104,13 @@ active. The launcher reads the existing ignored local environment; credentials
 are never included in the browser report. Billing totals are read from saved
 receipts; absent receipts remain unknown. Each fresh session contains only its
 own run, while original model retry counts are reflected in its diagnostics.
+
+
+The local snapshot's unused `reco_chat_operation.workflow_json` column is NOT
+NULL. The older server ORM does not know this field and Django's Python default
+is absent from a database dump. The launcher installs a SQL `{}` default only
+in loopback `homa_studio_ab` so the original ORM can insert operations unchanged.
+The readiness endpoint rejects an incompatible default before either paid turn
+starts. A real baseline service/storage smoke test with a fake runner verified
+operation persistence/completion without text/image API calls. Original local
+and production databases are not altered by this compatibility bridge.

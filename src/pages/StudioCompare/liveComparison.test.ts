@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
-import { preflight, runLiveArm, type RuntimeInfo } from './liveComparison';
+import { preflight, runLiveArm, readLiveArm, type RuntimeInfo } from './liveComparison';
 import { newCase } from './comparison';
 vi.mock('@/utils/apiClient', () => ({ getStoredTokens: () => ({ access: 'test-token' }) }));
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
@@ -34,4 +34,12 @@ it('submits one text turn with identical input, never sends render, and reads sa
   expect(sent.every(frame => frame.type === 'chat.turn' && frame.payload.text === item.brief && frame.payload.images[0] === item.originalImage)).toBe(true);
   expect(output).toHaveBeenCalledTimes(2);
   expect(fetch.mock.calls.some(([url]) => url.includes('/render'))).toBe(false);
+});
+
+it('keeps a known pre-model failure failed when no operation row could be saved', async () => {
+  localMode();
+  vi.stubGlobal('fetch', vi.fn(async () => response({ session_id: 'saved', status: 'active', turns: [], operations: [] })));
+  const result = await readLiveArm('A', { sessionId: 'saved', status: 'failed', stage: '', startedAt: '2026-10-23', runtime: runtime('server') });
+  expect(result.run.status).toBe('failed');
+  expect(result.arm.status).toBe('failed');
 });

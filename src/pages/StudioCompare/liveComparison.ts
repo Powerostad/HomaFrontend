@@ -61,7 +61,8 @@ export async function readLiveArm(key: ArmKey, run: LiveRun): Promise<{ arm: Com
   arm.resultImage = null; // This comparison never associates earlier renders with a new run.
   arm.model = arm.model || run.runtime.model;
   const running = session.value.operations?.some(op => op.status === 'running');
-  const failed = arm.status === 'failed';
+  const failed = arm.status === 'failed' || !session.value.operations?.length && run.status === 'failed';
+  if (failed) arm.status = 'failed';
   const next = { ...run, status: running ? 'running' : failed ? 'failed' : session.value.operations?.length ? 'complete' : 'unknown',
     stage: '', ...(running ? {} : { finishedAt: run.finishedAt || new Date().toISOString() }) } as LiveRun;
   return { arm, run: next };
