@@ -76,7 +76,7 @@ local catalogue/account/configuration, not production data or a server connectio
 Readiness checks verify matching model, catalogue and product count and that
 images are disabled before any billed turn starts. The prepared snapshot has
 1,415 products and gpt-6-luna. Cache/ticket/channel namespaces are separate.
-Embedding computation uses the already-running local embedding worker; actual
+Embedding computation uses a dedicated local CPU worker and queue; actual
 retrieval/ranking is performed by each arm's own code. Concurrent timings include
 shared machine/worker contention and are not isolated production latency numbers.
 Server-native validation/retry policy is retained; no browser retry is added.
@@ -96,6 +96,7 @@ Start from the backend root with its existing Python environment:
 ```powershell
 python scripts/run_studio_comparison.py server --root "D:/Company/Homa_V.0.0/New folder/studio-ab-runtime/server"
 python scripts/run_studio_comparison.py local --root "D:/Company/Homa_Studio_Product_Search_v2"
+python scripts/run_studio_comparison.py embedding --root "D:/Company/Homa_Studio_Product_Search_v2"
 ```
 
 The database snapshot is provisioned once. Do not recreate it while runs are
