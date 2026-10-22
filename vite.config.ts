@@ -75,6 +75,10 @@ export default defineConfig(async ({ isSsrBuild, command, mode }) => {
             host: true,
             // Optional local-only bridge to the existing server account/data.
             proxy: devApiTarget ? {
+                ...(mode === 'studio-local' ? {
+                    '/__studio_ab/server': { target: 'http://127.0.0.1:8001', changeOrigin: true, ws: true, rewrite: (url: string) => url.replace(/^\/__studio_ab\/server/, '') },
+                    '/__studio_ab/local': { target: 'http://127.0.0.1:8002', changeOrigin: true, ws: true, rewrite: (url: string) => url.replace(/^\/__studio_ab\/local/, '') },
+                } : {}),
                 '/api': { target: devApiTarget, changeOrigin: true },
                 '/ws': { target: devApiTarget, changeOrigin: true, ws: true },
             } : undefined,

@@ -1,4 +1,5 @@
 import type { ExecutionPlan, SessionDiagnosticsReport, SessionPayload, StudioPerformanceReport } from '../RoomRedesign/services/redesignChatService';
+import type { LiveRun } from './liveComparison';
 
 export type ArmKey = 'A' | 'B';
 export type Dimension = 'design' | 'products' | 'image';
@@ -16,6 +17,7 @@ export interface ComparisonVote { choice: Choice; note: string; judge: string; s
 export interface ComparisonCase {
   id: string; title: string; brief: string; originalImage: string | null; order: ArmKey[]; revealed: boolean;
   arms: Record<ArmKey, ComparisonArm | null>; votes: Partial<Record<Dimension, ComparisonVote>>;
+  live?: Partial<Record<ArmKey, LiveRun>>;
 }
 export const format = 'homa-studio-comparison-v1';
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -133,6 +135,14 @@ export function parseCases(value: unknown): ComparisonCase[] {
     parsed.order = Array.isArray(item.order) && item.order.join(',') === 'B,A' ? ['B', 'A'] : ['A', 'B'];
     parsed.revealed = item.revealed === true;
     parsed.arms = { A: arms.A ? parseArm(arms.A) : null, B: arms.B ? parseArm(arms.B) : null };
+    const live = object(item.live);
+    for (const key of ['A', 'B'] as ArmKey[]) {
+      const run = object(live[key]), runtime = object(run.runtime);
+      if (string(run.sessionId).match(/^[0-9a-f-]{36}$/i) && ['running', 'complete', 'failed', 'unknown'].includes(string(run.status)) && runtime.profile === (key === 'A' ? 'server' : 'local')) {
+        parsed.live = { ...parsed.live, [key]: { sessionId: string(run.sessionId), status: run.status as LiveRun['status'], stage: string(run.stage), startedAt: string(run.startedAt), finishedAt: string(run.finishedAt) || undefined,
+          runtime: { profile: runtime.profile, revision: string(runtime.revision), image_generation: false, catalogue: string(runtime.catalogue), products: numberOrNull(runtime.products) || 0, model: string(runtime.model), prompt: string(runtime.prompt) } } };
+      }
+    }
     for (const dimension of dimensions) {
       const v = object(savedVotes[dimension]);
       if (['A', 'B', 'tie', 'neither', 'unassessed'].includes(string(v.choice))) parsed.votes[dimension] = {

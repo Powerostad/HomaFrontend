@@ -9,6 +9,7 @@ import { dimensions, format, fromSession, imageSource, localSessionId, newCase, 
   type ArmKey, type Choice, type ComparisonArm, type ComparisonCase, type Dimension } from './comparison';
 import { loadWorkspace, saveWorkspace } from './storage';
 import { importRenderFiles } from './importRenderFiles';
+import { preflight, runLiveArm, readLiveArm, type LiveRun } from './liveComparison';
 import './comparison.css';
 
 const dimensionLabels = { design: 'کیفیت تشخیص و طراحی', products: 'تناسب محصولات پیشنهادی', image: 'کیفیت و وفاداری تصویر' };
@@ -41,7 +42,7 @@ function VoteForm({ item, dimension, onSave }: { item: ComparisonCase; dimension
   useEffect(() => { setChoice(saved?.choice || 'unassessed'); setNote(saved?.note || ''); setJudge(saved?.judge || ''); }, [saved?.savedAt, saved?.choice, saved?.note, saved?.judge]);
   const options: [Choice, string][] = [[item.order[0], 'گزینهٔ ۱ بهتر است'], [item.order[1], 'گزینهٔ ۲ بهتر است'], ['tie', 'برابرند'], ['neither', 'هیچ‌کدام مناسب نیست'], ['unassessed', 'اطلاعات کافی ندارم']];
   return <form className="comparison-vote" onSubmit={event => { event.preventDefault(); onSave(choice, note, judge); }}>
-    <fieldset><legend>{copy(dimensionLabels[dimension])}</legend>{options.map(([value, label]) => <label key={value}><input type="radio" name={`vote-${item.id}-${dimension}`} value={value} checked={choice === value} disabled={value !== 'unassessed' && (!item.arms.A || !item.arms.B)} onChange={() => setChoice(value)} />{copy(label)}</label>)}</fieldset>
+    <fieldset><legend>{copy(dimensionLabels[dimension])}</legend>{options.map(([value, label]) => <label key={value}><input type="radio" name={`vote-${item.id}-${dimension}`} value={value} checked={choice === value} disabled={value !== 'unassessed' && (!item.arms.A || !item.arms.B || dimension === 'image' && !!item.live)} onChange={() => setChoice(value)} />{copy(label)}</label>)}</fieldset>
     <label>{copy('دلیل و شواهد انتخاب')}<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={4000} rows={3} /></label>
     <label>{copy('نام ارزیاب')}<input value={judge} onChange={event => setJudge(event.target.value)} maxLength={100} /></label>
     <Button type="submit" variant="outline">{copy('ثبت ارزیابی')}</Button>
@@ -49,12 +50,14 @@ function VoteForm({ item, dimension, onSave }: { item: ComparisonCase; dimension
   </form>;
 }
 
-function ArmPanel({ arm, index, revealed }: { arm: ComparisonArm | null; index: number; revealed: boolean }) {
+function ArmPanel({ arm, index, revealed, run }: { arm: ComparisonArm | null; index: number; revealed: boolean; run?: LiveRun }) {
   const { siteText: copy, siteLocale } = useSiteTranslation();
   const display = (value: number | null, unit: string) => value == null ? copy('ثبت نشده') : `${value.toLocaleString(siteLocale(), { maximumFractionDigits: 5 })} ${unit}`;
   return <article className="comparison-arm">
     <header><span>{copy(index === 0 ? 'گزینهٔ ۱' : 'گزینهٔ ۲')}</span>{arm && <b className={`comparison-status comparison-status-${arm.status}`}>{copy(arm.status === 'failed' ? 'اجرای ناموفق' : arm.status === 'partial' ? 'خروجی ناقص یا وضعیت نامشخص' : 'خروجی ثبت‌شده')}</b>}</header>
-    <Photo src={arm?.resultImage || null} alt={copy(index === 0 ? 'تصویر گزینهٔ ۱' : 'تصویر گزینهٔ ۲')} />
+    {run && <div className="comparison-notice" role="status">{copy(run.status === 'running' ? 'در حال اجرا' : run.status === 'complete' ? 'اجرا تمام شد' : run.status === 'failed' ? 'اجرای ناموفق' : 'وضعیت اجرا نامشخص است؛ خروجی ذخیره‌شده را دوباره بخوان.')} {run.stage && <p>{run.stage}</p>}
+      <p>{copy('تولید تصویر برای این اجرا خاموش است.')}</p></div>}
+    {!run && <Photo src={arm?.resultImage || null} alt={copy(index === 0 ? 'تصویر گزینهٔ ۱' : 'تصویر گزینهٔ ۲')} />}
     {!arm ? <p>{copy('خروجی این گزینه هنوز وارد نشده است.')}</p> : <>
       <section><h2>{copy('رویکرد طراحی')}</h2><p className="comparison-design" dir="auto">{arm.design || copy('توضیح طراحی در این خروجی ثبت نشده است.')}</p></section>
       {!!arm.needs.length && <details><summary>{copy('نیازهای محصول در طرح')}</summary><ul>{arm.needs.map((need, i) => <li key={i}>{need}</li>)}</ul></details>}
@@ -91,7 +94,9 @@ export default function StudioComparePage() {
   const [busy, setBusy] = useState(false);
   const [sessionInput, setSessionInput] = useState('');
   const [target, setTarget] = useState<ArmKey>('A');
+  const [runtimeStatus, setRuntimeStatus] = useState('');
   const generation = useRef(0);
+  const launching = useRef(false);
   const current = cases.find(item => item.id === selected) || cases[0];
   useEffect(() => {
     let active = true; generation.current += 1; setReady(false); setCases([]); setSelected('');
@@ -155,10 +160,41 @@ export default function StudioComparePage() {
       setCases(items => items.map(item => item.id === id ? replaceArm(item, key, arm) : item));
     });
   };
+  const runPair = () => {
+    if (launching.current || !current?.brief.trim() || !current.originalImage?.startsWith('data:image/')) return;
+    if (current.originalImage.length > 8 * 1024 * 1024 * 4 / 3 + 100) { setMessage(copy('برای اجرا، عکس اصلی باید حداکثر ۸ مگابایت باشد.')); return; }
+    launching.current = true;
+    const input = current, stamp = generation.current;
+    void perform(async () => {
+      let runtimes;
+      try { runtimes = await preflight(); } catch {
+        setMessage(copy('اتصال هر دو سرویس یا یکسان‌بودن مدل و کاتالوگ تأیید نشد. هیچ مدلی اجرا نشد؛ سرویس‌ها و ورود حساب لوکال را بررسی کن.')); return;
+      }
+      if (stamp !== generation.current) return;
+      const item = { ...newCase(), title: input.title, brief: input.brief, originalImage: input.originalImage };
+      setCases(items => [...items, item]); setSelected(item.id);
+      const progress = (key: ArmKey, run: LiveRun) => { if (stamp === generation.current) setCases(items => items.map(row => row.id === item.id ? { ...row, live: { ...row.live, [key]: run } } : row)); };
+      const results = await Promise.allSettled((['A', 'B'] as ArmKey[]).map(key => runLiveArm(key, item, runtimes[key], run => progress(key, run), (arm, run) => {
+        if (stamp === generation.current) setCases(items => items.map(row => row.id === item.id ? { ...replaceArm(row, key, arm), live: { ...row.live, [key]: run } } : row));
+      })));
+      if (results.some(result => result.status === 'rejected')) setMessage(copy('یکی از مسیرها شروع نشد؛ مسیر دیگر دوباره اجرا نشده است. وضعیت سرویس‌های لوکال را بررسی کن.'));
+    }).finally(() => { launching.current = false; });
+  };
+  const refreshLive = () => {
+    const id = current?.id, runs = current?.live, stamp = generation.current;
+    void perform(async () => {
+      const results = await Promise.allSettled((['A', 'B'] as ArmKey[]).map(async key => {
+        if (!runs?.[key]) return;
+        const { arm, run } = await readLiveArm(key, runs[key]!);
+        if (stamp === generation.current) setCases(items => items.map(row => row.id === id ? { ...replaceArm(row, key, arm), live: { ...row.live, [key]: run } } : row));
+      }));
+      if (results.some(result => result.status === 'rejected')) throw new Error('read');
+    });
+  };
   const inputMismatch = current && Object.values(current.arms).some(arm => arm?.originalImage && current.originalImage && arm.originalImage !== current.originalImage);
   return <div className="studio-comparison-page" dir={siteDirection()}><Header /><main>
     <header className="comparison-page-heading"><div><p>HOMA / R&D</p><h1>{copy('مقایسهٔ دو مسیر طراحی')}</h1><p>{copy('یک فضا، دو خروجی؛ طراحی، محصول و تصویر را جدا ارزیابی کن.')}</p></div><Link to="/studio">{copy('بازگشت به استودیو')}</Link></header>
-    <div className="comparison-notice">{copy('این صفحه مدل را اجرا نمی‌کند. فقط خروجی‌های ذخیره‌شده را می‌خواند؛ فایل‌ها و رأی‌ها در همین مرورگر می‌مانند.')}</div>
+    <div className="comparison-notice">{copy('مشاهده و واردکردن خروجی هزینه ندارد. دکمهٔ اجرای هم‌زمان، تحلیل و سرچ هر دو ساختار را اجرا می‌کند و هزینهٔ مدل متن و جست‌وجو دارد؛ تصویر تولید نمی‌شود.')}</div>
     <p className="comparison-media-note">{copy('نشانی بعضی تصاویرِ جلسه موقت است؛ برای گزارش ماندگار، تصاویر را از بستهٔ R&D یا فایل عکس وارد کن.')}</p>
     <nav className="comparison-workspace" aria-label={copy('مدیریت آزمون')}>
       <label>{copy('کیس مقایسه')}<select value={current?.id || ''} disabled={busy || !ready} onChange={event => setSelected(event.target.value)}>{cases.map((item, index) => <option key={item.id} value={item.id}>{item.title || `${copy('کیس')} ${index + 1}`}</option>)}</select></label>
@@ -170,10 +206,22 @@ export default function StudioComparePage() {
     </nav>
     {message && <p role="alert" className="comparison-alert">{message}</p>}
     {current && <>
-      <section className="comparison-case-intake"><div><label>{copy('عنوان کیس')}<input maxLength={120} value={current.title} onChange={event => update(item => ({ ...item, title: event.target.value }))} /></label>
-        <label>{copy('درخواست یکسان کاربر برای هر دو نسخه')}<textarea rows={3} maxLength={4000} value={current.brief} onChange={event => update(item => ({ ...item, brief: event.target.value, votes: {} }))} /></label>
+      <section className="comparison-case-intake"><div><label>{copy('عنوان کیس')}<input disabled={busy} maxLength={120} value={current.title} onChange={event => update(item => ({ ...item, title: event.target.value }))} /></label>
+        <label>{copy('درخواست یکسان کاربر برای هر دو نسخه')}<textarea disabled={busy} rows={3} maxLength={4000} value={current.brief} onChange={event => update(item => ({ ...item, brief: event.target.value, votes: {} }))} /></label>
         <label className="comparison-file-button">{copy('انتخاب عکس اصلی')}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={event => photo(event)} /></label></div>
         <figure><Photo src={current.originalImage} alt={copy('عکس اصلی مشترک')} /><figcaption>{copy('عکس اصلی مشترک')}</figcaption></figure>
+      </section>
+      <section className="comparison-live-controls"><h2>{copy('اجرای دو ساختار روی همین کامپیوتر')}</h2>
+        <p>{copy('ساختار سرور با پرامپت یک‌مرحله‌ای و سرچ اصلی، در کنار ساختار لوکال با پرامپت دو‌مرحله‌ای و سرچ V2 اجرا می‌شود. مدل و کاتالوگ یکسان‌اند. هر اجرا کیس تازه می‌سازد.')}</p>
+        <Button disabled={busy || cases.length >= 50 || !current.brief.trim() || !current.originalImage?.startsWith('data:image/')} onClick={runPair}>{copy(busy ? 'در حال پردازش…' : 'اجرای هم‌زمان بدون تولید تصویر')}</Button>
+        <Button variant="outline" disabled={busy} onClick={() => { void perform(async () => {
+          setRuntimeStatus('');
+          try { const runtimes = await preflight(); setRuntimeStatus(`${copy('هر دو سرویس آماده‌اند؛ تصویر خاموش است.')} ${runtimes.A.model} · ${runtimes.A.products} ${copy('محصول')}`); }
+          catch { setMessage(copy('اتصال هر دو سرویس یا یکسان‌بودن مدل و کاتالوگ تأیید نشد. هیچ مدلی اجرا نشد؛ سرویس‌ها و ورود حساب لوکال را بررسی کن.')); }
+        }); }}>{copy('بررسی آمادگی بدون هزینه')}</Button>
+        {runtimeStatus && <p role="status">{runtimeStatus}</p>}
+        {!!current.live && <Button variant="outline" disabled={busy} onClick={refreshLive}>{copy('خواندن وضعیت و خروجی همین اجرا')}</Button>}
+        <p>{copy('عکس اصلی و درخواست را وارد کن. بازکردن صفحه یا خواندن وضعیت، اجرای تازه شروع نمی‌کند. قطع اتصال مرورگر به معنی لغو درخواست مدل نیست.')}</p>
       </section>
       <details className="comparison-setup"><summary>{copy('واردکردن خروجی دو نسخه')}</summary>
         <p>{copy('خروجی A و B را جدا وارد کن؛ ترتیب نمایش گزینه‌ها تصادفی و ثابت است. برای سرورِ خارج از دسترس، فایل JSON ذخیره‌شده را وارد کن.')}</p>
@@ -196,7 +244,7 @@ export default function StudioComparePage() {
       {inputMismatch && <p role="alert" className="comparison-alert">{copy('عکس ورودی ثبت‌شده برای دو نسخه یکسان نیست یا نشانی متفاوت دارد؛ قبل از نتیجه‌گیری، یکسان‌بودن عکس‌ها را بررسی کن.')}</p>}
       <div className="comparison-blind-controls"><p>{copy(current.revealed ? 'منابع نمایش داده شده‌اند؛ رأی‌های بعدی کور محسوب نمی‌شوند.' : 'منابع و هزینه‌ها پنهان‌اند تا قضاوت اولیه تحت تأثیر نسخه قرار نگیرد.')}</p>
         {!current.revealed && <Button variant="outline" onClick={() => update(item => ({ ...item, revealed: true }))}>{copy('نمایش منابع، هزینه و زمان')}</Button>}</div>
-      <section className="comparison-columns" aria-label={copy('خروجی‌های کنار هم')}>{current.order.map((key, index) => <ArmPanel key={`${current.id}-${key}`} arm={current.arms[key]} index={index} revealed={current.revealed} />)}</section>
+      <section className="comparison-columns" aria-label={copy('خروجی‌های کنار هم')}>{current.order.map((key, index) => <ArmPanel key={`${current.id}-${key}`} arm={current.arms[key]} index={index} revealed={current.revealed} run={current.live?.[key]} />)}</section>
       <section className="comparison-votes"><h2>{copy('ارزیابی این کیس')}</h2><p>{copy('خروجی ناموفق را حذف نکن. اگر داده کافی نیست، همان را ثبت کن. تعداد بیشتر محصول به‌تنهایی نشانهٔ کیفیت نیست.')}</p>
         <div>{dimensions.map(dimension => <VoteForm key={`${current.id}-${dimension}`} item={current} dimension={dimension} onSave={(choice, note, judge) => update(item => vote(item, dimension, choice, note, judge))} />)}</div>
       </section>

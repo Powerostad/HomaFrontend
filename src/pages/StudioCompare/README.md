@@ -1,8 +1,8 @@
 # Local paired Studio comparison
 
 Open `/studio/compare` in `npm run dev:studio` on loopback, using the existing
-local account. The route is lazy and excluded from production builds. No backend
-schema, prompt, search, model choice, server deployment or generation is changed.
+local account. The route is lazy and excluded from production builds. The import-only workflow remains available. Live execution uses the two isolated
+local runtimes described below; it does not deploy or run the production server.
 
 For each case, keep the same original image and user brief. Import independent
 A/B outputs. Display order is randomized once per case; sources, raw inputs,
@@ -61,3 +61,45 @@ claim statistical significance or silently choose an overall winner.
 The real local run can be read immediately. The successful server case
 `e58acf14-9a62-48f0-a279-7d755fba256d` still needs its own exported data; do not
 substitute the older failed/timeout server sessions or the local output for it.
+
+
+## Live paired execution (no images)
+
+The page can now start both architectures with one brief and raster data-URL photo
+(max 8 MiB). `A` uses the server source snapshot (baseline `f2206b2` plus its
+optional export port `3e40b6e`); `B` uses the current local split-prompt/V2 source.
+The Vite-only bridges map `/__studio_ab/server` to loopback 8001 and
+`/__studio_ab/local` to 8002. These bridges exist only in studio-local mode.
+
+Both use the dedicated `homa_studio_ab` database, a pg_dump/pg_restore copy of the
+local catalogue/account/configuration, not production data or a server connection.
+Readiness checks verify matching model, catalogue and product count and that
+images are disabled before any billed turn starts. The prepared snapshot has
+1,415 products and gpt-6-luna. Cache/ticket/channel namespaces are separate.
+Embedding computation uses the already-running local embedding worker; actual
+retrieval/ranking is performed by each arm's own code. Concurrent timings include
+shared machine/worker contention and are not isolated production latency numbers.
+Server-native validation/retry policy is retained; no browser retry is added.
+
+Each click creates a new comparison case and two fresh backend sessions. Both
+text turns start concurrently with exactly the same input. No chat.render command
+is sent; automatic render enqueue is suppressed by STUDIO_COMPARISON_NO_IMAGES
+and run_render also fails before any image provider call. No render workers run
+for these profiles. The original Studio runtime on 8000 is unchanged when that
+flag is absent. Session IDs, runtime revisions, stages and states survive export
+and IndexedDB reload. Reading saved status/output never resubmits model work.
+Disconnecting is not cancellation; reconnect/read the saved sessions rather than
+clicking run again. Image evaluation is disabled for these no-image cases.
+
+Start from the backend root with its existing Python environment:
+
+```powershell
+python scripts/run_studio_comparison.py server --root "D:/Company/Homa_V.0.0/New folder/studio-ab-runtime/server"
+python scripts/run_studio_comparison.py local --root "D:/Company/Homa_Studio_Product_Search_v2"
+```
+
+The database snapshot is provisioned once. Do not recreate it while runs are
+active. The launcher reads the existing ignored local environment; credentials
+are never included in the browser report. Billing totals are read from saved
+receipts; absent receipts remain unknown. Each fresh session contains only its
+own run, while original model retry counts are reflected in its diagnostics.

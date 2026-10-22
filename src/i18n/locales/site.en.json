@@ -968,5 +968,22 @@
   "دامنهٔ زمان و هزینه در این فایل کامل مشخص نشده است.": "The scope of cost and timing is not fully recorded in this file.",
   "فایل یا جلسه خوانده نشد. فرمت خروجی و دسترسی را بررسی کن.": "Could not read the file or session. Check its format and your access.",
   "ذخیرهٔ مرورگر در دسترس نیست؛ خروجی JSON را دانلود کن.": "Browser storage is unavailable. Download a JSON report.",
-  "ذخیرهٔ مرورگر انجام نشد؛ خروجی JSON را دانلود کن.": "Browser storage failed. Download a JSON report."
+  "ذخیرهٔ مرورگر انجام نشد؛ خروجی JSON را دانلود کن.": "Browser storage failed. Download a JSON report.",
+  "مشاهده و واردکردن خروجی هزینه ندارد. دکمهٔ اجرای هم‌زمان، تحلیل و سرچ هر دو ساختار را اجرا می‌کند و هزینهٔ مدل متن و جست‌وجو دارد؛ تصویر تولید نمی‌شود.": "Viewing and importing are free. Running both architectures incurs text model and search costs; no image is generated.",
+  "اجرای دو ساختار روی همین کامپیوتر": "Run both architectures on this computer",
+  "ساختار سرور با پرامپت یک‌مرحله‌ای و سرچ اصلی، در کنار ساختار لوکال با پرامپت دو‌مرحله‌ای و سرچ V2 اجرا می‌شود. مدل و کاتالوگ یکسان‌اند. هر اجرا کیس تازه می‌سازد.": "The server architecture uses its original single-stage prompt and search. The local architecture uses split prompts and V2 search. Both share the model and catalogue. Each run creates a fresh case.",
+  "اجرای هم‌زمان بدون تولید تصویر": "Run both without image generation",
+  "بررسی آمادگی بدون هزینه": "Check readiness for free",
+  "هر دو سرویس آماده‌اند؛ تصویر خاموش است.": "Both runtimes are ready; images are disabled.",
+  "خواندن وضعیت و خروجی همین اجرا": "Read this run’s saved status and output",
+  "عکس اصلی و درخواست را وارد کن. بازکردن صفحه یا خواندن وضعیت، اجرای تازه شروع نمی‌کند. قطع اتصال مرورگر به معنی لغو درخواست مدل نیست.": "Add the original photo and brief. Opening the page or reading status never starts a new run. Disconnecting the browser does not cancel a model request.",
+  "اتصال هر دو سرویس یا یکسان‌بودن مدل و کاتالوگ تأیید نشد. هیچ مدلی اجرا نشد؛ سرویس‌ها و ورود حساب لوکال را بررسی کن.": "Runtime readiness or matching model/catalogue could not be verified. No model was run. Check the local services and sign-in.",
+  "برای اجرا، عکس اصلی باید حداکثر ۸ مگابایت باشد.": "The original photo must be at most 8 MiB to run.",
+  "یکی از مسیرها شروع نشد؛ مسیر دیگر دوباره اجرا نشده است. وضعیت سرویس‌های لوکال را بررسی کن.": "One arm could not start. The other arm was not rerun. Check the local services.",
+  "وضعیت اجرا نامشخص است؛ خروجی ذخیره‌شده را دوباره بخوان.": "Run status is unknown; read the saved output again.",
+  "تولید تصویر برای این اجرا خاموش است.": "Image generation is disabled for this run.",
+  "اجرا تمام شد": "Run completed",
+  "در حال اجرا": "Running",
+  "در حال پردازش…": "Processing…",
+  "محصول": "products"
 }

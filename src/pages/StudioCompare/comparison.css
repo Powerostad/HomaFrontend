@@ -9,6 +9,8 @@
 .studio-comparison-page :is(input:not([type=radio]):not([type=file]),textarea,select) { width:100%; border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); padding:var(--space-3); background:var(--color-surface-default); color:var(--color-content-primary); font:inherit; min-width:0; }
 .studio-comparison-page :is(input,textarea,select,button,a,summary):focus-visible { outline:2px solid var(--color-interactive-primary); outline-offset:3px; }
 .comparison-notice { background:var(--color-surface-muted); border-radius:var(--radius-lg); padding:var(--space-4) var(--space-5); line-height:1.9; }
+.comparison-live-controls { background:var(--color-surface-default); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); padding:var(--space-5); display:flex; flex-wrap:wrap; gap:var(--space-3); }
+.comparison-live-controls > :is(h2,p) { flex-basis:100%; }
 .comparison-media-note { color:var(--color-content-secondary); font-size:var(--text-sm); }
 .comparison-alert { border-inline-start:3px solid var(--color-feedback-warning); padding:var(--space-3) var(--space-4); background:var(--color-surface-default); }
 .comparison-workspace { display:flex; flex-wrap:wrap; align-items:end; gap:var(--space-3); }
