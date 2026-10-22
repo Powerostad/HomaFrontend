@@ -2,7 +2,7 @@ import { getStoredTokens, refreshAccessToken } from '@/utils/apiClient';
 import { fromSession, type ArmKey, type ComparisonArm, type ComparisonCase } from './comparison';
 import type { SessionPayload, SessionDiagnosticsReport, StudioPerformanceReport } from '../RoomRedesign/services/redesignChatService';
 
-export interface RuntimeInfo { profile: 'server' | 'local'; revision: string; image_generation: false; catalogue: string; products: number; model: string; prompt: string }
+export interface RuntimeInfo { profile: 'server' | 'local'; revision: string; image_generation: false; catalogue: string; products: number; model: string; prompt: string; search?: string }
 export interface LiveRun { sessionId: string; status: 'running' | 'complete' | 'failed' | 'unknown'; stage: string; startedAt: string; finishedAt?: string; runtime: RuntimeInfo }
 const profiles = { A: 'server', B: 'local' } as const;
 function prefix(key: ArmKey) {
@@ -25,7 +25,8 @@ async function request<T>(key: ArmKey, path: string, body?: unknown, refreshed =
 export async function preflight(): Promise<Record<ArmKey, RuntimeInfo>> {
   const [A, B] = await Promise.all((['A', 'B'] as ArmKey[]).map(key => request<RuntimeInfo>(key, 'recommendations/chat/local-comparison/')));
   if (A.profile !== 'server' || B.profile !== 'local' || A.image_generation !== false || B.image_generation !== false
-    || A.catalogue !== B.catalogue || A.products !== B.products || A.model !== B.model) throw new Error('runtime_mismatch');
+    || A.catalogue !== B.catalogue || A.products !== B.products || A.model !== B.model
+    || A.search !== 'studio-search-v1' || B.search !== 'studio-search-v1') throw new Error('runtime_mismatch');
   return { A, B };
 }
 function turn(key: ArmKey, sessionId: string, brief: string, image: string, onStage: (stage: string) => void): Promise<void> {
@@ -71,7 +72,7 @@ export async function runLiveArm(key: ArmKey, item: ComparisonCase, runtime: Run
   onProgress: (run: LiveRun) => void, onOutput: (arm: ComparisonArm, run: LiveRun) => void) {
   const startedAt = new Date().toISOString();
   const created = await request<{ session_id: string }>(key, 'recommendations/chat/sessions/', key === 'B'
-    ? { prompt_split: 'server-split-v1', search_version: 'studio-search-v2', product_taxonomy_version: 'product-taxonomy-v1', product_identity_version: 'product-identity-v1' } : {});
+    ? { prompt_split: 'server-split-v1', search_version: 'studio-search-v1', product_taxonomy_version: 'product-taxonomy-v1' } : {});
   let run: LiveRun = { sessionId: created.session_id, status: 'running', stage: '', startedAt, runtime };
   onProgress(run);
   let failure = '';

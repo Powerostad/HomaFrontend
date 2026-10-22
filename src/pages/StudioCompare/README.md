@@ -114,3 +114,10 @@ The readiness endpoint rejects an incompatible default before either paid turn
 starts. A real baseline service/storage smoke test with a fake runner verified
 operation persistence/completion without text/image API calls. Original local
 and production databases are not altered by this compatibility bridge.
+
+
+Search rollback: new local/paired sessions now explicitly use studio-search-v1,
+the unchanged server AsyncProductSearch and its original ranking/thresholds.
+The split design prompt and taxonomy guide remain; identity-V2 is not enabled.
+Saved older V2 cases are historical snapshots, not silently reranked. Start a new
+case to compare the restored search. No catalogue records were changed.

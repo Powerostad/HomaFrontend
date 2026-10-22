@@ -21,31 +21,31 @@ it('delivers intermediate analysis without treating it as a completed execution'
     { onAnalysis, onResult }, new AbortController().signal);
 });
 
-it('opts new local sessions into V3 and leaves V2 selectable with its flag off', async () => {
+it('uses server search regardless of retired pipeline flags', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
   vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'false');
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
+    search_version: 'studio-search-v1', prompt_split: 'server-split-v1',
   });
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'false');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
+    search_version: 'studio-search-v1', prompt_split: 'server-split-v1',
   });
   vi.unstubAllEnvs();
 });
 
-it('selects partitioned V4 for new sessions while preserving the full-policy V3 option', async () => {
+it('keeps split design while using original server search', async () => {
   vi.mocked(apiPost).mockResolvedValue({ success: true, data: { session_id: 'new', status: 'active' } });
   vi.stubEnv('VITE_STUDIO_SEARCH_V2', 'true');
   vi.stubEnv('VITE_STUDIO_PIPELINE_V3', 'true');
   vi.stubEnv('VITE_STUDIO_PIPELINE_V4', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
+    search_version: 'studio-search-v1', prompt_split: 'server-split-v1',
   });
   vi.unstubAllEnvs();
 });
@@ -90,7 +90,7 @@ it('keeps taxonomy and identity with V4 without V5 or rule options', async () =>
   vi.stubEnv('VITE_STUDIO_PRODUCT_IDENTITY_V1', 'true');
   await createChatSession();
   expect(apiPost).toHaveBeenLastCalledWith('/recommendations/chat/sessions/', {
-    search_version: 'studio-search-v2', prompt_split: 'server-split-v1',
-    product_taxonomy_version: 'product-taxonomy-v1', product_identity_version: 'product-identity-v1',
+    search_version: 'studio-search-v1', prompt_split: 'server-split-v1',
+    product_taxonomy_version: 'product-taxonomy-v1',
   });
 });

@@ -212,7 +212,7 @@ export default function StudioComparePage() {
         <figure><Photo src={current.originalImage} alt={copy('عکس اصلی مشترک')} /><figcaption>{copy('عکس اصلی مشترک')}</figcaption></figure>
       </section>
       <section className="comparison-live-controls"><h2>{copy('اجرای دو ساختار روی همین کامپیوتر')}</h2>
-        <p>{copy('ساختار سرور با پرامپت یک‌مرحله‌ای و سرچ اصلی، در کنار ساختار لوکال با پرامپت دو‌مرحله‌ای و سرچ V2 اجرا می‌شود. مدل و کاتالوگ یکسان‌اند. هر اجرا کیس تازه می‌سازد.')}</p>
+        <p>{copy('هر دو مسیر از سرچ اصلی سرور استفاده می‌کنند؛ تفاوت در پرامپت یک‌مرحله‌ای سرور و پرامپت دو‌مرحله‌ای لوکال است. مدل و کاتالوگ یکسان‌اند. هر اجرا کیس تازه می‌سازد.')}</p>
         <Button disabled={busy || cases.length >= 50 || !current.brief.trim() || !current.originalImage?.startsWith('data:image/')} onClick={runPair}>{copy(busy ? 'در حال پردازش…' : 'اجرای هم‌زمان بدون تولید تصویر')}</Button>
         <Button variant="outline" disabled={busy} onClick={() => { void perform(async () => {
           setRuntimeStatus('');

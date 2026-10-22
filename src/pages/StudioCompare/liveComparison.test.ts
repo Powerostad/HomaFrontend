@@ -4,7 +4,7 @@ import { preflight, runLiveArm, readLiveArm, type RuntimeInfo } from './liveComp
 import { newCase } from './comparison';
 vi.mock('@/utils/apiClient', () => ({ getStoredTokens: () => ({ access: 'test-token' }) }));
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
-const runtime = (profile: 'server' | 'local'): RuntimeInfo => ({ profile, revision: 'revision', image_generation: false, catalogue: 'same', products: 4, model: 'gpt-6-luna', prompt: profile });
+const runtime = (profile: 'server' | 'local'): RuntimeInfo => ({ profile, revision: 'revision', image_generation: false, catalogue: 'same', products: 4, model: 'gpt-6-luna', prompt: profile, search: 'studio-search-v1' });
 const response = (data: unknown) => ({ ok: true, json: async () => ({ success: true, data }) });
 function localMode() { vi.stubEnv('DEV', true); vi.stubEnv('MODE', 'studio-local'); vi.stubGlobal('location', new URL('http://127.0.0.1:3000/studio/compare')); }
 it('preflights both runtimes before spending and rejects enabled images or unequal catalogues', async () => {
@@ -34,6 +34,8 @@ it('submits one text turn with identical input, never sends render, and reads sa
   expect(sent.every(frame => frame.type === 'chat.turn' && frame.payload.text === item.brief && frame.payload.images[0] === item.originalImage)).toBe(true);
   expect(output).toHaveBeenCalledTimes(2);
   expect(fetch.mock.calls.some(([url]) => url.includes('/render'))).toBe(false);
+  const localCreate = fetch.mock.calls.find(([url]) => url.includes('/local/') && url.endsWith('/sessions/'));
+  expect(JSON.parse((localCreate as unknown as [string, RequestInit])[1].body as string)).toEqual({ prompt_split: 'server-split-v1', search_version: 'studio-search-v1', product_taxonomy_version: 'product-taxonomy-v1' });
 });
 
 it('keeps a known pre-model failure failed when no operation row could be saved', async () => {

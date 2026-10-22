@@ -985,5 +985,6 @@
   "اجرا تمام شد": "Run completed",
   "در حال اجرا": "Running",
   "در حال پردازش…": "Processing…",
-  "محصول": "products"
+  "محصول": "products",
+  "هر دو مسیر از سرچ اصلی سرور استفاده می‌کنند؛ تفاوت در پرامپت یک‌مرحله‌ای سرور و پرامپت دو‌مرحله‌ای لوکال است. مدل و کاتالوگ یکسان‌اند. هر اجرا کیس تازه می‌سازد.": "Both paths use the original server search. The server uses one prompt; local uses split prompts. Model and catalogue match. Each run creates a fresh case."
 }

@@ -259,10 +259,8 @@ export async function createChatSession(): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
     {
-      ...(import.meta.env.VITE_STUDIO_SEARCH_V2 === 'true'
-        ? { search_version: 'studio-search-v2' } : {}),
+      search_version: 'studio-search-v1',
       ...(import.meta.env.VITE_STUDIO_PRODUCT_TAXONOMY_V1 === 'true' ? { product_taxonomy_version: 'product-taxonomy-v1' } : {}),
-      ...(import.meta.env.VITE_STUDIO_PRODUCT_IDENTITY_V1 === 'true' ? { product_identity_version: 'product-identity-v1' } : {}),
       prompt_split: 'server-split-v1',
     },
   );
