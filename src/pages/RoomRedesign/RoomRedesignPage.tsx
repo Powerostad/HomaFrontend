@@ -71,6 +71,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </div>
       {chat.newVersionReady && <Button variant="outline" onClick={() => chat.selectVersion(chat.versions[chat.versions.length - 1].version_id)}>{t('redesignJourney.ready')}</Button>}
       <nav className="studio-result-session-tools" aria-label={t('studioChat.archive')}>
+        {import.meta.env.DEV && import.meta.env.MODE === 'studio-local' && <Link to="/studio/compare" className="studio-text-button">{siteText('مقایسهٔ A/B')}</Link>}
         <Link to="/studio/projects" className="studio-text-button"><History size={16} />{t('studioChat.archive')}</Link>
         <button type="button" className="studio-text-button" disabled={chat.status === 'creating'} onClick={fresh}><Plus size={16} />{t('studioChat.new')}</button>
       </nav>

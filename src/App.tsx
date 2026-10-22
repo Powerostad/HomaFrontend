@@ -54,6 +54,9 @@ const PageLoader = () => <HomaLoader />;
 const LocalStudioPreview = import.meta.env.DEV && import.meta.env.VITE_LOCAL_STUDIO_PREVIEW === 'true'
   && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   ? lazy(() => import('./pages/Studio/dev/LocalStudioPreview')) : null;
+const LocalStudioCompare = import.meta.env.DEV && import.meta.env.MODE === 'studio-local'
+  && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+  ? lazy(() => import('./pages/StudioCompare/StudioComparePage')) : null;
 
 export default function App() {
   const { siteText } = useSiteTranslation();
@@ -100,6 +103,7 @@ export default function App() {
               <RouterRoute path="studio" element={
                 LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
               } />
+              {LocalStudioCompare && <RouterRoute path="studio/compare" element={<ProtectedRoute fallback="modal"><LocalStudioCompare /></ProtectedRoute>} />}
               <RouterRoute path="studio/chat/:sessionId" element={
                 LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
               } />
