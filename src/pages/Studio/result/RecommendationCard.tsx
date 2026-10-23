@@ -1,10 +1,9 @@
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
-import { AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, Crown, Lightbulb, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, Crown, Lightbulb, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import { StudioSkuDetails } from './StudioSkuDetails';
 import { useState } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
@@ -77,16 +76,9 @@ function ProductPreview({
       <div className="studio-product-copy" dir={siteDirection()}>
         <span className="studio-product-category">{siteValue(product.category || group.category)}</span>
         <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
-        <StudioSkuDetails product={product} />
         <div className="studio-product-meta">
           <span className="studio-price">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
-          {siteValue(group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>)}
         </div>
-        {siteValue(isPrimary && product.matchHighlights && product.matchHighlights.length > 0 && (
-          <div className="studio-product-highlights">
-            {siteValue(product.matchHighlights.slice(0, 2).map((highlight) => <span key={highlight}>{siteValue(highlight)}</span>))}
-          </div>
-        ))}
         {isPrimary && isSelected && onUpdateQuantity && <div className="studio-quantity-control">
           <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
           <div className="studio-quantity-stepper" dir="ltr">
@@ -175,7 +167,7 @@ export function RecommendationCard({
             group={group}
             isPrimary
             isKey={isTopPriority}
-            onSwap={alternatives.length > 3 ? () => setAlternativesOpen(value => !value) : undefined}
+            onSwap={alternatives.length > 0 ? () => setAlternativesOpen(value => !value) : undefined}
             alternativesOpen={alternativesOpen}
             isSelected={basketProductIds.has(heroProduct.id)}
             onOpen={() => onProductClick(heroProduct)}
@@ -201,19 +193,20 @@ export function RecommendationCard({
           {siteValue(isAccepted ? t('studio.result.v2.card.accepted', 'تغییر انتخاب شد') : t('studio.result.v2.card.accept', 'انتخاب تغییر'))}
         </button>
       </div>}
-    {!isActionItem && alternatives.length > 0 && <section id={`alternatives-${group.itemId}`} className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>
+    {!isActionItem && alternatives.length > 0 && <section id={`alternatives-${group.itemId}`} hidden={!alternativesOpen} className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>
       <div className="studio-alternatives-heading">
         <h4>{alternatives.length === 2 ? t('studio.result.v2.card.alternatives', 'دو جایگزین') : toLocalizedDigits(t('studio.result.v2.card.alternativeCount', { count: alternatives.length, defaultValue: '{{count}} جایگزین دیگر' }))}</h4>
-        {alternatives.length > 3 && <Button variant="ghost" aria-expanded={alternativesOpen} aria-controls={`alternative-options-${group.itemId}`} onClick={() => setAlternativesOpen(value => !value)}>{alternativesOpen ? t('studioProductLayout.fewerAlternatives', 'نمایش سه گزینهٔ اول') : t('studioProductLayout.moreAlternatives', 'جایگزین‌های بیشتر')}<ChevronDown size={16} aria-hidden="true" /></Button>}
+        <Button variant="ghost" size="icon" aria-label={t('common.close', 'بستن')} onClick={() => setAlternativesOpen(false)}><X size={16} aria-hidden="true" /></Button>
       </div>
       <div className="studio-alternatives-grid" id={`alternative-options-${group.itemId}`}>
-        {(alternativesOpen ? alternatives : alternatives.slice(0, 3)).map(product => <article className="studio-swap-option" key={product.id}>
-          <button type="button" className="studio-swap-image" onClick={() => onProductClick(product)} aria-label={product.name}><AuthenticatedImage src={product.image} alt={siteValue(product.name)} loading="lazy" /></button>
+        {alternatives.map((product, index) => <button type="button" className="studio-swap-option" key={product.id} data-recommended={index < 3 || undefined}
+          aria-label={`${t('studioProductLayout.makePrimary')}: ${siteValue(product.name)}`}
+          onClick={() => { onMakePrimary?.(product.id); setAlternativesOpen(false); }} disabled={!onMakePrimary || busy}>
+          <span className="studio-swap-image"><AuthenticatedImage src={product.image} alt="" loading="lazy" /></span>
+          <span className="studio-swap-label">{index < 3 && <span className="studio-swap-tag">{t('studioProductLayout.suggestionNumber', 'پیشنهاد')} {siteValue(toLocalizedDigits(index + 1))}</span>}</span>
           <strong>{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</strong>
-          <button type="button" className="studio-swap-name" onClick={() => onProductClick(product)}>{siteValue(product.name)}</button>
-          <StudioSkuDetails product={product} />
-          <Button variant="outline" onClick={() => { onMakePrimary?.(product.id); setAlternativesOpen(false); }} disabled={!onMakePrimary}>{t('studioProductLayout.makePrimary')}</Button>
-        </article>)}
+          <span className="studio-swap-name" title={siteValue(product.name)}>{siteValue(product.name)}</span>
+        </button>)}
       </div>
     </section>}
     {!isActionItem && heroProduct && onRefineProduct && <ProductRefinement key={heroProduct.id} product={heroProduct} busy={busy} onSubmit={onRefineProduct} />}

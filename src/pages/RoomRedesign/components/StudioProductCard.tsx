@@ -8,13 +8,20 @@ import type { BackendProduct } from '../services/redesignChatService';
 import { MessageText } from './ConversationPanel';
 
 /** One catalogue presentation for the selected product and its alternatives. */
-export function StudioProductCard({ product, busy, onPreview }: {
-  product: BackendProduct; busy: boolean; onPreview: () => void;
+export function StudioProductCard({ product, busy, onPreview, compact = false, rank }: {
+  product: BackendProduct; busy: boolean; onPreview: () => void; compact?: boolean; rank?: number;
 }) {
   const { siteValue } = useSiteTranslation();
   const { t, i18n } = useTranslation();
   const rial = product.price_rial ?? (product.price_toman != null ? product.price_toman * 10 : null);
   const checked = product.catalog_checked_at ? new Date(product.catalog_checked_at) : null;
+  if (compact) return <button type="button" className="studio-swap-option" data-recommended={rank != null && rank <= 3 || undefined}
+    disabled={busy || product.candidate?.eligibility === 'rejected'} onClick={onPreview} aria-label={`${t('redesignJourney.preview')}: ${siteValue(product.name)}`}>
+    <span className="studio-swap-image"><AuthenticatedImage src={product.image_url || ''} alt="" loading="lazy" /></span>
+    <span className="studio-swap-label">{rank != null && rank <= 3 && <span className="studio-swap-tag">{t('studioProductLayout.suggestionNumber', 'پیشنهاد')} {rank.toLocaleString(i18n.language)}</span>}</span>
+    <strong>{rial != null && rial > 0 ? formatPriceFromRial(rial) : t('redesignJourney.unpriced')}</strong>
+    <span className="studio-swap-name" title={siteValue(product.name)}>{siteValue(product.name)}</span>
+  </button>;
   return <div className="studio-catalogue-card">
     <div className="studio-product-media">
       {product.image_url ? <AuthenticatedImage src={product.image_url} alt={siteValue(product.name)} loading="lazy" decoding="async" />

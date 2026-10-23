@@ -38,7 +38,10 @@ export function StudioProductCollection({ items, busy, onPreview }: {
             <summary>{t('studioCollection.whyAndWhere')}</summary>
             <dl className="studio-purchase-rationale"><div><dt>{t('studioChat.reason')}</dt><dd>{siteValue(item.reason_fa || item.mother_product?.why_needed)}</dd></div>{placement && <div className="studio-placement"><dt><MapPin size={16} aria-hidden="true" />{t('studioChat.placement')}</dt><dd>{siteValue(placement)}</dd></div>}</dl>
           </details>
-          {!!item.alternatives.length && <section className="studio-alternatives" aria-label={t('redesignJourney.alternatives')}><h4>{t('redesignJourney.alternatives')} · {item.alternatives.length.toLocaleString(i18n.language)}</h4><div className="studio-alternative-list">{item.alternatives.slice(0, 3).map(product => <StudioProductCard key={`${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`} product={product} busy={busy} onPreview={() => preview(product)} />)}</div>{item.alternatives.length > 3 && <details><summary>{t('studioProductLayout.moreAlternatives', 'جایگزین‌های بیشتر')}</summary><div className="studio-alternative-list">{item.alternatives.slice(3).map(product => <StudioProductCard key={`${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`} product={product} busy={busy} onPreview={() => preview(product)} />)}</div></details>}</section>}
+          {!!item.alternatives.length && <details className="studio-alternatives">
+            <summary>{t('redesignJourney.alternatives')} · {item.alternatives.length.toLocaleString(i18n.language)}</summary>
+            <div className="studio-alternative-list">{item.alternatives.map((product, index) => <StudioProductCard compact rank={index + 1} key={`${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`} product={product} busy={busy} onPreview={() => preview(product)} />)}</div>
+          </details>}
         </div>
       </article>;
     })}</div>

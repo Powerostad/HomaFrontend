@@ -34,11 +34,11 @@ describe('Studio product collection', () => {
       await act(async () => lighting.click());
       expect(container.querySelectorAll('article')).toHaveLength(1);
       expect(preview).not.toHaveBeenCalled();
-      const buttons = Array.from(container.querySelectorAll('button')).filter(button => button.textContent === 'redesignJourney.preview');
+      const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-actions button, .studio-swap-option'));
       await act(async () => buttons[1].click());
       expect(preview).toHaveBeenCalledWith('lamp', 2);
       await act(async () => render(true));
-      expect(Array.from(container.querySelectorAll('button')).filter(button => button.textContent === 'redesignJourney.preview').every(button => button.disabled)).toBe(true);
+      expect(Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-actions button, .studio-swap-option')).every(button => button.disabled)).toBe(true);
     } finally { await act(async () => root.unmount()); }
   });
   it('does not carry an empty category filter into a different version', async () => {
