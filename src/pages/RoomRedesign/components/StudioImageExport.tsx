@@ -38,10 +38,13 @@ export function StudioImageExport({ sessionId, busy }: { sessionId: string; busy
   const download = async (id: string, format: 'zip' | 'html') => {
     setWorking(true); setError('');
     try {
-      const target = new URL(`/api${endpoint}?download=${encodeURIComponent(id)}&format=${format}`, appConfig.apiBaseUrl);
+      const target = new URL(`/api${endpoint}?download=${encodeURIComponent(id)}&file_format=${format}`, appConfig.apiBaseUrl);
       const url = await fetchAuthenticatedImage(target.toString());
       const link = document.createElement('a');
-      link.href = url; link.download = `homa-image-input-${id}.${format}`; link.click();
+      link.href = url; link.download = `homa-image-input-${id}.${format}`;
+      document.body.append(link);
+      link.click();
+      link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch { setError(copy('دانلود بسته انجام نشد؛ دوباره تلاش کن.')); }
     finally { setWorking(false); }
