@@ -75,3 +75,6 @@
 .studio-image-export select { width:100%; padding:var(--space-3); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); background:var(--color-surface-muted); color:var(--color-content-primary); }
 .studio-image-export-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); padding-block:var(--space-3); border-bottom:1px solid var(--color-border-subtle); }
 .studio-image-export-row > span { flex-basis:100%; overflow-wrap:anywhere; font-size:var(--text-sm); }
+
+/* Discovery keeps the room and analysis in view on desktop as well as mobile. */
+.studio-conversation-drawer[data-floating=true] { position:fixed; inset-inline:0; bottom:var(--studio-keyboard-offset,0px); height:min(82dvh,900px); max-height:var(--studio-visible-height,100dvh); min-height:0; border-radius:var(--radius-2xl) var(--radius-2xl) 0 0; box-shadow:var(--shadow-xl); }

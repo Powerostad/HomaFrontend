@@ -29,12 +29,15 @@ describe('one-finding discovery', () => {
   it('shows accepted analysis while design and product search have not completed', async () => {
     const ui = await mount({ plan: null, resultAvailable: false });
     try {
+      const reading = ui.container.querySelector<HTMLElement>('.studio-discovery-reading')!;
+      reading.scrollTop = 200;
       await ui.render({ analysisPreview: { studio_documents: { img0: {
         room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'issue1', evidence: 'مسیر کنار مبل باریک است.' }] } },
         user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
       } } }, stage: 'در حال طراحی تغییرات' });
       expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
       expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
+      expect(reading.scrollTop).toBe(0);
       expect(ui.props.onComplete).not.toHaveBeenCalled();
       await ui.render({ plan: source, busy: true });
       expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
@@ -57,8 +60,10 @@ describe('one-finding discovery', () => {
     try {
       expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull();
       expect(ui.container.querySelector('.studio-initial-loading[aria-busy=true]')).not.toBeNull();
-      expect(ui.container.querySelector('.studio-original-loader')).not.toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-tip, .studio-discovery-steps')).toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-main[data-view=initial]')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-photo img')?.getAttribute('src')).toBe('room.jpg');
+      expect(ui.container.querySelector('.studio-discovery-tip')).toBeNull();
+      expect(ui.container.querySelectorAll('.studio-discovery-steps li')).toHaveLength(3);
       expect(ui.container.querySelector('[role=progressbar]')).toBeNull();
       expect(ui.props.onComplete).not.toHaveBeenCalled();
       await ui.render({ stage: 'مرحلهٔ واقعی سرویس', plan: null });
@@ -96,5 +101,45 @@ describe('one-finding discovery', () => {
     const ui = await mount({ busy: false, error: 'تصویر آماده نشد.' });
     try { await ui.click('تلاش دوباره'); expect(ui.props.onRetry).toHaveBeenCalledOnce(); await ui.click('دیدن پیشنهادهای آماده'); expect(ui.props.onComplete).toHaveBeenCalledOnce(); }
     finally { await ui.cleanup(); }
+  });
+  it('retains the waiting error instead of automatically hiding it behind the result', async () => {
+    const ui = await mount();
+    try {
+      await ui.click('مستقیم به نتیجه');
+      await ui.render({ busy: false, error: 'خطای خروجی', resultAvailable: false });
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      expect(ui.container.querySelector('[role=alert]')?.textContent).toContain('خطای خروجی');
+      expect(ui.props.onRetry).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('opens the conversation when a turn finished without an analysis rather than showing an endless loader', async () => {
+    const ui = await mount({ plan: null, busy: false, resultAvailable: false });
+    try {
+      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.textContent).toContain('پاسخ هما را ببین');
+      await ui.click('بازکردن گفت‌وگو');
+      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
+      expect(ui.props.onRetry).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('does not wait for an output when analysis is saved but the service is idle without a plan', async () => {
+    const ui = await mount({ plan: null, busy: false, analysisPreview: { studio_documents: { room: { room_analysis: {} } } }, resultAvailable: false });
+    try {
+      expect(ui.container.querySelector('[role=status]')?.textContent).toBe('تحلیل اولیه آماده است');
+      await ui.click('گفت‌وگو برای ادامه');
+      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
+      expect(ui.container.querySelector('.studio-discovery-loading')).toBeNull();
+    } finally { await ui.cleanup(); }
+  });
+  it('keeps navigation outside the reading area and does not send a request when discussing a finding', async () => {
+    const ui = await mount();
+    try {
+      expect(ui.container.querySelector('.studio-discovery-reading .studio-discovery-footer')).toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-content > .studio-discovery-footer')).not.toBeNull();
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-discovery-discuss')!.click());
+      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      expect(ui.props.onRetry).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
   });
 });

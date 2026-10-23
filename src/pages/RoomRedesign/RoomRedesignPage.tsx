@@ -137,15 +137,17 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     {chat.unavailable ? <><h1>{t('studioChat.unavailableTitle')}</h1><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></> : <><Loader2 className="studio-spinner" /><p>{t('studioChat.loading')}</p></>}
   </div></main></div>;
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
-  const discovering = !reviewDismissed && (reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
+  const starting = !!intake && !seeded.current && !chat.versions.length && !plan && !chat.error;
+  const discovering = !reviewDismissed && (starting || reviewActive || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
   if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} originalImage={original}
-    sessionId={chat.sessionId} busy={chat.busy} error={chat.error} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage}
+    sessionId={chat.sessionId} busy={chat.busy || starting} error={chat.error} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={() => { setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}
-    panel={<>{chat.sessionId && import.meta.env.MODE === 'studio-local' && <StudioImageExport key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
+    tools={chat.sessionId && import.meta.env.MODE === 'studio-local' ? <StudioImageExport key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} /> : undefined}
+    panel={<StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact
       messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
       busy={chat.busy} failed={!!chat.error} statusText={chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking')}
-      value={input} onChange={setInput} onSend={sendMessage} /></>} />;
+      value={input} onChange={setInput} onSend={sendMessage} />} />;
   return <>
     <ConversationResult key={`${chat.sessionId || path || 'new'}:${chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'}`} chat={chat} plan={plan}
       versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={(report?.image_pending ? original : report?.image_url) || original || ''} originalImage={original}

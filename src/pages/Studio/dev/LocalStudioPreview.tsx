@@ -51,7 +51,7 @@ export default function LocalStudioPreview() {
     setMessages(previous => [...previous, { id: `local-${previous.length}`, role: 'user', text: text.trim() }]);
     setNotice(t('studioLocal.noModel'));
   };
-  if (demoPhase !== 'result') return <StudioDiscovery plan={demoPhase === 'review' ? plan : null} originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={demoPhase === 'loading'} error={null} resultAvailable={demoPhase === 'review'} onRetry={() => {}} onNew={() => setDemoPhase('result')} onDiscuss={openChat} onComplete={() => setDemoPhase('result')} panel={<Button variant="outline" onClick={() => setDemoPhase(demoPhase === 'loading' ? 'review' : 'result')}>{t('studioLocal.hint')} · {demoPhase === 'loading' ? 'نمایش تحلیل نمونه' : 'نمایش نتیجه نمونه'}</Button>} />;
+  if (demoPhase !== 'result') return <StudioDiscovery plan={demoPhase === 'review' ? plan : null} originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={demoPhase === 'loading'} error={null} resultAvailable={demoPhase === 'review'} onRetry={() => {}} onNew={() => setDemoPhase('result')} onDiscuss={openChat} onComplete={() => setDemoPhase('result')} tools={<Button variant="outline" onClick={() => setDemoPhase(demoPhase === 'loading' ? 'review' : 'result')}>{t('studioLocal.hint')} · {demoPhase === 'loading' ? 'نمایش تحلیل نمونه' : 'نمایش نتیجه نمونه'}</Button>} />;
   return <StudioResultView state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
     open, compact, onOpen: openChat, onClose: () => setOpen(false), onExit: () => setNotice(t('studioLocal.hint')),
     busy: false, priceUnknown: true, onImageError: () => setNotice(t('studioLocal.imageError')),

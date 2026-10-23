@@ -3,13 +3,15 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ImageIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ImageIcon, Loader2, MessageSquare, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { ExecutionPlan } from '../services/redesignChatService';
 import { buildDiscoveryReview, type DiscoveryTrack, type AnalysisPreview } from '../services/discoveryReview';
 import '../discovery.css';
 import { DiscoveryLoading } from './DiscoveryLoading';
 import { InitialAnalysisLoading } from './InitialAnalysisLoading';
+import { DiscoveryProgress, DiscoveryElapsed } from './DiscoveryProgress';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 const trackLabels: Record<DiscoveryTrack, string> = {
   layout: 'چیدمان و تناسب', harmony: 'هماهنگی فضا', function: 'کارکرد روزمره', surfaces: 'نور و سطوح', idea: 'ایدهٔ تغییر',
@@ -18,25 +20,26 @@ const trackLabels: Record<DiscoveryTrack, string> = {
 function FindingText({ value, className = '' }: { value: string; className?: string }) {
   const { siteText: copy } = useSiteTranslation();
   const [expanded, setExpanded] = useState(false);
-  const long = value.length > 240;
+  const long = value.length > 160;
   return <div className="studio-discovery-copy"><p dir="auto" className={`${className}${long && !expanded ? ' studio-discovery-clamped' : ''}`}>{value}</p>
     {long && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(previous => !previous)}>{copy(expanded ? 'کمتر' : 'متن کامل')}</button>}
   </div>;
 }
 
-export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel, stage }: {
+export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionId, busy, error, resultAvailable, onRetry, onComplete, onNew, onDiscuss, panel, tools, stage }: {
   plan: ExecutionPlan | null; originalImage: string | null; sessionId: string | null; busy: boolean; error: string | null;
   resultAvailable: boolean;
   stage?: string | null;
   analysisPreview?: AnalysisPreview | null;
-  onRetry: () => void; onComplete: () => void; onNew: () => void; onDiscuss: () => void; panel?: ReactNode;
+  onRetry: () => void; onComplete: () => void; onNew: () => void; onDiscuss: () => void; panel?: ReactNode; tools?: ReactNode;
 }) {
   const { siteText: copy, siteDirection, siteLocale } = useSiteTranslation();
-  const review = useMemo(() => buildDiscoveryReview(analysisPreview || plan), [plan, analysisPreview]);
+  const review = useMemo(() => buildDiscoveryReview(plan, analysisPreview), [plan, analysisPreview]);
   const hasAnalysis = !!plan || !!analysisPreview;
   const [findingId, setFindingId] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const reading = useRef<HTMLDivElement>(null);
   const viewed = useRef(new Set<string>());
   const firstShown = useRef(false);
   const start = useRef(Date.now());
@@ -46,6 +49,7 @@ export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionI
   const ready = completeAvailable && !error && resultAvailable;
   const last = index === review.findings.length - 1;
   const number = (value: number) => value.toLocaleString(siteLocale());
+  useEffect(() => { if (reading.current) reading.current.scrollTop = 0; }, [hasAnalysis, waiting, error]);
 
   useEffect(() => {
     if (!hasAnalysis || firstShown.current) return;
@@ -65,73 +69,75 @@ export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionI
   // Only leave automatically after the user explicitly chose to wait for the result.
   const completeRef = useRef(complete);
   completeRef.current = complete;
-  useEffect(() => { if (waiting && completeAvailable) completeRef.current(); }, [waiting, completeAvailable]);
+  useEffect(() => { if (waiting && completeAvailable && !error) completeRef.current(); }, [waiting, completeAvailable, error]);
   const choose = (next: number) => {
     const item = review.findings[next];
     if (!item) return;
     setFindingId(item.id);
+    if (reading.current) reading.current.scrollTop = 0;
     requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
   };
 
-  if (!hasAnalysis && busy && !error) return <div className="studio-discovery-page studio-discovery-initial" dir={siteDirection()}>
-    <Header />
-    <main className="studio-initial-main"><InitialAnalysisLoading image={originalImage} stage={stage} />
-      {panel && <div className="studio-initial-preview-controls">{panel}</div>}
-    </main>
-  </div>;
-
+  const waitingForOutput = waiting && busy && !error;
+  const openResult = () => { if (completeAvailable) complete(); else if (busy) setWaiting(true); else onDiscuss(); };
+  const initial = !hasAnalysis && !error;
+  const awaitingReply = initial && !busy;
+  const status = error ? copy('پردازش متوقف شد؛ جزئیات را بررسی کن.')
+    : awaitingReply ? copy('پاسخ گفت‌وگو آماده است.') : !busy ? copy(!plan ? 'تحلیل اولیه آماده است' : ready ? 'تصویر و پیشنهادها آماده‌اند.' : 'طرح و محصولات پیشنهادی آماده‌اند.')
+    : stage?.trim() || copy(!hasAnalysis ? 'در حال بررسی عکس و شناخت فضا…' : !plan ? 'در حال طراحی و یافتن محصولات متناسب…' : 'در حال آماده‌سازی خروجی طراحی…');
   return <div className="studio-discovery-page" dir={siteDirection()}>
-    <Header />
-    <main className="studio-discovery-main">
-      <div className="studio-discovery-topline"><span>HOMA / {copy('فضای شما، قدم‌به‌قدم')}</span><button type="button" onClick={onNew}>{copy('طراحی جدید')}</button></div>
-      <ol className="studio-discovery-steps" aria-label={copy('مسیر طراحی')}>
-        {['تحلیل فضا', 'مرور تغییرها', 'تصویر و پیشنهادها'].map((label, step) => <li key={label} aria-current={step === (!hasAnalysis ? 0 : waiting ? 2 : 1) ? 'step' : undefined} data-complete={hasAnalysis && step === 0}>
-          <span>{hasAnalysis && step === 0 ? <Check size={15} aria-hidden="true" /> : number(step + 1)}</span>{copy(label)}
-        </li>)}
-      </ol>
+    <Header hideSpacer />
+    <main className="studio-discovery-main" data-view={error ? 'error' : initial ? 'initial' : waitingForOutput ? 'waiting' : 'analysis'}>
+      <header className="studio-discovery-topline">
+        <div><span>HOMA / STUDIO</span><DiscoveryElapsed startedAt={start.current} running={busy && !error} /></div>
+        <div>{tools && <Dialog><DialogTrigger asChild><button type="button"><SlidersHorizontal size={15} />{copy('گزینه‌ها')}</button></DialogTrigger>
+          <DialogContent className="studio-discovery-tools" dir={siteDirection()}><DialogTitle>{copy('گزینه‌های این طراحی')}</DialogTitle><DialogDescription>{copy('با بستن این بخش، به همان طراحی برمی‌گردی.')}</DialogDescription>{tools}</DialogContent>
+        </Dialog>}{!busy && <button type="button" onClick={onNew}>{copy('طراحی جدید')}</button>}</div>
+      </header>
+      <DiscoveryProgress hasAnalysis={hasAnalysis} hasPlan={!!plan} done={completeAvailable && !error} failed={!!error} running={busy} />
       <div className="studio-discovery-layout">
         <figure className="studio-discovery-photo">
           {originalImage ? <AuthenticatedImage src={originalImage} alt={copy('عکس اصلی فضای شما')} /> : <div className="studio-discovery-photo-empty"><ImageIcon size={32} aria-hidden="true" /><p>{copy('تصویر فضای شما')}</p></div>}
-          {busy && !error && <div className="studio-discovery-photo-scan" aria-hidden="true" />}
-          <figcaption>{copy('فضای شما')}<small>{copy('همهٔ پیشنهادها از همین عکس شروع می‌شوند.')}</small></figcaption>
+          <figcaption><span>{copy('فضای شما')}</span><small>{copy('مبنای تحلیل و طراحی')}</small></figcaption>
         </figure>
         <section className="studio-discovery-content" aria-label={copy('برداشت هما از فضا')}>
-          {(hasAnalysis || !busy || !!error) && <div className="studio-discovery-status" role="status">
-            {busy ? <Loader2 size={16} className="studio-spinner" aria-hidden="true" /> : error ? <ImageIcon size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
-            <span>{copy(error ? 'این مرحله به بررسی نیاز دارد.' : !hasAnalysis ? 'در حال بررسی فضای شما…' : ready ? 'نتیجه آماده است؛ هر وقت خواستی آن را باز کن.' : completeAvailable ? 'پیشنهادها آماده‌اند؛ تصویر تازه‌ای ثبت نشده است.' : 'تصویر و پیشنهادها در حال آماده‌شدن‌اند.')}</span>
-          </div>}
-          {error && <div className="studio-flow-error" role="alert"><p>{error}</p><Button variant="outline" disabled={busy} onClick={onRetry}>{copy('تلاش دوباره')}</Button>{plan && <Button disabled={busy} onClick={complete}>{copy('دیدن پیشنهادهای آماده')}</Button>}</div>}
-          {!hasAnalysis ? <div className="studio-discovery-pending">
-            <span className="studio-discovery-kicker">{copy('یک نگاه تازه به فضای شما')}</span>
-            <h1>{copy('اول می‌فهمیم چه چیزی می‌تواند بهتر شود.')}</h1>
-            <p>{copy('وقتی تحلیل آماده شد، نکته‌ها را یکی‌یکی مرور می‌کنیم؛ بعد تصویر و پیشنهادهای مرتبط را می‌بینی.')}</p>
-            {busy && <div className="studio-discovery-skeleton" aria-hidden="true"><i /><i /><i /></div>}
-          </div> : waiting ? <div className="studio-discovery-pending">
-            {busy && !error && <DiscoveryLoading stage={stage || undefined} waiting />}
-            {!busy && <span className="studio-discovery-kicker">{copy('قدم بعد، دیدن نتیجه')}</span>}
-            {!busy && <h1>{copy('تصویر و پیشنهادهای فضای شما')}</h1>}
-            <p>{copy('پس از آماده‌شدن، نتیجه همین‌جا باز می‌شود. لازم نیست درخواست تازه‌ای بفرستی.')}</p>
-            <Button variant="outline" onClick={() => setWaiting(false)}>{copy('بازگشت به نکته‌ها')}</Button>
-          </div> : <>
-            <h1>{copy('چه چیزی بهتر می‌شود؟')}</h1>
-            {finding ? <article className="studio-discovery-finding" aria-labelledby="studio-finding-title">
-              <div className="studio-discovery-finding-meta"><span>{copy(trackLabels[finding.track])}</span><span>{number(index + 1)} / {number(review.findings.length)}</span></div>
-              <nav className="studio-discovery-finding-nav" aria-label={copy('مرور نکته‌ها')}>{review.findings.map((item, step) => <button type="button" key={item.id} aria-label={copy('نکتهٔ {{number}}', { number: number(step + 1) })} aria-current={step === index ? 'step' : undefined} onClick={() => choose(step)}><span /></button>)}</nav>
-              <h2 id="studio-finding-title" tabIndex={-1} ref={heading}>{copy(finding.isObservation ? 'چیزی که در عکس دیدیم' : 'ایده‌ای برای این فضا')}</h2>
-              {finding.observation && <FindingText key={`${finding.id}:observation`} value={finding.observation} className="studio-discovery-observation" />}
-              {finding.suggestion && <div className="studio-discovery-suggestion"><Sparkles size={20} aria-hidden="true" /><div><h3>{copy('پیشنهاد تغییر')}</h3><FindingText key={`${finding.id}:suggestion`} value={finding.suggestion} /></div></div>}
-              <div className="studio-discovery-finding-actions">
-                <Button variant="ghost" disabled={index === 0} onClick={() => choose(index - 1)}>{siteDirection() === 'rtl' ? <ArrowRight size={16} aria-hidden="true" /> : <ArrowLeft size={16} aria-hidden="true" />}{copy('قبلی')}</Button>
-                <Button variant="outline" onClick={() => last ? completeAvailable ? complete() : setWaiting(true) : choose(index + 1)}>{copy(last ? 'پایان مرور' : 'نکتهٔ بعدی')}{siteDirection() === 'rtl' ? <ArrowLeft size={16} aria-hidden="true" /> : <ArrowRight size={16} aria-hidden="true" />}</Button>
-              </div>
-            </article> : <div className="studio-discovery-no-findings"><h2>{copy('تحلیل اولیه آماده شد.')}</h2><p dir="auto">{review.direction || review.summary || copy('جزئیات تشخیصی جداگانه‌ای برای این نتیجه ثبت نشده است.')}</p></div>}
-            {(review.summary || review.direction) && <details className="studio-discovery-overview"><summary>{copy('نگاه کلی به این فضا')}<ChevronDown size={16} aria-hidden="true" /></summary>{review.summary && <p dir="auto">{review.summary}</p>}{review.direction && <p dir="auto">{review.direction}</p>}</details>}
-            <button className="studio-discovery-discuss" type="button" onClick={() => { onDiscuss(); requestAnimationFrame(() => document.getElementById('studio-discovery-conversation')?.scrollIntoView({ block: 'nearest', behavior: 'instant' })); }}><MessageSquare size={17} aria-hidden="true" />{copy('سؤال یا اصلاحی داری؟ با هما در میان بگذار.')}</button>
-          </>}
-          {hasAnalysis && !waiting && !error && <div className="studio-discovery-result-action"><Button onClick={() => completeAvailable ? complete() : setWaiting(true)}>{copy(ready ? 'دیدن تصویر و پیشنهادها' : completeAvailable ? 'دیدن پیشنهادهای آماده' : 'مستقیم به نتیجه')}</Button><small>{copy('مرور همهٔ نکته‌ها اجباری نیست.')}</small></div>}
-          {panel && <div className="studio-discovery-conversation" id="studio-discovery-conversation">{panel}</div>}
+          <div className="studio-discovery-status" data-error={!!error}>
+            {error ? <ImageIcon size={17} aria-hidden="true" /> : busy ? <Loader2 size={17} className="studio-spinner" aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+            <p role="status" aria-live="polite">{status}</p>
+          </div>
+          <div className="studio-discovery-reading" ref={reading} tabIndex={0} aria-label={copy('جزئیات تحلیل و طراحی')}>
+            {error && <div className="studio-flow-error" role="alert">{hasAnalysis ? <h2>{copy('این مرحله کامل نشد.')}</h2> : <h1>{copy('این مرحله کامل نشد.')}</h1>}<p>{error}</p></div>}
+            {!hasAnalysis && error ? null : awaitingReply ? <div className="studio-discovery-no-findings"><h1>{copy('پاسخ هما را ببین')}</h1><p>{copy('هنوز طرحی برای نمایش ثبت نشده است. پیام‌ها و سؤال‌های این مرحله را در گفت‌وگو بررسی کن.')}</p><Button onClick={onDiscuss}>{copy('بازکردن گفت‌وگو')}</Button></div>
+            : initial ? <InitialAnalysisLoading />
+            : waitingForOutput ? <><DiscoveryLoading hasPlan={!!plan} /><Button variant="outline" onClick={() => setWaiting(false)}>{copy('بازگشت به نکته‌ها')}</Button></>
+            : <>
+              <div className="studio-discovery-analysis-heading"><span className="studio-discovery-kicker">{copy('شناخت فضا، پیش از تغییر')}</span><h1>{copy('برداشت طراح از فضای شما')}</h1></div>
+              {review.summary && <div className="studio-discovery-positive"><span>{copy('نقطهٔ قوت این فضا')}</span><FindingText value={review.summary} /></div>}
+              {finding ? <article className="studio-discovery-finding" aria-labelledby="studio-finding-title">
+                <div className="studio-discovery-finding-meta"><span>{copy(trackLabels[finding.track])}</span><span>{copy('نکتهٔ {{number}} از {{total}}', { number: number(index + 1), total: number(review.findings.length) })}</span></div>
+                <nav className="studio-discovery-finding-nav" aria-label={copy('مرور نکته‌ها')}>{review.findings.map((item, step) => <button type="button" key={item.id} aria-label={copy('نکتهٔ {{number}}', { number: number(step + 1) })} aria-current={step === index ? 'step' : undefined} onClick={() => choose(step)}>{number(step + 1)}</button>)}</nav>
+                <h2 id="studio-finding-title" tabIndex={-1} ref={heading}>{copy(finding.isObservation ? 'در عکس چه می‌بینیم؟' : 'دلیل این پیشنهاد')}</h2>
+                {finding.observation && <FindingText key={`${finding.id}:observation`} value={finding.observation} className="studio-discovery-observation" />}
+                {finding.suggestion && <div className="studio-discovery-suggestion"><Sparkles size={18} aria-hidden="true" /><div><h3>{copy('تغییر پیشنهادی')}</h3><FindingText key={`${finding.id}:suggestion`} value={finding.suggestion} /></div></div>}
+              </article> : <div className="studio-discovery-no-findings"><h2>{copy('تحلیل اولیه آماده شد.')}</h2><p dir="auto">{copy('جزئیات طراحی پس از تکمیل مرحلهٔ بعد همین‌جا نمایش داده می‌شود.')}</p></div>}
+              {review.direction && <details className="studio-discovery-overview" open={!finding}><summary>{copy('مسیر پیشنهادی طراحی')}<ChevronDown size={16} aria-hidden="true" /></summary><p dir="auto">{review.direction}</p></details>}
+            </>}
+          </div>
+          {(hasAnalysis || error) && <footer className="studio-discovery-footer">
+            {error ? <div className="studio-discovery-finding-actions"><Button variant="outline" disabled={busy} onClick={onRetry}>{copy('تلاش دوباره')}</Button>{plan && <Button disabled={busy} onClick={complete}>{copy('دیدن پیشنهادهای آماده')}</Button>}</div> : <>
+            {!waitingForOutput && finding && <div className="studio-discovery-finding-actions">
+              <Button variant="ghost" disabled={index === 0} onClick={() => choose(index - 1)}>{siteDirection() === 'rtl' ? <ArrowRight size={16} aria-hidden="true" /> : <ArrowLeft size={16} aria-hidden="true" />}{copy('قبلی')}</Button>
+              <Button variant="outline" onClick={() => last ? openResult() : choose(index + 1)}>{copy(last ? 'پایان مرور' : 'نکتهٔ بعدی')}{siteDirection() === 'rtl' ? <ArrowLeft size={16} aria-hidden="true" /> : <ArrowRight size={16} aria-hidden="true" />}</Button>
+            </div>}
+            <div className="studio-discovery-result-action">
+              {!waitingForOutput && <Button onClick={openResult}>{copy(!busy && !plan ? 'گفت‌وگو برای ادامه' : ready ? 'دیدن تصویر و پیشنهادها' : completeAvailable ? 'دیدن پیشنهادهای آماده' : 'مستقیم به نتیجه')}</Button>}
+              <button className="studio-discovery-discuss" type="button" onClick={onDiscuss} aria-label={copy('گفت‌وگو دربارهٔ این فضا')}><MessageSquare size={18} aria-hidden="true" />{waitingForOutput && copy('گفت‌وگو دربارهٔ این فضا')}</button>
+            </div>
+            </>}
+          </footer>}
         </section>
       </div>
     </main>
+    {panel && <div className="studio-discovery-conversation">{panel}</div>}
   </div>;
 }

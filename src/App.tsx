@@ -60,6 +60,8 @@ const LocalStudioCompare = import.meta.env.DEV && import.meta.env.MODE === 'stud
   && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   ? lazy(() => import('./pages/StudioCompare/StudioComparePage')) : null;
 
+const LocalDiscoveryPreview = LocalStudioCompare ? lazy(() => import('./pages/Studio/dev/DiscoveryPreview')) : null;
+
 export default function App() {
   const { siteText } = useSiteTranslation();
   return (
@@ -107,6 +109,7 @@ export default function App() {
                 LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />
               } />
               <RouterRoute path="studio/hosts" element={<StudioStartPage host />} />
+              {LocalDiscoveryPreview && <RouterRoute path="studio/preview" element={<LocalDiscoveryPreview />} />}
               {LocalStudioCompare && <RouterRoute path="studio/compare" element={<ProtectedRoute fallback="modal"><LocalStudioCompare /></ProtectedRoute>} />}
               <RouterRoute path="studio/chat/:sessionId" element={
                 LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />

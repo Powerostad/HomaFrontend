@@ -15,12 +15,12 @@ vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultI
 vi.mock('../Studio/components/ProductDetailSheet', () => ({ ProductDetailSheet: ({ onPreview }: { onPreview?: () => void }) => <div><button onClick={onPreview}>Preview lamp</button></div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }), siteText: (value: string) => value }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
-const testState = vi.hoisted(() => ({ failed: false, processing: false, send: vi.fn(async () => true) }));
+const testState = vi.hoisted(() => ({ failed: false, processing: false, starting: false, send: vi.fn(async () => true) }));
 const fixturePlan = vi.hoisted((): ExecutionPlan => ({ purchases: [{ item_id: 'lamp', category: 'Lighting', quantity: 1, reason_fa: 'Canonical report', relation: 'similar', alternatives: [], product: { product_id: 7, name: 'Lamp', price_rial: 100000, image_url: '', unique_link: 'lamp' } }], free_actions: [], surface_actions: [], known_subtotal_rial: 100000, unknown_cost_item_ids: [], budget_ceiling_toman: null, budget_status: 'complete' }));
-vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: 'saved', messages: [], chipGroups: [],
-  versions: testState.failed || testState.processing ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
-  currentExecution: fixturePlan,
-  originalImage: 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: testState.processing,
+vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: testState.starting ? null : 'saved', messages: [], chipGroups: [],
+  versions: testState.failed || testState.processing || testState.starting ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
+  currentExecution: testState.starting ? null : fixturePlan,
+  originalImage: testState.starting ? null : 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: testState.processing,
   error: testState.failed ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: testState.send, selectChip: vi.fn() }) }));
 
 async function mount() {
@@ -33,6 +33,17 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
+  it('shows the original photo and initial loader immediately after intake instead of flashing a completed result', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    testState.starting = true; testState.send.mockClear();
+    const container = document.createElement('div'), root = createRoot(container);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={['/studio']}><Routes><Route path="/studio" element={<RoomRedesignPage initialIntake={{ image: { dataUrl: 'data:image/jpeg;base64,original', width: 1200, height: 900, source: 'gallery' }, goals: [], createdAt: 'now' }} />} /></Routes></MemoryRouter>));
+      expect(container.querySelector('.studio-initial-loading')).not.toBeNull();
+      expect(container.querySelector('.studio-discovery-photo img')?.getAttribute('src')).toBe('data:image/jpeg;base64,original');
+      expect(container.querySelector('.studio-invoice')).toBeNull();
+    } finally { await act(async () => root.unmount()); testState.starting = false; testState.send.mockClear(); }
+  });
   it('keeps product feedback on the RTL main card and details visible without nested disclosures', async () => {
     const ui = await mount();
     try {
@@ -105,7 +116,7 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.studio-invoice')?.textContent).toContain('هنوز محصولی انتخاب نکردید');
     } finally { await ui.cleanup(); fixturePlan.free_actions = []; fixturePlan.surface_actions = []; }
   });
-  beforeEach(() => { testState.failed = false; testState.processing = false; testState.send.mockClear(); sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }); vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
+  beforeEach(() => { testState.starting = false; testState.failed = false; testState.processing = false; testState.send.mockClear(); sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }); vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
   it('preserves the generated image behind the original-image comparison', async () => {
     const ui = await mount();
     try {
