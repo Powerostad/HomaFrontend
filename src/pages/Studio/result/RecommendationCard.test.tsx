@@ -13,12 +13,19 @@ const group: CategoryGroup = { itemId: 2, category: 'rug', categoryDisplay: 'Rug
   products: Array.from({ length: 4 }, (_, index) => ({ id: String(index), name: `Product ${index}`, category: 'rug', image: '', price: index * 10000, uniqueLink: index === 2 ? undefined : `link-${index}`, priceUnknown: index === 2 })) };
 
 describe('Studio product and alternative presentation', () => {
-  it('shows up to ten alternatives instead of two', async () => {
+  it('shows three alternatives immediately and expands the remaining options locally', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div'); const root = createRoot(container);
     try {
       await act(async () => root.render(<RecommendationCard group={{ ...group, products: Array.from({length: 13}, (_, i) => ({...group.products[0], id: String(i)})) }} tier="quick_win" isTopPriority={false} priorityRank={1} isWhyExpanded={false} isSaved={false} basketProductIds={new Set()} onToggleWhy={vi.fn()} onProductClick={vi.fn()} onToggleSaved={vi.fn()} onToggleBasketProduct={vi.fn()} />));
+      expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(3);
+      expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(false);
+      const more = container.querySelector<HTMLButtonElement>('.studio-alternatives-heading button')!;
+      await act(async () => more.click());
       expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(10);
+      expect(more.getAttribute('aria-expanded')).toBe('true');
+      await act(async () => more.click());
+      expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(3);
     } finally { await act(async () => root.unmount()); }
   });
   it('discloses all alternatives locally and never changes selection merely by opening them', async () => {
@@ -34,11 +41,7 @@ describe('Studio product and alternative presentation', () => {
       expect(container.querySelectorAll('.is-primary')).toHaveLength(1);
       expect(container.querySelectorAll('.studio-swap-option')).toHaveLength(3);
       expect(container.querySelector('.studio-alternatives .studio-product-refinement')).toBeNull();
-      const swap = container.querySelector<HTMLButtonElement>('.studio-swap-toggle')!;
-      expect(swap.getAttribute('aria-expanded')).toBe('false');
-      expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
-      await act(async () => swap.click());
-      expect(swap.getAttribute('aria-expanded')).toBe('true');
+      expect(container.querySelector('.studio-swap-toggle')).toBeNull();
       expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(false);
       expect(onToggle).not.toHaveBeenCalled();
       expect(onOpen).not.toHaveBeenCalled();
@@ -65,7 +68,7 @@ describe('Studio product and alternative presentation', () => {
       expect(onWhy).not.toHaveBeenCalled();
       await act(async () => container.querySelector<HTMLButtonElement>('.studio-swap-option > button:last-child')!.click());
       expect(onPrimary).toHaveBeenCalledExactlyOnceWith('1');
-      expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
+      expect(container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(false);
     } finally { await act(async () => root.unmount()); }
   });
 });
