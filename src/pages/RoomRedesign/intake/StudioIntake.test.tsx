@@ -26,11 +26,12 @@ const render = async (onStart = vi.fn(), url = '/studio', host = false) => {
   return onStart;
 };
 describe('progressive Studio onboarding', () => {
-  it('starts with purpose and requires a photo before continuing', async () => {
+  it('starts with room selection in the dedicated home journey and requires a photo', async () => {
     const onStart = await render();
-    expect(container.querySelector('h1')?.textContent).toBe('برای خانهٔ خودت، یا مهمان‌هایت؟');
+    expect(container.querySelector('h1')?.textContent).toBe('از کدام فضا شروع کنیم؟');
+    expect(container.textContent).not.toContain('اقامتگاه من');
     expect(container.querySelector('textarea')).toBeNull();
-    await click('ادامه'); await click('ادامه');
+    await click('ادامه');
     expect(container.querySelector('h1')?.textContent).toBe('همین فضا را به ما نشان بده.');
     expect([...container.querySelectorAll('button')].find(b => b.textContent === 'ادامه با این عکس')?.disabled).toBe(true);
     expect(container.querySelectorAll('input[type=file]')).toHaveLength(2);
@@ -56,7 +57,7 @@ describe('progressive Studio onboarding', () => {
   it('shows host-specific goals and keeps photo and choices when going back', async () => {
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     await render(vi.fn(), '/studio/hosts', true);
-    expect(container.textContent).toContain('استودیو برای میزبان‌ها');
+    expect(container.textContent).toContain('طراحی اقامتگاه');
     await click('ادامه'); await click('ادامه با این عکس');
     expect(container.textContent).toContain('جذاب‌تر در عکس آگهی');
     expect(container.textContent).not.toContain('تازه‌تر و امروزی‌تر');

@@ -9,7 +9,7 @@ import { ROOMS, MOODS, ROOM_STYLE_HINTS, HOME_GOALS, HOST_GOALS, initialChoices,
 import './studio-onboarding.css';
 import { StylePhoto } from './StylePhoto';
 
-const STEPS = ['برای چه فضایی؟', 'انتخاب اتاق', 'عکس فضا', 'اولویت شما', 'حال‌وهوای دلخواه', 'حدود تغییر', 'مرور و شروع'];
+const STEPS = ['انتخاب اتاق', 'عکس فضا', 'اولویت شما', 'حال‌وهوای دلخواه', 'حدود تغییر', 'مرور و شروع'];
 /** One decision per screen. Only final confirmation hands off to AI. */
 export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysis: (payload: HomaIntakePayload) => void; host?: boolean }) {
   const { siteText: copy, siteDirection, siteLocale } = useSiteTranslation();
@@ -18,7 +18,7 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
   const [choices, setChoices] = useState(() => initialChoices(location.search, host));
   const [step, setStep] = useState(() => {
     const initial = initialChoices(location.search, host);
-    return initial.room !== 'not_sure' ? 2 : host || new URLSearchParams(location.search).has('audience') ? 1 : 0;
+    return initial.room !== 'not_sure' ? 2 : 1;
   });
   const [dragging, setDragging] = useState(false);
   const [budgetError, setBudgetError] = useState(false);
@@ -31,8 +31,8 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
   const room = ROOMS.find(item => item.id === choices.room);
   const mood = MOODS.find(item => item.id === choices.mood);
   const goalOptions = choices.audience === 'host' ? HOST_GOALS : HOME_GOALS;
-  const titles = ['برای خانهٔ خودت، یا مهمان‌هایت؟', 'از کدام فضا شروع کنیم؟', 'همین فضا را به ما نشان بده.', 'چه چیزی برایت مهم‌تر است؟', 'دوست داری چه حسی داشته باشد؟', 'چه چیزهایی را در نظر بگیریم؟', 'طرح از همین‌جا شروع می‌شود.'];
-  const hints = ['مسیر را با توجه به استفادهٔ واقعی از فضا تنظیم می‌کنیم.', 'هر بار یک فضا و یک عکس؛ برای اتاق بعدی یک طراحی جدا بساز.', 'عکس واقعی و بدون فیلتر کافی است؛ لازم نیست خانه را از قبل مرتب کنی.', 'می‌توانی چند مورد را انتخاب کنی، یا تصمیم را به طراح بسپاری.', 'اسم سبک‌ها را لازم نیست بدانی؛ ببین کدام تصویر به سلیقه‌ات نزدیک‌تر است.', 'این انتخاب‌ها به طراح کمک می‌کنند تغییرهای قابل‌اجراتری پیشنهاد دهد.', 'انتخاب‌هایت را مرور کن. تا زدن دکمهٔ شروع، عکس به سرویس طراحی فرستاده نمی‌شود.'];
+  const titles = ['', 'از کدام فضا شروع کنیم؟', 'همین فضا را به ما نشان بده.', 'چه چیزی برایت مهم‌تر است؟', 'دوست داری چه حسی داشته باشد؟', 'چه چیزهایی را در نظر بگیریم؟', 'طرح از همین‌جا شروع می‌شود.'];
+  const hints = ['', 'هر بار یک فضا و یک عکس؛ برای اتاق بعدی یک طراحی جدا بساز.', 'عکس واقعی و بدون فیلتر کافی است؛ لازم نیست خانه را از قبل مرتب کنی.', 'می‌توانی چند مورد را انتخاب کنی، یا تصمیم را به طراح بسپاری.', 'اسم سبک‌ها را لازم نیست بدانی؛ ببین کدام تصویر به سلیقه‌ات نزدیک‌تر است.', 'این انتخاب‌ها به طراح کمک می‌کنند تغییرهای قابل‌اجراتری پیشنهاد دهد.', 'انتخاب‌هایت را مرور کن. تا زدن دکمهٔ شروع، عکس به سرویس طراحی فرستاده نمی‌شود.'];
   const pick = (file: File | undefined, source: 'gallery' | 'camera') => { if (file && !flow.preparing) void flow.pickImage(file, source); };
   const next = () => {
     if (flow.preparing || step === 2 && !flow.image) return;
@@ -47,7 +47,7 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
     try { onStartAnalysis(buildOnboardingPayload(payload, choices)); } finally { queueMicrotask(() => { submitting.current = false; }); }
   };
   return <div className="studio-onboarding" dir={siteDirection()}><Header /><main>
-    <div className="studio-onboarding-top"><Link to="/">HOMA <span>STUDIO</span></Link><Link to="/studio/projects"><History size={15} />{copy('طراحی‌های من')}</Link></div>
+    <div className="studio-onboarding-top"><Link to={host ? '/hosts' : '/'}>HOMA <span>{host ? 'HOSTS' : 'STUDIO'}</span></Link><Link to="/studio/projects"><History size={15} />{copy('طراحی‌های من')}</Link></div>
     <div className="studio-onboarding-layout">
       <aside className="studio-onboarding-visual">
         {flow.image ? <img className="studio-original-photo" src={flow.image.dataUrl} alt={copy('عکس فضای شما')} /> : room ? <StylePhoto row={room.row} col={mood?.col || 0} label={copy(room.label)} /> : <img src="/images/studio/preset-warm-living.webp" alt={copy('الهام برای یک خانهٔ گرم و آرام')} />}
@@ -55,13 +55,10 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
         {flow.image && <button className="studio-change-photo" type="button" disabled={flow.preparing} onClick={() => gallery.current?.click()}><ImagePlus size={16} />{copy('تعویض عکس')}</button>}
       </aside>
       <section className="studio-onboarding-body">
-        <nav aria-label={copy('مراحل آماده‌سازی طراحی')} className="studio-onboarding-progress"><span>{copy('گام')} {step + 1} / {STEPS.length}</span><span>{copy(STEPS[step])}</span><div role="progressbar" aria-label={copy('پیشرفت آماده‌سازی')} aria-valuemin={0} aria-valuemax={7} aria-valuenow={step + 1}>{STEPS.map((label, index) => <span key={label} data-complete={index <= step} />)}</div></nav>
-        {choices.audience === 'host' && <span className="studio-host-label">{copy('استودیو برای میزبان‌ها')}</span>}
-        <h1 ref={heading} tabIndex={-1}>{copy(titles[step])}</h1><p className="studio-onboarding-hint">{copy(hints[step])}</p>
+        <nav aria-label={copy('مراحل آماده‌سازی طراحی')} className="studio-onboarding-progress"><span>{copy('گام')} {step} / {STEPS.length}</span><span>{copy(STEPS[step - 1])}</span><div role="progressbar" aria-label={copy('پیشرفت آماده‌سازی')} aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={step}>{STEPS.map((label, index) => <span key={label} data-complete={index < step} />)}</div></nav>
+        <span className="studio-host-label">{copy(host ? 'طراحی اقامتگاه' : 'طراحی خانه')}</span>
+        <h1 ref={heading} tabIndex={-1}>{copy(host && step === 1 ? 'از کدام فضای اقامتگاه شروع کنیم؟' : titles[step])}</h1><p className="studio-onboarding-hint">{copy(hints[step])}</p>
         <div className="studio-onboarding-question" key={step}>
-          {step === 0 && <div className="studio-audience-options">
-            {([{ id: 'home', title: 'خانهٔ من', hint: 'برای زندگی روزمره، با سلیقه و وسایل خودم' }, { id: 'host', title: 'اقامتگاه من', hint: 'برای راحتی مهمان و بهتر دیده‌شدن فضا در آگهی' }] as const).map((option, index) => <button key={option.id} type="button" aria-pressed={choices.audience === option.id} onClick={() => update({ audience: option.id, goals: [] })}><span>0{index + 1}</span><div><h2>{copy(option.title)}</h2><p>{copy(option.hint)}</p></div><Check size={18} /></button>)}
-          </div>}
           {step === 1 && <><div className="studio-room-options">{ROOMS.map(option => <button type="button" key={option.id} aria-pressed={choices.room === option.id} onClick={() => update({ room: option.id })}><StylePhoto row={option.row} col={0} label={copy(option.label)} /><span><b>{copy(option.label)}</b><small>{copy(option.hint)}</small></span>{choices.room === option.id && <Check size={18} />}</button>)}</div><button className="studio-inline-option" type="button" aria-pressed={choices.room === 'not_sure'} onClick={() => update({ room: 'not_sure' })}>{copy('نوع فضا را طراح از روی عکس تشخیص دهد')}</button></>}
           {step === 2 && <><div className="studio-onboarding-upload" data-dragging={dragging} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={event => { event.preventDefault(); setDragging(false); pick(event.dataTransfer.files[0], 'gallery'); }}>
             {flow.image ? <Check size={28} strokeWidth={1.2} /> : <ImagePlus size={32} strokeWidth={1.2} />}<h2>{copy(flow.image ? 'عکس آماده است.' : 'عکس را اینجا رها کن')}</h2><p>{copy(flow.image ? 'می‌توانی با همین عکس ادامه بدهی یا آن را عوض کنی.' : 'یا یک عکس از گالری انتخاب کن.')}</p>
@@ -77,7 +74,6 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
             {choices.budgetMode === 'limit' && <label htmlFor="studio-budget">{copy('حداکثر مجموع خرید، به تومان')}<input id="studio-budget" inputMode="numeric" aria-invalid={budgetError} aria-describedby={budgetError ? 'studio-budget-error' : undefined} value={choices.budget} maxLength={20} placeholder={copy('مثلاً ۲۰٬۰۰۰٬۰۰۰')} onChange={event => { update({ budget: event.target.value }); setBudgetError(false); }} />{budgetError && <small role="alert" id="studio-budget-error">{copy('یک مبلغ معتبر و بیشتر از صفر وارد کن.')}</small>}</label>}
             <p className="studio-subtle">{copy('این مبلغ سقف خرید محصول است؛ هزینهٔ اجرای کار یا دستمزد را شامل نمی‌شود.')}</p></div>}
           {step === 6 && <><dl className="studio-onboarding-summary">{[
-            { label: 'کاربری', value: choices.audience === 'host' ? 'اقامتگاه و میزبانی' : 'خانهٔ شخصی', target: 0 },
             { label: 'فضا', value: room?.label || 'تشخیص از روی عکس', target: 1 },
             { label: 'اولویت', value: goalOptions.filter(option => choices.goals.includes(option.id)).map(option => copy(option.label)).join('، ') || copy('پیشنهاد طراح'), target: 3 },
             { label: 'سبک', value: mood?.name || 'پیشنهاد طراح', target: 4 },
@@ -88,7 +84,7 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
             <label className="studio-final-note" htmlFor="studio-note">{copy('نکتهٔ دیگری برای طراح داری؟')} <small>{copy('اختیاری')}</small><textarea id="studio-note" rows={3} maxLength={2000} value={flow.note} onChange={event => flow.setNote(event.target.value)} placeholder={copy('مثلاً نور شب برایم مهم است یا دیوارها تغییر نکنند.')} /></label><p className="studio-subtle">{copy('در ادامه، طرح و محصولات پیشنهادی را می‌بینی و می‌توانی در گفت‌وگو اصلاحشان کنی. خرید محصول جداگانه است.')}</p></>}
         </div>
         {flow.error && <p className="studio-onboarding-warning" role="alert">{copy('عکس باز نشد. یک فایل تصویری معتبر با حجم حداکثر ۸ مگابایت انتخاب کن.')}</p>}
-        <div className="studio-onboarding-actions"><button type="button" className="studio-onboarding-back" disabled={step === 0 || flow.preparing} onClick={() => { setBudgetError(false); setStep(value => value - 1); }}><ArrowRight size={16} />{copy('قبلی')}</button><button type="button" className="studio-onboarding-primary" disabled={flow.preparing || step === 2 && !flow.image} onClick={step === 6 ? start : next}>{copy(step === 6 ? 'شروع طراحی فضای من' : step === 2 ? 'ادامه با این عکس' : 'ادامه')}<ArrowLeft size={17} /></button></div>
+        <div className="studio-onboarding-actions"><button type="button" className="studio-onboarding-back" disabled={step === 1 || flow.preparing} onClick={() => { setBudgetError(false); setStep(value => value - 1); }}><ArrowRight size={16} />{copy('قبلی')}</button><button type="button" className="studio-onboarding-primary" disabled={flow.preparing || step === 2 && !flow.image} onClick={step === 6 ? start : next}>{copy(step === 6 ? 'شروع طراحی فضای من' : step === 2 ? 'ادامه با این عکس' : 'ادامه')}<ArrowLeft size={17} /></button></div>
         <p className="studio-onboarding-footnote">{copy(step < 6 ? 'قبل از شروع می‌توانی همهٔ انتخاب‌ها را مرور و عوض کنی.' : 'شروع طراحی ممکن است اعتبار حساب مصرف کند. برای شروع، حساب کاربری لازم است.')}</p>
       </section>
     </div>

@@ -37,8 +37,9 @@ describe("public HTML content", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toContain('href="/studio"');
-    expect(html).toContain('href="/studio/hosts"');
-    expect(html).toContain('href="/studio?audience=home&amp;room=bedroom"');
+    expect(html).toContain('href="/hosts"');
+    expect(html).not.toContain('href="/studio/hosts"');
+    expect(html).toContain('href="/studio?room=bedroom"');
     expect(html).toContain('href="/ai-interior-design"');
     expect(html).toContain('href="/virtual-product-preview"');
     expect(html).not.toContain("seo.home.");
@@ -52,6 +53,14 @@ describe("public HTML content", () => {
     expect(html).toContain("طراحی دکوراسیون خانه با هوش مصنوعی");
     expect(html).toContain("ابعاد، رنگ‌ها و جزئیات");
     expect(html).not.toContain("seo.articles.");
+  });
+  it('gives hosts a separate landing and room links without embedding their purchase journey in the home hero', () => {
+    const html = render({ ...base, path: '/hosts' });
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toContain('href="/studio/hosts"');
+    expect(html).toContain('href="/studio/hosts?room=bedroom"');
+    expect(html).toContain('اقامتگاهت؛');
+    expect(html).not.toContain('/images/hero/before.png');
   });
   it("renders catalog pagination as ordinary URLs", () => {
     const html = render({
@@ -118,7 +127,7 @@ describe("public HTML content", () => {
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
     expect(html).toContain("Choose a space.");
-    expect(html).toContain("Design my guest accommodation");
+    expect(html).toContain("HOMA for hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
     const data = { ...base, kind: "article" as const, path: "/contact" };

@@ -9,6 +9,7 @@ export interface PageOptions { origin: string; apiBase: string; indexable: boole
 export type PageResult = { redirect: string; status: 308 } | { data: PublicPageData; status: number };
 const titles: Record<string, [string, string]> = {
   '/': ['طراحی دکوراسیون و مشاهده محصول با هوش مصنوعی', 'با هما برای دکوراسیون خانه ایده بگیرید و محصولات فروشگاه‌ها را پیش از خرید در عکس فضای خود ببینید.'],
+  '/hosts': ['طراحی اقامتگاه برای میزبان‌ها', 'طراحی فضا با توجه به راحتی مهمان، عکس آگهی، دوام وسایل و بودجهٔ اقامتگاه.'],
   '/explore': ['فروشگاه‌های دکوراسیون و لوازم خانه', 'فروشگاه‌ها را در هما ببینید، محصولات را مقایسه کنید و محصول انتخابی را در فضای خانه خود امتحان کنید.'],
   '/gallery': ['گالری محصولات دکوراسیون خانه', 'محصولات فروشگاه‌های هما را ببینید و برای مشاهده در فضای خود انتخاب کنید.'],
 };
@@ -72,7 +73,7 @@ export async function loadPage(url: URL, read: CatalogReader, options: PageOptio
       const article = ARTICLES[route.path];
       const [title, description] = titles[route.path] || [article?.title || siteText("هما"), article?.description || ''];
       data.seo.title = title + siteText(" | هما"); data.seo.description = description;
-      if (route.path === '/') data.kind = 'home';
+      if (['/', '/hosts'].includes(route.path)) data.kind = 'home';
       else if (route.path === '/explore') { const shops = await read<PublicShop>('/shops/list/', params); data.kind = 'explore'; data.shops = shops.results.map(validateShop); data.total = shops.count; }
       else if (route.path === '/gallery') { const products = await read<PublicProduct>('/products/', params); data.kind = 'gallery'; data.products = products.results.map(validateProduct); data.total = products.count; }
       else { data.kind = 'article'; data.seo.type = 'article'; }

@@ -14,6 +14,7 @@ import { Header } from "../../components/Header";
 import { LazySection } from "../../components/LazySection";
 
 // Above-the-fold Components (loaded immediately)
+import { RoomEntrySection } from './components/RoomEntrySection';
 import { HeroSection } from "./components/HeroSection";
 import { OutputShowcase } from "./components/OutputShowcase";
 import { TrustBar } from "./components/TrustBar";
@@ -73,15 +74,14 @@ export function ProductLandingPage() {
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
-      <Header 
-        hideSpacer={true}
-      />
+      <Header />
       
       <main className="flex-grow">
         {/* Above-the-fold content (loaded immediately) */}
         <HeroSection onGetStarted={handleGetStarted} />
         <OutputShowcase onGetStarted={handleGetStarted} />
         <TrustBar />
+        <RoomEntrySection />
 
         {/* Below-the-fold content (lazy loaded for better performance) */}
         <LazySection minHeight="600px">

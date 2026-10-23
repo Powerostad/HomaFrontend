@@ -16,6 +16,16 @@ const reader: CatalogReader = async <T>(path: string, params: Record<string, str
 const page = (path: string, read = reader, settings = options) => loadPage(new URL(path, 'https://untrusted-host.test'), read, settings);
 
 describe('public route contract', () => {
+  it('serves the separate host landing and its private design entry without catalogue availability', async () => {
+    const unavailable: CatalogReader = async () => { throw new UpstreamError('No catalogue'); };
+    const landing = await page('/hosts', unavailable);
+    expect(landing.status).toBe(200);
+    expect('data' in landing && landing.data.kind).toBe('home');
+    expect('data' in landing && landing.data.seo.canonical).toBe('https://myhoma.ir/hosts');
+    const entry = await page('/studio/hosts?room=bedroom', unavailable);
+    expect(entry.status).toBe(200);
+    expect('data' in entry && entry.data.kind).toBe('private');
+  });
   it('uses configured origin and strips campaigns from canonicals', async () => {
     const result = await page('/?utm_source=campaign&gclid=secret');
     expect('data' in result && result.data.seo.canonical).toBe('https://myhoma.ir/');

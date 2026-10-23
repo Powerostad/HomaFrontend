@@ -23,7 +23,8 @@ describe('onboarding preference boundary', () => {
   });
   it('whitelists entry parameters and constrains preserved-item lengths', () => {
     expect(initialChoices('?room=anything&audience=anything').room).toBe('not_sure');
-    expect(initialChoices('?audience=host&room=balcony').audience).toBe('host');
+    expect(initialChoices('?audience=host&room=balcony').audience).toBe('home');
+    expect(initialChoices('?room=balcony', true).audience).toBe('host');
     expect(buildOnboardingPayload(payload, { ...initialChoices(''), preserved: 'a'.repeat(100) }).prefsUpdate?.preserved_items?.[0]).toHaveLength(80);
   });
 });

@@ -61,6 +61,6 @@ export function buildOnboardingPayload(payload: HomaIntakePayload, choices: Onbo
 export function initialChoices(search: string, host = false): OnboardingChoices {
   const params = new URLSearchParams(search);
   const room = ROOMS.find(item => item.id === params.get('room'))?.id || 'not_sure';
-  return { audience: host || params.get('audience') === 'host' ? 'host' : 'home', room, goals: [], mood: null,
+  return { audience: host ? 'host' : 'home', room, goals: [], mood: null,
     budgetMode: 'unknown', budget: '', preserved: '', scope: 'open' };
 }

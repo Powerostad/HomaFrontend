@@ -26,7 +26,7 @@ interface UnifiedMenuProps {
 }
 
 export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps) {
-  const { siteValue, siteDirection } = useSiteTranslation();
+  const { siteValue, siteDirection, siteText } = useSiteTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, user, logout, login } = useAuth();
@@ -45,6 +45,7 @@ export function UnifiedMenu({ isOpen, onClose, onLoginClick }: UnifiedMenuProps)
   const navItems = [
     { label: t('nav.home'), href: "/", icon: Home, navId: "home" },
     { label: t('nav.stores'), href: "/explore", icon: ShoppingBag, navId: "explore" },
+    { label: siteText('هُما برای میزبان‌ها'), href: '/hosts', icon: Home, navId: 'hosts' },
     { label: t('nav.studio'), href: "/studio", icon: Palette, navId: "studio" },
   ];
 

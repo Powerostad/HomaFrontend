@@ -1,3 +1,4 @@
+import { RoomEntrySection } from './ProductLanding/components/RoomEntrySection';
 import { HeroSection } from './ProductLanding/components/HeroSection';
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { siteLocale, useSiteTranslation } from '@/i18n/siteCopy';
@@ -53,7 +54,7 @@ function formatDimension(value?: string | null): string {
 /** Shares the editorial entry with the client landing, without router/provider dependencies. */
 export function SeoHome() {
   const { t } = useTranslation();
-  return <><HeroSection /><nav className="flex flex-wrap justify-center gap-6 px-6 py-10 bg-surface-page text-content-secondary text-sm" aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')}>
+  return <><HeroSection /><RoomEntrySection /><nav className="flex flex-wrap justify-center gap-6 px-6 py-10 bg-surface-page text-content-secondary text-sm" aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')}>
     <a href="/ai-interior-design">{t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}</a>
     <a href="/virtual-product-preview">{t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}</a>
   </nav></>;

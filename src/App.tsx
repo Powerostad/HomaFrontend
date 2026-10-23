@@ -22,6 +22,7 @@ import { PrecheckPage } from "./pages/Precheck";
 import { ProcessingPage } from "./pages/Processing";
 import { ProductDetailsPage } from "./pages/ProductDetails";
 import { ProductFallbackPage } from "./pages/ProductFallback";
+import { HostsLandingPage } from './pages/ProductLanding/HostsPage';
 import { ProductLandingPage } from "./pages/ProductLanding/Page";
 import { StorePage } from "./pages/Store";
 import { StudioProgressPage } from "./pages/Studio/ProgressPage";
@@ -70,6 +71,7 @@ export default function App() {
             <RouterRoutes>
             <RouterRoute path="/" element={<Layout />}>
               <RouterRoute index element={LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProductLandingPage />} />
+              <RouterRoute path="hosts" element={<HostsLandingPage />} />
               <RouterRoute path="gallery" element={<GalleryPage />} />
               <RouterRoute path="explore" element={<ExplorePage />} />
               <RouterRoute path="shop" element={<ExplorePage />} /> {/* Alias for ExplorePage */}

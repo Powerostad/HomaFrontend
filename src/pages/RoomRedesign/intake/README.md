@@ -1,11 +1,12 @@
 # Studio entry and progressive onboarding
 
-`/` presents the editorial landing and four room entry points. `/studio` opens
-the home/host choice. `/studio/hosts` starts the host journey; it is suitable for
-Jabama hosts and other short-stay accommodation, without implying a partnership.
-`?audience=home&room=bedroom` can preselect a supported room and open photo input.
+`/` uses the original before/after home hero and room entry points. `/hosts`
+has a separate accommodation landing; navigation links the two destinations.
+`/studio` starts home onboarding and `/studio/hosts` starts host onboarding.
+The audience is fixed by the route, not changed inside the questionnaire.
+`?room=bedroom` can preselect a supported room and open photo input.
 
-The sequence is purpose → room → photo → priorities → visual mood → constraints
+The six-step sequence is room → photo → priorities → visual mood → constraints
 → editable review. Optional questions permit an undecided/designer choice.
 Only the final start action hands off to design. Sign-in is deferred to that
 action; cancellation preserves the mounted draft. Photos stay in component
