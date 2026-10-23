@@ -9,6 +9,7 @@ export interface CatalogueProduct {
   merchant_url: string | null; shop: string | null; category: CatalogueCategory;
   is_active: boolean; deleted_at: string | null; visual_complete: boolean;
   description: string; color: string; pattern: string;
+  source?: 'existing' | 'bazaar'; source_label?: string;
   extra_details?: Record<string, unknown>; seller_description?: string;
   variants?: { id: number; label_fa: string; sku: string; price: number | null }[];
 }
@@ -24,7 +25,7 @@ function unwrap<T>(response: { success: boolean; data?: T; message?: string; err
   if (!response.success || !response.data) throw new Error(response.error || response.message || 'catalogue_request_failed');
   return response.data;
 }
-export const catalogueFacets = async () => unwrap(await apiGet<CatalogueFacets>('/products/manage/facets/'));
+export const catalogueFacets = async (source = 'existing') => unwrap(await apiGet<CatalogueFacets>('/products/manage/facets/', { source }));
 export const catalogueProducts = async (params: Record<string, unknown>, signal?: AbortSignal) =>
   unwrap(await apiGet<CataloguePage>('/products/manage/', params, { signal }));
 export const catalogueProduct = async (id: number) => unwrap(await apiGet<CatalogueProduct>(`/products/manage/${id}/`));

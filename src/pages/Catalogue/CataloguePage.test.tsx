@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import CataloguePage from './CataloguePage';
-import { catalogueAction, catalogueProducts } from '@/services/catalogueManagement';
+import { catalogueAction, catalogueFacets, catalogueProducts } from '@/services/catalogueManagement';
 
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (s: string) => s, siteValue: (value: unknown) => value, siteLocale: () => 'fa-IR', siteDirection: () => 'rtl' }) }));
 vi.mock('@/services/catalogueManagement', async importOriginal => ({
@@ -22,6 +22,19 @@ vi.mock('@/services/catalogueManagement', async importOriginal => ({
 }));
 
 describe('catalogue panel', () => {
+  it('switches Bazaar to a separate inactive source and refreshes its counts', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div'); document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => root.render(<MemoryRouter><CataloguePage /></MemoryRouter>));
+      const select = container.querySelector('select[aria-label="منبع محصولات"]') as HTMLSelectElement;
+      await act(async () => { select.value = 'bazaar'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+      expect(catalogueProducts).toHaveBeenLastCalledWith(expect.objectContaining({ source: 'bazaar', state: 'inactive' }), expect.any(AbortSignal));
+      expect(catalogueFacets).toHaveBeenLastCalledWith('bazaar');
+      expect(container.textContent).toContain('در پیشنهادهای استودیو استفاده نمی‌شوند');
+    } finally { await act(async () => root.unmount()); container.remove(); }
+  });
   it('filters categories and requires a concrete confirmation before reversible deletion', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div'); document.body.append(container);

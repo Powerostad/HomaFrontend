@@ -33,6 +33,7 @@ export default function CataloguePage() {
   const detailRequest = useRef(0);
   const key = params.toString();
   const state = params.get('state') || 'active';
+  const source = params.get('source') || 'existing';
   const category = params.get('category') || '';
   const page = Number(params.get('page')) || 1;
   const count = (value: number) => value.toLocaleString(siteLocale());
@@ -53,10 +54,10 @@ export default function CataloguePage() {
   useEffect(() => { setSearch(new URLSearchParams(key).get('search') || ''); setSelected([]); }, [key]);
   useEffect(() => {
     let active = true;
-    catalogueFacets().then(result => { if (active) setFacets(result); }).catch(() => { if (active) setError(copy('دسترسی به کاتالوگ ممکن نشد؛ با حساب مجاز وارد شوید.')); });
+    catalogueFacets(source).then(result => { if (active) setFacets(result); }).catch(() => { if (active) setError(copy('دسترسی به کاتالوگ ممکن نشد؛ با حساب مجاز وارد شوید.')); });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revision]);
+  }, [revision, source]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError('');
@@ -119,12 +120,14 @@ export default function CataloguePage() {
         {([['active', 'فعال', facets?.stats.active], ['inactive', 'غیرفعال', facets?.stats.inactive], ['deleted', 'سطل بازیافت', facets?.stats.deleted], ['all', 'همه', facets?.stats.total]] as const).map(([value, label, number]) => <button key={value} className={state === value ? 'chosen' : ''} onClick={() => change({ state: value })}>{value === 'deleted' && <Trash2 size={15} />}{copy(label)}<span>{count(number || 0)}</span></button>)}
       </div>
       <div className="catalogue-filters"><label className="catalogue-search"><Search size={18} /><input aria-label={copy('جست‌وجوی نام یا شناسه')} placeholder={copy('جست‌وجوی نام یا شناسه')} value={search} onChange={event => setSearch(event.target.value)} /></label>
+        <label><span>{copy('منبع محصولات')}</span><select aria-label={copy('منبع محصولات')} value={source} onChange={event => change({ source: event.target.value, state: event.target.value === 'bazaar' ? 'inactive' : 'active', category: '', subcategory: '', shop: '' })}><option value="existing">{copy('کاتالوگ فعلی')}</option><option value="bazaar">{copy('بازار دیجی‌کالا — پرده')}</option><option value="all">{copy('همهٔ منابع')}</option></select></label>
         <label><span>{copy('دسته')}</span><select value={category} onChange={event => change({ category: event.target.value, subcategory: '' })}><option value="">{copy('همهٔ دسته‌ها')}</option>{roots.map(node => <option key={node.code} value={node.code}>{node.name}</option>)}</select></label>
         <label><span>{copy('زیردسته')}</span><select value={params.get('subcategory') || ''} disabled={!category} onChange={event => change({ subcategory: event.target.value })}><option value="">{copy('همهٔ زیردسته‌ها')}</option>{children.map(node => <option key={node.code} value={node.code}>{node.name} ({count(node.count || 0)})</option>)}</select></label>
         <label><span>{copy('تگ‌گذاری تصویری')}</span><select value={params.get('vision') || 'all'} onChange={event => change({ vision: event.target.value })}><option value="all">{copy('همه')}</option><option value="completed">{copy('تصویر بررسی شده')}</option><option value="pending">{copy('تصویر بررسی نشده')}</option></select></label>
         <label><span>{copy('فروشگاه')}</span><select value={params.get('shop') || ''} onChange={event => change({ shop: event.target.value })}><option value="">{copy('همه')}</option>{facets?.shops.map(shop => <option key={shop.shop_id} value={shop.shop_id}>{shop.shop__shop_name}</option>)}</select></label>
         <label><span>{copy('مرتب‌سازی')}</span><select value={params.get('sort') || 'newest'} onChange={event => change({ sort: event.target.value })}><option value="newest">{copy('جدیدترین')}</option><option value="oldest">{copy('قدیمی‌ترین')}</option><option value="price_asc">{copy('ارزان‌ترین')}</option><option value="price_desc">{copy('گران‌ترین')}</option></select></label>
       </div>
+      {source === 'bazaar' && <p className="catalogue-notice" role="status">{copy('پرده‌های بازار جدا وارد شده‌اند و فعلاً غیرفعال‌اند؛ در پیشنهادهای استودیو استفاده نمی‌شوند. قیمت و موجودی طبق آخرین پاسخ بازار است. توصیف تصویری اجرا نشده است.')}</p>}
       {error && <div className="catalogue-error" role="alert">{error}<button onClick={refresh}>{copy('تلاش دوباره')}</button></div>}
       {notice && <div className="catalogue-notice" role="status">{notice}{!!undoIds.length && <button disabled={busy} onClick={() => void act('restore', undoIds)}><Undo2 size={15} />{copy('بازگردانی حذف اخیر')}</button>}</div>}
       <div className="catalogue-results-heading"><label><input type="checkbox" disabled={loading || !pageIds.length} checked={allSelected} onChange={() => setSelected(allSelected ? [] : pageIds)} />{copy('انتخاب این صفحه')}</label><span aria-live="polite">{loading ? copy('در حال دریافت محصولات…') : `${count(data?.count || 0)} ${copy('محصول')}`}</span><button aria-label={copy('به‌روزرسانی')} onClick={refresh}><RefreshCw size={17} /></button></div>
@@ -133,7 +136,7 @@ export default function CataloguePage() {
       </div>}
       <div className={`catalogue-grid ${loading ? 'is-loading' : ''}`} aria-busy={loading}>{data?.results.map(product => <article key={product.id} className={`catalogue-card ${selected.includes(product.id) ? 'selected' : ''}`}>
         <div className="catalogue-photo"><button className="catalogue-image-button" aria-label={`${copy('مشاهدهٔ جزئیات')} ${product.name}`} onClick={() => void openDetail(product)}><ProductPhoto product={product} /></button><label className="catalogue-check"><input type="checkbox" aria-label={`${copy('انتخاب')} ${product.name}`} disabled={busy || loading} checked={selected.includes(product.id)} onChange={() => setSelected(previous => toggleSelection(previous, product.id))} />{selected.includes(product.id) && <Check size={13} />}</label><span className={`catalogue-badge ${product.visual_complete ? 'complete' : ''}`}>{copy(product.visual_complete ? 'تصویر بررسی شده' : 'تصویر بررسی نشده')}</span></div>
-        <div className="catalogue-card-body"><span className="catalogue-card-meta">{product.category.name} <b>#{product.id}</b></span><button className="catalogue-product-name" onClick={() => void openDetail(product)}>{product.name}</button><strong>{money(product.price_rial)}</strong><div className="catalogue-card-actions"><button onClick={() => void openDetail(product)}><SlidersHorizontal size={15} />{copy('بررسی و ویرایش')}</button><button className="danger" disabled={busy || loading} aria-label={copy(product.deleted_at ? 'بازگردانی' : 'انتقال به سطل بازیافت')} onClick={() => product.deleted_at ? void act('restore', [product.id]) : setPendingTrash([product.id])}>{product.deleted_at ? <Undo2 size={17} /> : <Trash2 size={17} />}</button></div></div>
+        <div className="catalogue-card-body"><span className="catalogue-card-meta">{product.category.name} <b>#{product.id}</b></span>{product.source === 'bazaar' && <span className="catalogue-card-meta">{copy('بازار دیجی‌کالا')} · {product.shop}</span>}<button className="catalogue-product-name" onClick={() => void openDetail(product)}>{product.name}</button><strong>{money(product.price_rial)}</strong><div className="catalogue-card-actions"><button onClick={() => void openDetail(product)}><SlidersHorizontal size={15} />{copy('بررسی و ویرایش')}</button><button className="danger" disabled={busy || loading} aria-label={copy(product.deleted_at ? 'بازگردانی' : 'انتقال به سطل بازیافت')} onClick={() => product.deleted_at ? void act('restore', [product.id]) : setPendingTrash([product.id])}>{product.deleted_at ? <Undo2 size={17} /> : <Trash2 size={17} />}</button></div></div>
       </article>)}</div>
       {!loading && !data?.results.length && <div className="catalogue-empty"><Search size={32} /><h2>{copy('محصولی با این فیلترها پیدا نشد.')}</h2><button onClick={() => { setSearch(''); setSelected([]); setParams({}); }}>{copy('پاک‌کردن فیلترها')}</button></div>}
       <nav className="catalogue-pagination" aria-label={copy('صفحه‌بندی')}><button disabled={page <= 1 || loading} onClick={() => change({ page: String(page - 1) })}><ChevronRight size={17} />{copy('قبلی')}</button><span>{copy('صفحه')} {count(page)} / {count(Math.max(1, Math.ceil((data?.count || 0) / (data?.page_size || 24))))}</span><button disabled={loading || page * (data?.page_size || 24) >= (data?.count || 0)} onClick={() => change({ page: String(page + 1) })}>{copy('بعدی')}<ChevronLeft size={17} /></button></nav>
