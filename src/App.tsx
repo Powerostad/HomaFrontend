@@ -39,6 +39,7 @@ import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
 
 // Room Redesign Flow (conversational recommendations - live chat backend)
 import { RoomRedesignPage } from "./pages/RoomRedesign/RoomRedesignPage";
+import { StudioStartPage } from "./pages/RoomRedesign/intake/StudioStartPage";
 
 // Account & Gallery
 import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
@@ -101,11 +102,12 @@ export default function App() {
 
               {/* Studio now starts the existing conversational flow. Legacy jobs remain accessible. */}
               <RouterRoute path="studio" element={
-                LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+                LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />
               } />
+              <RouterRoute path="studio/hosts" element={<StudioStartPage host />} />
               {LocalStudioCompare && <RouterRoute path="studio/compare" element={<ProtectedRoute fallback="modal"><LocalStudioCompare /></ProtectedRoute>} />}
               <RouterRoute path="studio/chat/:sessionId" element={
-                LocalStudioPreview ? <LocalStudioPreview /> : <ProtectedRoute fallback="modal"><RoomRedesignPage /></ProtectedRoute>
+                LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />
               } />
               <RouterRoute path="studio/start" element={<Navigate to="/studio" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />

@@ -1,3 +1,4 @@
+import { HeroSection } from './ProductLanding/components/HeroSection';
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { siteLocale, useSiteTranslation } from '@/i18n/siteCopy';
 import { ARTICLES } from "@/seo/content";
@@ -49,45 +50,13 @@ function formatDimension(value?: string | null): string {
   return Number.isFinite(numeric) ? numeric.toLocaleString(siteLocale()) : value;
 }
 
-/** Static, browser-free homepage content for the SSR public document. */
+/** Shares the editorial entry with the client landing, without router/provider dependencies. */
 export function SeoHome() {
-  const { siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
-  return (
-    <div className="min-h-screen bg-surface-page flex flex-col" dir={siteDirection()}>
-      <main className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
-        <div className="space-y-12 text-center">
-          <header className="space-y-5">
-            <p className="text-[11px] tracking-[0.2em] text-black/40">
-              {t('seo.home.eyebrow', 'طراحی و انتخاب با هوش مصنوعی')}
-            </p>
-            <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
-              {t('seo.home.title', 'دکوراسیون خانه با هوش مصنوعی')}
-            </h1>
-            <p className="text-[16px] md:text-lg opacity-60 leading-relaxed max-w-2xl mx-auto">
-              {t('seo.home.description', 'با عکس اتاق خود ایده‌های دکوراسیون را بررسی کنید؛ یا یک محصول را انتخاب کنید و آن را پیش از خرید در فضای خود ببینید.')}
-            </p>
-          </header>
-          <nav aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <a href="/ai-interior-design" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
-              {t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}
-            </a>
-            <a href="/virtual-product-preview" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
-              {t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}
-            </a>
-          </nav>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[13px]">
-            <a href="/studio" className="inline-flex h-12 items-center bg-black text-white px-6">
-              {t('seo.home.start', 'طراحی با عکس اتاق')}
-            </a>
-            <a href="/explore" className="inline-flex h-12 items-center border border-black/15 px-6">
-              {t('seo.home.browse', 'مشاهده فروشگاه‌ها')}
-            </a>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+  return <><HeroSection /><nav className="flex flex-wrap justify-center gap-6 px-6 py-10 bg-surface-page text-content-secondary text-sm" aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')}>
+    <a href="/ai-interior-design">{t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}</a>
+    <a href="/virtual-product-preview">{t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}</a>
+  </nav></>;
 }
 
 function Breadcrumbs({ data }: PublicPageProps) {

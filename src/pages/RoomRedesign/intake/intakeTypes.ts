@@ -27,7 +27,12 @@ export type Goal =
   | 'modernize'
   | 'declutter'
   | 'product_recommendations'
-  | 'improve_for_rent_or_sale';
+  | 'improve_for_rent_or_sale'
+  | 'photo_appeal'
+  | 'guest_comfort'
+  | 'easy_cleaning'
+  | 'durable';
+// Explicit host goals share the existing structured preferences boundary.
 
 /**
  * The captured photo. Stored as a base64 data URL — the redesign chat sends

@@ -87,13 +87,13 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   }} />;
 }
 
-export function RoomRedesignPage() {
+export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: HomaIntakePayload | null } = {}) {
   const { sessionId: path } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const chat = useRedesignChat(path);
   const compact = useMediaQuery('(max-width: 1199px)');
-  const [intake, setIntake] = useState<HomaIntakePayload | null>(null);
+  const [intake, setIntake] = useState<HomaIntakePayload | null>(initialIntake);
   const [input, setInput] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
   const [reviewActive, setReviewActive] = useState(false);

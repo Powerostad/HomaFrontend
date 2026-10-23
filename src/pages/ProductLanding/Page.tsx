@@ -1,5 +1,5 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import {
@@ -23,7 +23,6 @@ const ComparisonSection=lazy(() => import("./components/ComparisonSection").then
 const ShoppingPropSection=lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
 
 import { useSeo } from "@/hooks/useSeo";
-import { HomaLoader } from "../../components/HomaLoader";
 
 export function ProductLandingPage() {
   const { siteText } = useSiteTranslation();
@@ -32,7 +31,6 @@ export function ProductLandingPage() {
   });
   const navigate = useRouterNavigate();
   const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initPage = async () => {
@@ -62,8 +60,6 @@ export function ProductLandingPage() {
 
       } catch (error) {
         console.error("Failed to initialize page:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -72,14 +68,8 @@ export function ProductLandingPage() {
 
   const handleGetStarted = () => {
     trackKPI("CTA Clicked", { location: "Landing" });
-    // Navigate to explore page where users can select a product to try-on
-    // (Try-on flow now requires a product ID in URL: /try-on/:productId/upload)
-    navigate("/explore");
+    navigate("/studio");
   };
-
-  if (isLoading) {
-    return <HomaLoader />;
-  }
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
