@@ -17,6 +17,7 @@ function localizedFailure(value: unknown): string {
 }
 
 export interface SendTurnArgs {
+  imageOutputMode?: 'export' | 'api';
   text: string;
   images?: string[];
   prefsUpdate?: unknown;
@@ -262,11 +263,12 @@ export function useRedesignChat(path?: string) {
     locked.current = true; setStatus('creating');
     let sid = sidRef.current;
     if (!sid) {
-      const created = await createChatSession();
+      const created = await createChatSession(args.imageOutputMode);
       if (!created.success || !created.data) { setError(created.error || siteText("خطا در ایجاد گفتگو")); setStatus('error'); locked.current = false; return false; }
       sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
     }
-    const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    const { imageOutputMode: _imageOutputMode, ...turnArgs } = args;
+    const params: StreamTurnParams = { ...turnArgs, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
     following.current = true;
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);

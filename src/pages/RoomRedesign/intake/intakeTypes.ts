@@ -48,6 +48,7 @@ export interface IntakeImage {
 
 /** Everything the intake flow hands to the analysis/chat flow. */
 export interface HomaIntakePayload {
+  imageOutputMode?: 'export' | 'api';
   image: IntakeImage;
   roomType?: RoomType;
   goals: Goal[];

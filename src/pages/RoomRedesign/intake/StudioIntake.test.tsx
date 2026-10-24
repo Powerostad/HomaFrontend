@@ -16,7 +16,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
 });
-afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.clearAllMocks(); flow.image = null; flow.preparing = false; });
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.clearAllMocks(); vi.unstubAllEnvs(); flow.image = null; flow.preparing = false; });
 const click = async (text: string) => {
   const button = [...container.querySelectorAll('button')].find(item => item.textContent === text);
   expect(button, text).toBeDefined(); await act(async () => button!.click());
@@ -26,6 +26,19 @@ const render = async (onStart = vi.fn(), url = '/studio', host = false) => {
   return onStart;
 };
 describe('progressive Studio onboarding', () => {
+  it('collects the paid render choice before creating the first local session', async () => {
+    vi.stubEnv('MODE', 'studio-local');
+    flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
+    flow.buildPayload.mockReturnValue({ image: flow.image, goals: [], createdAt: 'now' });
+    const onStart = await render(vi.fn(), '/studio?room=bedroom');
+    await click('ادامه با این عکس'); await click('ادامه'); await click('ادامه'); await click('ادامه');
+    const radio = container.querySelectorAll<HTMLInputElement>('input[name="image-output-mode"]');
+    expect(radio[0].checked).toBe(true);
+    await act(async () => radio[1].click());
+    expect(onStart).not.toHaveBeenCalled();
+    await click('شروع طراحی فضای من');
+    expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ imageOutputMode: 'api' }));
+  });
   it('starts with room selection in the dedicated home journey and requires a photo', async () => {
     const onStart = await render();
     expect(container.querySelector('h1')?.textContent).toBe('از کدام فضا شروع کنیم؟');

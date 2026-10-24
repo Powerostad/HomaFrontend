@@ -22,6 +22,8 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
   });
   const [dragging, setDragging] = useState(false);
   const [budgetError, setBudgetError] = useState(false);
+  const localImageChoice = import.meta.env.DEV && import.meta.env.MODE === 'studio-local';
+  const [imageOutputMode, setImageOutputMode] = useState<'export' | 'api'>('export');
   const gallery = useRef<HTMLInputElement>(null), camera = useRef<HTMLInputElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
@@ -44,7 +46,7 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
     const payload = flow.buildPayload(); if (!payload) return;
     if (choices.budgetMode === 'limit' && budgetAmount(choices.budget) === null) { setStep(5); setBudgetError(true); return; }
     submitting.current = true;
-    try { onStartAnalysis(buildOnboardingPayload(payload, choices)); } finally { queueMicrotask(() => { submitting.current = false; }); }
+    try { onStartAnalysis({ ...buildOnboardingPayload(payload, choices), ...(localImageChoice ? { imageOutputMode } : {}) }); } finally { queueMicrotask(() => { submitting.current = false; }); }
   };
   return <div className="studio-onboarding" dir={siteDirection()}><Header /><main>
     <div className="studio-onboarding-top"><Link to={host ? '/hosts' : '/'}>HOMA <span>{host ? 'HOSTS' : 'STUDIO'}</span></Link><Link to="/studio/projects"><History size={15} />{copy('طراحی‌های من')}</Link></div>
@@ -83,6 +85,7 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
           ].map(row => <div key={row.label}><dt>{copy(row.label)}</dt><dd>{row.label === 'وسایل ثابت' ? row.value : copy(row.value)}</dd><button type="button" onClick={() => setStep(row.target)} aria-label={copy('ویرایش') + ' ' + copy(row.label)}>{copy('ویرایش')}</button></div>)}</dl>
             <label className="studio-final-note" htmlFor="studio-note">{copy('نکتهٔ دیگری برای طراح داری؟')} <small>{copy('اختیاری')}</small><textarea id="studio-note" rows={3} maxLength={2000} value={flow.note} onChange={event => flow.setNote(event.target.value)} placeholder={copy('مثلاً نور شب برایم مهم است یا دیوارها تغییر نکنند.')} /></label><p className="studio-subtle">{copy('در ادامه، طرح و محصولات پیشنهادی را می‌بینی و می‌توانی در گفت‌وگو اصلاحشان کنی. خرید محصول جداگانه است.')}</p></>}
         </div>
+        {step === 6 && localImageChoice && <fieldset className="studio-output-options"><legend>{copy('خروجی تصویر')}</legend><label><input type="radio" name="image-output-mode" checked={imageOutputMode === 'export'} onChange={() => setImageOutputMode('export')} />{copy('بستهٔ R&D؛ بدون تولید تصویر')}</label><label><input type="radio" name="image-output-mode" checked={imageOutputMode === 'api'} onChange={() => setImageOutputMode('api')} />{copy('تصویر را با Qwen Image 3.0 بساز — دارای هزینه')}</label><p className="studio-subtle">{copy(imageOutputMode === 'api' ? 'پس از طراحی و پیدا کردن محصولات، تصویر به‌صورت خودکار ساخته می‌شود.' : 'طراحی و جست‌وجو اجرا می‌شوند؛ بستهٔ پرامپت و تصاویر را برای رندر دستی دانلود می‌کنی.')}</p></fieldset>}
         {flow.error && <p className="studio-onboarding-warning" role="alert">{copy('عکس باز نشد. یک فایل تصویری معتبر با حجم حداکثر ۸ مگابایت انتخاب کن.')}</p>}
         <div className="studio-onboarding-actions"><button type="button" className="studio-onboarding-back" disabled={step === 1 || flow.preparing} onClick={() => { setBudgetError(false); setStep(value => value - 1); }}><ArrowRight size={16} />{copy('قبلی')}</button><button type="button" className="studio-onboarding-primary" disabled={flow.preparing || step === 2 && !flow.image} onClick={step === 6 ? start : next}>{copy(step === 6 ? 'شروع طراحی فضای من' : step === 2 ? 'ادامه با این عکس' : 'ادامه')}<ArrowLeft size={17} /></button></div>
         <p className="studio-onboarding-footnote">{copy(step < 6 ? 'قبل از شروع می‌توانی همهٔ انتخاب‌ها را مرور و عوض کنی.' : 'شروع طراحی ممکن است اعتبار حساب مصرف کند. برای شروع، حساب کاربری لازم است.')}</p>

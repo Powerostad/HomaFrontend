@@ -255,11 +255,12 @@ export interface CreateSessionResult {
   error?: string;
 }
 
-export async function createChatSession(): Promise<CreateSessionResult> {
+export async function createChatSession(imageOutputMode?: 'export' | 'api'): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
     {
       search_version: 'studio-search-v1',
+      ...(imageOutputMode ? { image_output_mode: imageOutputMode } : {}),
       ...(import.meta.env.VITE_STUDIO_PRODUCT_TAXONOMY_V1 === 'true' ? { product_taxonomy_version: 'product-taxonomy-v1' } : {}),
       prompt_split: 'server-split-v1',
     },

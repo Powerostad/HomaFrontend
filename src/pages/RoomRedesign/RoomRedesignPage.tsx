@@ -117,7 +117,7 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     if (!intake || seeded.current || path) return;
     const timer = setTimeout(() => {
       seeded.current = true;
-      void chat.sendTurn({ text: composeIntakeText(intake), images: [intake.image.dataUrl], prefsUpdate: intake.prefsUpdate });
+      void chat.sendTurn({ text: composeIntakeText(intake), images: [intake.image.dataUrl], prefsUpdate: intake.prefsUpdate, imageOutputMode: intake.imageOutputMode });
     }, 0);
     return () => clearTimeout(timer);
   }, [intake, path, chat.sendTurn]);
