@@ -15,6 +15,15 @@ instructions per scene, without modifying either source or model input. Saved
 analysis remains available after an output error. Only an explicit wait action
 allows automatic result navigation, and an error must prevent that navigation.
 
+When available, show the saved positive diagnosis before revealing individual
+observations. The next action begins the finding review; returning to the first
+impression preserves the selected finding. Later design updates must not reset
+the reading position. If there is no positive diagnosis, go directly to actual
+findings, without an empty extra step. A ready result changes the status and
+primary action while the review remains available. No timed progression or
+mandatory reading delay is used. Result entrance motion respects reduced motion;
+an explicit result action moves focus to the result heading.
+
 The chat and local export settings open above the workspace in accessible
 dialogs. Their content must not push status or findings below the viewport.
 
@@ -22,3 +31,5 @@ Local development only: `/studio/preview` shows initial loading without model
 calls; `/studio/preview?state=review` shows fixture analysis. The Options panel
 switches loading, analysis, ready and error fixtures. This route is gated to
 loopback `studio-local` development and is absent in production.
+The ready fixture can open the existing illustrative result view to check the
+entire transition without creating a session or calling a model.

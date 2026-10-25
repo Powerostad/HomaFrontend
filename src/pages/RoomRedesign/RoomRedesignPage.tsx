@@ -102,6 +102,7 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
   const lastVersion = useRef<string | null>(null);
   const refreshedVersion = useRef<string | null>(null);
   const seeded = useRef(false);
+  const resultContainer = useRef<HTMLDivElement>(null);
   const selected = chat.selectedVersion;
   if (selected) lastVersion.current = selected.version_id;
   const report = chat.viewedId === 'current' ? chat.versions.find(version => version.version_id === chat.currentBaseVersionId)
@@ -112,6 +113,12 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     if (!chat.hydrating && !reviewDismissed && !chat.versions.length && (chat.busy || chat.currentExecution || chat.error)) setReviewActive(true);
   }, [chat.hydrating, chat.busy, chat.currentExecution, chat.error, chat.versions.length, reviewDismissed]);
   useEffect(() => setImageFailed(false), [selected?.image_url, original]);
+  useEffect(() => {
+    if (!reviewDismissed) return;
+    const title = resultContainer.current?.querySelector<HTMLElement>('h1');
+    title?.setAttribute('tabindex', '-1');
+    title?.focus({ preventScroll: true });
+  }, [reviewDismissed]);
   useEffect(() => { if (chat.sessionId && !path) navigate(`/studio/chat/${chat.sessionId}`, { replace: true }); }, [chat.sessionId, path, navigate]);
   useEffect(() => {
     if (!intake || seeded.current || path) return;
@@ -149,13 +156,13 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
       busy={chat.busy} failed={!!chat.error} statusText={chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking')}
       value={input} onChange={setInput} onSend={sendMessage} />} />;
   return <>
-    <ConversationResult key={`${chat.sessionId || path || 'new'}:${chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'}`} chat={chat} plan={plan}
+    <div ref={resultContainer} className={reviewDismissed ? 'studio-result-arrival' : undefined}><ConversationResult key={`${chat.sessionId || path || 'new'}:${chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'}`} chat={chat} plan={plan}
       versionId={chat.viewedId === 'current' ? 'current' : report?.version_id || 'analysis'} resultImage={(report?.image_pending ? original : report?.image_url) || original || ''} originalImage={original}
       onToggleOriginal={show => chat.selectVersion(show ? 'original' : lastVersion.current || report?.version_id || 'original')}
       onImageError={() => {
         setImageFailed(true);
         if (selected && refreshedVersion.current !== selected.version_id) { refreshedVersion.current = selected.version_id; chat.selectVersion(selected.version_id); }
-      }} compact={compact} chatOpen={chatOpen} setChatOpen={setChatOpen} input={input} setInput={setInput} sendMessage={sendMessage} fresh={fresh} />
+      }} compact={compact} chatOpen={chatOpen} setChatOpen={setChatOpen} input={input} setInput={setInput} sendMessage={sendMessage} fresh={fresh} /></div>
     {imageFailed && <div className="studio-conversation-media-error" role="alert"><p>{t('redesignJourney.imageUnavailable')}</p><Button variant="outline" onClick={() => { setImageFailed(false); chat.selectVersion(chat.viewedId); }}>{t('redesignJourney.reloadImage')}</Button></div>}
   </>;
 }

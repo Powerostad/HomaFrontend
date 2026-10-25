@@ -209,6 +209,15 @@ its linked proposed change at a time, and let the user move back or skip the
 review. Long explanations belong behind disclosure. Never fabricate a finding,
 certainty score, user message, or artificial processing delay to fill this flow.
 
+Reveal the saved positive diagnosis first when it exists, then let the user
+explore the observations individually and their linked changes. Preserve the
+current observation as later design data arrives. Announce a ready design in
+the existing status area and promote the result action, without taking over
+the user's reading. Use one short editorial reveal for the observation, the
+ready announcement and the final room image; do not add a timed waiting screen.
+On mobile, keep the status and navigation inside the viewport; only the reading
+area scrolls. Opening the final design moves keyboard focus to its heading.
+
 Image generation and product preparation continue during the review. A ready
 result must be available immediately without requiring every finding to be read;
 do not interrupt someone still reading. On the connected result page, show one

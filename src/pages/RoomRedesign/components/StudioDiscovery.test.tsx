@@ -36,6 +36,9 @@ describe('one-finding discovery', () => {
         user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
       } } }, stage: 'در حال طراحی تغییرات' });
       expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
+      expect(ui.container.textContent).toContain('نور طبیعی خوب است.');
+      expect(ui.container.textContent).not.toContain('مسیر کنار مبل باریک است.');
+      await ui.click('مرور نکته‌های فضا');
       expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
       expect(reading.scrollTop).toBe(0);
       expect(ui.props.onComplete).not.toHaveBeenCalled();
@@ -91,6 +94,41 @@ describe('one-finding discovery', () => {
     const ui = await mount();
     try { await ui.render({ busy: false }); expect(ui.props.onComplete).not.toHaveBeenCalled(); await ui.click('دیدن تصویر و پیشنهادها'); expect(ui.props.onComplete).toHaveBeenCalledOnce(); }
     finally { await ui.cleanup(); }
+  });
+  it('reveals the first impression before individual findings, without gating a ready result', async () => {
+    const ui = await mount({ analysisPreview: { studio_documents: { room: { user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' } } } } });
+    try {
+      expect(ui.container.querySelector('.studio-discovery-introduction')).not.toBeNull();
+      expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull();
+      await ui.render({ busy: false });
+      expect(ui.container.textContent).toContain('طرح شما آمادهٔ دیدن است');
+      expect(ui.container.querySelector('.studio-discovery-introduction')).not.toBeNull();
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      await ui.click('دیدن تصویر و پیشنهادها');
+      expect(ui.props.onComplete).toHaveBeenCalledOnce();
+    } finally { await ui.cleanup(); }
+  });
+  it('keeps the selected insight when later design instructions arrive and supports returning to the overview', async () => {
+    const preview = { studio_documents: { room: {
+      user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
+      room_analysis: { layout_evaluation: { layout_issues: [
+        { issue_id: 'a', evidence: 'مسیر باریک است.' }, { issue_id: 'b', evidence: 'فرش کوچک است.' },
+      ] } },
+    } } };
+    const ui = await mount({ plan: null, analysisPreview: preview });
+    try {
+      await ui.click('مرور نکته‌های فضا');
+      await ui.click('نکتهٔ بعدی');
+      await ui.render({ plan: { ...source, studio_documents: { room: { ...preview.studio_documents.room,
+        layout_fix_plan: [{ resolves_issue_id: 'b', specific_instruction: 'فرش بزرگ‌تر انتخاب کن.' }],
+      } } as unknown as ExecutionPlan['studio_documents'] } });
+      expect(ui.container.textContent).toContain('فرش کوچک است.');
+      expect(ui.container.textContent).toContain('فرش بزرگ‌تر انتخاب کن.');
+      expect(ui.container.querySelector('.studio-discovery-introduction')).toBeNull();
+      await ui.click('بازگشت به برداشت اول');
+      expect(ui.container.textContent).toContain('نور طبیعی خوب است.');
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
   });
   it('opens the result when ready only after the user explicitly chose to skip/wait', async () => {
     const ui = await mount();

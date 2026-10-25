@@ -33,6 +33,23 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
+  it('keeps analysis visible when the output arrives, then reveals and focuses the result on request', async () => {
+    testState.processing = true;
+    const ui = await mount();
+    try {
+      expect(ui.container.querySelector('.studio-discovery-page')).not.toBeNull();
+      testState.processing = false;
+      await ui.render();
+      expect(ui.container.querySelector('.studio-discovery-page')).not.toBeNull();
+      expect(ui.container.textContent).toContain('طرح شما آمادهٔ دیدن است');
+      const open = Array.from(ui.container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'دیدن تصویر و پیشنهادها')!;
+      await act(async () => open.click());
+      expect(ui.container.querySelector('.studio-discovery-page')).toBeNull();
+      const result = ui.container.querySelector('.studio-result-arrival');
+      expect(result).not.toBeNull();
+      expect(document.activeElement).toBe(result?.querySelector('h1'));
+    } finally { testState.processing = false; await ui.cleanup(); }
+  });
   it('shows the original photo and initial loader immediately after intake instead of flashing a completed result', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     testState.starting = true; testState.send.mockClear();
@@ -84,7 +101,7 @@ describe('original Studio result flow with conversation', () => {
       await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-swap-toggle')!.click());
       expect(ui.container.querySelector('.studio-alternatives .studio-product-refinement')).toBeNull();
       expect(ui.container.querySelector('.studio-alternatives .studio-product-select')).toBeNull();
-      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-swap-option > button:last-child')!.click());
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('button.studio-swap-option')!.click());
       expect(ui.container.querySelector('.is-primary .studio-product-name')?.textContent).toBe('Alternative lamp');
       expect(ui.container.querySelector('.studio-swap-name')?.textContent).toBe('Lamp');
       expect(ui.container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
