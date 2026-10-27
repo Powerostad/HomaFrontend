@@ -25,6 +25,21 @@ describe('chat composer', () => {
       expect(container.textContent).not.toContain('studioChat.emptyChatFailed');
     } finally { await act(async () => root.unmount()); }
   });
+  it('fills the editable composer from first-use examples without sending', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const onChange = vi.fn();
+    const onSend = vi.fn();
+    try {
+      await act(async () => root.render(<ConversationPanel messages={[]} chipGroups={[]} busy={false} statusText="" value="" onChange={onChange} onSend={onSend} onSelectChip={vi.fn()} />));
+      const examples = container.querySelectorAll('.studio-edit-examples-options button');
+      expect(examples).toHaveLength(3);
+      await act(async () => (examples[0] as HTMLButtonElement).click());
+      expect(onChange).toHaveBeenCalledWith('studio.v9.editExampleColor');
+      expect(onSend).not.toHaveBeenCalled();
+    } finally { await act(async () => root.unmount()); }
+  });
   it('keeps the next draft editable but prevents duplicate sends while processing', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div');
