@@ -423,6 +423,11 @@
   },
   "studio": {
     "v9": {
+      "intro": "تصمیم‌هایی برای بهتر شدن فضایت؛ عناصر مناسب حفظ می‌شوند و خرید در خدمت طراحی است.",
+      "designCount": "{{count}} تصمیم طراحی",
+      "productCount": "{{count}} پیشنهاد محصول",
+      "completionCount": "{{count}} مورد تکمیلی",
+      "discuss": "نظرت یا تغییری داری؟",
       "acceptDecision": "انتخاب این تغییر",
       "decisionSelected": "تغییر انتخاب شد",
       "tier": { "quick_win": "تغییرهای سریع", "enhancement": "ارتقای فضا", "structural": "تغییرهای اساسی" }

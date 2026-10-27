@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { toLocalizedDigits } from '@/utils/formatters';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import type { JourneyFinding } from '../../RoomRedesign/services/resultJourney';
@@ -20,13 +21,14 @@ export function ResultReveal({ before, after, onComplete }: { before: string; af
     motion?.addEventListener('change', change);
     return () => { clearTimeout(timer); motion?.removeEventListener('change', change); };
   }, []);
-  return <div className="homa-result-reveal homa-v9" data-finished={finished} role="region" aria-label={copy('نمایش قبل و بعد طراحی شما')}>
+  return createPortal(<div className="homa-result-reveal homa-v9" data-finished={finished} role="region" aria-label={copy('نمایش قبل و بعد طراحی شما')}>
     <img src={before} alt={copy('فضای شما پیش از طراحی')} draggable={false} />
     <div className="homa-result-reveal-after" onAnimationEnd={finish}><img src={after} alt={copy('فضای شما پس از طراحی')} draggable={false} /></div>
     <div className="homa-v9-reveal-divider" aria-hidden="true"><span>‹ ›</span></div>
+    <div className="homa-v9-reveal-brand">HOMA</div>
     <div className="homa-result-reveal-copy"><span>YOUR SPACE, REIMAGINED</span><h1>{copy('فضای تو، با نگاهی تازه.')}</h1><p>{copy('دلیل تغییرها را قدم‌به‌قدم ببین.')}</p></div>
     <button type="button" className="homa-result-reveal-skip" onClick={finish}>{copy('دیدن تحلیل‌ها')}</button>
-  </div>;
+  </div>, document.body);
 }
 
 const labels: Record<string, string> = { keep: 'حفظ', move: 'جابه‌جایی', remove: 'حذف', replace: 'تعویض', add: 'افزودن', restyle: 'بهبود استایل' };

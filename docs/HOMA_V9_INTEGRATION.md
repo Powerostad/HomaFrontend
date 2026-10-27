@@ -2,6 +2,22 @@
 
 Feature branch: `codex/homa-v9-polished`. Target: `dev`. Review before merging; no production deployment is part of this change.
 
+## Visual review revision
+
+A second comparison against the approved HTML found that the first integration retained too much of the previous shell: duplicated loading labels, a smaller image, redundant moodboard thumbnails, a reveal clipped by the result layout, and too many permanently expanded product actions.
+
+The revised loading composition uses the reference's top utility line, centered wordmark, calmer title, 45svh photo, two-part moodboard and bottom stage indicators. Indicators derive from the actual stage key, not elapsed time. The original photo still requires analysis readiness.
+
+The reveal now renders through a body portal so route transitions cannot clip its viewport. The original Header returns after the reveal. Existing completion timing, reduced-motion path, analysis sequence and navigation remain unchanged. The result introduction includes counts derived from actual findings/recommendations/completion items and the existing conversation action.
+
+Product cards keep photography, title, price and alternatives prominent. Design reasoning, independent acceptance and product feedback live in one disclosure on the same card. Merchant product details and all shopping handlers remain unchanged. Floating navigation icons and analysis title focus styling were corrected.
+
+Updated screenshots are in `v9-screenshots/revision/`. These labelled previews verify component behavior and presentation, not live model quality.
+
+![Revised moodboard](v9-screenshots/revision/moodboard-390.png)
+![Revised full-screen reveal](v9-screenshots/revision/reveal-390.png)
+![Revised recommendations](v9-screenshots/revision/recommendations-390.png)
+
 ## Implementation
 
 The approved HTML is a visual reference, not an application dependency. Scoped `v9-polished.css` applies its light photographic presentation and Vazirmatn typography to the existing Studio components. No dependencies, backend contracts, recommendation ranking, pricing, authentication or checkout logic were changed.

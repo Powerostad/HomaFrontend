@@ -40,7 +40,7 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.homa-loading-page')).not.toBeNull();
       testState.processing = false;
       await ui.render();
-      expect(ui.container.querySelector('.homa-result-reveal')).not.toBeNull();
+      expect(document.querySelector('.homa-result-reveal')).not.toBeNull();
       expect(ui.container.querySelector('.homa-loading-page')).toBeNull();
       const result = ui.container.querySelector('.studio-result-arrival');
       expect(result).not.toBeNull();
@@ -59,12 +59,16 @@ describe('original Studio result flow with conversation', () => {
       expect(container.querySelector('.studio-invoice')).toBeNull();
     } finally { await act(async () => root.unmount()); testState.starting = false; testState.send.mockClear(); }
   });
-  it('keeps product feedback on the RTL main card and details visible without nested disclosures', async () => {
+  it('keeps product feedback in the main card disclosure and product details readable', async () => {
     const ui = await mount();
     try {
       const card = ui.container.querySelector<HTMLElement>('.studio-product-preview')!;
       expect(card.dir).toBe('rtl');
-      const feedback = ui.container.querySelector<HTMLButtonElement>('.studio-recommendation-card > .studio-product-refinement > button')!;
+      const decision = ui.container.querySelector<HTMLDetailsElement>('.studio-v9-design-decision')!;
+      expect(decision.open).toBe(false);
+      await act(async () => decision.querySelector('summary')!.click());
+      expect(decision.open).toBe(true);
+      const feedback = decision.querySelector<HTMLButtonElement>('.studio-product-refinement > button')!;
       expect(feedback).not.toBeNull();
       await act(async () => feedback.click());
       expect(ui.container.querySelector('.studio-product-refinement textarea')).not.toBeNull();
@@ -167,8 +171,8 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.studio-invoice')).toBeNull();
       testState.processing = false;
       await ui.render();
-      expect(ui.container.querySelector('.homa-result-reveal')).not.toBeNull();
-      await act(async () => ui.container.querySelector<HTMLButtonElement>('.homa-result-reveal-skip')!.click());
+      expect(document.querySelector('.homa-result-reveal')).not.toBeNull();
+      await act(async () => document.querySelector<HTMLButtonElement>('.homa-result-reveal-skip')!.click());
       expect(ui.container.querySelector('.homa-loading-page')).toBeNull();
       expect(ui.container.querySelector('#section-products')?.hasAttribute('hidden')).toBe(false);
       expect(ui.container.querySelector('#section-analysis')?.hasAttribute('hidden')).toBe(true);

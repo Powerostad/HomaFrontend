@@ -53,8 +53,9 @@ const recommendationsActive = (host: HTMLElement) => {
 describe('integrated result journey in the existing result page', () => {
   it.each([1, 3, 7])('shows %i genuine decisions sequentially and rests on recommendations', async count => {
     const ui = await mount(count);
-    expect(ui.host.querySelector('.homa-result-reveal img')?.getAttribute('src')).toBe('before.jpg');
-    expect(ui.host.querySelector('.homa-result-reveal-after img')?.getAttribute('src')).toBe('after.jpg');
+    expect(document.querySelector('.homa-result-reveal img')?.getAttribute('src')).toBe('before.jpg');
+    expect(document.querySelector('.homa-result-reveal-after img')?.getAttribute('src')).toBe('after.jpg');
+    expect(document.querySelector('.homa-result-reveal')?.parentElement).toBe(document.body);
     await finishReveal();
     for (let index = 0; index < count; index++) {
       expect(document.querySelector('.homa-analysis-sheet h2')?.textContent).toBe(`تصمیم ${index + 1}`);
@@ -63,7 +64,7 @@ describe('integrated result journey in the existing result page', () => {
       await click(index === count - 1 ? 'دیدن پیشنهادهای محصول←' : 'تحلیل بعدی←');
     }
     recommendationsActive(ui.host);
-    expect(ui.host.querySelector('.homa-result-reveal')).toBeNull();
+    expect(document.querySelector('.homa-result-reveal')).toBeNull();
     await ui.render(); await act(async () => vi.advanceTimersByTime(30000)); recommendationsActive(ui.host);
     expect(basket.addItem).not.toHaveBeenCalled();
   });
@@ -83,12 +84,12 @@ describe('integrated result journey in the existing result page', () => {
     const ui = await mount(0); await finishReveal(); recommendationsActive(ui.host);
     const key = ui.key; await cleanup?.(); cleanup = undefined;
     const reloaded = await mount(3, key);
-    expect(reloaded.host.querySelector('.homa-result-reveal')).toBeNull(); recommendationsActive(reloaded.host);
+    expect(document.querySelector('.homa-result-reveal')).toBeNull(); recommendationsActive(reloaded.host);
   });
   it('reduced motion goes promptly to real analysis without a lengthy reveal', async () => {
     vi.mocked(window.matchMedia).mockReturnValue({ matches: true, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList);
     const ui = await mount(1);
-    expect(ui.host.querySelector('.homa-result-reveal')).toBeNull(); expect(document.querySelector('.homa-analysis-sheet')).not.toBeNull();
+    expect(document.querySelector('.homa-result-reveal')).toBeNull(); expect(document.querySelector('.homa-analysis-sheet')).not.toBeNull();
     await click('رد کردن'); recommendationsActive(ui.host);
   });
 });

@@ -427,6 +427,11 @@
   },
   "studio": {
     "v9": {
+      "intro": "Thoughtful changes for your space: keep what works, and choose products that support the design.",
+      "designCount": "{{count}} design decisions",
+      "productCount": "{{count}} product recommendations",
+      "completionCount": "{{count}} finishing items",
+      "discuss": "Have feedback or a change in mind?",
       "acceptDecision": "Choose this design change",
       "decisionSelected": "Design change selected",
       "tier": { "quick_win": "Quick changes", "enhancement": "Enhance your space", "structural": "Structural changes" }

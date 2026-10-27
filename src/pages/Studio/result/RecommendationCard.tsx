@@ -193,8 +193,12 @@ export function RecommendationCard({
         <summary>{siteValue(group.categoryDisplay)} · {t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</summary>
         {problem && <p>{siteValue(problem)}</p>}
         {solution && solution !== problem && <p>{siteValue(solution)}</p>}
+        {onToggleAccepted && <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
+          {siteValue(isAccepted ? t('studio.v9.decisionSelected', 'تغییر انتخاب شد') : t('studio.v9.acceptDecision', 'انتخاب این تغییر'))}
+        </button>}
+        {heroProduct && onRefineProduct && <ProductRefinement key={heroProduct.id} product={heroProduct} busy={busy} onSubmit={onRefineProduct} />}
       </details>}
-      {onToggleAccepted && <div className="studio-recommendation-actions">
+      {isActionItem && onToggleAccepted && <div className="studio-recommendation-actions">
         <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
           {siteValue(isAccepted ? <Check size={17} /> : null)}
           {siteValue(isAccepted ? t('studio.v9.decisionSelected', 'تغییر انتخاب شد') : t('studio.v9.acceptDecision', 'انتخاب این تغییر'))}
@@ -216,7 +220,6 @@ export function RecommendationCard({
         </button>)}
       </div>
     </section>}
-    {!isActionItem && heroProduct && onRefineProduct && <ProductRefinement key={heroProduct.id} product={heroProduct} busy={busy} onSubmit={onRefineProduct} />}
     </article>
     </div>
   );

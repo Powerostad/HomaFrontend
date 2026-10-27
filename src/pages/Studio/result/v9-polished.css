@@ -1,10 +1,10 @@
 /* Homa V9: the approved light, photographic visual system.
    Scoped presentation only; polling, selection and commerce remain in their owners. */
 .homa-v9 {
-  --v9-ink: #191919;
+  --v9-ink: #1c1b19;
   --v9-muted: #77736f;
-  --v9-line: #ececea;
-  --v9-soft: #f7f7f5;
+  --v9-line: #eae8e5;
+  --v9-soft: #f6f5f3;
   --v9-paper: #fff;
   --v9-radius: 20px;
   color: var(--v9-ink);
@@ -21,20 +21,29 @@
   --loading-caption: var(--v9-muted); --loading-sand: var(--v9-ink);
   background: var(--v9-soft);
 }
-.homa-v9 .homa-loading-screen { max-width: 440px; min-height: min(850px, 100svh); border: 0; border-radius: 26px; box-shadow: 0 16px 60px #1919190a; }
-.homa-v9 .homa-loading-head { padding: 24px 22px 12px; border: 0; }
-.homa-v9 .homa-loading-logo { font-size: 24px; letter-spacing: .28em; }
+.homa-v9 .homa-loading-screen { max-width: 440px; min-height: 100svh; border: 0; border-radius: 26px; background: #f8f7f5; box-shadow: 0 16px 60px #1919190a; }
+.homa-v9 .homa-loading-head { padding: 24px 22px 0; border: 0; direction: ltr; align-items: center; }
+.homa-v9 .homa-loading-head-actions { direction: rtl; }
+.homa-v9 .homa-loading-logo { font: 23px Georgia, serif; letter-spacing: .32em; text-align: center; margin-top: 27px; }
+.homa-v9 .homa-loading-micro { margin: 0; font: 10px Arial, sans-serif; letter-spacing: .14em; }
 .homa-v9 .homa-loading-micro, .homa-v9 .homa-loading-eyebrow { font-size: 10px; color: var(--v9-muted); }
-.homa-v9 .homa-loading-top { padding: 10px 22px 0; }
-.homa-v9-loading-title { text-align: center; margin: 18px auto 21px; max-width: 350px; }
-.homa-v9-loading-title h1 { margin: 0 0 8px; font-size: clamp(24px, 6.5vw, 29px); font-weight: 700; line-height: 1.65; letter-spacing: -.035em; }
-.homa-v9-loading-title .homa-loading-description { font-size: 12px; line-height: 2; min-height: 0; margin: 0; color: var(--v9-muted); }
-.homa-v9 .homa-loading-visual { height: clamp(240px, 40svh, 375px); border-radius: 15px; }
+.homa-v9 .homa-loading-top { padding: 0 22px; }
+.homa-v9-loading-title { text-align: center; margin: 17px auto 20px; max-width: 350px; }
+.homa-v9-loading-title h1 { margin: 0 0 7px; font-size: 26px; font-weight: 700; line-height: 1.65; letter-spacing: -.023em; }
+.homa-v9-loading-title .homa-loading-description { font-size: 12px; line-height: 2.1; min-height: 44px; margin: 0 auto; max-width: 316px; color: var(--v9-muted); }
+.homa-v9 .homa-loading-visual { height: min(45svh, 375px); min-height: 280px; border-radius: 17px; }
 .homa-v9 .homa-loading-board { gap: 5px; }
+.homa-v9 .homa-loading-board-stack { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.homa-v9 .homa-loading-detail:empty { display: none; }
 .homa-v9 .homa-loading-copy { padding-top: 12px; }
 .homa-v9 .homa-loading-status { justify-content: center; font-size: 12px; }
-.homa-v9 .homa-loading-photo-label { padding-top: 12px; font-size: 11px; color: var(--v9-muted); }
-.homa-v9 .homa-loading-bottom { padding: 20px 22px 24px; }
+.homa-v9 .homa-loading-photo-label { padding-top: 17px; font-size: 11px; text-align: center; color: var(--v9-muted); }
+.homa-v9 .homa-loading-bottom { padding: 26px 22px 24px; margin-top: auto; border: 0; }
+.homa-v9 .homa-loading-stages { display: flex; gap: 6px; direction: ltr; }
+.homa-v9 .homa-loading-stages i { height: 3px; flex: 1; border-radius: 9px; background: var(--v9-line); }
+.homa-v9 .homa-loading-stages i[data-state=done], .homa-v9 .homa-loading-stages i[data-state=active] { background: var(--v9-ink); }
+.homa-v9 .homa-loading-stages[data-running=true] i[data-state=active] { animation: v9-stage-pulse 1.4s ease-in-out infinite alternate; }
+@keyframes v9-stage-pulse { to { opacity: .4; } }
 .homa-v9 .homa-loading-note { border: 0; background: transparent; }
 .homa-v9 .homa-loading-insight-card { background: var(--v9-soft); border: 0; border-radius: 16px; }
 .homa-v9 .homa-loading-insight-response { border-color: var(--v9-line); }
@@ -42,12 +51,15 @@
 .homa-v9 .homa-loading-ready h2 { font-size: 27px; font-weight: 700; letter-spacing: -.035em; }
 .homa-v9 .homa-loading-ready button { border-radius: 999px; background: var(--v9-ink); border-color: var(--v9-ink); color: var(--v9-paper); padding: 14px 24px; }
 /* Single CSS wipe: no per-frame React state. The existing completion callback owns routing. */
-.homa-result-reveal.homa-v9 { background: var(--v9-ink); }
+.homa-result-reveal.homa-v9 { position: fixed; inset: 0; width: 100%; height: 100dvh; z-index: var(--z-modal); background: var(--v9-ink); }
+.homa-result-reveal.homa-v9::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, #17141166, transparent 25%, transparent 49%, #17131166 71%, #0d0c0cd6); }
+.homa-v9-reveal-brand { position: absolute; top: 30px; inset-inline: 0; color: white; text-align: center; font: 22px Georgia, serif; letter-spacing: .32em; z-index: 1; }
+.studio-result-page.homa-v9[data-revealing=true] .studio-result-content, .studio-result-page.homa-v9[data-revealing=true] .studio-summary { visibility: hidden; }
 .homa-result-reveal.homa-v9 > img, .homa-result-reveal.homa-v9 .homa-result-reveal-after img { object-fit: contain; }
-.homa-v9 .homa-result-reveal-copy { inset: auto 24px 160px; text-align: start; text-shadow: 0 3px 20px #0006; }
+.homa-v9 .homa-result-reveal-copy { inset: auto 28px 218px; z-index: 1; text-align: start; text-shadow: 0 3px 20px #0006; }
 .homa-v9 .homa-result-reveal-copy h1 { font-size: clamp(26px, 7vw, 34px); line-height: 1.6; font-weight: 700; }
 .homa-v9 .homa-result-reveal-copy p { font-size: 13px; }
-.homa-v9 .homa-result-reveal-skip { bottom: calc(34px + env(safe-area-inset-bottom)); border: 0; background: #fffffff0; color: var(--v9-ink); padding: 13px 28px; font-weight: 600; box-shadow: 0 8px 28px #0002; }
+.homa-v9 .homa-result-reveal-skip { bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 1; width: calc(100% - 48px); max-width: 440px; min-height: 52px; border: 0; background: #fffffff0; color: var(--v9-ink); padding: 13px 28px; font-weight: 600; box-shadow: 0 8px 28px #0002; }
 .homa-v9-reveal-divider { position: absolute; inset-block: 0; left: 0; width: 100%; border-left: 2px solid #fff; background: transparent; animation: v9-divider 4.5s cubic-bezier(.45,0,.2,1) forwards; pointer-events: none; }
 .homa-v9-reveal-divider span { position: absolute; top: 50%; left: 0; translate: -50% -50%; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: white; color: var(--v9-ink); font: 20px Georgia, serif; box-shadow: 0 4px 16px #0002; }
 @keyframes v9-divider { 0% { transform: translateX(0); opacity: 0; } 8% { opacity: 1; } 42% { transform: translateX(100%); } 67% { transform: translateX(22%); } 98% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
@@ -56,6 +68,12 @@
 .homa-v9 .studio-result-content { background: var(--v9-paper); }
 .homa-v9 .studio-result-heading { padding-block: 8px 10px; }
 .homa-v9 .studio-result-heading h1 { font-size: 25px; line-height: 1.55; letter-spacing: -.035em; font-weight: 700; }
+.studio-result-page.homa-v9 .studio-result-heading { align-items: start; }
+.homa-v9 .studio-result-heading .studio-result-eyebrow { display: block; font-size: 10px; margin-bottom: 9px; }
+.homa-v9 .studio-result-heading-description { display: block; color: var(--v9-muted); font-size: 13px; line-height: 2.05; margin-top: 9px; }
+.studio-v9-result-overview { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 18px; }
+.studio-v9-result-overview span { border: 1px solid var(--v9-line); border-radius: 999px; background: var(--v9-soft); padding: 9px 12px; font-size: 11px; color: var(--v9-muted); }
+.studio-v9-discuss { display: flex; align-items: center; justify-content: center; gap: 7px; background: var(--v9-ink); color: white; border: 0; border-radius: 14px; padding: 12px 16px; min-height: 46px; font-size: 12px; font-weight: 600; margin-bottom: 24px; }
 .homa-v9 .studio-result-eyebrow { font-size: 11px; font-weight: 500; color: var(--v9-muted); }
 .homa-v9 .studio-section-heading { margin-block: 25px 18px; }
 .homa-v9 .studio-section-heading h2 { font-size: 22px; font-weight: 700; letter-spacing: -.035em; }
@@ -87,8 +105,9 @@
 .studio-result-page.homa-v9 .studio-product-row .studio-product-row-actions .studio-swap-toggle { align-self: start; flex: none; width: auto; min-height: 44px; padding: 8px 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: var(--v9-muted); font-size: 12px; text-decoration: underline; text-underline-offset: 4px; box-shadow: none; }
 .homa-v9 .studio-product-key { font-size: 10px; padding: 7px 10px; background: #ffffffe6; box-shadow: none; }
 .homa-v9 .studio-product-key svg { display: none; }
-.homa-v9 .studio-v9-design-decision { margin-top: 8px; border-top: 1px solid var(--v9-line); font-size: 11px; line-height: 1.9; }
-.homa-v9 .studio-v9-design-decision summary { padding-block: 10px; cursor: pointer; color: var(--v9-muted); }
+.homa-v9 .studio-v9-design-decision { margin-top: 0; font-size: 11px; line-height: 1.9; }
+.homa-v9 .studio-v9-design-decision summary { padding-block: 8px; cursor: pointer; color: var(--v9-muted); }
+.homa-v9 .studio-v9-design-decision[open] { padding-bottom: 12px; }
 .homa-v9 .studio-v9-design-decision p { padding-bottom: 8px; }
 .homa-v9 .studio-product-row .studio-recommendation-actions { margin: 0; padding: 0; }
 .homa-v9 .studio-product-row .studio-accept-button { width: 100%; border-radius: 999px; min-height: 40px; border: 1px solid var(--v9-line); background: transparent; color: var(--v9-ink); font-size: 11px; padding: 8px; }
@@ -110,6 +129,8 @@
 .homa-v9 .homa-analysis-meta { color: var(--v9-muted); }
 .homa-v9 .homa-analysis-meta > span:first-child { border-color: var(--v9-line); background: var(--v9-soft); }
 .homa-v9 .homa-analysis-sheet h2, .homa-analysis-sheet.homa-v9 h2 { font-size: 21px; font-weight: 700; letter-spacing: -.035em; }
+.homa-analysis-sheet.homa-v9 h2 { outline: none; }
+.homa-analysis-sheet.homa-v9 figcaption strong { display: none; }
 .homa-analysis-sheet.homa-v9 dl > div { background: transparent; border: 0; border-bottom: 1px solid var(--v9-line); border-radius: 0; padding: 12px 0; }
 .homa-analysis-sheet.homa-v9 dt { color: var(--v9-muted); }
 .homa-analysis-sheet.homa-v9 footer button { border-radius: 999px; }
@@ -135,17 +156,17 @@
   .homa-v9 .studio-mobile-hero .studio-hero-image, .homa-result-reveal.homa-v9 > img, .homa-result-reveal.homa-v9 .homa-result-reveal-after img { object-fit: cover; }
   .studio-result-page.homa-v9 .studio-summary { bottom: 14px; inset-inline: 14px; width: auto; border: 0; border-radius: 999px; background: transparent; padding-bottom: env(safe-area-inset-bottom); }
   .studio-result-page.homa-v9 .studio-summary-inner { background: #1c1c1cf5; border-radius: 999px; padding: 5px; box-shadow: 0 14px 36px #0003; }
-  .studio-result-page.homa-v9 .studio-summary-nav button { min-height: 50px; color: #fff9; border-radius: 999px; font-size: 10px; }
+  .studio-result-page.homa-v9 .studio-summary-nav button { min-height: 58px; color: #fff9; border-radius: 999px; font-size: 10px; display: flex; flex-direction: column; gap: 5px; }
   .studio-result-page.homa-v9 .studio-summary-nav button.is-active { background: var(--v9-paper); color: var(--v9-ink); }
-  .studio-result-page.homa-v9 .studio-summary-nav svg { width: 18px; height: 18px; }
+  .studio-result-page.homa-v9 .studio-summary-nav svg { display: block; width: 18px; height: 18px; }
   .homa-v9 .studio-workspace-nav { display: none; }
 }
 @media(max-width:470px) {
   .homa-v9 .studio-alternatives-grid { grid-template-columns: minmax(0, 1fr); }
   .homa-loading-page.homa-v9 { padding: 0; min-height: 100svh; }
   .homa-v9 .homa-loading-screen { border-radius: 0; min-height: 100svh; max-width: none; box-shadow: none; }
-  .homa-v9 .homa-loading-visual { height: clamp(215px, 36svh, 340px); }
-  .homa-v9 .homa-loading-screen[data-personal=true] .homa-loading-visual { height: clamp(155px, 24svh, 230px); }
+  .homa-v9 .homa-loading-visual { height: min(45svh, 375px); }
+  .homa-v9 .homa-loading-screen[data-personal=true] .homa-loading-visual { height: clamp(155px, 24svh, 230px); min-height: 0; }
   .homa-v9 .homa-loading-screen[data-personal=true] .homa-v9-loading-title { margin-block: 8px 12px; }
   .homa-v9 .homa-loading-screen[data-personal=true] .homa-v9-loading-title h1 { font-size: 22px; }
   .homa-v9 .homa-loading-insight-card { max-height: 155px; }
@@ -165,6 +186,7 @@
   .homa-v9 .homa-loading-screen[data-personal=true] .homa-loading-visual { height: 150px; }
 }
 @media(prefers-reduced-motion:reduce) {
+  .homa-v9 .homa-loading-stages[data-running=true] i[data-state=active] { animation: none; }
   .homa-v9-reveal-divider { display: none; animation: none; }
   .homa-v9 .studio-product-image { transition: none; }
   .homa-v9 .studio-product-image-button:hover .studio-product-image { transform: none; }

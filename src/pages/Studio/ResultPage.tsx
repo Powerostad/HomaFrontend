@@ -2,6 +2,7 @@ import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
+import { toLocalizedDigits } from '@/utils/formatters';
 import { Bookmark, ChevronDown, Download as DownloadIcon, Loader2, MessageSquare, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'motion/react';
@@ -172,7 +173,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
       data-revealing={revealing}
       style={{ fontFamily: FONT }}
     >
-      {siteValue(!state.isFullScreen && <Header hideSpacer />)}
+        {siteValue(!state.isFullScreen && !revealing && <Header hideSpacer />)}
 
       <main className="studio-result-main" dir="ltr">
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
@@ -197,9 +198,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
                 {siteValue(state.projectName || t('studio.result.v2.roomFallback', 'فضای شما'))}
                 {siteValue(state.targetStyle && <span className="studio-result-heading-style">، {siteValue(state.targetStyle)}</span>)}
               </h1>
-              {!conversation && <p className="studio-result-heading-description">
-                {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
-              </p>}
+              <p className="studio-result-heading-description">{t('studio.v9.intro', 'تصمیم‌هایی برای بهتر شدن فضایت؛ عناصر مناسب حفظ می‌شوند و خرید در خدمت طراحی است.')}</p>
             </div>
             <details className="studio-result-more">
               <summary>{t('studioProductLayout.more', 'بیشتر')}<ChevronDown size={16} aria-hidden="true" /></summary>
@@ -217,6 +216,12 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
               </div>
             </details>
           </div>
+          <div className="studio-v9-result-overview">
+            {journey && journey.findings.length > 0 && <span>{t('studio.v9.designCount', '{{count}} تصمیم طراحی', { count: toLocalizedDigits(journey.findings.length) })}</span>}
+            <span>{t('studio.v9.productCount', '{{count}} پیشنهاد محصول', { count: toLocalizedDigits(purchasableCount) })}</span>
+            {checklistItems.length > 0 && <span>{t('studio.v9.completionCount', '{{count}} مورد تکمیلی', { count: toLocalizedDigits(checklistItems.length) })}</span>}
+          </div>
+          {conversation && <button type="button" className="studio-v9-discuss" onClick={conversation.onOpen}><MessageSquare size={16} aria-hidden="true" />{t('studio.v9.discuss', 'نظرت یا تغییری داری؟')}</button>}
           {conversation?.status}
 
           <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={activePhase !== 'analysis'}>

@@ -17,10 +17,10 @@ export interface HomaLoadingProps {
 }
 
 const narrative: Record<LoadingMoment, { micro: string; title: string; description: string }> = {
-  comparison: { micro: 'DESIGN STUDY', title: 'هر تغییر خوب، با یک تصمیم درست شروع می‌شود.',
-    description: 'در حال بررسی فضای تو هستیم. در این فاصله، نمونه‌ای از اثر تغییرات کوچک را ببین.' },
-  moodboard: { micro: 'INSPIRATION / MATERIALS', title: 'جزئیات، حال‌وهوای فضا را می‌سازند.',
-    description: 'این مودبرد، الهامی از رنگ، بافت و نور است؛ هنوز پالت اختصاصی فضای تو نیست.' },
+  comparison: { micro: 'DESIGN STUDY', title: 'هر فضا، یک امکان تازه.',
+    description: 'در حال بررسی نیازها و ظرفیت فضای شما.' },
+  moodboard: { micro: 'INSPIRATION / MATERIALS', title: 'الهام در جزئیات.',
+    description: 'مروری بر رنگ، نور و بافت؛ الهام برای زمان انتظار.' },
   room: { micro: 'YOUR SPACE / INITIAL ANALYSIS', title: 'حالا نوبت خانهٔ خودته.',
     description: 'تحلیل اولیه آماده است. از ویژگی‌های واقعی فضایت، به مسیر طراحی می‌رسیم.' },
   decisions: { micro: 'DESIGN DECISIONS', title: 'همه‌چیز قرار نیست تغییر کند.',
@@ -34,7 +34,7 @@ function Moodboard({ active }: { active: boolean }) {
   return <figure className="homa-loading-board">
     <img className="homa-loading-board-hero" src={loadingAssets.editorial} alt={copy('فضای الهام‌بخش نمونه؛ ترکیب نور و متریال')} width={1000} height={667} loading={active ? 'eager' : 'lazy'} />
     <div className="homa-loading-board-stack">
-      {[['after', 'نورپردازی نمونه'], ['after', 'بافت پارچه در نمونه'], ['editorial', 'جزئیات متریال نمونه']].map(([asset, alt], index) =>
+      {[['after', 'نورپردازی نمونه'], ['editorial', 'جزئیات متریال نمونه']].map(([asset, alt], index) =>
         <img key={index} src={loadingAssets[asset as keyof typeof loadingAssets]} alt={copy(alt)} loading="lazy" />)}
     </div>
     <figcaption className="sr-only">{copy('الهام تصویری؛ رنگ، بافت و نور')}</figcaption>
@@ -102,15 +102,16 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
         : stageKey === 'render' ? 'در حال آماده‌سازی خروجی طراحی…' : 'در حال یافتن محصولات متناسب…');
   const story = narrative[moment];
   const retry = () => { completed.current = false; setExtended(false); setIntroduction('comparison'); onRetry(); };
+  const stageIndex = Math.max(0, ['analyze', 'design', 'search', 'render', 'finalize'].indexOf(stageKey || 'analyze'));
   return <div className="homa-loading-page homa-v9" dir="rtl">
     <main className="homa-loading-screen" aria-label={copy('روند طراحی فضای شما')} aria-busy={busy && !error} data-moment={moment} data-personal={personal}>
       <div ref={body} className="homa-loading-body" aria-hidden={ready}>
-      <header className="homa-loading-head"><div><div className="homa-loading-logo">HOMA</div><div className="homa-loading-micro">DESIGN IN PROGRESS</div></div>
+      <header className="homa-loading-head"><div className="homa-loading-micro">HOMA / DESIGN STUDIO</div>
         <div className="homa-loading-head-actions">{onDiscuss && <button type="button" onClick={onDiscuss}>{copy('گفت‌وگو')}</button>}
           {tools && <details><summary>{copy('گزینه‌ها')}</summary><div className="homa-loading-tools">{tools}</div></details>}</div>
       </header>
       <div className="homa-loading-top">
-        <div className="homa-loading-eyebrow"><span>{story.micro}</span><span>{personal ? 'YOUR PROJECT' : 'HOMA STUDIO'}</span></div>
+        <div className="homa-loading-logo">HOMA</div>
         <div className="homa-v9-loading-title">
           <h1>{copy(error ? 'این مرحله کامل نشد.' : story.title)}</h1>
           <p className="homa-loading-description">{error || copy(story.description)}</p>
@@ -130,10 +131,6 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
         <div className="homa-loading-copy">
           <div className="homa-loading-status" role="status" aria-live="polite"><i aria-hidden="true" data-running={busy && !error} /><span>{status}</span></div>
           {!error && <div className="homa-loading-detail">
-            {moment === 'comparison' && <div className="homa-loading-note"><span aria-hidden="true">01</span><p><b>{copy('یک تغییر، بدون بازسازی کامل')}</b>{copy('نمونه‌ای از اثر هماهنگی روتختی، نور و استایلینگ روی فضای موجود.')}</p></div>}
-            {moment === 'moodboard' && <div className="homa-loading-swatches" aria-label={copy('جزئیات مودبرد نمونه')}>
-              {['editorial', 'after', 'editorial', 'after', 'editorial'].map((asset, index) => <img key={index} src={loadingAssets[asset as keyof typeof loadingAssets]} alt="" loading="lazy" />)}
-            </div>}
             {personal && <div className="homa-loading-insight">
               <div className="homa-loading-insight-card" key={slide?.id || 'approach'} aria-live={paused ? 'polite' : 'off'}>
                 <span>{copy(slide?.label || 'رویکرد هما')}</span>
@@ -161,7 +158,7 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
         </div>
       </div>
       <footer className="homa-loading-bottom">
-        <div className="homa-loading-indicator" aria-hidden="true" data-running={busy && !error}><span /></div>
+        <div className="homa-loading-stages" aria-hidden="true" data-running={busy && !error}>{[0, 1, 2, 3, 4].map(index => <i key={index} data-state={index < stageIndex ? 'done' : index === stageIndex ? 'active' : 'pending'} />)}</div>
         <div className="homa-loading-footer-row"><span>{copy(error ? 'می‌توانی همین درخواست را دوباره بررسی کنی.' : hasAnalysis ? 'از شناخت فضا تا یک تغییر حساب‌شده' : 'در حال شناخت فضای شما')}</span><span>HOMA STUDIO</span></div>
         <p role={extended ? 'status' : undefined}>{copy(extended ? 'در حال تکمیل طراحی شما هستیم؛ این بار کمی بیشتر زمان می‌برد.' : 'نیازی به بارگذاری دوبارهٔ عکس نیست.')}</p>
       </footer>
