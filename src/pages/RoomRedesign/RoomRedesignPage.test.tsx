@@ -11,7 +11,7 @@ vi.mock('@/context/BasketContext', () => ({ useBasket: () => ({ basket: { shop_g
 vi.mock('./components/SessionDiagnostics', () => ({ SessionDiagnostics: () => <section data-testid="unified-report">Unified report</section> }));
 vi.mock('./components/PerformancePanel', () => ({ PerformancePanel: () => <div>Performance report</div> }));
 vi.mock('./components/workspace', () => ({ useImageActions: () => ({ modals: null }) }));
-vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal }: { resultImage: string; showOriginal: boolean }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}>Original hero</div>, MobileHeroSection: () => null }));
+vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultImage, showOriginal, onToggleOriginal }: { resultImage: string; showOriginal: boolean; onToggleOriginal: (show: boolean) => void }) => <div data-testid="hero" data-result={resultImage} data-original={showOriginal}><button onClick={() => onToggleOriginal(!showOriginal)}>Toggle comparison</button></div>, MobileHeroSection: () => null }));
 vi.mock('../Studio/components/ProductDetailSheet', () => ({ ProductDetailSheet: ({ onPreview }: { onPreview?: () => void }) => <div><button onClick={onPreview}>Preview lamp</button></div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }), siteText: (value: string) => value }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
@@ -33,31 +33,29 @@ async function mount() {
 }
 
 describe('original Studio result flow with conversation', () => {
-  it('keeps analysis visible when the output arrives, then reveals and focuses the result on request', async () => {
+  it('shows the ready reveal on completion and focuses the existing result after entering it', async () => {
     testState.processing = true;
     const ui = await mount();
     try {
-      expect(ui.container.querySelector('.studio-discovery-page')).not.toBeNull();
+      expect(ui.container.querySelector('.homa-loading-page')).not.toBeNull();
       testState.processing = false;
       await ui.render();
-      expect(ui.container.querySelector('.studio-discovery-page')).not.toBeNull();
-      expect(ui.container.textContent).toContain('طرح شما آمادهٔ دیدن است');
-      const open = Array.from(ui.container.querySelectorAll<HTMLButtonElement>('button')).find(button => button.textContent === 'دیدن تصویر و پیشنهادها')!;
-      await act(async () => open.click());
-      expect(ui.container.querySelector('.studio-discovery-page')).toBeNull();
+      expect(ui.container.querySelector('.homa-result-reveal')).not.toBeNull();
+      expect(ui.container.querySelector('.homa-loading-page')).toBeNull();
       const result = ui.container.querySelector('.studio-result-arrival');
       expect(result).not.toBeNull();
       expect(document.activeElement).toBe(result?.querySelector('h1'));
+      expect(testState.send).not.toHaveBeenCalled();
     } finally { testState.processing = false; await ui.cleanup(); }
   });
-  it('shows the original photo and initial loader immediately after intake instead of flashing a completed result', async () => {
+  it('opens sample inspiration after intake and keeps the private photo hidden until analysis', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     testState.starting = true; testState.send.mockClear();
     const container = document.createElement('div'), root = createRoot(container);
     try {
       await act(async () => root.render(<MemoryRouter initialEntries={['/studio']}><Routes><Route path="/studio" element={<RoomRedesignPage initialIntake={{ image: { dataUrl: 'data:image/jpeg;base64,original', width: 1200, height: 900, source: 'gallery' }, goals: [], createdAt: 'now' }} />} /></Routes></MemoryRouter>));
-      expect(container.querySelector('.studio-initial-loading')).not.toBeNull();
-      expect(container.querySelector('.studio-discovery-photo img')?.getAttribute('src')).toBe('data:image/jpeg;base64,original');
+      expect(container.querySelector('.homa-loading-screen[data-moment=comparison]')).not.toBeNull();
+      expect(container.querySelector('[src="data:image/jpeg;base64,original"]')).toBeNull();
       expect(container.querySelector('.studio-invoice')).toBeNull();
     } finally { await act(async () => root.unmount()); testState.starting = false; testState.send.mockClear(); }
   });
@@ -133,12 +131,18 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.studio-invoice')?.textContent).toContain('هنوز محصولی انتخاب نکردید');
     } finally { await ui.cleanup(); fixturePlan.free_actions = []; fixturePlan.surface_actions = []; }
   });
-  beforeEach(() => { testState.starting = false; testState.failed = false; testState.processing = false; testState.send.mockClear(); sessionStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }); vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
+  beforeEach(() => {
+    class ReadyImage { naturalWidth = 800; onload?: () => void; onerror?: () => void; decode = async () => {}; set src(_value: string) { queueMicrotask(() => this.onload?.()); } }
+    vi.stubGlobal('Image', ReadyImage);
+    testState.starting = false; testState.failed = false; testState.processing = false; testState.send.mockClear(); sessionStorage.clear(); localStorage.clear(); vi.spyOn(window, 'scrollTo').mockImplementation(() => {}); Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() }); vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
   it('preserves the generated image behind the original-image comparison', async () => {
     const ui = await mount();
     try {
       expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-result')).toBe('render.jpg');
+      expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-original')).toBe('false');
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('[data-testid=hero] button')!.click());
       expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-original')).toBe('true');
+      expect(ui.container.querySelector('[data-testid=hero]')?.getAttribute('data-result')).toBe('render.jpg');
     } finally { await ui.cleanup(); }
   });
   it('keeps the analysis and products available when image generation failed', async () => {
@@ -155,21 +159,22 @@ describe('original Studio result flow with conversation', () => {
       expect(document.querySelector('[role=dialog]')).toBeNull();
     } finally { await ui.cleanup(); testState.failed = false; }
   });
-  it('reviews a first analysis during rendering and does not jump away when the image arrives', async () => {
+  it('keeps the real job loading until rendering finishes, then preserves result sections', async () => {
     testState.processing = true;
     const ui = await mount();
     try {
-      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
+      expect(ui.container.querySelector('.homa-loading-page')).not.toBeNull();
       expect(ui.container.querySelector('.studio-invoice')).toBeNull();
       testState.processing = false;
       await ui.render();
-      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
-      await act(async () => Array.from(ui.container.querySelectorAll('button')).find(button => button.textContent === 'دیدن تصویر و پیشنهادها')!.click());
+      expect(ui.container.querySelector('.homa-result-reveal')).not.toBeNull();
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('.homa-result-reveal-skip')!.click());
+      expect(ui.container.querySelector('.homa-loading-page')).toBeNull();
       expect(ui.container.querySelector('#section-products')?.hasAttribute('hidden')).toBe(false);
       expect(ui.container.querySelector('#section-analysis')?.hasAttribute('hidden')).toBe(true);
       expect(ui.container.querySelector('#section-basket')?.hasAttribute('hidden')).toBe(true);
       expect(testState.send).not.toHaveBeenCalled();
-    } finally { await ui.cleanup(); }
+    } finally { testState.processing = false; await ui.cleanup(); }
   });
   it('opens one drawer, preserves an unsent draft, and closes without sending', async () => {
     testState.send.mockClear();

@@ -78,3 +78,11 @@
 
 /* Discovery keeps the room and analysis in view on desktop as well as mobile. */
 .studio-conversation-drawer[data-floating=true] { position:fixed; inset-inline:0; bottom:var(--studio-keyboard-offset,0px); height:min(82dvh,900px); max-height:var(--studio-visible-height,100dvh); min-height:0; border-radius:var(--radius-2xl) var(--radius-2xl) 0 0; box-shadow:var(--shadow-xl); }
+
+/* The current project stays primary; snapshots are an optional archive. */
+.studio-result-history { font-size: 12px; color: #68635d; }
+.studio-result-history summary { cursor: pointer; padding: 8px 0; }
+.studio-result-history .studio-result-version-row { padding-block: 8px; }
+.studio-project-removed { font-size: 12px; color: #776b60; margin: 4px 0; }
+.studio-product-change { display: inline-flex; align-self: flex-start; width: fit-content; padding: 3px 8px; margin-block: 3px; border-radius: 4px; background: #eef1e8; color: #4a5b3d; font-size: 10px; line-height: 1.5; }
+.studio-product-change[data-change="changed"] { background: #f2eadf; color: #795c35; }

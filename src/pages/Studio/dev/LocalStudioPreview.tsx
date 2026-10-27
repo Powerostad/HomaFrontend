@@ -9,6 +9,8 @@ import type { BackendProduct, ExecutionPlan } from '../../RoomRedesign/services/
 import type { ChatMessage } from '../../RoomRedesign/types';
 import '../../RoomRedesign/studio-conversation.css';
 import { StudioDiscovery } from '../../RoomRedesign/components/StudioDiscovery';
+import { journeyFindings } from '../../RoomRedesign/services/resultJourney';
+import type { StudioMotherDocument } from '../../RoomRedesign/services/motherDocument';
 import { studioV2Fixture } from './studioV2Fixture';
 
 // Illustrative data only. Never represents an account, quote or model result.
@@ -32,8 +34,25 @@ const legacyPlan: ExecutionPlan = {
   known_subtotal_rial: 159400000, budget_ceiling_toman: null, budget_status: 'sample', unknown_cost_item_ids: ['light'],
 };
 
-export default function LocalStudioPreview() {
-  const plan = new URLSearchParams(window.location.search).get('preview') === 'v2' ? studioV2Fixture : legacyPlan;
+export default function LocalStudioPreview({ journeyStart = false }: { journeyStart?: boolean } = {}) {
+  const preview = new URLSearchParams(window.location.search).get('preview');
+  const [edited, setEdited] = useState(preview === 'changes');
+  const basePlan: ExecutionPlan = preview === 'v2' ? studioV2Fixture : edited ? {
+    ...legacyPlan, purchases: [
+      { ...legacyPlan.purchases[0], product: legacyPlan.purchases[0].alternatives[0], alternatives: [legacyPlan.purchases[0].product!] },
+      legacyPlan.purchases[1],
+      { item_id: 'curtain', quantity: 1, category: 'پرده', relation: 'sample', reason_fa: 'پردهٔ روشن برای نور ملایم',
+        product: product(6, 'پردهٔ کتانی شیری', 'پرده', 12000000, '/images/studio/preset-warm-living.webp'), alternatives: [] },
+    ],
+  } : legacyPlan;
+  const plan: ExecutionPlan = preview === 'integrated' ? { ...basePlan, studio_documents: { room: {
+    room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'walkway', evidence: 'در این نمونه، میز به مسیر رفت‌وآمد نزدیک است.' }] } },
+    existing_items_decision: [
+      { existing_item_id: 'sofa', item_name: 'مبل نشیمن', decision: 'keep', action_instruction: 'مبل نمونه در جای خود حفظ شود.', decision_reason: 'رنگ و مقیاس آن با ترکیب پیشنهادی هماهنگ است.' },
+      { existing_item_id: 'table', item_name: 'میز جلو مبلی', decision: 'move', related_issue_ids: ['walkway'], action_instruction: 'در نمونه، میز کمی به مرکز نشیمن منتقل شود.', decision_reason: 'مسیر ورود بازتر می‌شود.' },
+    ],
+    product_recommendations: [{ item_id: 'rug', product_name_generic: 'فرش', why_needed: 'در این نمونه، بافت روشن محدودهٔ نشیمن را منسجم می‌کند.', placement_instruction: 'پایه‌های جلویی مبل روی فرش قرار بگیرند.', shopping_attributes: { replace_existing: true } }],
+  } as unknown as StudioMotherDocument } } : basePlan;
   const { t } = useTranslation();
   const compact = useMediaQuery('(max-width: 1199px)');
   const [open, setOpen] = useState(false);
@@ -43,7 +62,7 @@ export default function LocalStudioPreview() {
   const [notice, setNotice] = useState('');
   const [demoPhase, setDemoPhase] = useState<'loading' | 'review' | 'result'>(() => new URLSearchParams(window.location.search).get('preview') === 'loading' ? 'loading' : 'result');
   const openChat = () => setOpen(true);
-  const state = useConversationStudioResult({ plan, sessionId: 'local-ui-preview', versionId: 'sample-v1',
+  const state = useConversationStudioResult({ plan, previousPlan: edited ? legacyPlan : null, sessionId: 'local-ui-preview', versionId: 'sample-v1',
     resultImage: '/images/studio/preset-warm-living.webp', originalImage: '/images/studio/preset-modern-living.webp',
     showOriginal: original, onToggleOriginal: setOriginal, onOpenChat: openChat });
   const append = (text: string) => {
@@ -52,7 +71,7 @@ export default function LocalStudioPreview() {
     setNotice(t('studioLocal.noModel'));
   };
   if (demoPhase !== 'result') return <StudioDiscovery plan={demoPhase === 'review' ? plan : null} originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={demoPhase === 'loading'} error={null} resultAvailable={demoPhase === 'review'} onRetry={() => {}} onNew={() => setDemoPhase('result')} onDiscuss={openChat} onComplete={() => setDemoPhase('result')} tools={<Button variant="outline" onClick={() => setDemoPhase(demoPhase === 'loading' ? 'review' : 'result')}>{t('studioLocal.hint')} · {demoPhase === 'loading' ? 'نمایش تحلیل نمونه' : 'نمایش نتیجه نمونه'}</Button>} />;
-  return <StudioResultView state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
+  return <StudioResultView journey={preview === 'integrated' ? { key: 'local-integrated-preview-' + (new URLSearchParams(window.location.search).get('run') || 'one'), start: journeyStart, findings: journeyFindings(plan) } : undefined} state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
     open, compact, onOpen: openChat, onClose: () => setOpen(false), onExit: () => setNotice(t('studioLocal.hint')),
     busy: false, priceUnknown: true, onImageError: () => setNotice(t('studioLocal.imageError')),
     onPreview: () => setNotice(t('studioLocal.noModel')),
@@ -60,7 +79,7 @@ export default function LocalStudioPreview() {
     panel: <StudioConversationDrawer open={open} onOpenChange={setOpen} compact={compact}
       messages={messages} chipGroups={[]} busy={false} statusText="" value={input} onChange={setInput}
       onSend={() => { append(input); setInput(''); }} onSelectChip={() => {}} />,
-    toolbar: <p>{t('studioLocal.hint')}</p>,
+    toolbar: <div><p>{t('studioLocal.hint')}</p><Button variant="outline" onClick={() => setEdited(value => !value)}>پیش‌نمایش ویرایش: تغییر میز، افزودن پرده و حذف روشنایی</Button></div>,
     status: <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div>,
     details: <p>{t('studioLocal.analysis')}</p>,
     afterReport: <><details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,

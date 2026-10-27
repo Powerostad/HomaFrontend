@@ -30,7 +30,7 @@ async function mount(currentPlan = plan) {
     return null;
   }
   await act(async () => root.render(<MemoryRouter><Harness /></MemoryRouter>));
-  return { get state() { return state!; }, unmount: async () => act(async () => root.unmount()) };
+  return { get state() { return state!; }, update: async (next: ExecutionPlan) => { currentPlan = next; await act(async () => root.render(<MemoryRouter><Harness /></MemoryRouter>)); }, unmount: async () => act(async () => root.unmount()) };
 }
 
 describe('conversation data in the original Studio', () => {
@@ -51,6 +51,25 @@ describe('conversation data in the original Studio', () => {
       expect(basket.addItem).toHaveBeenCalledExactlyOnceWith({ product_unique_link: 'lamp-7', source_context: 'studio', quantity: 2 });
       expect(basket.openBasket).toHaveBeenCalledOnce();
     } finally { await ui.unmount(); }
+  });
+  it('keeps product card identity and quantity when a preceding recommendation is removed', async () => {
+    const initial = { ...plan, purchases: [{ ...plan.purchases[0], item_id: 'first', product: { product_id: 1, name: 'First' } }, plan.purchases[0]] };
+    const ui = await mount(initial);
+    try {
+      const lampId = ui.state.categoryGroups.find(group => group.workspaceKey === 'lamp|')!.itemId;
+      await act(async () => ui.state.updateItemQuantity(lampId, 4));
+      await ui.update({ ...plan, purchases: [plan.purchases[0]] });
+      expect(ui.state.categoryGroups[0].itemId).toBe(lampId);
+      expect(ui.state.categoryGroups[0].quantity).toBe(4);
+      await ui.update({ ...plan, purchases: [{ ...plan.purchases[0], quantity: 3 }] });
+      expect(ui.state.categoryGroups[0].quantity).toBe(3);
+      expect(ui.state.categoryGroups.flatMap(g => g.products).some(p => p.name === 'First')).toBe(false);
+    } finally { await ui.unmount(); }
+  });
+  it('keeps incomplete validated documents usable without manufacturing summary content', async () => {
+    const ui = await mount({ ...plan, studio_documents: { room: { room_analysis: {} } } as unknown as ExecutionPlan['studio_documents'] });
+    try { expect(ui.state.categoryGroups.length).toBeGreaterThan(0); expect(ui.state.diagnosisDetail).toBe(''); }
+    finally { await ui.unmount(); }
   });
   it('restores staged choices after remount without automatically adding them to the server', async () => {
     const first = await mount();

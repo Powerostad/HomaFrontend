@@ -75,6 +75,7 @@ function ProductPreview({
       </button>
       <div className="studio-product-copy" dir={siteDirection()}>
         <span className="studio-product-category">{siteValue(product.category || group.category)}</span>
+        {isPrimary && group.changeKind && <span className="studio-product-change" data-change={group.changeKind}>{t(group.changeKind === 'added' ? 'studioProject.productAdded' : 'studioProject.productChanged', group.changeKind === 'added' ? 'اضافه‌شده' : 'تغییرکرده')}</span>}
         <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
         <div className="studio-product-meta">
           <span className="studio-price">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
@@ -141,6 +142,7 @@ export function RecommendationCard({
       tabIndex={-1}
     >
       {isActionItem && <header className="studio-recommendation-header">
+        {group.changeKind && <span className="studio-product-change" data-change={group.changeKind}>{t(group.changeKind === 'added' ? 'studioProject.productAdded' : 'studioProject.productChanged', group.changeKind === 'added' ? 'اضافه‌شده' : 'تغییرکرده')}</span>}
         <button type="button" className="studio-details-toggle studio-why-button" onClick={onToggleWhy} aria-expanded={isWhyExpanded} aria-controls={`recommendation-detail-${group.itemId}`}>
           <span>{t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span>
           <ChevronDown className={isWhyExpanded ? 'is-open' : ''} size={16} />

@@ -208,3 +208,22 @@ body:has(.studio-selection-sheet) [data-slot="dialog-overlay"] { z-index: var(--
 @media (max-width: 767px) {
   .studio-selection-sheet[data-slot="dialog-content"] { top: auto; bottom: 0; left: 0; width: 100%; max-width: none; max-height: 88dvh; transform: none; translate: none; animation: none; border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
 }
+
+/* Merchant information stays separate from design reasoning and vision data. */
+.studio-merchant-gallery { background: var(--color-surface-page); }
+.studio-merchant-gallery:focus-visible { outline: 2px solid var(--color-content-primary); outline-offset: -2px; }
+.studio-merchant-gallery-controls { display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) var(--space-4); font-size: var(--text-xs); }
+.studio-merchant-gallery-controls button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-full); background: var(--color-surface-default); }
+.studio-merchant-thumbnails { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) var(--space-4) var(--space-4); }
+.studio-merchant-thumbnails button { flex: 0 0 64px; width: 64px; height: 76px; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); padding: 3px; background: var(--color-surface-default); }
+.studio-merchant-thumbnails button[aria-pressed="true"] { border: 2px solid var(--color-content-primary); }
+.studio-merchant-thumbnails img { width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-sm); }
+.studio-merchant-section { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--color-border-subtle); }
+.studio-merchant-section h3 { margin-bottom: var(--space-3); font-size: var(--text-sm); font-weight: 600; }
+.studio-merchant-specifications { margin: 0; font-size: var(--text-sm); }
+.studio-merchant-specifications > div { display: grid; grid-template-columns: minmax(90px, 0.8fr) minmax(0, 1.4fr); gap: var(--space-3); padding: var(--space-3); line-height: 1.9; }
+.studio-merchant-specifications > div:nth-child(odd) { background: var(--color-surface-page); border-radius: var(--radius-sm); }
+.studio-merchant-specifications dt { color: var(--color-content-secondary); }
+.studio-merchant-specifications dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.studio-selection-sheet-copy .studio-merchant-description { white-space: pre-line; line-height: 2; color: var(--color-content-primary); }
+.studio-merchant-error { margin-top: var(--space-4); }

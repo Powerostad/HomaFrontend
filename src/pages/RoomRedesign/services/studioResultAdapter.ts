@@ -1,10 +1,12 @@
 import type { Product } from '../../Studio/components/ProductDetailSheet';
 import type { CategoryGroup } from '../../Studio/result/types';
 import type { ExecutionPlan } from './redesignChatService';
+import { planChanges, purchaseKey } from './planChanges';
 
 /** Adapt data only: the original Studio owns every result component and layout. */
-export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGroup[] {
+export function toStudioCategoryGroups(plan: ExecutionPlan | null, previousPlan: ExecutionPlan | null = null): CategoryGroup[] {
   if (!plan) return [];
+  const changes = planChanges(plan, previousPlan);
   const purchases: CategoryGroup[] = plan.purchases.map((item, index) => {
     const mother = item.mother_product;
     const impact = mother?.scores?.impact_score;
@@ -24,7 +26,7 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
         purchaseStatus: plan.search_version && !item.product ? 'needs_verification' : product.candidate?.purchase_status,
         image: product.image_url || '', price: price ?? 0, priceUnknown: price == null || price <= 0,
         category: product.category_fa || item.category, store: product.merchant_name,
-        description: product.description || product.ai_description,
+        description: product.description,
         // match_notes are search diagnostics, not customer-facing design guidance.
         persianReason: item.reason_fa || mother?.why_needed,
         uniqueLink: product.unique_link,
@@ -33,6 +35,8 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
     });
     const placement = (plan.search_version ? item.placement_instruction_fa : mother?.placement_instruction) || item.placement_instruction_fa || '';
     return {
+      sourcingSpecs: item.sourcing_guidance?.specifications_fa,
+      workspaceKey: purchaseKey(item), changeKind: changes.badges.get(purchaseKey(item)),
       itemId: index + 1, category: item.category, categoryDisplay: mother?.product_name_generic || item.category,
       recommendationReasonFa: item.reason_fa || mother?.why_needed || '',
       designRationaleFa: placement || mother?.why_needed || '', recommendedSize: '',
@@ -47,6 +51,7 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null): CategoryGrou
   const actions: CategoryGroup[] = [...plan.free_actions.map(action => ({ reason: action.reason_fa, instruction: action.instruction_fa, kind: 'layout' as const })),
     ...plan.surface_actions.map(action => ({ reason: '', instruction: action.change_fa, kind: 'service' as const }))].map((action, index) => ({
     itemId: purchases.length + index + 1, category: 'action', categoryDisplay: action.instruction,
+    workspaceKey: `action:${action.kind}:${action.instruction}`,
     recommendationReasonFa: action.reason, designRationaleFa: action.instruction,
     recommendedSize: '', quantity: 1, placements: [], positionInImage: null, products: [],
     actionStatus: 'architectural', interventionTier: action.kind === 'service' ? 'structural' : 'enhancement', impactLevel: 'low', impactKnown: false,

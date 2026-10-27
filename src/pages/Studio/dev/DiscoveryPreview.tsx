@@ -19,16 +19,18 @@ const plan: ExecutionPlan = { purchases: [], free_actions: [], surface_actions: 
 type Phase = 'loading' | 'review' | 'ready' | 'error' | 'result';
 export default function DiscoveryPreview() {
   const { siteText: copy } = useSiteTranslation();
+  const [journeyStart, setJourneyStart] = useState(false);
+  const integrated = new URLSearchParams(window.location.search).get('preview') === 'integrated';
   const [phase, setPhase] = useState<Phase>(() => {
     const requested = new URLSearchParams(window.location.search).get('state');
     return requested === 'review' || requested === 'ready' || requested === 'error' ? requested : 'loading';
   });
-  if (phase === 'result') return <div className="studio-result-arrival"><LocalStudioPreview /></div>;
+  if (phase === 'result') return <div className="studio-result-arrival"><LocalStudioPreview journeyStart={journeyStart} /></div>;
   return <StudioDiscovery key={phase === 'loading' ? 'loading' : 'review'} plan={phase === 'loading' ? null : plan} analysisPreview={phase === 'loading' ? null : analysis}
     originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={phase === 'loading' || phase === 'review'}
-    error={phase === 'error' ? copy('خطای نمونه؛ هیچ مدل یا سرویس تولید تصویری اجرا نشده است.') : null} resultAvailable={phase === 'ready'}
+    error={phase === 'error' ? copy('خطای نمونه؛ هیچ مدل یا سرویس تولید تصویری اجرا نشده است.') : null} autoRevealImage={integrated && phase === 'ready' ? '/images/studio/preset-warm-living.webp' : null} resultAvailable={phase === 'ready'}
     stage={copy(phase === 'loading' ? 'پیش‌نمایش: در حال شناخت فضا' : 'پیش‌نمایش: در حال آماده‌سازی خروجی')}
-    onRetry={() => setPhase('review')} onComplete={() => setPhase('result')} onNew={() => setPhase('loading')} onDiscuss={() => {}}
+    onRetry={() => setPhase('review')} onComplete={automatic => { setJourneyStart(!!automatic); setPhase('result'); }} onNew={() => setPhase('loading')} onDiscuss={() => {}}
     tools={<div className="grid gap-3"><p>{copy('پیش‌نمایش رابط؛ بدون اجرای مدل و بدون هزینهٔ تحلیل یا تصویر')}</p>{([
       ['loading', 'لودینگ اولیه'], ['review', 'تحلیل فضا'], ['ready', 'خروجی آماده'], ['error', 'نمایش خطا'],
     ] as const).map(([id, label]) => <button className="min-h-11 border p-3" key={id} type="button" onClick={() => setPhase(id)}>{copy(label)}</button>)}</div>} />;

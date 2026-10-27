@@ -1120,5 +1120,11 @@
     "subtitle": "Please read these terms carefully before using HOMA services.",
     "lastUpdate": "Last updated: January 2026",
     "contactUs": "Contact us"
+  },
+  "studioProject": {
+    "current": "Current design",
+    "productAdded": "Added",
+    "productChanged": "Updated",
+    "removed": "Removed from this design"
   }
 }

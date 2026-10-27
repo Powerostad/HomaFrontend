@@ -1,183 +1,206 @@
 // @vitest-environment jsdom
 import { act, type ComponentProps } from 'react';
 import { createRoot } from 'react-dom/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StudioDiscovery } from './StudioDiscovery';
-import type { ExecutionPlan } from '../services/redesignChatService';
 
-vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
 vi.mock('@/components/figma/AuthenticatedImage', () => ({ AuthenticatedImage: (props: { src: string; alt: string }) => <img {...props} /> }));
-vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (value: string) => value, siteValue: (value: unknown) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }) }));
-const source: ExecutionPlan = { purchases: [], free_actions: [
-  { reason_fa: 'نور طبیعی فضا مناسب است.', instruction_fa: 'صندلی را نزدیک پنجره بگذار.' },
-  { reason_fa: 'مسیر رفت‌وآمد باریک است.', instruction_fa: 'میز را از مسیر ورودی کنار ببر.' },
-], surface_actions: [], known_subtotal_rial: 0, budget_ceiling_toman: null, budget_status: 'incomplete', unknown_cost_item_ids: [] };
-
+vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (value: string) => value }) }));
+const plan = { purchases: [], free_actions: [{ reason_fa: 'Observed reason', instruction_fa: 'Actual move instruction' }],
+  surface_actions: [], known_subtotal_rial: 0, budget_ceiling_toman: null, budget_status: 'incomplete', unknown_cost_item_ids: [] };
 async function mount(overrides: Partial<ComponentProps<typeof StudioDiscovery>> = {}) {
-  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  const container = document.createElement('div'); document.body.append(container);
-  const root = createRoot(container);
-  let props: ComponentProps<typeof StudioDiscovery> = { plan: source, originalImage: 'room.jpg', sessionId: 'room', busy: true, error: null, resultAvailable: true,
-    onRetry: vi.fn(), onComplete: vi.fn(), onNew: vi.fn(), onDiscuss: vi.fn(), ...overrides };
+  const container = document.createElement('div'); document.body.append(container); const root = createRoot(container);
+  let props: ComponentProps<typeof StudioDiscovery> = { plan: null, originalImage: 'private-room.jpg', sessionId: 'job-a',
+    busy: true, error: null, resultAvailable: false, onRetry: vi.fn(), onComplete: vi.fn(), onNew: vi.fn(), onDiscuss: vi.fn(), ...overrides };
   const render = async (update: Partial<typeof props> = {}) => { props = { ...props, ...update }; await act(async () => root.render(<StudioDiscovery {...props} />)); };
   await render();
-  const click = async (label: string) => act(async () => { Array.from(container.querySelectorAll('button')).find(button => button.textContent === label)!.click(); });
-  return { container, props, render, click, cleanup: async () => { await act(async () => root.unmount()); container.remove(); } };
+  return { container, get props() { return props; }, render, cleanup: async () => { await act(async () => root.unmount()); container.remove(); } };
 }
-beforeEach(() => { vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; }); });
-describe('one-finding discovery', () => {
-  it('shows accepted analysis while design and product search have not completed', async () => {
-    const ui = await mount({ plan: null, resultAvailable: false });
-    try {
-      const reading = ui.container.querySelector<HTMLElement>('.studio-discovery-reading')!;
-      reading.scrollTop = 200;
-      await ui.render({ analysisPreview: { studio_documents: { img0: {
-        room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'issue1', evidence: 'مسیر کنار مبل باریک است.' }] } },
-        user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
-      } } }, stage: 'در حال طراحی تغییرات' });
-      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
-      expect(ui.container.textContent).toContain('نور طبیعی خوب است.');
-      expect(ui.container.textContent).not.toContain('مسیر کنار مبل باریک است.');
-      await ui.click('مرور نکته‌های فضا');
-      expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
-      expect(reading.scrollTop).toBe(0);
-      expect(ui.props.onComplete).not.toHaveBeenCalled();
-      await ui.render({ plan: source, busy: true });
-      expect(ui.container.textContent).toContain('مسیر کنار مبل باریک است.');
-    } finally { await ui.cleanup(); }
-  });
-  it('replaces initial analysis loading with the terminal error and an explicit retry', async () => {
-    const ui = await mount({ plan: null, resultAvailable: false });
-    try {
-      expect(ui.container.querySelector('.studio-initial-loading')).not.toBeNull();
-      await ui.render({ busy: false, error: 'پاسخ مدل با قواعد طراحی سازگار نبود.' });
-      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
-      expect(ui.container.textContent).toContain('پاسخ مدل با قواعد طراحی سازگار نبود.');
-      expect(ui.props.onRetry).not.toHaveBeenCalled();
-      await ui.click('تلاش دوباره');
-      expect(ui.props.onRetry).toHaveBeenCalledOnce();
-    } finally { await ui.cleanup(); }
-  });
-  it('shows no invented findings before the saved analysis arrives', async () => {
-    const ui = await mount({ plan: null });
-    try {
-      expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull();
-      expect(ui.container.querySelector('.studio-initial-loading[aria-busy=true]')).not.toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-main[data-view=initial]')).not.toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-photo img')?.getAttribute('src')).toBe('room.jpg');
-      expect(ui.container.querySelector('.studio-discovery-tip')).toBeNull();
-      expect(ui.container.querySelectorAll('.studio-discovery-steps li')).toHaveLength(3);
-      expect(ui.container.querySelector('[role=progressbar]')).toBeNull();
-      expect(ui.props.onComplete).not.toHaveBeenCalled();
-      await ui.render({ stage: 'مرحلهٔ واقعی سرویس', plan: null });
-      expect(ui.container.querySelector('[role=status]')?.textContent).toBe('مرحلهٔ واقعی سرویس');
-      await ui.render({ plan: source });
-      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-finding')).not.toBeNull();
-    }
-    finally { await ui.cleanup(); }
-  });
-  it('only shows the current finding and allows back navigation without sending anything', async () => {
+beforeEach(() => {
+  vi.useFakeTimers(); (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1)); vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+});
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+const advance = async (ms: number) => act(async () => { vi.advanceTimersByTime(ms); });
+describe('production V5 discovery integration', () => {
+  it('opens with the sample and makes moodboard the second moment; no private photo before analysis', async () => {
     const ui = await mount();
     try {
-      expect(ui.container.textContent).toContain(source.free_actions[0].instruction_fa);
-      expect(ui.container.textContent).not.toContain(source.free_actions[1].instruction_fa);
-      await ui.click('نکتهٔ بعدی');
-      expect(ui.container.textContent).toContain(source.free_actions[1].instruction_fa);
-      expect(ui.container.textContent).not.toContain(source.free_actions[0].instruction_fa);
-      await ui.click('قبلی');
-      expect(ui.container.textContent).toContain(source.free_actions[0].instruction_fa);
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('comparison');
+      expect(ui.container.querySelector('[src="private-room.jpg"]')).toBeNull();
+      expect(ui.container.textContent).toContain('پروژهٔ نمونه');
+      await advance(8000);
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('moodboard');
+      await advance(180000);
+      expect(ui.container.querySelector('[src="private-room.jpg"]')).toBeNull();
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      expect(ui.container.textContent).toContain('کمی بیشتر زمان می‌برد');
+      expect(ui.container.querySelector('[role="progressbar"]')).toBeNull();
+    } finally { await ui.cleanup(); }
+  });
+  it('reveals actual analysis after moodboard, and separately shows genuine decisions', async () => {
+    const ui = await mount();
+    try {
+      await ui.render({ analysisPreview: { studio_documents: { room: { user_facing_summary: { positive_diagnosis: 'Real saved insight' } } } } });
+      expect(ui.container.querySelector('[src="private-room.jpg"]')).toBeNull();
+      await advance(8000); await advance(1800);
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('room');
+      expect(ui.container.querySelector('[src="private-room.jpg"]')).not.toBeNull();
+      expect(ui.container.textContent).toContain('Real saved insight');
+      await ui.render({ plan, stageKey: 'search' });
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('decisions');
+      await advance(7000);
+      expect(ui.container.textContent).toContain('Actual move instruction');
+      await ui.render({ stageKey: 'render' });
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('finishing');
       expect(ui.props.onComplete).not.toHaveBeenCalled();
     } finally { await ui.cleanup(); }
   });
-  it('does not interrupt reading when the result arrives', async () => {
+  it('immediately reveals the real ready moment, then opens the result once on request', async () => {
     const ui = await mount();
-    try { await ui.render({ busy: false }); expect(ui.props.onComplete).not.toHaveBeenCalled(); await ui.click('دیدن تصویر و پیشنهادها'); expect(ui.props.onComplete).toHaveBeenCalledOnce(); }
-    finally { await ui.cleanup(); }
-  });
-  it('reveals the first impression before individual findings, without gating a ready result', async () => {
-    const ui = await mount({ analysisPreview: { studio_documents: { room: { user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' } } } } });
     try {
-      expect(ui.container.querySelector('.studio-discovery-introduction')).not.toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-finding')).toBeNull();
-      await ui.render({ busy: false });
-      expect(ui.container.textContent).toContain('طرح شما آمادهٔ دیدن است');
-      expect(ui.container.querySelector('.studio-discovery-introduction')).not.toBeNull();
+      await ui.render({ plan, busy: false, resultAvailable: true });
+      expect(ui.container.querySelector('[role="dialog"]')?.textContent).toContain('طرح فضای تو آماده است.');
       expect(ui.props.onComplete).not.toHaveBeenCalled();
-      await ui.click('دیدن تصویر و پیشنهادها');
+      expect(ui.container.querySelector('.homa-loading-body')?.hasAttribute('inert')).toBe(true);
+      const button = [...ui.container.querySelectorAll('button')].find(item => item.textContent?.includes('دیدن طرح من'))!;
+      await act(async () => { button.click(); button.click(); });
+      expect(ui.props.onComplete).toHaveBeenCalledOnce();
+      await advance(150000); await ui.render();
       expect(ui.props.onComplete).toHaveBeenCalledOnce();
     } finally { await ui.cleanup(); }
   });
-  it('keeps the selected insight when later design instructions arrive and supports returning to the overview', async () => {
-    const preview = { studio_documents: { room: {
-      user_facing_summary: { positive_diagnosis: 'نور طبیعی خوب است.' },
+  it('reveals findings individually even with a summary, pairs their fixes, and retains the room during rendering', async () => {
+    const ui = await mount({ analysisPreview: { studio_documents: { room: {
+      user_facing_summary: { positive_diagnosis: 'Actual room strength' },
       room_analysis: { layout_evaluation: { layout_issues: [
-        { issue_id: 'a', evidence: 'مسیر باریک است.' }, { issue_id: 'b', evidence: 'فرش کوچک است.' },
-      ] } },
-    } } };
-    const ui = await mount({ plan: null, analysisPreview: preview });
+        { issue_id: 'one', evidence: 'First actual finding' }, { issue_id: 'two', evidence: 'Second actual finding' },
+      ] } }, layout_fix_plan: [{ resolves_issue_id: 'one', specific_instruction: 'First matching fix' }],
+    } } } });
     try {
-      await ui.click('مرور نکته‌های فضا');
-      await ui.click('نکتهٔ بعدی');
-      await ui.render({ plan: { ...source, studio_documents: { room: { ...preview.studio_documents.room,
-        layout_fix_plan: [{ resolves_issue_id: 'b', specific_instruction: 'فرش بزرگ‌تر انتخاب کن.' }],
-      } } as unknown as ExecutionPlan['studio_documents'] } });
-      expect(ui.container.textContent).toContain('فرش کوچک است.');
-      expect(ui.container.textContent).toContain('فرش بزرگ‌تر انتخاب کن.');
-      expect(ui.container.querySelector('.studio-discovery-introduction')).toBeNull();
-      await ui.click('بازگشت به برداشت اول');
-      expect(ui.container.textContent).toContain('نور طبیعی خوب است.');
+      await advance(8000); await advance(1800);
+      const text = () => ui.container.querySelector('.homa-loading-insight-card')?.textContent;
+      expect(text()).toContain('Actual room strength');
+      expect(text()).not.toContain('First actual finding');
+      await advance(7000);
+      expect(text()).toContain('First actual finding'); expect(text()).toContain('First matching fix');
+      expect(text()).not.toContain('Second actual finding');
+      await ui.render({ stageKey: 'render' });
+      expect(ui.container.querySelector('[src="private-room.jpg"]')).not.toBeNull();
+      expect(ui.container.querySelector('.homa-loading-personal .homa-loading-caption')).toBeNull();
+      const pause = [...ui.container.querySelectorAll('button')].find(button => button.textContent === 'توقف نمایش')!;
+      await act(async () => pause.click()); await advance(14000);
+      expect(text()).toContain('First actual finding');
+      const next = [...ui.container.querySelectorAll('button')].find(button => button.textContent === 'نکتهٔ بعدی')!;
+      await act(async () => next.click()); expect(text()).toContain('Second actual finding');
       expect(ui.props.onComplete).not.toHaveBeenCalled();
     } finally { await ui.cleanup(); }
   });
-  it('opens the result when ready only after the user explicitly chose to skip/wait', async () => {
-    const ui = await mount();
-    try { await ui.click('مستقیم به نتیجه'); expect(ui.props.onComplete).not.toHaveBeenCalled(); await ui.render({ busy: false }); expect(ui.props.onComplete).toHaveBeenCalledOnce(); }
-    finally { await ui.cleanup(); }
-  });
-  it('keeps a failed image recoverable and allows opening the saved suggestions', async () => {
-    const ui = await mount({ busy: false, error: 'تصویر آماده نشد.' });
-    try { await ui.click('تلاش دوباره'); expect(ui.props.onRetry).toHaveBeenCalledOnce(); await ui.click('دیدن پیشنهادهای آماده'); expect(ui.props.onComplete).toHaveBeenCalledOnce(); }
-    finally { await ui.cleanup(); }
-  });
-  it('retains the waiting error instead of automatically hiding it behind the result', async () => {
+  it('does not complete on an error; retries are explicit and reset the presentation', async () => {
     const ui = await mount();
     try {
-      await ui.click('مستقیم به نتیجه');
-      await ui.render({ busy: false, error: 'خطای خروجی', resultAvailable: false });
-      expect(ui.props.onComplete).not.toHaveBeenCalled();
-      expect(ui.container.querySelector('[role=alert]')?.textContent).toContain('خطای خروجی');
-      expect(ui.props.onRetry).not.toHaveBeenCalled();
-    } finally { await ui.cleanup(); }
-  });
-  it('opens the conversation when a turn finished without an analysis rather than showing an endless loader', async () => {
-    const ui = await mount({ plan: null, busy: false, resultAvailable: false });
-    try {
-      expect(ui.container.querySelector('.studio-initial-loading')).toBeNull();
-      expect(ui.container.textContent).toContain('پاسخ هما را ببین');
-      await ui.click('بازکردن گفت‌وگو');
-      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
-      expect(ui.props.onRetry).not.toHaveBeenCalled();
-    } finally { await ui.cleanup(); }
-  });
-  it('does not wait for an output when analysis is saved but the service is idle without a plan', async () => {
-    const ui = await mount({ plan: null, busy: false, analysisPreview: { studio_documents: { room: { room_analysis: {} } } }, resultAvailable: false });
-    try {
-      expect(ui.container.querySelector('[role=status]')?.textContent).toBe('تحلیل اولیه آماده است');
-      await ui.click('گفت‌وگو برای ادامه');
-      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
-      expect(ui.container.querySelector('.studio-discovery-loading')).toBeNull();
-    } finally { await ui.cleanup(); }
-  });
-  it('keeps navigation outside the reading area and does not send a request when discussing a finding', async () => {
-    const ui = await mount();
-    try {
-      expect(ui.container.querySelector('.studio-discovery-reading .studio-discovery-footer')).toBeNull();
-      expect(ui.container.querySelector('.studio-discovery-content > .studio-discovery-footer')).not.toBeNull();
-      await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-discovery-discuss')!.click());
-      expect(ui.props.onDiscuss).toHaveBeenCalledOnce();
+      await ui.render({ busy: false, error: 'Actual failure', plan });
+      expect(ui.container.textContent).toContain('Actual failure');
       expect(ui.props.onComplete).not.toHaveBeenCalled();
       expect(ui.props.onRetry).not.toHaveBeenCalled();
+      const retry = [...ui.container.querySelectorAll('button')].find(button => button.textContent === 'تلاش دوباره')!;
+      await act(async () => retry.click()); expect(ui.props.onRetry).toHaveBeenCalledOnce();
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('comparison');
+    } finally { await ui.cleanup(); }
+  });
+  it('resets insight and photo presentation for a different job, without showing stale user data', async () => {
+    const ui = await mount({ plan });
+    try {
+      await advance(8000); await advance(1800);
+      expect(ui.container.textContent).toContain('Actual move instruction');
+      await ui.render({ sessionId: 'job-b', plan: null, analysisPreview: null, originalImage: 'other-room.jpg' });
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('comparison');
+      expect(ui.container.querySelector('[src="other-room.jpg"]')).toBeNull();
+      expect(ui.container.textContent).not.toContain('Actual move instruction');
+    } finally { await ui.cleanup(); }
+  });
+  it('stays truthful when the uploaded photo is unavailable or the server asks a question', async () => {
+    const ui = await mount({ originalImage: null, analysisPreview: { studio_documents: {} } });
+    try {
+      await advance(8000); await advance(1800);
+      expect(ui.container.querySelector('main')?.getAttribute('data-moment')).toBe('moodboard');
+      await ui.render({ busy: false });
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+      expect(ui.container.textContent).toContain('بازکردن گفت‌وگو');
+    } finally { await ui.cleanup(); }
+  });
+  it('supports keyboard comparison without changing job status or invoking an API', async () => {
+    const ui = await mount();
+    try {
+      const slider = ui.container.querySelector('[role="slider"]')!;
+      await act(async () => { slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true })); });
+      expect(slider.getAttribute('aria-valuenow')).toBe('88');
+      await act(async () => { slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true })); });
+      expect(slider.getAttribute('aria-valuenow')).toBe('12');
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+  it('does not start automatic comparison motion when reduced motion is enabled', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+    const ui = await mount();
+    try {
+      expect(requestAnimationFrame).not.toHaveBeenCalled();
+      const slider = ui.container.querySelector('[role="slider"]')!;
+      await act(async () => slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+      expect(slider.getAttribute('aria-valuenow')).toBe('54');
+    } finally { await ui.cleanup(); }
+  });
+  it('allows pointer dragging and releases motion pause without changing processing', async () => {
+    const ui = await mount();
+    try {
+      const slider = ui.container.querySelector<HTMLElement>('[role="slider"]')!;
+      vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({ left: 0, width: 400 } as DOMRect);
+      await act(async () => slider.dispatchEvent(new MouseEvent('pointerdown', { clientX: 300, button: 0, bubbles: true })));
+      expect(slider.getAttribute('aria-valuenow')).toBe('50');
+      await act(async () => slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 100, bubbles: true })));
+      expect(slider.getAttribute('aria-valuenow')).toBe('25');
+      await act(async () => slider.dispatchEvent(new MouseEvent('pointerup', { bubbles: true })));
+      expect(ui.props.onComplete).not.toHaveBeenCalled();
+    } finally { await ui.cleanup(); }
+  });
+});
+
+
+describe('automatic integrated reveal preparation', () => {
+  const fakeImages = () => {
+    const images: { onload?: () => void; onerror?: () => void; naturalWidth: number; decode: () => Promise<void> }[] = [];
+    class TestImage { naturalWidth = 800; src = ''; onload?: () => void; onerror?: () => void; decode = async () => {}; constructor() { images.push(this); } }
+    vi.stubGlobal('Image', TestImage); return images;
+  };
+  it('stays truthful while rendering, then waits for both image decodes before automatic reveal', async () => {
+    const images = fakeImages(); const ui = await mount({ plan, autoRevealImage: 'final.jpg', resultAvailable: true });
+    try {
+      expect(images).toHaveLength(0); await ui.render({ busy: false }); expect(images).toHaveLength(2);
+      await act(async () => images[0].onload!()); expect(ui.props.onComplete).not.toHaveBeenCalled();
+      await act(async () => images[1].onload!()); expect(ui.props.onComplete).toHaveBeenCalledExactlyOnceWith(true);
+      await ui.render(); expect(ui.props.onComplete).toHaveBeenCalledOnce();
+    } finally { await ui.cleanup(); }
+  });
+  it('retries failed images without invoking the model retry handler and supports leaving with recommendations', async () => {
+    const images = fakeImages(); const ui = await mount({ plan, busy: false, autoRevealImage: 'bad.jpg', resultAvailable: true });
+    try {
+      await act(async () => images[0].onerror!());
+      expect(ui.container.textContent).toContain('تصویر طرح هنوز بارگذاری نشده');
+      await act(async () => [...ui.container.querySelectorAll('button')].find(button => button.textContent === 'تلاش دوباره')!.click());
+      expect(ui.props.onRetry).not.toHaveBeenCalled(); expect(images).toHaveLength(4);
+      await act(async () => images[2].onerror!());
+      await act(async () => [...ui.container.querySelectorAll('button')].find(button => button.textContent === 'دیدن پیشنهادهای آماده')!.click());
+      expect(ui.props.onComplete).toHaveBeenCalledExactlyOnceWith(false);
+    } finally { await ui.cleanup(); }
+  });
+  it('vertical swipes do not capture or alter the inspirational comparison', async () => {
+    const ui = await mount();
+    try {
+      const slider = ui.container.querySelector<HTMLElement>('[role=slider]')!;
+      const capture = vi.fn(); slider.setPointerCapture = capture;
+      await act(async () => { slider.dispatchEvent(new MouseEvent('pointerdown', { clientX: 200, clientY: 100, bubbles: true })); slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 205, clientY: 150, bubbles: true })); });
+      expect(capture).not.toHaveBeenCalled(); expect(slider.getAttribute('aria-valuenow')).toBe('50');
     } finally { await ui.cleanup(); }
   });
 });

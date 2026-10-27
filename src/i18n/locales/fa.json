@@ -1073,5 +1073,11 @@
   "toman": "تومان",
   "style": "سبک",
   "showDesign": "طرح پیشنهادی را نشان بده"
-}
+},
+  "studioProject": {
+    "current": "طرح فعلی",
+    "productAdded": "اضافه‌شده",
+    "productChanged": "تغییرکرده",
+    "removed": "از طرح حذف شد"
+  }
 }

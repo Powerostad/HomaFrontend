@@ -32,7 +32,8 @@ function restoreSelection(key: string): Selection {
 function toggle<T>(items: T[], value: T) { return items.includes(value) ? items.filter(item => item !== value) : [...items, value]; }
 function quantity(value: number) { return Number.isFinite(value) ? Math.max(1, Math.min(99, Math.round(value))) : 1; }
 
-export function useConversationStudioResult({ plan, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat, onChooseProduct }: {
+export function useConversationStudioResult({ plan, previousPlan = null, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat, onChooseProduct }: {
+  previousPlan?: ExecutionPlan | null;
   plan: ExecutionPlan | null; sessionId: string | null; versionId: string; resultImage: string; originalImage: string | null;
   showOriginal: boolean; onToggleOriginal: (show: boolean) => void; onOpenChat: () => void;
   onChooseProduct?: (product: Product) => void;
@@ -52,7 +53,38 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const [isFinalizing, setIsFinalizing] = useState(false);
   const finalizing = useRef(false);
   const isV2 = plan?.search_version === 'studio-search-v2' || !!plan?.purchases.some(item => item.product?.search_version === 'studio-search-v2');
-  const baseGroups = useMemo(() => toStudioCategoryGroups(plan), [plan]);
+  const groupIds = useRef<{ key: string; ids: Map<string, number> }>({ key: '', ids: new Map() });
+  const canonicalProducts = useRef(new Map<string, string>());
+  const canonicalQuantities = useRef(new Map<string, number>());
+  const baseGroups = useMemo(() => toStudioCategoryGroups(plan, previousPlan).map(group => {
+    const key = group.workspaceKey || String(group.itemId);
+    if (groupIds.current.key !== storageKey) {
+      let entries: [string, number][] = [];
+      try { entries = JSON.parse(sessionStorage.getItem(`${storageKey}:groups`) || '[]'); } catch { /* optional memory */ }
+      groupIds.current = { key: storageKey, ids: new Map(entries) };
+    }
+    const ids = groupIds.current.ids;
+    if (!ids.has(key)) ids.set(key, Math.max(0, ...ids.values()) + 1);
+    return { ...group, itemId: ids.get(key)! };
+  }), [plan, previousPlan, storageKey]);
+  useEffect(() => {
+    try { sessionStorage.setItem(`${storageKey}:groups`, JSON.stringify([...groupIds.current.ids])); } catch { /* optional memory */ }
+    const next = new Map(baseGroups.map(group => [group.workspaceKey || String(group.itemId), group.products[0]?.id || '']));
+    const changed = baseGroups.filter(group => {
+      const key = group.workspaceKey || String(group.itemId);
+      return canonicalProducts.current.has(key) && canonicalProducts.current.get(key) !== next.get(key);
+    });
+    const quantityChanged = baseGroups.filter(group => {
+      const key = group.workspaceKey || String(group.itemId);
+      return canonicalQuantities.current.has(key) && canonicalQuantities.current.get(key) !== group.quantity;
+    });
+    canonicalProducts.current = next;
+    canonicalQuantities.current = new Map(baseGroups.map(group => [group.workspaceKey || String(group.itemId), group.quantity]));
+    setSelectedProduct(previous => previous && !baseGroups.some(group => group.products.some(product => product.id === previous.id)) ? null : previous);
+    if (changed.length || quantityChanged.length) setSelection(previous => ({ ...previous,
+      primary: Object.fromEntries(Object.entries(previous.primary).filter(([id]) => !changed.some(group => group.itemId === Number(id)))),
+      quantities: Object.fromEntries(Object.entries(previous.quantities).filter(([id]) => !quantityChanged.some(group => group.itemId === Number(id)))) }));
+  }, [baseGroups, storageKey]);
   const categoryGroups = useMemo(() => (isV2 && onChooseProduct ? baseGroups : applyPrimaryProducts(baseGroups, selection.primary)).map(group => ({ ...group, quantity: isV2 ? group.quantity : quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities, selection.primary, isV2, onChooseProduct]);
   const tierGroups = useMemo<TierGroup[]>(() => (['quick_win', 'enhancement', 'structural'] as const)
     .map(tier => ({ tier, items: categoryGroups.filter(group => group.interventionTier === tier) })).filter(group => group.items.length), [categoryGroups]);
@@ -65,7 +97,7 @@ export function useConversationStudioResult({ plan, sessionId, versionId, result
   const selectedPrice = selectedLines.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
   const imageActions = useImageActions({ image: showOriginal ? originalImage : resultImage, originalImage, activeVersion: 1, isPreview: !showOriginal });
   const productAlternatives = selectedProduct ? categoryGroups.find(group => group.products.some(product => product.id === selectedProduct.id))?.products.filter(product => product.id !== selectedProduct.id) || [] : [];
-  const summaries = Object.values(plan?.studio_documents || {}).map(document => document.user_facing_summary);
+  const summaries = Object.values(plan?.studio_documents || {}).flatMap(document => document?.user_facing_summary ? [document.user_facing_summary] : []);
   useEffect(() => {
     if (selectionKey.current !== storageKey) {
       selectionKey.current = storageKey;
