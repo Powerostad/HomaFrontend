@@ -20,9 +20,10 @@ export function ResultReveal({ before, after, onComplete }: { before: string; af
     motion?.addEventListener('change', change);
     return () => { clearTimeout(timer); motion?.removeEventListener('change', change); };
   }, []);
-  return <div className="homa-result-reveal" data-finished={finished} role="region" aria-label={copy('نمایش قبل و بعد طراحی شما')}>
+  return <div className="homa-result-reveal homa-v9" data-finished={finished} role="region" aria-label={copy('نمایش قبل و بعد طراحی شما')}>
     <img src={before} alt={copy('فضای شما پیش از طراحی')} draggable={false} />
     <div className="homa-result-reveal-after" onAnimationEnd={finish}><img src={after} alt={copy('فضای شما پس از طراحی')} draggable={false} /></div>
+    <div className="homa-v9-reveal-divider" aria-hidden="true"><span>‹ ›</span></div>
     <div className="homa-result-reveal-copy"><span>YOUR SPACE, REIMAGINED</span><h1>{copy('فضای تو، با نگاهی تازه.')}</h1><p>{copy('دلیل تغییرها را قدم‌به‌قدم ببین.')}</p></div>
     <button type="button" className="homa-result-reveal-skip" onClick={finish}>{copy('دیدن تحلیل‌ها')}</button>
   </div>;
@@ -43,7 +44,7 @@ export function AnalysisGuide({ findings, image, onClose, onProduct }: {
   return <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
     <Dialog.Portal>
       <Dialog.Overlay className="homa-analysis-backdrop" />
-      <Dialog.Content className="homa-analysis-sheet" dir="rtl" aria-modal="true" onOpenAutoFocus={event => { event.preventDefault(); title.current?.focus({ preventScroll: true }); }} onCloseAutoFocus={event => event.preventDefault()}>
+      <Dialog.Content className="homa-analysis-sheet homa-v9" dir="rtl" aria-modal="true" onOpenAutoFocus={event => { event.preventDefault(); title.current?.focus({ preventScroll: true }); }} onCloseAutoFocus={event => event.preventDefault()}>
         <div className="homa-analysis-grab" aria-hidden="true" />
         <header><span>HOMA / DESIGN NOTES</span><button type="button" onClick={onClose}>{copy('رد کردن')}</button></header>
         <Dialog.Description className="sr-only">{copy('مرور مرحله‌به‌مرحلهٔ تصمیم‌های واقعی طراحی')}</Dialog.Description>

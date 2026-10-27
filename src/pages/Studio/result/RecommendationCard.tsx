@@ -99,9 +99,9 @@ function ProductPreview({
           dir={siteDirection()}
         >
           {isSelected ? <Trash2 size={16} aria-hidden="true" /> : <ShoppingBag size={16} aria-hidden="true" />}
-          {siteValue(isSelected
+          <span className="studio-product-select-label">{siteValue(isSelected
             ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
-            : t('studio.result.v2.card.addToBasketShort', 'افزودن به سبد'))}
+            : t('studio.result.v2.card.addToBasketShort', 'افزودن به سبد'))}</span>
         </Button>
         {onSwap && <Button variant="outline" className="studio-swap-toggle" aria-expanded={alternativesOpen} aria-controls={`alternatives-${group.itemId}`} onClick={onSwap}><ArrowLeftRight size={16} aria-hidden="true" />{t('studioProductLayout.swap')}</Button>}
       </div>
@@ -189,10 +189,15 @@ export function RecommendationCard({
         </div>
       ))}
 
-      {isActionItem && onToggleAccepted && <div className="studio-recommendation-actions">
+      {!isActionItem && <details className="studio-v9-design-decision">
+        <summary>{siteValue(group.categoryDisplay)} · {t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</summary>
+        {problem && <p>{siteValue(problem)}</p>}
+        {solution && solution !== problem && <p>{siteValue(solution)}</p>}
+      </details>}
+      {onToggleAccepted && <div className="studio-recommendation-actions">
         <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
           {siteValue(isAccepted ? <Check size={17} /> : null)}
-          {siteValue(isAccepted ? t('studio.result.v2.card.accepted', 'تغییر انتخاب شد') : t('studio.result.v2.card.accept', 'انتخاب تغییر'))}
+          {siteValue(isAccepted ? t('studio.v9.decisionSelected', 'تغییر انتخاب شد') : t('studio.v9.acceptDecision', 'انتخاب این تغییر'))}
         </button>
       </div>}
     {!isActionItem && alternatives.length > 0 && <section id={`alternatives-${group.itemId}`} hidden={!alternativesOpen} className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>

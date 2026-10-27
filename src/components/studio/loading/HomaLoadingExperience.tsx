@@ -6,6 +6,7 @@ import type { ExecutionPlan } from '@/pages/RoomRedesign/services/redesignChatSe
 import { loadingDecisions, loadingMoment, loadingSlides, type LoadingMoment } from './loadingState';
 import { loadingAssets, SampleComparison } from './SampleComparison';
 import './loading-v5.css';
+import '@/pages/Studio/result/v9-polished.css';
 
 export interface HomaLoadingProps {
   jobId: string; originalImage: string | null; analysis?: AnalysisPreview | null;
@@ -101,7 +102,7 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
         : stageKey === 'render' ? 'در حال آماده‌سازی خروجی طراحی…' : 'در حال یافتن محصولات متناسب…');
   const story = narrative[moment];
   const retry = () => { completed.current = false; setExtended(false); setIntroduction('comparison'); onRetry(); };
-  return <div className="homa-loading-page" dir="rtl">
+  return <div className="homa-loading-page homa-v9" dir="rtl">
     <main className="homa-loading-screen" aria-label={copy('روند طراحی فضای شما')} aria-busy={busy && !error} data-moment={moment} data-personal={personal}>
       <div ref={body} className="homa-loading-body" aria-hidden={ready}>
       <header className="homa-loading-head"><div><div className="homa-loading-logo">HOMA</div><div className="homa-loading-micro">DESIGN IN PROGRESS</div></div>
@@ -110,6 +111,10 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
       </header>
       <div className="homa-loading-top">
         <div className="homa-loading-eyebrow"><span>{story.micro}</span><span>{personal ? 'YOUR PROJECT' : 'HOMA STUDIO'}</span></div>
+        <div className="homa-v9-loading-title">
+          <h1>{copy(error ? 'این مرحله کامل نشد.' : story.title)}</h1>
+          <p className="homa-loading-description">{error || copy(story.description)}</p>
+        </div>
         <div className="homa-loading-visual">
           <section className="homa-loading-layer" data-active={moment === 'comparison'} aria-hidden={moment !== 'comparison'}>
             <SampleComparison active={moment === 'comparison' && !error} />
@@ -124,8 +129,6 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
         <div className="homa-loading-photo-label">{copy(personal ? 'عکس اصلی فضای شما' : moment === 'comparison' ? 'پروژهٔ نمونه؛ نتیجهٔ فضای شما نیست' : 'الهام تصویری نمونه')}</div>
         <div className="homa-loading-copy">
           <div className="homa-loading-status" role="status" aria-live="polite"><i aria-hidden="true" data-running={busy && !error} /><span>{status}</span></div>
-          <h1>{copy(error ? 'این مرحله کامل نشد.' : story.title)}</h1>
-          <p className="homa-loading-description">{error || copy(story.description)}</p>
           {!error && <div className="homa-loading-detail">
             {moment === 'comparison' && <div className="homa-loading-note"><span aria-hidden="true">01</span><p><b>{copy('یک تغییر، بدون بازسازی کامل')}</b>{copy('نمونه‌ای از اثر هماهنگی روتختی، نور و استایلینگ روی فضای موجود.')}</p></div>}
             {moment === 'moodboard' && <div className="homa-loading-swatches" aria-label={copy('جزئیات مودبرد نمونه')}>

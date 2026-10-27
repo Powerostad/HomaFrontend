@@ -31,6 +31,7 @@ import type { StudioResultConversation, StudioResultViewState } from './result/v
 
 import { journeySeen, markJourneySeen, type JourneyFinding } from '../RoomRedesign/services/resultJourney';
 import { AnalysisGuide, ResultReveal } from './result/IntegratedResultJourney';
+import './result/v9-polished.css';
 
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
@@ -166,7 +167,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
 
   return (
     <div
-      className={`studio-result-page${conversation ? ' studio-result-with-conversation' : ''}`}
+      className={`studio-result-page homa-v9${conversation ? ' studio-result-with-conversation' : ''}`}
       dir={siteDirection()}
       data-revealing={revealing}
       style={{ fontFamily: FONT }}
@@ -287,7 +288,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
             {siteValue(productTierGroups.map(({ tier, items }, tierIndex) => (
               <TierSection
                 key={tier}
-                hideHeading
+                hideHeading={false}
                 tier={tier}
                 items={items}
                 allCategoryGroups={state.categoryGroups}

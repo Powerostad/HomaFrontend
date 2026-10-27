@@ -87,3 +87,24 @@ describe('Studio product and alternative presentation', () => {
     } finally { await act(async () => root.unmount()); }
   });
 });
+
+
+it('keeps accepting a V9 design decision independent from buying its product', async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const container = document.createElement('div'); const root = createRoot(container);
+  const accepted = vi.fn(); const basket = vi.fn();
+  try {
+    await act(async () => root.render(<RecommendationCard group={group} tier="quick_win" isTopPriority={false} priorityRank={1}
+      isWhyExpanded={false} isSaved={false} basketProductIds={new Set()} onToggleWhy={vi.fn()} onProductClick={vi.fn()}
+      onToggleSaved={vi.fn()} onToggleAccepted={accepted} onToggleBasketProduct={basket} />));
+    await act(async () => container.querySelector<HTMLButtonElement>('.studio-accept-button')!.click());
+    expect(accepted).toHaveBeenCalledTimes(1);
+    expect(basket).not.toHaveBeenCalled();
+    await act(async () => container.querySelector<HTMLButtonElement>('.studio-product-select')!.click());
+    expect(basket).toHaveBeenCalledWith('0');
+    expect(accepted).toHaveBeenCalledTimes(1);
+    const decision = container.querySelector('details.studio-v9-design-decision')!;
+    expect(decision.textContent).toContain('Reason');
+    expect(decision.textContent).toContain('Strategy');
+  } finally { await act(async () => root.unmount()); }
+});

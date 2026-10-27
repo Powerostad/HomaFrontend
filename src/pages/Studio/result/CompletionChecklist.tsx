@@ -22,7 +22,7 @@ export function CompletionChecklist({ items, checkedIds, onToggleItem, sessionId
   useEffect(() => { try { sessionStorage.setItem(storage, JSON.stringify(selfSource)); } catch { /* optional local intentions */ } }, [storage, selfSource]);
   if (!items.length) return null;
   const selected = items.filter(item => checkedIds.has(item.id)).length;
-  return <section className="studio-sourcing" dir={siteDirection()} aria-label={siteText('تکمیل پازل چیدمان')}>
+  return <section className="studio-sourcing studio-v9-completion" dir={siteDirection()} aria-label={siteText('تکمیل پازل چیدمان')}>
     <header className="studio-sourcing-heading"><h3>{siteText('تکمیل پازل چیدمان')}</h3><small>{siteValue(selected)}/{siteValue(items.length)}</small></header>
     <p>{siteText('این موارد در تصویر طراحی شما دیده می‌شن اما در انبار هُما موجود نیستن. موارد مورد نظرتون رو انتخاب کنید تا تیم ما برای تهیه‌شون مشاوره بده.')}</p>
     <div className="studio-sourcing-list">

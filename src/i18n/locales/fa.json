@@ -422,6 +422,11 @@
     }
   },
   "studio": {
+    "v9": {
+      "acceptDecision": "انتخاب این تغییر",
+      "decisionSelected": "تغییر انتخاب شد",
+      "tier": { "quick_win": "تغییرهای سریع", "enhancement": "ارتقای فضا", "structural": "تغییرهای اساسی" }
+    },
     "title": "استودیو هُما",
     "subtitle": "طراحی مجدد اتاق با هوش مصنوعی",
     "newProject": "پروژه جدید",

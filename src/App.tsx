@@ -60,7 +60,7 @@ const LocalStudioCompare = import.meta.env.DEV && import.meta.env.MODE === 'stud
   && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   ? lazy(() => import('./pages/StudioCompare/StudioComparePage')) : null;
 
-const LocalDiscoveryPreview = LocalStudioCompare ? lazy(() => import('./pages/Studio/dev/DiscoveryPreview')) : null;
+const LocalDiscoveryPreview = (LocalStudioCompare || LocalStudioPreview) ? lazy(() => import('./pages/Studio/dev/DiscoveryPreview')) : null;
 const LocalCatalogue = LocalStudioCompare ? lazy(() => import('./pages/Catalogue/CataloguePage')) : null;
 
 export default function App() {

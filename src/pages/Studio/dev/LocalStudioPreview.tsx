@@ -63,7 +63,7 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
   const [demoPhase, setDemoPhase] = useState<'loading' | 'review' | 'result'>(() => new URLSearchParams(window.location.search).get('preview') === 'loading' ? 'loading' : 'result');
   const openChat = () => setOpen(true);
   const state = useConversationStudioResult({ plan, previousPlan: edited ? legacyPlan : null, sessionId: 'local-ui-preview', versionId: 'sample-v1',
-    resultImage: '/images/studio/preset-warm-living.webp', originalImage: '/images/studio/preset-modern-living.webp',
+    resultImage: preview === 'analysis-only' ? '' : '/images/studio/preset-warm-living.webp', originalImage: '/images/studio/preset-modern-living.webp',
     showOriginal: original, onToggleOriginal: setOriginal, onOpenChat: openChat });
   const append = (text: string) => {
     if (!text.trim()) return;

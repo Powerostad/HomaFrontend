@@ -426,6 +426,11 @@
     }
   },
   "studio": {
+    "v9": {
+      "acceptDecision": "Choose this design change",
+      "decisionSelected": "Design change selected",
+      "tier": { "quick_win": "Quick changes", "enhancement": "Enhance your space", "structural": "Structural changes" }
+    },
     "title": "Homa Studio",
     "subtitle": "AI-powered room redesign",
     "newProject": "New project",

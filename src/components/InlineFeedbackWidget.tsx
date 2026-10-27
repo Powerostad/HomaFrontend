@@ -89,7 +89,7 @@ export function InlineFeedbackWidget({ flow, imageId, sessionId }: InlineFeedbac
   };
 
   return (
-    <div className="flex flex-col gap-4 py-6 border-t border-black/[0.08]">
+    <div className="studio-v9-feedback flex flex-col gap-4 py-6 border-t border-black/[0.08]">
       <AnimatePresence mode="wait">
         {siteValue(state === 'submitted' ? (
           <motion.div
