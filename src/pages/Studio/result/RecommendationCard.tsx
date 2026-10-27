@@ -121,7 +121,6 @@ export function RecommendationCard({
   onToggleBasketProduct,
   onUpdateQuantity,
   isTopPriority,
-  onMakePrimary,
   onRefineProduct,
   busy = false,
 }: RecommendationCardProps) {
@@ -211,8 +210,8 @@ export function RecommendationCard({
       </div>
       <div className="studio-alternatives-grid" id={`alternative-options-${group.itemId}`}>
         {alternatives.map((product, index) => <button type="button" className="studio-swap-option" key={product.id} data-recommended={index < 3 || undefined}
-          aria-label={`${t('studioProductLayout.makePrimary')}: ${siteValue(product.name)}`}
-          onClick={() => { onMakePrimary?.(product.id); setAlternativesOpen(false); }} disabled={!onMakePrimary || busy}>
+          aria-label={`${t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول')}: ${siteValue(product.name)}`}
+          onClick={() => onProductClick(product)} disabled={busy}>
           <span className="studio-swap-image"><AuthenticatedImage src={product.image} alt="" loading="lazy" /></span>
           <span className="studio-swap-label">{index < 3 && <span className="studio-swap-tag">{t('studioProductLayout.suggestionNumber', 'پیشنهاد')} {siteValue(toLocalizedDigits(index + 1))}</span>}</span>
           <strong>{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</strong>

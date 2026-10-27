@@ -96,7 +96,7 @@ describe('original Studio result flow with conversation', () => {
       expect(testState.send).not.toHaveBeenCalled();
     } finally { await ui.cleanup(); }
   });
-  it('promotes an alternative locally without showing alternative chat forms or calling the model', async () => {
+  it('previews an alternative and promotes it only after explicit confirmation in its product sheet', async () => {
     fixturePlan.purchases[0].alternatives = [{ product_id:9, name:'Alternative lamp', price_rial:90000, image_url:'', unique_link:'alternative-lamp' }];
     const ui = await mount();
     try {
@@ -104,9 +104,18 @@ describe('original Studio result flow with conversation', () => {
       expect(ui.container.querySelector('.studio-alternatives .studio-product-refinement')).toBeNull();
       expect(ui.container.querySelector('.studio-alternatives .studio-product-select')).toBeNull();
       await act(async () => ui.container.querySelector<HTMLButtonElement>('button.studio-swap-option')!.click());
+      expect(ui.container.querySelector('.is-primary .studio-product-name')?.textContent).toBe('Lamp');
+      expect(document.querySelector('.studio-selection-sheet-copy h2')?.textContent).toBe('Alternative lamp');
+      expect(testState.send).not.toHaveBeenCalled();
+      await act(async () => document.querySelector<HTMLButtonElement>('.studio-selection-sheet > button:last-child')!.click());
+      expect(ui.container.querySelector('.is-primary .studio-product-name')?.textContent).toBe('Lamp');
+      await act(async () => ui.container.querySelector<HTMLButtonElement>('button.studio-swap-option')!.click());
+      const confirm = document.querySelector<HTMLButtonElement>('.studio-selection-sheet-footer button')!;
+      expect(confirm.textContent).toBe('studioProductLayout.makePrimary');
+      await act(async () => confirm.click());
       expect(ui.container.querySelector('.is-primary .studio-product-name')?.textContent).toBe('Alternative lamp');
       expect(ui.container.querySelector('.studio-swap-name')?.textContent).toBe('Lamp');
-      expect(ui.container.querySelector<HTMLElement>('.studio-alternatives')!.hidden).toBe(true);
+      expect(document.querySelector('.studio-selection-sheet')).toBeNull();
       expect(testState.send).not.toHaveBeenCalled();
     } finally { await ui.cleanup(); fixturePlan.purchases[0].alternatives = []; }
   });
