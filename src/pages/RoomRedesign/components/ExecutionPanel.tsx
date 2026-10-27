@@ -1,29 +1,42 @@
-import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial } from '@/utils/formatters';
-import type { BackendProduct, ExecutionPlan } from '../services/redesignChatService';
+import { Check, ShoppingBag } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import type { ExecutionPlan } from '../services/redesignChatService';
+import { MessageText } from './ConversationPanel';
+import { StudioProductCollection } from './StudioProductCollection';
 
-export function ExecutionPanel({ plan, busy, onPreview }: { plan: ExecutionPlan; busy: boolean; onPreview: (itemId: string, productId: number) => void }) {
+interface Props {
+  plan: ExecutionPlan;
+  busy: boolean;
+  onPreview: (itemId: string, productId: number, variantId?: number | null, placementId?: string | null) => void;
+  section?: 'all' | 'plan' | 'products';
+}
+
+export function ExecutionPanel({ plan, busy, onPreview, section = 'all' }: Props) {
+  const { siteValue } = useSiteTranslation();
   const { t, i18n } = useTranslation();
-  const product = (p: BackendProduct, itemId: string) => <details key={p.product_id} className="redesign-product">
-    <summary>{p.name} · {p.price_rial != null && p.price_rial > 0 ? formatPriceFromRial(p.price_rial) : t('redesignJourney.unpriced')}</summary>
-    {p.image_url && <img src={p.image_url} alt={p.name} loading="lazy" />}
-    <p>{p.description || p.ai_description}</p>
-    <p>{p.merchant_name}</p>
-    {p.catalog_checked_at && <p>{t('redesignJourney.checked')} {new Date(p.catalog_checked_at).toLocaleString(i18n.language)}</p>}
-    <button disabled={busy} onClick={() => onPreview(itemId, p.product_id)}>{t('redesignJourney.preview')}</button>
-    {p.merchant_url && /^https?:\/\//i.test(p.merchant_url) && <a href={p.merchant_url} target="_blank" rel="noopener noreferrer">{t(p.merchant_destination === 'shop' ? 'redesignJourney.shop' : 'redesignJourney.merchant')}</a>}
-  </details>;
+
   return <div className="redesign-execution">
-    {plan.free_actions.length > 0 && <ul>{plan.free_actions.map((a, i) => <li key={i}>{a.instruction_fa}{a.reason_fa && <p>{a.reason_fa}</p>}</li>)}</ul>}
-    {plan.surface_actions.map((a, i) => <p key={i}>{a.change_fa}</p>)}
-    <p>{t('redesignJourney.subtotal')} {plan.known_subtotal_rial === 0 ? `${(0).toLocaleString(i18n.language)} ${t('redesignJourney.toman')}` : formatPriceFromRial(plan.known_subtotal_rial)}</p>
-    {plan.budget_ceiling_toman != null && <p>{t('redesignJourney.ceiling')} {plan.budget_ceiling_toman === 0 ? t('redesignJourney.noPurchases') : formatPriceFromRial(plan.budget_ceiling_toman * 10)}</p>}
-    <p>{t(`redesignJourney.budget_${plan.budget_status}`)}</p>
-    <p>{t('redesignJourney.excluded')}</p>
-    {plan.purchases.map(item => <article key={item.item_id}>
-      <h3>{item.category} × {item.quantity}</h3><p>{item.reason_fa}</p><p>{t(`redesignJourney.${item.relation}`)}</p>
-      {item.product && product(item.product, item.item_id)}
-      {!!item.alternatives.length && <details><summary>{t('redesignJourney.alternatives')}</summary>{item.alternatives.map(p => product(p, item.item_id))}</details>}
-    </article>)}
+    {section !== 'products' && <div className="studio-plan-sections">
+      {Object.entries(plan.studio_documents ?? {}).map(([sceneId, document]) => <section className="studio-plan-summary" key={sceneId}>
+        <p className="studio-eyebrow">{t('studioChat.summary')}</p>
+        <h3>{siteValue(document.user_facing_summary.main_improvement_idea)}</h3>
+        <MessageText text={siteValue(document.user_facing_summary.positive_diagnosis)} />
+        {!!document.user_facing_summary.top_changes.length && <div className="studio-plan-changes"><h4>{t('studioChat.changes')}</h4><ul>{document.user_facing_summary.top_changes.map((change, index) => <li key={index}><Check size={16} aria-hidden="true" /><span>{siteValue(change)}</span></li>)}</ul></div>}
+        <div className="studio-plan-explained"><div><h4>{t('studioChat.why')}</h4><MessageText text={siteValue(document.user_facing_summary.why_these_changes_work)} /></div><div><h4>{t('studioChat.expected')}</h4><MessageText text={siteValue(document.user_facing_summary.expected_visual_result)} /></div></div>
+        <div className="studio-shopping-note"><ShoppingBag size={18} aria-hidden="true" /><p>{siteValue(document.user_facing_summary.shopping_message)}</p></div>
+      </section>)}
+      {!!plan.free_actions.length && <section><h3>{t('studioChat.actions')}</h3><ul className="studio-action-list">{plan.free_actions.map((action, index) => <li key={index}><strong>{siteValue(action.instruction_fa)}</strong>{action.reason_fa && <p>{siteValue(action.reason_fa)}</p>}</li>)}</ul></section>}
+      {!!plan.surface_actions.length && <section><h3>{t('studioChat.surfaces')}</h3><ul className="studio-action-list">{plan.surface_actions.map((action, index) => <li key={index}>{siteValue(action.change_fa)}</li>)}</ul></section>}
+    </div>}
+    {section !== 'plan' && <>
+      <StudioProductCollection key={plan.purchases.map(item => item.item_id).join('|')} items={plan.purchases} busy={busy} onPreview={onPreview} />
+      <section className="studio-cost-summary"><div><p className="studio-eyebrow">{t('studioChat.cost')}</p><h3>{siteValue(plan.known_subtotal_rial > 0 ? formatPriceFromRial(plan.known_subtotal_rial) : plan.unknown_cost_item_ids.length ? t('studioChat.priceUnknown') : `${(0).toLocaleString(i18n.language)} ${t('redesignJourney.toman')}`)}</h3><p>{t('studioChat.costHint')}</p></div>
+        {plan.budget_ceiling_toman != null && <p>{t('redesignJourney.ceiling')} <strong>{siteValue(plan.budget_ceiling_toman === 0 ? t('redesignJourney.noPurchases') : formatPriceFromRial(plan.budget_ceiling_toman * 10))}</strong></p>}
+        {!!plan.unknown_cost_item_ids.length && <p>{t('studioChat.unknownCosts', { count: plan.unknown_cost_item_ids.length })}</p>}
+        <p>{t(`redesignJourney.budget_${plan.budget_status}`)}</p><p className="studio-caption">{t('redesignJourney.excluded')}</p>
+      </section>
+    </>}
   </div>;
 }

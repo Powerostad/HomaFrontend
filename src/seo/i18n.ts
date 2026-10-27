@@ -1,8 +1,11 @@
 import { createInstance } from "i18next";
-import fa from "../i18n/locales/fa.json";
 import ar from "../i18n/locales/ar.json";
 import en from "../i18n/locales/en.json";
+import fa from "../i18n/locales/fa.json";
+import informationEn from '../i18n/locales/information.en.json';
+import informationFa from '../i18n/locales/information.fa.json';
 import tr from "../i18n/locales/tr.json";
+import { translateUiTree } from '../i18n/siteDictionary';
 import { seoFa } from "./content";
 
 /** Each render gets its own language state; importing this module never touches the browser. */
@@ -14,7 +17,7 @@ export function createPublicI18n() {
     supportedLngs: ["fa", "ar", "en", "tr"],
     initImmediate: false,
     resources: {
-      fa: { translation: { ...fa, seo: seoFa } },
+      fa: { translation: { ...fa, seo: seoFa }, information: informationFa },
       ar: {
         translation: {
           ...ar,
@@ -31,9 +34,11 @@ export function createPublicI18n() {
         },
       },
       en: {
+        information: informationEn,
         translation: {
           ...en,
           seo: {
+            ...translateUiTree(seoFa),
             header: {
               explore: "Stores",
               gallery: "Products",

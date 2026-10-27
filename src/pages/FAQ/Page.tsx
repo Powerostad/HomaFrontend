@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ChevronDown, HelpCircle } from "lucide-react";
-import { Header } from "../../components/Header";
-import { Footer } from "../../components/Footer";
-import { useTranslation } from "react-i18next";
 import { useSeo } from "@/hooks/useSeo";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { ChevronDown, HelpCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Footer } from "../../components/Footer";
+import { Header } from "../../components/Header";
 
 interface FAQItem {
   question: string;
@@ -26,7 +27,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: "آیا عکس اتاق من ذخیره می‌شود؟",
-    answer: "حریم خصوصی شما برای ما اهمیت دارد. عکس‌های آپلود شده فقط برای پردازش استفاده می‌شوند و پس از تولید تصویر نهایی، از سرورهای ما حذف می‌شوند. تصاویر نهایی تجسم‌شده در گالری شخصی شما نگهداری می‌شوند."
+    answer: "برای اطلاعات پردازش و نگهداری تصاویر، صفحه حریم خصوصی را ببینید. مدت نگهداری این سرویس هنوز نیازمند تأیید است؛ تصویر حساس بارگذاری نکنید."
   },
   {
     question: "تجسم چقدر دقیق است؟",
@@ -42,11 +43,12 @@ const faqData: FAQItem[] = [
   },
   {
     question: "آیا استفاده از هما رایگان است؟",
-    answer: "هما امکان تجسم رایگان با تعداد محدود در روز ارائه می‌دهد. برای استفاده نامحدود و دسترسی به امکانات پیشرفته، می‌توانید از اشتراک‌های ویژه استفاده کنید."
+    answer: "دسترسی به قابلیت‌ها به اعتبار و امکانات فعال حساب شما بستگی دارد. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید."
   }
 ];
 
 function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boolean; onToggle: () => void }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="border-b border-black/[0.05] last:border-b-0">
       <button
@@ -54,7 +56,7 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
         className="w-full py-6 flex items-center justify-between text-right gap-4 group"
       >
         <span className="font-medium text-[16px] md:text-[18px] text-black group-hover:text-black/70 transition-colors">
-          {item.question}
+          {siteValue(item.question)}
         </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
@@ -65,7 +67,7 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
         </motion.div>
       </button>
       <AnimatePresence>
-        {isOpen && (
+        {siteValue(isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -74,19 +76,20 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
             className="overflow-hidden"
           >
             <p className="pb-6 text-[14px] md:text-[15px] leading-relaxed text-black/60">
-              {item.answer}
+              {siteValue(item.answer)}
             </p>
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
     </div>
   );
 }
 
 export function FAQPage() {
+  const { siteValue, siteText, siteDirection } = useSiteTranslation();
   useSeo({
-    title: 'سوالات متداول',
-    description: 'پاسخ پرسش‌های رایج درباره HOMA و نحوه استفاده از آن.',
+    title: siteText("سوالات متداول"),
+    description: siteText("پاسخ پرسش‌های رایج درباره HOMA و نحوه استفاده از آن."),
   });
   const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -96,7 +99,7 @@ export function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-surface-page flex flex-col" dir={siteDirection()}>
       <Header />
 
       <main className="flex-grow pt-32 pb-24 px-6 max-w-4xl mx-auto w-full">
@@ -121,14 +124,14 @@ export function FAQPage() {
 
           {/* FAQ List */}
           <div className="bg-white border border-black/[0.03] rounded-[24px] p-6 md:p-10 shadow-sm">
-            {faqData.map((item, index) => (
+            {siteValue(faqData.map((item, index) => (
               <FAQAccordion
                 key={index}
                 item={item}
                 isOpen={openIndex === index}
                 onToggle={() => handleToggle(index)}
               />
-            ))}
+            )))}
           </div>
 
           {/* Contact CTA */}

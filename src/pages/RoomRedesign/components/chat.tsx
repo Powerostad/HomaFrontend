@@ -1,3 +1,4 @@
+import { siteText, useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Chat / conversational primitives for the Room Redesign flow:
  *  - HeaderBadge  (square brand badge; icon configurable per tab)
@@ -6,37 +7,37 @@
  *  - Chip + ChipRow (pill/card chips; scroll or 2-col grid; staggered entrance)
  *  - MessageInput (rounded input with green send button)
  */
+import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ShoppingBag,
-  PaintRoller,
-  LayoutGrid,
-  Image as ImageIcon,
-  Heart,
-  Sofa,
-  Leaf,
-  Shirt,
-  Coins,
-  Sun,
-  Minimize2,
-  Blinds,
-  Tag,
-  Send,
-  Camera,
-  Sparkles,
-  Droplet,
-  Check,
-  Loader2,
-  Info,
-  ImageDown,
   AlertCircle,
+  Blinds,
+  Camera,
+  Check,
+  Coins,
+  Droplet,
+  Heart,
+  ImageDown,
+  Image as ImageIcon,
+  Info,
+  LayoutGrid,
+  Leaf,
+  Loader2,
+  Minimize2,
+  PaintRoller,
+  Send,
+  Shirt,
+  ShoppingBag,
+  Sofa,
+  Sparkles,
+  Sun,
+  Tag,
 } from 'lucide-react';
-import { useEffect, useRef, type ReactNode, type Ref } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { RD } from '../theme';
-import type { ChatEventKind, ChatMessage, Chip as ChipType, ChipGroup } from '../types';
+import { useEffect, useRef, type ReactNode, type Ref } from 'react';
 import type { RoomFinding } from '../services/transformers';
+import { RD } from '../theme';
+import type { ChatEventKind, ChatMessage, ChipGroup, Chip as ChipType } from '../types';
 
 const TAP = { scale: 0.97 };
 const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
@@ -106,6 +107,7 @@ export function HomaAvatar({ size = AVATAR_SIZE }: { size?: number }) {
 
 // ── UserBubble (the user's own turn — right side, green tint) ───────
 function UserBubble({ message }: { message: ChatMessage }) {
+  const { siteValue } = useSiteTranslation();
   if (!message.text?.trim() && !message.imageUrl) return null;
   return (
     <div className="flex flex-col items-start">
@@ -113,7 +115,7 @@ function UserBubble({ message }: { message: ChatMessage }) {
         className="flex items-center gap-2.5 rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[85%]"
         style={{ backgroundColor: RD.accentGreenBg, border: `1px solid ${RD.accentGreenBorder}` }}
       >
-        {message.imageUrl && (
+        {siteValue(message.imageUrl && (
           <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 order-last">
             <ImageWithFallback src={message.imageUrl} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 flex items-end justify-end p-0.5">
@@ -122,16 +124,16 @@ function UserBubble({ message }: { message: ChatMessage }) {
               </span>
             </div>
           </div>
-        )}
-        {message.text?.trim() && (
+        ))}
+        {siteValue(message.text?.trim() && (
           <span className="text-[13px]" style={{ color: RD.ink, lineHeight: 1.9 }}>
-            {message.text}
+            {siteValue(message.text)}
           </span>
-        )}
+        ))}
       </div>
-      {message.time && (
-        <span className="text-[10px] mt-1" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{message.time}</span>
-      )}
+      {siteValue(message.time && (
+        <span className="text-[10px] mt-1" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{siteValue(message.time)}</span>
+      ))}
     </div>
   );
 }
@@ -140,6 +142,7 @@ function UserBubble({ message }: { message: ChatMessage }) {
 // The run's first bubble nips its RTL leading corner (top-right) to point back
 // at the avatar; follow-on bubbles are fully rounded so the run reads as a unit.
 function AssistantBubble({ message, isFirstInRun }: { message: ChatMessage; isFirstInRun: boolean }) {
+  const { siteValue } = useSiteTranslation();
   if (!message.text?.trim()) return null;
   return (
     <div className="flex flex-col items-start" style={{ gap: 4, maxWidth: '100%', minWidth: 0 }}>
@@ -165,24 +168,25 @@ function AssistantBubble({ message, isFirstInRun }: { message: ChatMessage; isFi
             overflowWrap: 'break-word',
           }}
         >
-          {message.text}
+          {siteValue(message.text)}
         </p>
       </div>
-      {message.time && (
-        <span className="text-[10px]" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{message.time}</span>
-      )}
+      {siteValue(message.time && (
+        <span className="text-[10px]" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{siteValue(message.time)}</span>
+      ))}
     </div>
   );
 }
 
 // ── RunHeader (هما identity — shown once per run, top of the column) ─
 function RunHeader({ time }: { time?: string }) {
+  const { siteText, siteValue } = useSiteTranslation();
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[12px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>هما</span>
-      {time && (
-        <span className="text-[10px]" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{time}</span>
-      )}
+      <span className="text-[12px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>{siteText("هما")}</span>
+      {siteValue(time && (
+        <span className="text-[10px]" style={{ color: RD.inkMuted, fontFamily: 'Vazirmatn' }}>{siteValue(time)}</span>
+      ))}
     </div>
   );
 }
@@ -200,16 +204,17 @@ function AssistantRun({
   showHeader?: boolean;
   children?: ReactNode;
 }) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   // Header timestamp = first message in the run that carries one.
   const headerTime = messages.find((m) => m.time)?.time;
   return (
-    <div className="flex justify-end items-start gap-2" dir="rtl">
+    <div className="flex justify-end items-start gap-2" dir={siteDirection()}>
       <div className="flex flex-col items-start gap-1.5 flex-1 min-w-0">
-        {showHeader && <RunHeader time={headerTime} />}
-        {messages.map((m, i) => (
+        {siteValue(showHeader && <RunHeader time={headerTime} />)}
+        {siteValue(messages.map((m, i) => (
           <AssistantBubble key={m.id} message={m} isFirstInRun={i === 0} />
-        ))}
-        {children}
+        )))}
+        {siteValue(children)}
       </div>
       <HomaAvatar />
     </div>
@@ -226,10 +231,11 @@ const EVENT_STYLE: Record<ChatEventKind, { bg: string; border: string; text: str
 };
 
 export function SystemEvent({ message }: { message: ChatMessage }) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const s = EVENT_STYLE[message.eventKind ?? 'info'];
   const Icon = s.icon;
   return (
-    <div className="flex justify-center" style={{ padding: '2px 0' }} dir="rtl">
+    <div className="flex justify-center" style={{ padding: '2px 0' }} dir={siteDirection()}>
       <div
         role="status"
         className="inline-flex items-center gap-1.5"
@@ -243,7 +249,7 @@ export function SystemEvent({ message }: { message: ChatMessage }) {
         }}
       >
         <Icon size={13} strokeWidth={2} color={s.text} style={{ flexShrink: 0 }} />
-        <span style={{ fontSize: 12, lineHeight: 1.5, color: s.text, textAlign: 'center' }}>{message.text}</span>
+        <span style={{ fontSize: 12, lineHeight: 1.5, color: s.text, textAlign: 'center' }}>{siteValue(message.text)}</span>
       </div>
     </div>
   );
@@ -271,6 +277,7 @@ export function Chip({
   variant?: 'pill' | 'card';
   onClick?: () => void;
 }) {
+  const { siteValue } = useSiteTranslation();
   const color = selected ? '#FFFFFF' : RD.inkSoft;
   const base =
     variant === 'card'
@@ -295,7 +302,7 @@ export function Chip({
         className={`text-[12.5px] leading-none ${selected ? 'font-semibold' : 'font-medium'}`}
         style={{ color }}
       >
-        {chip.label}
+        {siteValue(chip.label)}
       </span>
     </motion.button>
   );
@@ -313,6 +320,7 @@ export function ChipRow({
   onSelect?: (chipId: string) => void;
   layout?: 'scroll' | 'grid' | 'wrap';
 }) {
+  const { siteValue } = useSiteTranslation();
   const reduce = useReducedMotion();
   const chips = group.chips.map((chip, i) => (
     <motion.div
@@ -333,28 +341,28 @@ export function ChipRow({
 
   return (
     <div className="space-y-2.5">
-      {group.question && (
+      {siteValue(group.question && (
         <h3 className="text-[13px] font-semibold text-right" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>
-          {group.question}
+          {siteValue(group.question)}
         </h3>
-      )}
-      {group.recommendation && <p className="text-sm">{group.recommendation}{group.recommendationReason ? ` · ${group.recommendationReason}` : ''}</p>}
-      {layout === 'grid' ? (
-        <div className="grid grid-cols-2 gap-2">{chips}</div>
+      ))}
+      {siteValue(group.recommendation && <p className="text-sm">{siteValue(group.recommendation)}{siteValue(group.recommendationReason ? ` · ${group.recommendationReason}` : '')}</p>)}
+      {siteValue(layout === 'grid' ? (
+        <div className="grid grid-cols-2 gap-2">{siteValue(chips)}</div>
       ) : layout === 'wrap' ? (
-        <div className="flex flex-wrap gap-2">{chips}</div>
+        <div className="flex flex-wrap gap-2">{siteValue(chips)}</div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-0.5">{chips}</div>
-      )}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-0.5">{siteValue(chips)}</div>
+      ))}
     </div>
   );
 }
 
 /** Placeholder that reflects هما's state so a locked input explains itself. */
 export function inputPlaceholder(busy: boolean, rendering: boolean): string {
-  if (rendering) return 'هما در حال ساخت تصویر است…';
-  if (busy) return 'هما در حال پاسخ‌گویی است…';
-  return 'پیامت رو بنویس…';
+  if (rendering) return siteText("هما در حال ساخت تصویر است…");
+  if (busy) return siteText("هما در حال پاسخ‌گویی است…");
+  return siteText("پیامت رو بنویس…");
 }
 
 // ── MessageInput ────────────────────────────────────────────────────
@@ -373,6 +381,7 @@ export function MessageInput({
   onSend: () => void;
   disabled?: boolean;
 }) {
+  const { siteValue, siteText } = useSiteTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const focus = () => inputRef.current?.focus();
@@ -391,9 +400,9 @@ export function MessageInput({
       <input
         ref={inputRef}
         type="text"
-        aria-label="پیام"
+        aria-label={siteText("پیام")}
         value={value}
-        placeholder={placeholder}
+        placeholder={siteValue(placeholder)}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -404,7 +413,7 @@ export function MessageInput({
       />
       <motion.button
         type="button"
-        aria-label="ارسال"
+        aria-label={siteText("ارسال")}
         onClick={onSend}
         disabled={disabled}
         whileTap={disabled ? undefined : TAP}
@@ -421,14 +430,15 @@ export function MessageInput({
 // ── TypingDots (هما is composing) ───────────────────────────────────
 // Inner pill only; the avatar/column is supplied by the AssistantRun wrapper.
 export function TypingDots() {
+  const { siteValue, siteText } = useSiteTranslation();
   return (
     <div
       role="status"
-      aria-label="هما در حال تایپ است"
+      aria-label={siteText("هما در حال تایپ است")}
       className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl"
       style={{ backgroundColor: RD.panel, border: `1px solid ${RD.line}`, borderTopRightRadius: 4, fontFamily: 'Vazirmatn' }}
     >
-      {[0, 1, 2].map((i) => (
+      {siteValue([0, 1, 2].map((i) => (
         <motion.span
           key={i}
           className="w-1.5 h-1.5 rounded-full"
@@ -436,7 +446,7 @@ export function TypingDots() {
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
         />
-      ))}
+      )))}
     </div>
   );
 }
@@ -447,16 +457,17 @@ export function TypingDots() {
 // being built and the conversation is paused. Inner pill only; the avatar/column
 // comes from the AssistantRun wrapper.
 export function RenderingIndicator() {
+  const { siteText } = useSiteTranslation();
   return (
     <div
       role="status"
-      aria-label="هما در حال ساخت تصویر است"
+      aria-label={siteText("هما در حال ساخت تصویر است")}
       className="flex flex-col gap-2 rounded-2xl px-3.5 py-3 w-full"
       style={{ backgroundColor: RD.accentGreenBg, border: `1px solid ${RD.accentGreenBorder}`, borderTopRightRadius: 4, fontFamily: 'Vazirmatn' }}
     >
       <div className="flex items-center gap-2">
         <Loader2 size={15} strokeWidth={2.5} className="animate-spin" style={{ color: RD.accentGreen }} />
-        <span className="text-[13px] font-medium" style={{ color: RD.ink }}>در حال ساخت تصویر…</span>
+        <span className="text-[13px] font-medium" style={{ color: RD.ink }}>{siteText("در حال ساخت تصویر…")}</span>
       </div>
       <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: RD.accentGreenTrack }}>
         <motion.div
@@ -473,6 +484,7 @@ export function RenderingIndicator() {
 // ── FindingsList (room analysis: gaps + strengths) ──────────────────
 /** One row per finding: status icon + short label + the full Persian explanation. */
 function FindingRow({ finding }: { finding: RoomFinding }) {
+  const { siteValue } = useSiteTranslation();
   const good = finding.status === 'good';
   const dot = good ? RD.greenSoft : RD.danger;
   return (
@@ -481,42 +493,43 @@ function FindingRow({ finding }: { finding: RoomFinding }) {
         className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
         style={{ backgroundColor: dot }}
       >
-        {good ? <Check size={12} strokeWidth={3} color="#fff" /> : <span className="text-[12px] font-bold leading-none text-white">!</span>}
+        {siteValue(good ? <Check size={12} strokeWidth={3} color="#fff" /> : <span className="text-[12px] font-bold leading-none text-white">!</span>)}
       </span>
       <div className="min-w-0">
-        {finding.label && (
-          <p className="text-[13px] font-medium leading-tight" style={{ color: RD.ink }}>{finding.label}</p>
-        )}
-        {finding.description && (
-          <p className="text-[12px] mt-0.5 leading-[1.7]" style={{ color: RD.inkSoft }}>{finding.description}</p>
-        )}
+        {siteValue(finding.label && (
+          <p className="text-[13px] font-medium leading-tight" style={{ color: RD.ink }}>{siteValue(finding.label)}</p>
+        ))}
+        {siteValue(finding.description && (
+          <p className="text-[12px] mt-0.5 leading-[1.7]" style={{ color: RD.inkSoft }}>{siteValue(finding.description)}</p>
+        ))}
       </div>
     </div>
   );
 }
 
 export function FindingsList({ findings }: { findings: RoomFinding[] }) {
+  const { siteValue, siteText } = useSiteTranslation();
   if (findings.length === 0) return null;
   const goods = findings.filter((f) => f.status === 'good');
   const gaps = findings.filter((f) => f.status === 'bad');
   return (
     <div className="space-y-3">
-      {gaps.length > 0 && (
+      {siteValue(gaps.length > 0 && (
         <div>
-          <h3 className="text-[13px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>نکات قابل بهبود</h3>
+          <h3 className="text-[13px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>{siteText("نکات قابل بهبود")}</h3>
           <div style={{ borderTop: `1px solid ${RD.line}` }}>
-            {gaps.map((f) => <FindingRow key={f.id} finding={f} />)}
+            {siteValue(gaps.map((f) => <FindingRow key={f.id} finding={f} />))}
           </div>
         </div>
-      )}
-      {goods.length > 0 && (
+      ))}
+      {siteValue(goods.length > 0 && (
         <div>
-          <h3 className="text-[13px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>نقاط قوت فضا</h3>
+          <h3 className="text-[13px] font-semibold" style={{ color: RD.ink, fontFamily: 'Vazirmatn' }}>{siteText("نقاط قوت فضا")}</h3>
           <div style={{ borderTop: `1px solid ${RD.line}` }}>
-            {goods.map((f) => <FindingRow key={f.id} finding={f} />)}
+            {siteValue(goods.map((f) => <FindingRow key={f.id} finding={f} />))}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -593,6 +606,7 @@ export function ChatThread({
   leading?: ReactNode;
   endRef?: Ref<HTMLDivElement>;
 }) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const lastIsUser = messages.length > 0 && messages[messages.length - 1].role === 'user';
   // Image generation gets its own progress UI; plain text turns get typing dots.
   const showTyping = busy && !rendering && lastIsUser;
@@ -601,30 +615,30 @@ export function ChatThread({
   // stay anchored to the opening turn instead of trailing every new message.
   const firstRunIdx = items.findIndex((it) => it.type === 'run');
   return (
-    <div className="space-y-3" dir="rtl">
-      {leading}
-      {items.map((it, i) => {
+    <div className="space-y-3" dir={siteDirection()}>
+      {siteValue(leading)}
+      {siteValue(items.map((it, i) => {
         if (it.type === 'user') return <UserBubble key={it.message.id} message={it.message} />;
         if (it.type === 'event') return <SystemEvent key={it.message.id} message={it.message} />;
         return (
           <AssistantRun key={it.messages[0].id} messages={it.messages}>
-            {i === firstRunIdx && findings.length > 0 && <FindingsMessage findings={findings} />}
+            {siteValue(i === firstRunIdx && findings.length > 0 && <FindingsMessage findings={findings} />)}
           </AssistantRun>
         );
-      })}
-      {showTyping && (
+      }))}
+      {siteValue(showTyping && (
         <AssistantRun messages={[]} showHeader={false}>
           <TypingDots />
         </AssistantRun>
-      )}
-      {rendering && (
+      ))}
+      {siteValue(rendering && (
         <AssistantRun messages={[]} showHeader={false}>
           <RenderingIndicator />
         </AssistantRun>
-      )}
-      {chipGroups.map((g) => (
-        <ChipRow key={g.id} group={g} layout={chipLayout} onSelect={(chipId) => onSelectChip(g.id, chipId)} />
       ))}
+      {siteValue(chipGroups.map((g) => (
+        <ChipRow key={g.id} group={g} layout={chipLayout} onSelect={(chipId) => onSelectChip(g.id, chipId)} />
+      )))}
       <div ref={endRef} />
     </div>
   );

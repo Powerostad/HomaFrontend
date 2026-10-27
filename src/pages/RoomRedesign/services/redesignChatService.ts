@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Service layer for the conversational Room Redesign chat backend
  * (`/api/recommendations/chat/`).
@@ -12,6 +13,7 @@
  */
 import { apiGet, apiPost } from '@/utils/apiClient';
 import { runChatCommand, type ChatErrorKind, type ChatSocketEvent } from './chatWebSocket';
+import type { MotherProduct, StudioMotherDocument } from './motherDocument';
 
 // --------------------------------------------------------------------------- //
 // Backend event payload shapes
@@ -39,6 +41,12 @@ export interface QuestionsEvent {
 }
 
 export interface BackendProduct {
+  variant_id?: number | null;
+  variant_label?: string;
+  dimensions_cm?: Record<string, number>;
+  search_version?: 'studio-search-v2';
+  candidate?: StudioCandidate;
+  variant_options?: { variant_id: number | null; price_rial: number | null; details: StudioCandidate }[];
   product_id: number;
   name: string;
   category_fa?: string;
@@ -59,6 +67,46 @@ export interface BackendProduct {
   unique_link?: string;
 }
 
+export interface StudioProductIdentity {
+  version: 'product-identity-v1';
+  requested_subtype: string;
+  expected_subtype: string;
+  expected_label_fa: string;
+  catalogue_category: string | null;
+  status: 'resolved' | 'category_unavailable' | 'unmapped';
+  mapping_source: 'subtype_alias' | 'need_family_alias' | 'exact_catalogue_code' | 'unmapped';
+  observed_subtype: string | null;
+  observed_status: 'unobserved' | 'observed' | 'unknown' | 'ambiguous';
+  observed_candidates: string[];
+  observations: { subtype: string; source: 'catalogue_fact' | 'catalogue_title' | 'catalogue_category'; source_ref: string }[];
+}
+
+export interface StudioCandidate {
+  product_identity?: StudioProductIdentity;
+  variant_id: number | null;
+  variant_label: string;
+  dimensions_cm: Record<string, number>;
+  quantity: number;
+  catalog_revision?: string | null;
+  order_quote?: StudioOrderQuote | null;
+  eligibility: 'eligible' | 'needs_verification' | 'rejected';
+  purchase_status: 'ready' | 'needs_verification' | 'unavailable';
+  known_total_rial: number | null;
+  verification_reasons: string[];
+  missing_costs: string[];
+}
+export interface StudioOrderQuote {
+  status: 'quoted' | 'needs_verification';
+  sales_unit?: 'piece' | 'pair' | 'pack' | 'roll' | 'm' | 'm2' | 'litre';
+  order_quantity?: number;
+  demand_quantity?: string;
+  demand_unit?: string;
+  required_with_waste?: string;
+  supplied_quantity?: string;
+  reason?: string;
+}
+export type ReviewKind = 'wrong_size' | 'wrong_style' | 'verify_specification' | 'request_alternative';
+
 export interface BackendResultScores {
   impact_score?: number;
   purchase_priority?: string;
@@ -66,6 +114,7 @@ export interface BackendResultScores {
 }
 
 export interface BackendResultItem {
+  mother_product?: MotherProduct | null;
   category_code: string;
   category_fa: string;
   reason_fa: string;
@@ -123,6 +172,8 @@ export interface BackendRoomAnalysis {
 }
 
 export interface BackendScene {
+  studio_document?: StudioMotherDocument | null;
+  render_verification?: { status: string };
   id: string;
   label_fa: string;
   diagnosis_fa: string;
@@ -132,6 +183,8 @@ export interface BackendScene {
 }
 
 export interface ResultEvent {
+  design_version_id?: string | null;
+  execution?: ExecutionPlan;
   message_fa: string;
   items: BackendResultItem[];
   existing_item_decisions: BackendExistingDecision[];
@@ -161,6 +214,7 @@ export interface StageEvent {
 }
 
 export interface StreamTurnHandlers {
+  onAnalysis?: (e: import('./discoveryReview').AnalysisPreview) => void;
   onSession?: (e: SessionEvent) => void;
   onSay?: (delta: string) => void;
   onQuestions?: (e: QuestionsEvent) => void;
@@ -186,9 +240,12 @@ export interface StreamTurnParams {
   images: string[];
   prefsUpdate?: unknown;
   baseVersionId?: string;
-  action?: 'chat' | 'preview_product';
+  action?: 'chat' | 'preview_product' | 'select_product' | 'retry_search' | 'review_product';
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: ReviewKind;
   idempotencyKey: string;
 }
 
@@ -201,15 +258,20 @@ export interface CreateSessionResult {
   error?: string;
 }
 
-export async function createChatSession(): Promise<CreateSessionResult> {
+export async function createChatSession(imageOutputMode?: 'export' | 'api'): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
-    {},
+    {
+      search_version: 'studio-search-v1',
+      ...(imageOutputMode ? { image_output_mode: imageOutputMode } : {}),
+      ...(import.meta.env.VITE_STUDIO_PRODUCT_TAXONOMY_V1 === 'true' ? { product_taxonomy_version: 'product-taxonomy-v1' } : {}),
+      prompt_split: 'server-split-v1',
+    },
   );
   if (res.success && res.data) {
     return { success: true, data: { sessionId: res.data.session_id, status: res.data.status } };
   }
-  return { success: false, error: res.error || 'خطا در ایجاد گفتگو' };
+  return { success: false, error: res.error || siteText("خطا در ایجاد گفتگو") };
 }
 
 export interface LoadSessionResult {
@@ -219,17 +281,88 @@ export interface LoadSessionResult {
   error?: string;
 }
 
+/** Account-owned, server-persisted conversations, separate from legacy Studio jobs. */
+export interface ChatSessionListItem {
+  id: string;
+  title: string;
+  status: 'active' | 'rendering' | 'failed';
+  turn_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listChatSessions(): Promise<{ success: boolean; sessions: ChatSessionListItem[] }> {
+  const result = await apiGet<{ sessions: ChatSessionListItem[] }>('/recommendations/chat/sessions/');
+  return { success: result.success, sessions: result.success ? result.data?.sessions ?? [] : [] };
+}
+
 /** Resume payload (re-presigned image URLs). Used to resume/hydrate a session. */
 export async function loadChatSession(sessionId: string, versionId?: string): Promise<LoadSessionResult> {
   const res = await apiGet<unknown>(`/recommendations/chat/sessions/${sessionId}/${versionId ? `?version_id=${encodeURIComponent(versionId)}` : ''}`);
   if (res.success) return { success: true, data: res.data };
-  return { success: false, statusCode: res.statusCode, error: res.error || 'خطا در بارگذاری گفتگو' };
+  return { success: false, statusCode: res.statusCode, error: res.error || siteText("خطا در بارگذاری گفتگو") };
 }
+
+/** Lightweight watchdog: never sends the base64 upload or refreshes the catalogue. */
+export async function loadChatSessionStatus(sessionId: string): Promise<LoadSessionResult> {
+  const res = await apiGet(`/recommendations/chat/sessions/${sessionId}/?status_only=1`);
+  return res.success ? { success: true, data: res.data }
+    : { success: false, statusCode: res.statusCode, error: res.error };
+}
+
+export interface SessionExpenses {
+  receipts?: { request_id: string; kind: 'text' | 'image'; model?: string; stage?: string; turn_index?: number | null; usd: string; paid_toman?: string | null }[];
+  token_estimate?: {
+    status: 'complete' | 'partial' | 'unavailable';
+    lower_usd: string | null;
+    upper_usd: string | null;
+    estimated_calls: number;
+    unknown_calls: number;
+    stages: { stage: string; calls: number; estimated_calls: number; unknown_calls: number; low: string; high: string }[];
+  };
+  status: 'pending' | 'partial' | 'settled' | 'unavailable';
+  known_usd: string | null;
+  text_usd: string | null;
+  image_usd: string | null;
+  known_paid_toman: string | null;
+  known_grant_toman: string | null;
+  unknown_calls: number;
+  pending_receipts: number;
+  checked_at: string | null;
+  refresh_status?: 'cooldown' | 'unavailable';
+}
+export interface StudioPerformanceReport {
+  status: 'ready' | 'pending' | 'unavailable' | 'incomplete';
+  runs: { id: string; workflow: string; status: string; duration_ms: number | null; started_at?: string; trace_id?: string }[];
+  spans: { id: string; name: string; duration_ms: number; status: string; started_at?: string; run_id?: string; metrics?: Record<string, string | number | null> }[];
+  summary: { trace_elapsed_timestamp_ms: number | null; api_calls: number; estimated_cost_usd: number | null; tokens: Record<string, number | null> } | null;
+}
+export const loadStudioPerformance = (sessionId: string) => apiGet<StudioPerformanceReport>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/performance/`,
+);
+
+export interface SessionDiagnosticsReport {
+  session_id: string;
+  expenses: SessionExpenses;
+  documents: unknown[];
+  versions: unknown[];
+  traces: { id: number; turn_index: number | null; step_name: string; payload_name: string; model: string; status: string; [key: string]: unknown }[];
+  next_before: number | null;
+}
+export const loadSessionDiagnostics = (sessionId: string, before?: number) => apiGet<SessionDiagnosticsReport>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/diagnostics/${before ? `?before=${before}` : ''}`,
+);
+export const refreshSessionExpenses = (sessionId: string) => apiPost<{ expenses: SessionExpenses }>(
+  `/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/diagnostics/`, {},
+);
 
 export async function selectChatProduct(params: {
   sessionId: string;
   category: string;
   productId: number;
+  itemId?: string;
+  variantId?: number | null;
+  placementId?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   const res = await runChatCommand({
     type: 'chat.select',
@@ -239,13 +372,16 @@ export async function selectChatProduct(params: {
       session_id: params.sessionId,
       category: params.category,
       product_id: params.productId,
+      item_id: params.itemId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
     },
     signal: new AbortController().signal,
   });
   const data = res.data as { ok?: boolean } | undefined;
   return res.ok && data?.ok
     ? { success: true }
-    : { success: false, error: res.error || 'خطا در ذخیره انتخاب محصول' };
+    : { success: false, error: res.error || siteText("خطا در ذخیره انتخاب محصول") };
 }
 
 // --------------------------------------------------------------------------- //
@@ -296,7 +432,7 @@ export async function requestRender(params: {
       operationId: data?.operation_id,
     };
   }
-  return { success: false, error: res.error || 'خطا در شروع ساخت تصویر' };
+  return { success: false, error: res.error || siteText("خطا در شروع ساخت تصویر") };
 }
 
 /** Shape of the GET session payload, for hydration and REST recovery. */
@@ -307,16 +443,23 @@ export interface SessionTurnEvent {
 export interface SessionTurn {
   role: string;
   text?: string;
+  text_origin?: 'user' | 'legacy_auto';
   /** Present on user turns: the data-URL photo(s) the user sent. */
   images?: string[];
   events?: SessionTurnEvent[];
 }
 export interface SessionPayload {
+  analysis_preview?: import('./discoveryReview').AnalysisPreview | null;
+  design_version?: string;
+  search_version?: string;
   session_id: string;
   status: string;
   title: string;
   turns: SessionTurn[];
   versions?: DesignVersion[];
+  /** Validated design/retrieval, available before or despite image failure. */
+  current_execution?: ExecutionPlan | null;
+  current_base_version_id?: string;
   operations?: DesignOperation[];
   original_image?: string | null;
 }
@@ -345,6 +488,9 @@ export async function streamChatTurn(
   const onEvent = (e: ChatSocketEvent) => {
     if (e.operationId) handlers.onRenderEvent?.(e);
     switch (e.event) {
+      case 'analysis':
+        handlers.onAnalysis?.(e.data as import('./discoveryReview').AnalysisPreview);
+        break;
       case 'session':
         handlers.onSession?.(e.data as SessionEvent);
         break;
@@ -376,7 +522,7 @@ export async function streamChatTurn(
         const d = e.data as { error?: string };
         const raw = d?.error || '';
         const isPersian = /[؀-ۿ]/.test(raw);
-        handlers.onError?.(isPersian ? raw : 'خطایی رخ داد. لطفاً دوباره تلاش کن.');
+        handlers.onError?.(isPersian ? raw : siteText("خطایی رخ داد. لطفاً دوباره تلاش کن."));
         break;
       }
       default:
@@ -390,13 +536,16 @@ export async function streamChatTurn(
     requestId: params.idempotencyKey,
     payload: {
       session_id: params.sessionId,
-      text: params.text,
+      ...(params.text.trim() ? { text: params.text, text_origin: 'user' } : {}),
       images: params.images,
       prefs_update: params.prefsUpdate ?? null,
       base_version_id: params.baseVersionId,
       action: params.action ?? 'chat',
       item_id: params.itemId,
       product_id: params.productId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
+      review_kind: params.reviewKind,
       idempotency_key: params.idempotencyKey,
     },
     onEvent,
@@ -408,15 +557,15 @@ export async function streamChatTurn(
 
   if (!result.ok) {
     if (result.errorKind === 'auth' || result.status === 401) {
-      handlers.onError?.('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.', 'auth');
+      handlers.onError?.(siteText("نشست شما منقضی شده است. لطفاً دوباره وارد شوید."), 'auth');
     } else if (result.errorKind === 'network') {
-      // The client's connection dropped (e.g. ERR_NETWORK_CHANGED) — not the
-      // server's fault. The caller may recover by reconciling the DB-backed session.
-      handlers.onError?.('ارتباط قطع شد. لطفاً اینترنتت رو بررسی کن و دوباره تلاش کن.', 'network');
+      handlers.onError?.(result.status === 408
+        ? siteText("انتظار برای پاسخ طولانی شد؛ وضعیت درخواست در حال بررسی است.")
+        : siteText("اتصال به سرور قطع شد؛ وضعیت درخواست در حال بررسی است."), 'network');
     } else {
       // Keep a Persian backend message if present; otherwise a generic one.
       const isPersian = !!result.error && /[؀-ۿ]/.test(result.error);
-      handlers.onError?.(isPersian ? (result.error as string) : 'خطا در ارتباط با سرور', 'server');
+      handlers.onError?.(isPersian ? (result.error as string) : siteText("خطا در ارتباط با سرور"), 'server');
     }
   }
   handlers.onDone?.();
@@ -424,15 +573,43 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
-  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[] }[];
+  search_version?: 'studio-search-v2';
+  purchases: {
+    sourcing_guidance?: { mode: 'external_search'; title_fa: string; explanation_fa: string; search_query: string; specifications_fa: string[]; placement_fa: string; design_preserved: boolean; image_status: 'concept'; catalogue_status: string };
+    item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  cost_gaps?: { item_id: string; reasons: string[] }[];
+  verification_gaps?: { item_id: string; reasons: string[] }[];
+  evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
+    coherence?: { status: string; summary_fa: string; assessments: { aspect: string; status: string; explanation_fa: string; item_ids: string[]; source_refs: string[] }[] } };
+  review_tasks?: { id: string; item_id: string; placement_id: string | null; route: string; missing_attributes: string[] }[];
+  studio_documents?: Record<string, StudioMotherDocument>;
   free_actions: { instruction_fa: string; reason_fa: string }[];
-  surface_actions: { change_fa: string }[];
+  surface_actions: { change_fa: string; target?: string }[];
   known_subtotal_rial: number;
   budget_ceiling_toman: number | null;
   budget_status: string;
   unknown_cost_item_ids: string[];
 }
+
+export interface StudioPurchaseLine {
+  item_id: string;
+  placement_id?: string | null;
+  product_id: number;
+  variant_id: number | null;
+  quantity: number;
+}
+export interface PurchaseCheckResult {
+  ready: boolean;
+  checked_at?: string;
+  reasons: { item_id?: string; reason: string }[];
+  lines: (StudioPurchaseLine & { product_unique_link: string; unit_price_rial: number })[];
+}
+export const checkStudioPurchase = (sessionId: string, versionId: string, lines: StudioPurchaseLine[]) =>
+  apiPost<PurchaseCheckResult>(`/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/purchase-check/`, { version_id: versionId, lines });
 export interface DesignVersion {
+  image_status?: 'pending' | 'failed' | 'ready' | 'exported';
+  image_pending?: boolean;
+  render_version_id?: string | null;
   version_id: string;
   base_version_id: string;
   image_url: string;

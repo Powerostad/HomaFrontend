@@ -1,14 +1,15 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Types, constants and helpers for Studio Result Page
  */
+import type { ImagePlacementMarker } from '@/services/studioService';
 import {
+  HardHat,
   Paintbrush,
   Wrench,
-  HardHat,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
-import type { ImagePlacementMarker } from '@/services/studioService';
 
 export type { ImagePlacementMarker } from '@/services/studioService';
 
@@ -112,6 +113,9 @@ export const LEVEL_BAR_WIDTHS: Record<string, string> = { low: '33%', medium: '6
 
 // --- Category Group type ---
 export interface CategoryGroup {
+  sourcingSpecs?: string[];
+  workspaceKey?: string;
+  changeKind?: 'added' | 'changed';
   category: string;
   categoryDisplay: string;
   itemId: number;
@@ -125,8 +129,13 @@ export interface CategoryGroup {
   actionStatus: ActionStatus;
   interventionTier: InterventionTier;
   impactLevel: ImpactLevel;
+  /** False when this data source does not provide an impact measurement. */
+  impactKnown?: boolean;
   actionType?: string;
   actionGuidance?: string;
+  webSearchQuery?: string;
+  /** Layout changes are not paid execution services or catalogue products. */
+  actionKind?: 'layout' | 'service';
 }
 
 // --- Session type ---
@@ -156,6 +165,7 @@ export interface ResultSession {
     interventionTier?: InterventionTier;
     impactLevel?: ImpactLevel;
     actionGuidance?: string;
+  webSearchQuery?: string;
   }[];
 }
 
@@ -187,8 +197,8 @@ export function matchedProductToUIProduct(product: MatchedProduct, index: number
     id: String(product.id),
     name: product.name,
     price: product.price,
-    category: product.categoryDisplay || product.category || 'محصول',
-    store: product.shopName || 'فروشگاه هوما',
+    category: product.categoryDisplay || product.category || siteText("محصول"),
+    store: product.shopName || siteText("فروشگاه هوما"),
     image: product.imageUrl,
     hotspot: { x: 50, y: 50 + index * 10 },
     isPromoted: product.isPromoted,
@@ -215,6 +225,7 @@ export interface TierGroup {
 
 // --- Completion Checklist ---
 export interface CompletionChecklistItem {
+  specifications?: string[];
   id: number;
   name: string;
   category: string;

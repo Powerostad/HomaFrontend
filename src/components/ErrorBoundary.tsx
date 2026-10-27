@@ -1,5 +1,6 @@
+import { siteValue } from '@/i18n/siteCopy';
+import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import React, { Component, ReactNode } from "react";
-import { RefreshCw, Home, AlertTriangle } from "lucide-react";
 import i18n from "../i18n/config";
 
 interface Props {
@@ -114,10 +115,10 @@ export class ErrorBoundary extends Component<Props, State> {
                 }}
                 dir="ltr"
               >
-                <strong>Error:</strong> {this.state.error.message}
+                <strong>Error:</strong> {siteValue(this.state.error.message)}
                 {this.state.errorInfo && (
                   <pre className="mt-2 whitespace-pre-wrap">
-                    {this.state.errorInfo.componentStack}
+                    {siteValue(this.state.errorInfo.componentStack)}
                   </pre>
                 )}
               </div>

@@ -8,7 +8,7 @@ const imgEmpty = "/images/prop/before.jpg";
 const imgWithCurtains = "/images/prop/after.jpg";
 
 export function ShoppingPropSection() {
-    const {t} = useTranslation();
+    const {t, i18n} = useTranslation();
     const navigate = useNavigate();
     const [sliderPosition, setSliderPosition] = useState(50);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -40,7 +40,7 @@ export function ShoppingPropSection() {
     }, []);
 
     return (
-        <section className="bg-surface-default py-12 md:py-24 overflow-hidden" dir="rtl">
+        <section className="bg-surface-default py-12 md:py-24 overflow-hidden" dir={['fa', 'ar'].includes(i18n.language) ? 'rtl' : 'ltr'}>
             <div className="container mx-auto px-6">
                 <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
 

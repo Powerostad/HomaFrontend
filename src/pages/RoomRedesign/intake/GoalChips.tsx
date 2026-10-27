@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * GoalChips — multi-select goal chip group with staggered entrance animation.
  *
@@ -5,8 +6,8 @@
  * Each chip animates in with a 40ms stagger; motion is gated via useReducedMotion.
  */
 import { motion, useReducedMotion } from 'motion/react';
-import { RD } from '../theme';
 import { Chip } from '../components/chat';
+import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 import { GOALS, type Goal } from './intakeTypes';
 
@@ -16,6 +17,7 @@ interface GoalChipsProps {
 }
 
 export function GoalChips({ selected, onToggle }: GoalChipsProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const reduce = useReducedMotion();
 
   return (
@@ -25,7 +27,7 @@ export function GoalChips({ selected, onToggle }: GoalChipsProps): JSX.Element {
         flexDirection: 'column',
         gap: '8px',
         fontFamily: 'Vazirmatn, sans-serif',
-        direction: 'rtl',
+        direction: siteDirection(),
       }}
     >
       <span
@@ -36,7 +38,7 @@ export function GoalChips({ selected, onToggle }: GoalChipsProps): JSX.Element {
           textAlign: 'right',
         }}
       >
-        {INTAKE_COPY.review.goalsLabel}
+        {siteValue(INTAKE_COPY.review.goalsLabel)}
       </span>
       <span
         style={{
@@ -46,10 +48,10 @@ export function GoalChips({ selected, onToggle }: GoalChipsProps): JSX.Element {
           lineHeight: '1.6',
         }}
       >
-        {INTAKE_COPY.review.goalsHelper}
+        {siteValue(INTAKE_COPY.review.goalsHelper)}
       </span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {GOALS.map((g, i) => (
+        {siteValue(GOALS.map((g, i) => (
           <motion.div
             key={g.value}
             initial={{ opacity: 0, y: reduce ? 0 : 6 }}
@@ -64,7 +66,7 @@ export function GoalChips({ selected, onToggle }: GoalChipsProps): JSX.Element {
               onClick={() => onToggle(g.value)}
             />
           </motion.div>
-        ))}
+        )))}
       </div>
     </div>
   );

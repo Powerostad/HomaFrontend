@@ -1,15 +1,16 @@
-import {
-  SimpleDialog as Dialog,
-  SimpleDialogContent as DialogContent,
-  SimpleDialogHeader as DialogHeader,
-  SimpleDialogTitle as DialogTitle,
-  SimpleDialogDescription as DialogDescription,
-} from "./SimpleDialog";
-import { SimpleButton as Button } from "./SimpleButton";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { CheckCircle, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Product } from "../types/product";
 import { formatPriceFromRial } from "../utils/formatters";
+import { SimpleButton as Button } from "./SimpleButton";
+import {
+  SimpleDialog as Dialog,
+  SimpleDialogContent as DialogContent,
+  SimpleDialogDescription as DialogDescription,
+  SimpleDialogHeader as DialogHeader,
+  SimpleDialogTitle as DialogTitle,
+} from "./SimpleDialog";
 
 interface ProductDetailsModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function ProductDetailsModal({
   product,
   onUploadSticky 
 }: ProductDetailsModalProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const displayPrice = product.price
     ? formatPriceFromRial(product.price)
@@ -44,87 +46,87 @@ export function ProductDetailsModal({
           <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100">
             <img 
               src={product.thumbnail}
-              alt={product.name}
+              alt={siteValue(product.name)}
               className="w-full h-full object-cover"
             />
           </div>
           
-          {product.images.length > 1 && (
+          {siteValue(product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(0, 4).map((img, idx) => (
+              {siteValue(product.images.slice(0, 4).map((img, idx) => (
                 <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <img 
                     src={img}
-                    alt={`${product.name} ${idx + 1}`}
+                    alt={siteValue(`${product.name} ${idx + 1}`)}
                     className="w-full h-full object-cover"
                   />
                 </div>
-              ))}
+              )))}
             </div>
-          )}
+          ))}
         </div>
 
         {/* Product Info */}
         <div className="space-y-4">
           <div>
             <div className="flex items-start justify-between gap-2 mb-2">
-              <h2 className="text-gray-900">{product.name}</h2>
-              {product.seller.verified && (
+              <h2 className="text-gray-900">{siteValue(product.name)}</h2>
+              {siteValue(product.seller.verified && (
                 <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
-              )}
+              ))}
             </div>
             
             <p className="text-gray-600">
               {t('productDetails.seller', { name: product.seller.name })}
             </p>
 
-            {product.brand && (
+            {siteValue(product.brand && (
               <p className="text-gray-600">
                 {t('productDetails.brand', { name: product.brand })}
               </p>
-            )}
+            ))}
           </div>
 
-          {displayPrice && (
+          {siteValue(displayPrice && (
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
               <p className="text-gray-600 mb-1">{t('product.price')}</p>
-              <p className="text-gray-900">{displayPrice}</p>
+              <p className="text-gray-900">{siteValue(displayPrice)}</p>
             </div>
-          )}
+          ))}
 
           {/* Description */}
-          {product.description && (
+          {siteValue(product.description && (
             <div>
               <h3 className="text-gray-900 mb-2">{t('product.description')}</h3>
               <p className="text-gray-600 leading-relaxed">
-                {product.description}
+                {siteValue(product.description)}
               </p>
             </div>
-          )}
+          ))}
 
           {/* Features */}
-          {product.features && product.features.length > 0 && (
+          {siteValue(product.features && product.features.length > 0 && (
             <div>
               <h3 className="text-gray-900 mb-2">{t('product.specifications')}</h3>
               <ul className="space-y-2">
-                {product.features.map((feature, idx) => (
+                {siteValue(product.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-gray-600">
                     <span className="text-green-500 mt-1">✓</span>
-                    <span>{feature}</span>
+                    <span>{siteValue(feature)}</span>
                   </li>
-                ))}
+                )))}
               </ul>
             </div>
-          )}
+          ))}
 
           {/* Variants */}
-          {product.variants && (
+          {siteValue(product.variants && (
             <div className="space-y-3">
-              {product.variants.colors && (
+              {siteValue(product.variants.colors && (
                 <div>
                   <h4 className="text-gray-900 mb-2">{t('productDetails.availableColors')}</h4>
                   <div className="flex flex-wrap gap-2">
-                    {product.variants.colors.map((color) => (
+                    {siteValue(product.variants.colors.map((color) => (
                       <div
                         key={color.name}
                         className={`px-3 py-1.5 rounded-full border ${
@@ -133,18 +135,18 @@ export function ProductDetailsModal({
                             : "border-gray-200 bg-gray-100 text-gray-400"
                         }`}
                       >
-                        {color.name}
+                        {siteValue(color.name)}
                       </div>
-                    ))}
+                    )))}
                   </div>
                 </div>
-              )}
+              ))}
 
-              {product.variants.sizes && (
+              {siteValue(product.variants.sizes && (
                 <div>
                   <h4 className="text-gray-900 mb-2">{t('productDetails.availableSizes')}</h4>
                   <div className="flex flex-wrap gap-2">
-                    {product.variants.sizes.map((size) => (
+                    {siteValue(product.variants.sizes.map((size) => (
                       <div
                         key={size.name}
                         className={`px-3 py-1.5 rounded-full border ${
@@ -153,14 +155,14 @@ export function ProductDetailsModal({
                             : "border-gray-200 bg-gray-100 text-gray-400"
                         }`}
                       >
-                        {size.name}
+                        {siteValue(size.name)}
                       </div>
-                    ))}
+                    )))}
                   </div>
                 </div>
-              )}
+              ))}
             </div>
-          )}
+          ))}
         </div>
 
         {/* Sticky CTA */}

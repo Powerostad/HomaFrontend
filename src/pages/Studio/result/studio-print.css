@@ -1,0 +1,53 @@
+.studio-print-trigger { gap:var(--space-2); min-height:44px; white-space:normal; background:var(--color-surface-default); color:var(--color-content-primary); }
+.studio-result-heading-actions:has(.studio-print-trigger) { flex-wrap:wrap; max-width:100%; }
+.studio-print-dialog { width:calc(100% - var(--space-6)); max-width:var(--max-width-content); max-height:92dvh; min-width:0; overflow:hidden; grid-template-rows:auto auto minmax(0,1fr); }
+.studio-print-dialog [data-slot=dialog-header] { padding-inline:var(--space-6); }
+.studio-print-controls { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-3); }
+.studio-print-controls > button { min-height:44px; background:var(--color-interactive-primary); color:var(--color-content-inverse); }
+.studio-print-controls [role=alert] { color:var(--color-feedback-error); font-size:var(--text-sm); }
+.studio-print-preview { overflow:auto; min-width:0; background:var(--color-surface-muted); padding:var(--space-4); }
+.homa-print-root { display:none; }
+.studio-print-document { box-sizing:border-box; width:100%; max-width:210mm; margin-inline:auto; padding:var(--space-6); background:var(--color-surface-default); color:var(--color-content-primary); font-family:var(--font-family-primary); font-size:14px; line-height:1.9; text-align:start; overflow-wrap:anywhere; }
+.studio-print-document h1 { font-size:26px; line-height:1.5; font-weight:700; margin-block:var(--space-4); }
+.studio-print-document h2 { font-size:20px; font-weight:700; line-height:1.6; border-bottom:1px solid var(--color-border-subtle); padding-bottom:var(--space-2); margin-block:var(--space-6) var(--space-3); }
+.studio-print-document h3 { font-size:15px; font-weight:600; }
+.studio-print-document p { margin-block:var(--space-2); white-space:pre-line; }
+.studio-print-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding-bottom:var(--space-3); border-bottom:2px solid var(--color-content-primary); }
+.studio-print-header strong { font-size:28px; letter-spacing:.2em; font-family:serif; }
+.studio-print-date,.studio-print-document footer { color:var(--color-content-secondary); font-size:12px; }
+.studio-print-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); margin-block:var(--space-5); }
+.studio-print-document figure { min-width:0; margin:0; }
+.studio-print-document figcaption { font-size:13px; font-weight:600; margin-bottom:var(--space-2); }
+.studio-print-document img { display:block; max-width:100%; width:100%; height:76mm; object-fit:contain; }
+.studio-print-missing { display:grid; place-items:center; min-height:40mm; padding:var(--space-3); border:1px dashed var(--color-border-subtle); }
+.studio-print-document ol,.studio-print-document ul { padding-inline-start:var(--space-5); }
+.studio-print-document li,.studio-print-finding { margin-block:var(--space-3); }
+.studio-print-product { display:grid; grid-template-columns:40mm minmax(0,1fr); gap:var(--space-4); border-bottom:1px solid var(--color-border-subtle); padding-block:var(--space-4); }
+.studio-print-product figure img { height:40mm; }
+.studio-print-product figure figcaption { display:none; }
+.studio-print-product dl { display:grid; gap:var(--space-1); }
+.studio-print-product dl > div { display:flex; justify-content:space-between; gap:var(--space-3); }
+.studio-print-product dd { font-variant-numeric:tabular-nums; }
+.studio-print-total { margin-block:var(--space-4); padding-block:var(--space-3); border-block:1px solid var(--color-content-primary); }
+.studio-print-document footer { border-top:1px solid var(--color-border-subtle); padding-top:var(--space-3); margin-top:var(--space-6); }
+@media screen and (max-width:600px) {
+  .studio-print-preview { padding:var(--space-1); }
+  .studio-print-document { padding:var(--space-3); }
+  .studio-print-comparison { grid-template-columns:minmax(0,1fr); }
+  .studio-print-product { grid-template-columns:72px minmax(0,1fr); gap:var(--space-3); }
+  .studio-print-product figure img { height:90px; }
+}
+@media print {
+  @page { size:A4; margin:14mm; }
+  html:has(.homa-print-root), body:has(> .homa-print-root) { height:auto!important; overflow:visible!important; position:static!important; background:var(--color-surface-default)!important; }
+  body:has(> .homa-print-root) > :not(.homa-print-root) { display:none!important; }
+  .homa-print-root { display:block!important; position:static; width:auto; }
+  .studio-print-document { max-width:none; padding:0; font-size:10pt; line-height:1.8; }
+  .studio-print-document h1 { font-size:22pt; }
+  .studio-print-document h2 { font-size:16pt; break-after:avoid; }
+  .studio-print-document h3,.studio-print-document figcaption { break-after:avoid; }
+  .studio-print-document p { orphans:3; widows:3; }
+  .studio-print-comparison,.studio-print-finding,.studio-print-product,.studio-print-document li,.studio-print-total { break-inside:avoid; }
+  .studio-print-products { break-before:page; }
+  .studio-print-document img { max-height:82mm; }
+}

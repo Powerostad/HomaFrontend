@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:studio": "vite --mode studio-local --host 127.0.0.1 --port 3000 --strictPort --open false",
+    "dev:studio:preview": "vite --mode studio-preview --host 127.0.0.1 --port 3000 --strictPort --open false",
     "dev:clean": "npm run clean && vite",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run generate:sitemap",
     "build": "tsc && vite build",
+    "postbuild": "node scripts/generate-information-pages.mjs",
     "preview": "vite preview",
     "clean": "rm -rf node_modules/.vite dist .cache",
     "clean:all": "rm -rf node_modules/.vite dist .cache node_modules && npm install",

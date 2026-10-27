@@ -6,8 +6,8 @@
  * optional context, then hands a typed `HomaIntakePayload` to RoomRedesignPage
  * which composes the first chat turn from it.
  *
- * English enum values are internal only — the UI always shows the Persian
- * labels below; the composer (composeIntakeText) maps them back to Persian.
+ * Explicit selections travel as structured preferences, not fabricated prose
+ * in the user's chat message.
  */
 
 /** Single-select room/category for the space. */
@@ -27,7 +27,12 @@ export type Goal =
   | 'modernize'
   | 'declutter'
   | 'product_recommendations'
-  | 'improve_for_rent_or_sale';
+  | 'improve_for_rent_or_sale'
+  | 'photo_appeal'
+  | 'guest_comfort'
+  | 'easy_cleaning'
+  | 'durable';
+// Explicit host goals share the existing structured preferences boundary.
 
 /**
  * The captured photo. Stored as a base64 data URL — the redesign chat sends
@@ -43,11 +48,12 @@ export interface IntakeImage {
 
 /** Everything the intake flow hands to the analysis/chat flow. */
 export interface HomaIntakePayload {
+  imageOutputMode?: 'export' | 'api';
   image: IntakeImage;
   roomType?: RoomType;
   goals: Goal[];
   userNote?: string;
-  prefsUpdate?: { goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
+  prefsUpdate?: { room_type?: Exclude<RoomType, 'not_sure'>; goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
   createdAt: string; // ISO 8601
 }
 

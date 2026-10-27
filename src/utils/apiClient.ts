@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * API Client برای HOMA Platform
  * مدیریت تمام ارتباطات با Backend
@@ -9,9 +10,9 @@
  * - Type-safe responses
  */
 
-import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
-import i18n from '@/i18n/config';
 import { appConfig } from '@/config/appConfig';
+import i18n from '@/i18n/config';
+import { AUTH_STORAGE_KEYS, type AuthTokens } from '@/types/auth';
 
 // =============================================================================
 // Environment Configuration
@@ -211,7 +212,15 @@ async function refreshAccessToken(): Promise<string | null> {
     console.log('[Auth] Refresh already in flight, awaiting shared result');
     return refreshPromise;
   }
-  refreshPromise = performTokenRefresh().finally(() => {
+  const initialRefresh = getRefreshToken();
+  const refresh = () => {
+    // Another tab may have rotated the single-use token while this tab waited.
+    if (initialRefresh && getRefreshToken() !== initialRefresh) return Promise.resolve(getStoredTokens()?.access || null);
+    return performTokenRefresh();
+  };
+  // The in-module promise guards one tab; Web Locks guards the whole origin.
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  refreshPromise = (async () => locks ? await locks.request('homa:token-refresh', refresh) : await refresh())().finally(() => {
     refreshPromise = null;
   });
   return refreshPromise;
@@ -231,6 +240,8 @@ async function performTokenRefresh(): Promise<string | null> {
     return null;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
   try {
     console.log('[Auth] Refreshing access token...');
 
@@ -242,16 +253,22 @@ async function performTokenRefresh(): Promise<string | null> {
         'Accept': 'application/json',
       },
       body: JSON.stringify({ refresh: refreshToken }),
+      signal: controller.signal,
     });
+
+    // Never let a late refresh (success or failure) replace a newer login/refresh.
+    if (getRefreshToken() !== refreshToken) return getStoredTokens()?.access || null;
 
     if (!response.ok) {
       console.log('[Auth] Refresh failed with status:', response.status);
-      // Refresh token is invalid/expired - clear all auth and notify AuthContext
-      clearAuthData(true);
+      // Network/server outages are not revoked credentials. Keep the account
+      // state so online/focus recovery can retry without forcing a new login.
+      if ([400, 401].includes(response.status)) clearAuthData(true);
       return null;
     }
 
     const data = await response.json();
+    if (getRefreshToken() !== refreshToken) return getStoredTokens()?.access || null;
 
     if (data.access) {
       // Token rotation: backend returns new refresh token along with access token
@@ -272,8 +289,9 @@ async function performTokenRefresh(): Promise<string | null> {
     return null;
   } catch (error) {
     console.error('[Auth] Token refresh error:', error);
-    clearAuthData(true);
-    return null;
+    return getRefreshToken() !== refreshToken ? getStoredTokens()?.access || null : null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -519,7 +537,7 @@ export async function apiGet<T>(
         // Refresh failed - return unauthorized error
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -529,7 +547,7 @@ export async function apiGet<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در دریافت اطلاعات',
+        data.error || data.message || siteText("خطا در دریافت اطلاعات"),
         response.status,
         data
       );
@@ -555,14 +573,14 @@ export async function apiGet<T>(
     if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
-        error: 'زمان درخواست به پایان رسید',
+        error: siteText("زمان درخواست به پایان رسید"),
         statusCode: 408,
       };
     }
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -580,7 +598,8 @@ export async function apiPost<T>(
 
   try {
     const url = buildURL(endpoint);
-    console.log('[API POST]', url.toString(), body);
+    // Authentication bodies can contain OTPs, passwords or Google ID tokens.
+    console.log('[API POST]', url.toString());
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
@@ -606,7 +625,7 @@ export async function apiPost<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -616,7 +635,7 @@ export async function apiPost<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در ارسال اطلاعات',
+        data.error || data.message || siteText("خطا در ارسال اطلاعات"),
         response.status,
         data
       );
@@ -642,14 +661,14 @@ export async function apiPost<T>(
     if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
-        error: 'زمان درخواست به پایان رسید',
+        error: siteText("زمان درخواست به پایان رسید"),
         statusCode: 408,
       };
     }
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -680,7 +699,7 @@ export async function apiUpload<T>(
     console.error('[API Upload] Invalid file provided:', file);
     return {
       success: false,
-      error: 'فایل انتخاب نشده است',
+      error: siteText("فایل انتخاب نشده است"),
       statusCode: 400,
     };
   }
@@ -740,7 +759,7 @@ export async function apiUpload<T>(
           } else {
             resolve({
               success: false,
-              error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+              error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
               statusCode: 401,
             });
             return;
@@ -760,14 +779,14 @@ export async function apiUpload<T>(
           } else {
             resolve({
               success: false,
-              error: data.error || data.message || 'خطا در آپلود فایل',
+              error: data.error || data.message || siteText("خطا در آپلود فایل"),
               statusCode: xhr.status,
             });
           }
         } catch {
           resolve({
             success: false,
-            error: 'خطا در پردازش پاسخ سرور',
+            error: siteText("خطا در پردازش پاسخ سرور"),
             statusCode: xhr.status,
           });
         }
@@ -777,7 +796,7 @@ export async function apiUpload<T>(
       xhr.addEventListener('error', () => {
         resolve({
           success: false,
-          error: 'خطا در اتصال به سرور',
+          error: siteText("خطا در اتصال به سرور"),
           statusCode: 0,
         });
       });
@@ -786,7 +805,7 @@ export async function apiUpload<T>(
       xhr.addEventListener('timeout', () => {
         resolve({
           success: false,
-          error: 'زمان آپلود به پایان رسید',
+          error: siteText("زمان آپلود به پایان رسید"),
           statusCode: 408,
         });
       });
@@ -816,7 +835,7 @@ export async function apiUpload<T>(
     console.error('[API Upload Error]', endpoint, error);
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته در آپلود',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته در آپلود"),
       statusCode: 500,
     };
   }
@@ -859,7 +878,7 @@ export async function apiPut<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -869,7 +888,7 @@ export async function apiPut<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در به‌روزرسانی',
+        data.error || data.message || siteText("خطا در به‌روزرسانی"),
         response.status,
         data
       );
@@ -894,7 +913,7 @@ export async function apiPut<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -934,7 +953,7 @@ export async function apiPatch<T>(
       }
       return {
         success: false,
-        error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+        error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
         statusCode: 401,
       };
     }
@@ -943,7 +962,7 @@ export async function apiPatch<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در به‌روزرسانی',
+        data.error || data.message || siteText("خطا در به‌روزرسانی"),
         response.status,
         data
       );
@@ -968,7 +987,7 @@ export async function apiPatch<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -1009,7 +1028,7 @@ export async function apiDelete<T>(
       } else {
         return {
           success: false,
-          error: 'نشست شما منقضی شده است. لطفا دوباره وارد شوید.',
+          error: siteText("نشست شما منقضی شده است. لطفا دوباره وارد شوید."),
           statusCode: 401,
         };
       }
@@ -1019,7 +1038,7 @@ export async function apiDelete<T>(
 
     if (!response.ok) {
       throw new APIError(
-        data.error || data.message || 'خطا در حذف',
+        data.error || data.message || siteText("خطا در حذف"),
         response.status,
         data
       );
@@ -1044,7 +1063,7 @@ export async function apiDelete<T>(
 
     return {
       success: false,
-      error: error instanceof Error ? translateErrorMessage(error) : 'خطای ناشناخته',
+      error: error instanceof Error ? translateErrorMessage(error) : siteText("خطای ناشناخته"),
       statusCode: 500,
     };
   }
@@ -1074,7 +1093,9 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
   const headers: Record<string, string> = {};
 
   // Only our own API needs the JWT; presigned/CDN URLs are self-authenticating.
-  if (imageUrl.startsWith(appConfig.apiBaseUrl)) {
+  const imageTarget = new URL(imageUrl, appConfig.apiBaseUrl);
+  const apiTarget = new URL(appConfig.apiBaseUrl);
+  if (imageTarget.origin === apiTarget.origin && imageTarget.pathname.startsWith('/api/')) {
     const tokens = getStoredTokens();
     if (tokens?.access) {
       headers['Authorization'] = `Bearer ${tokens.access}`;
@@ -1093,7 +1114,7 @@ export async function fetchAuthenticatedImage(imageUrl: string): Promise<string>
 
   if (!response.ok) {
     throw new APIError(
-      `خطا در بارگذاری تصویر: ${response.status}`,
+      siteText("خطا در بارگذاری تصویر: {{v0}}", { v0: response.status }),
       response.status
     );
   }
@@ -1119,4 +1140,4 @@ export async function apiHealthCheck(): Promise<boolean> {
 // Auth-specific exports for authService
 // =============================================================================
 
-export { refreshAccessToken, translateErrorMessage };
+export { refreshAccessToken,translateErrorMessage };

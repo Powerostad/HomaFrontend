@@ -1,9 +1,13 @@
-import { Check, ChevronDown, Minus, Plus, ShoppingBag } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
+import { AlertTriangle, ArrowLeftRight, BarChart3, Check, ChevronDown, Crown, Lightbulb, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import type { Product } from '../components/ProductDetailSheet';
 import type { CategoryGroup, InterventionTier } from './types';
+import { ProductRefinement, type RefineProduct } from './ProductRefinement';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
@@ -26,6 +30,9 @@ interface RecommendationCardProps {
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (newQuantity: number) => void;
   isLast?: boolean;
+  onRefineProduct?: RefineProduct;
+  busy?: boolean;
+  onMakePrimary?: (productId: string) => void;
 }
 
 function impactText(level: CategoryGroup['impactLevel'], t: (key: string, fallback: string) => string) {
@@ -41,6 +48,10 @@ function ProductPreview({
   isPrimary,
   onOpen,
   onToggle,
+  onUpdateQuantity,
+  isKey = false,
+  onSwap,
+  alternativesOpen,
 }: {
   product: Product & { store?: string; matchScore?: number };
   group: CategoryGroup;
@@ -48,39 +59,55 @@ function ProductPreview({
   isPrimary: boolean;
   onOpen: () => void;
   onToggle: () => void;
+  onUpdateQuantity?: (quantity: number) => void;
+  isKey?: boolean;
+  onSwap?: () => void;
+  alternativesOpen?: boolean;
 }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
-  const reason = product.persianReason || group.recommendationReasonFa || t('studio.result.v2.card.defaultReason', 'با سبک کلی فضا هماهنگ است.');
 
   return (
-    <article className={`studio-product-preview ${isPrimary ? 'is-primary' : ''}`}>
-      <button type="button" className="studio-product-image-button" onClick={onOpen} aria-label={`${t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول')}: ${product.name}`}>
-        <ImageWithFallback src={product.image} alt={product.name} className="studio-product-image" />
-        {isPrimary && <span className="studio-product-badge">{t('studio.result.v2.card.recommendedProduct', 'پیشنهاد اصلی')}</span>}
+    <article className={`studio-product-preview ${isPrimary ? 'is-primary' : ''}`} dir={siteDirection()}>
+      <button type="button" className="studio-product-image-button" onClick={onOpen} aria-label={siteText("{{v0}}: {{v1}}", { v0: t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول'), v1: product.name })}>
+        <AuthenticatedImage src={product.image} alt={siteValue(product.name)} className="studio-product-image" loading="lazy" />
+        {isKey && <span className="studio-product-key" dir={siteDirection()}><Crown size={14} aria-hidden="true" />{t('studioProductLayout.keyProduct')}</span>}
       </button>
-      <div className="studio-product-copy">
-        <button type="button" className="studio-product-name" onClick={onOpen}>{product.name}</button>
-        <span className="studio-product-reason">{reason}</span>
+      <div className="studio-product-copy" dir={siteDirection()}>
+        <span className="studio-product-category">{siteValue(product.category || group.category)}</span>
+        {isPrimary && group.changeKind && <span className="studio-product-change" data-change={group.changeKind}>{t(group.changeKind === 'added' ? 'studioProject.productAdded' : 'studioProject.productChanged', group.changeKind === 'added' ? 'اضافه‌شده' : 'تغییرکرده')}</span>}
+        <button type="button" className="studio-product-name" onClick={onOpen}>{siteValue(product.name)}</button>
         <div className="studio-product-meta">
-          <span className="studio-price" dir="ltr">{formatPriceFromRial(product.price, true)}</span>
-          {group.recommendedSize && <span>{group.recommendedSize}</span>}
+          <span className="studio-price">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
         </div>
-        {product.matchHighlights && product.matchHighlights.length > 0 && (
-          <div className="studio-product-highlights">
-            {product.matchHighlights.slice(0, 2).map((highlight) => <span key={highlight}>{highlight}</span>)}
+        {product.variantId != null && <p className="studio-product-size">
+          {product.dimensionsCm?.width_cm && product.dimensionsCm?.length_cm
+            ? `${toLocalizedDigits(product.dimensionsCm.width_cm)} × ${toLocalizedDigits(product.dimensionsCm.length_cm)} ${t('studioV2.cm')}` : product.variantLabel}
+        </p>}
+        {isPrimary && isSelected && onUpdateQuantity && <div className="studio-quantity-control">
+          <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
+          <div className="studio-quantity-stepper" dir="ltr">
+          <button type="button" onClick={() => onUpdateQuantity(Math.max(1, group.quantity - 1))} disabled={!!product.purchaseStatus || group.quantity <= 1} aria-label={t('basket.decrease', 'کاهش تعداد')}><Minus size={16} /></button>
+          <strong>{siteValue(toLocalizedDigits(group.quantity || 1))}</strong>
+          <button type="button" onClick={() => onUpdateQuantity(Math.min(99, (group.quantity || 1) + 1))} disabled={!!product.purchaseStatus || group.quantity >= 99} aria-label={t('basket.increase', 'افزایش تعداد')}><Plus size={16} /></button>
           </div>
-        )}
-        <button
+        </div>}
+      </div>
+      <div className="studio-product-row-actions" dir={siteDirection()}>
+        <Button variant={isSelected ? 'outline' : 'default'}
           type="button"
           className={`studio-product-select ${isSelected ? 'is-selected' : ''}`}
           onClick={onToggle}
+          disabled={!product.uniqueLink || (!!product.purchaseStatus && product.purchaseStatus !== 'ready' && !isSelected)}
           aria-pressed={isSelected}
+          dir={siteDirection()}
         >
-          {isSelected ? <Check size={16} /> : <ShoppingBag size={16} />}
-          {isSelected
+          {isSelected ? <Trash2 size={16} aria-hidden="true" /> : <ShoppingBag size={16} aria-hidden="true" />}
+          <span className="studio-product-select-label">{siteValue(isSelected
             ? t('studio.result.v2.card.removeFromBasket', 'حذف از سبد')
-            : t('studio.result.v2.card.addToBasket', 'افزودن محصول به سبد')}
-        </button>
+            : t('studio.result.v2.card.addToBasketShort', 'افزودن به سبد'))}</span>
+        </Button>
+        {onSwap && <Button variant="outline" className="studio-swap-toggle" aria-expanded={alternativesOpen} aria-controls={`alternatives-${group.itemId}`} onClick={onSwap}><ArrowLeftRight size={16} aria-hidden="true" />{t('studioProductLayout.swap')}</Button>}
       </div>
     </article>
   );
@@ -97,109 +124,106 @@ export function RecommendationCard({
   onToggleAccepted,
   onToggleBasketProduct,
   onUpdateQuantity,
+  isTopPriority,
+  onRefineProduct,
+  busy = false,
 }: RecommendationCardProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
+  const [alternativesOpen, setAlternativesOpen] = useState(false);
   const heroProduct = group.products[0] || null;
-  const alternatives = group.products.slice(1, 4);
+  const alternatives = group.products.slice(1, 11);
   const isActionItem = group.actionStatus !== 'available' || !heroProduct;
-  const quantity = group.quantity || 1;
-  const problem = group.recommendationReasonFa || t('studio.result.v2.card.defaultProblem', 'این بخش از فضا با ظرفیت اصلی اتاق هم‌خوان نیست.');
-  const solution = group.designRationaleFa || t('studio.result.v2.card.defaultSolution', 'انتخابی هماهنگ با مقیاس، رنگ و سبک فضا.');
+  const problem = group.recommendationReasonFa;
+  const solution = group.designRationaleFa;
 
   return (
+    <div className={`studio-recommendation${isActionItem ? '' : ' studio-product-row'}`} style={{ fontFamily: FONT }} dir={siteDirection()}>
     <article
       id={`recommendation-${group.itemId}`}
       className="studio-recommendation-card"
       tabIndex={-1}
-      style={{ fontFamily: FONT }}
     >
-      <header className="studio-recommendation-header">
-        <div className="studio-recommendation-step" dir="ltr">{String(stepNumber || 1).padStart(2, '0')}</div>
+      {isActionItem && <header className="studio-recommendation-header">
+        {group.changeKind && <span className="studio-product-change" data-change={group.changeKind}>{t(group.changeKind === 'added' ? 'studioProject.productAdded' : 'studioProject.productChanged', group.changeKind === 'added' ? 'اضافه‌شده' : 'تغییرکرده')}</span>}
+        <button type="button" className="studio-details-toggle studio-why-button" onClick={onToggleWhy} aria-expanded={isWhyExpanded} aria-controls={`recommendation-detail-${group.itemId}`}>
+          <span>{t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span>
+          <ChevronDown className={isWhyExpanded ? 'is-open' : ''} size={16} />
+        </button>
+        <div className="studio-recommendation-step" dir="ltr">{siteValue(String(stepNumber || 1).padStart(2, '0'))}</div>
         <div className="studio-recommendation-title">
-          <span>{t('studio.result.v2.card.changeLabel', 'تغییر پیشنهادی')}</span>
-          <h3>{group.categoryDisplay}</h3>
+          <h3>{siteValue(group.categoryDisplay)}</h3>
         </div>
-        <span className="studio-recommendation-impact">{impactText(group.impactLevel, t)}</span>
-      </header>
+        {group.impactKnown !== false && <span className="studio-recommendation-impact">{siteValue(impactText(group.impactLevel, t))}</span>}
+      </header>}
 
+      {isActionItem && <div id={`recommendation-detail-${group.itemId}`} hidden={!isWhyExpanded} className="studio-recommendation-detail">
       <div className="studio-recommendation-copy">
-        <p><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}:</strong> {problem}</p>
-        <p><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}:</strong> {solution}</p>
-        <p><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}:</strong> {t('studio.result.v2.card.expectedImpactCopy', 'تعادل بیشتر، کاربرد بهتر و خوانایی بالاتر در فضا')}</p>
+        {problem && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><AlertTriangle size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.problemStatement', 'مشکل فعلی')}</strong><p>{siteValue(problem)}</p></div>}
+        {solution && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><Lightbulb size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.designStrategy', 'راهکار پیشنهادی')}</strong><p>{siteValue(solution)}</p></div>}
+        {group.impactKnown !== false && <div className="studio-recommendation-fact"><span className="studio-recommendation-fact-icon"><BarChart3 size={18} aria-hidden="true" /></span><strong>{t('studio.result.v2.card.expectedImpact', 'اثر مورد انتظار')}</strong><p>{siteValue(impactText(group.impactLevel, t))}</p></div>}
       </div>
+        {group.recommendedSize && <span>{siteValue(group.recommendedSize)}</span>}
+      </div>}
 
-      {!isActionItem && heroProduct && (
-        <>
-          {onUpdateQuantity && (
-            <div className="studio-quantity-control" dir="ltr">
-              <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
-              <button type="button" onClick={() => onUpdateQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1} aria-label={t('basket.decrease', 'کاهش تعداد')}><Minus size={16} /></button>
-              <strong>{toLocalizedDigits(quantity)}</strong>
-              <button type="button" onClick={() => onUpdateQuantity(Math.min(99, quantity + 1))} disabled={quantity >= 99} aria-label={t('basket.increase', 'افزایش تعداد')}><Plus size={16} /></button>
-            </div>
-          )}
-
+      {siteValue(!isActionItem && heroProduct && (
           <ProductPreview
             product={heroProduct}
             group={group}
             isPrimary
+            isKey={isTopPriority}
+            onSwap={alternatives.length > 0 ? () => setAlternativesOpen(value => !value) : undefined}
+            alternativesOpen={alternativesOpen}
             isSelected={basketProductIds.has(heroProduct.id)}
             onOpen={() => onProductClick(heroProduct)}
             onToggle={() => onToggleBasketProduct(heroProduct.id)}
+            onUpdateQuantity={onUpdateQuantity}
           />
+      ))}
 
-          {alternatives.length > 0 && (
-            <div className="studio-alternatives">
-              <div className="studio-alternatives-heading">
-                <h4>{t('studio.result.v2.card.alternatives', 'دو جایگزین برای مقایسه')}</h4>
-                <span>{t('studio.result.v2.card.alternativesHint', 'انتخاب محصول مستقل از انتخاب تغییر است')}</span>
-              </div>
-              <div className="studio-alternatives-grid">
-                {alternatives.map((product) => (
-                  <ProductPreview
-                    key={product.id}
-                    product={product}
-                    group={group}
-                    isPrimary={false}
-                    isSelected={basketProductIds.has(product.id)}
-                    onOpen={() => onProductClick(product)}
-                    onToggle={() => onToggleBasketProduct(product.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {isActionItem && (
+      {siteValue(isActionItem && (
         <div className="studio-action-item">
-          {group.actionGuidance && <p>{group.actionGuidance}</p>}
-          {group.placements.length > 0 && (
+          {siteValue(group.actionGuidance && <p>{siteValue(group.actionGuidance)}</p>)}
+          {siteValue(group.placements.length > 0 && (
             <div className="studio-placement-list">
-              {group.placements.map((placement) => <span key={placement}>{placement}</span>)}
+              {siteValue(group.placements.map((placement) => <span key={placement}>{siteValue(placement)}</span>))}
             </div>
-          )}
+          ))}
         </div>
-      )}
+      ))}
 
-      <div className="studio-recommendation-actions">
+      {!isActionItem && <details className="studio-v9-design-decision">
+        <summary><span>{siteValue(group.categoryDisplay)} · {t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span><ChevronDown size={18} aria-hidden="true" /></summary>
+        {problem && <p>{siteValue(problem)}</p>}
+        {solution && solution !== problem && <p>{siteValue(solution)}</p>}
+        {onToggleAccepted && <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
+          {siteValue(isAccepted ? t('studio.v9.decisionSelected', 'تغییر انتخاب شد') : t('studio.v9.acceptDecision', 'انتخاب این تغییر'))}
+        </button>}
+        {heroProduct && onRefineProduct && <ProductRefinement key={heroProduct.id} product={heroProduct} busy={busy} onSubmit={onRefineProduct} />}
+      </details>}
+      {isActionItem && onToggleAccepted && <div className="studio-recommendation-actions">
         <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>
-          {isAccepted ? <Check size={17} /> : null}
-          {isAccepted ? t('studio.result.v2.card.accepted', 'تغییر انتخاب شد') : t('studio.result.v2.card.accept', 'انتخاب تغییر')}
+          {siteValue(isAccepted ? <Check size={17} /> : null)}
+          {siteValue(isAccepted ? t('studio.v9.decisionSelected', 'تغییر انتخاب شد') : t('studio.v9.acceptDecision', 'انتخاب این تغییر'))}
         </button>
-        <button type="button" className="studio-details-toggle studio-why-button" onClick={onToggleWhy} aria-expanded={isWhyExpanded}>
-          <span>{t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span>
-          <ChevronDown className={isWhyExpanded ? 'is-open' : ''} size={16} />
-        </button>
+      </div>}
+    {!isActionItem && alternatives.length > 0 && <section id={`alternatives-${group.itemId}`} hidden={!alternativesOpen} className="studio-alternatives" aria-label={t('studio.result.v2.product.alternativesTitle', 'مقایسه جایگزین‌ها')}>
+      <div className="studio-alternatives-heading">
+        <h4>{alternatives.length === 2 ? t('studio.result.v2.card.alternatives', 'دو جایگزین') : toLocalizedDigits(t('studio.result.v2.card.alternativeCount', { count: alternatives.length, defaultValue: '{{count}} جایگزین دیگر' }))}</h4>
+        <Button variant="ghost" size="icon" aria-label={t('common.close', 'بستن')} onClick={() => setAlternativesOpen(false)}><X size={16} aria-hidden="true" /></Button>
       </div>
-
-      {isWhyExpanded && (
-        <div className="studio-recommendation-detail">
-          <p>{group.recommendationReasonFa || problem}</p>
-          {group.recommendedSize && <span>{t('studio.result.v2.card.budgetHint', 'بودجه تقریبی بر اساس انتخاب اصلی')}: {formatPriceFromRial(heroProduct?.price ? heroProduct.price * quantity : 0, true)}</span>}
-        </div>
-      )}
+      <div className="studio-alternatives-grid" id={`alternative-options-${group.itemId}`}>
+        {alternatives.map((product, index) => <button type="button" className="studio-swap-option" key={product.id} data-recommended={index < 3 || undefined}
+          aria-label={`${t('studio.result.v2.card.viewProduct', 'مشاهده جزئیات محصول')}: ${siteValue(product.name)}`}
+          onClick={() => onProductClick(product)} disabled={busy}>
+          <span className="studio-swap-image"><AuthenticatedImage src={product.image} alt="" loading="lazy" /></span>
+          <span className="studio-swap-label">{index < 3 && <span className="studio-swap-tag">{t('studioProductLayout.suggestionNumber', 'پیشنهاد')} {siteValue(toLocalizedDigits(index + 1))}</span>}</span>
+          <strong>{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</strong>
+          <span className="studio-swap-name" title={siteValue(product.name)}>{siteValue(product.name)}</span>
+        </button>)}
+      </div>
+    </section>}
     </article>
+    </div>
   );
 }

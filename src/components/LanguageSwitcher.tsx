@@ -1,13 +1,14 @@
-import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
-import { languages, updateDocumentLanguage, type LanguageCode } from '@/i18n/config';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+import { languages, updateDocumentLanguage, type LanguageCode } from '@/i18n/config';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LanguageSwitcherProps {
   variant?: 'default' | 'compact' | 'full';
@@ -15,6 +16,7 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ variant = 'default', className = '' }: LanguageSwitcherProps) {
+  const { siteValue } = useSiteTranslation();
   const { i18n } = useTranslation();
   const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
@@ -32,13 +34,13 @@ export function LanguageSwitcher({ variant = 'default', className = '' }: Langua
           className={`gap-2 ${className}`}
         >
           <Globe className="h-4 w-4" />
-          {variant !== 'compact' && (
-            <span className="text-sm">{currentLanguage.name}</span>
-          )}
+          {siteValue(variant !== 'compact' && (
+            <span className="text-sm">{siteValue(currentLanguage.name)}</span>
+          ))}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[140px]">
-        {languages.map((lang) => (
+        {siteValue(languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
@@ -51,13 +53,13 @@ export function LanguageSwitcher({ variant = 'default', className = '' }: Langua
                 fontFamily: lang.dir === 'rtl' ? 'Vazirmatn, sans-serif' : 'Inter, sans-serif',
               }}
             >
-              {lang.name}
+              {siteValue(lang.name)}
             </span>
-            {lang.code === i18n.language && (
+            {siteValue(lang.code === i18n.language && (
               <span className="text-brand-primary">✓</span>
-            )}
+            ))}
           </DropdownMenuItem>
-        ))}
+        )))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

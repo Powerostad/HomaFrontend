@@ -1,10 +1,12 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { FileUpload } from "../../components/FileUpload";
 import { Header } from "../../components/Header";
 import { useApp } from "../../context/AppContext";
-import { motion } from "motion/react";
 
 export function UploadPage() {
+  const { siteText } = useSiteTranslation();
   const navigate = useNavigate();
   const { setSelectedFile, setUploadStartTime } = useApp();
 
@@ -31,10 +33,9 @@ export function UploadPage() {
           className="w-full max-w-2xl relative z-10"
         >
           <div className="text-center mb-[var(--spacing-xl)]">
-            <h1 className="mb-[var(--spacing-sm)] text-[var(--foreground)]">آپلود تصویر محصول</h1>
+            <h1 className="mb-[var(--spacing-sm)] text-[var(--foreground)]">{siteText("آپلود تصویر محصول")}</h1>
             <p className="text-[var(--muted-foreground)] mb-[var(--spacing-sm)]">
-              برای شروع، یک تصویر با کیفیت از محصول خود بارگذاری کنید
-            </p>
+              {siteText("برای شروع، یک تصویر با کیفیت از محصول خود بارگذاری کنید")}</p>
           </div>
 
           <FileUpload 
@@ -45,18 +46,18 @@ export function UploadPage() {
           <div className="mt-[var(--spacing-xl)] grid grid-cols-1 md:grid-cols-3 gap-[var(--spacing-md)] text-center">
             <div className="p-[var(--spacing-sm)] rounded-[var(--radius-card)] bg-[var(--secondary)] backdrop-blur-sm">
               <div className="text-[24px] mb-[var(--spacing-xs)]">📸</div>
-              <h3 className="mb-[5px] text-[var(--foreground)]">وضوح بالا</h3>
-              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">برای بهترین نتیجه از تصاویر با کیفیت استفاده کنید</p>
+              <h3 className="mb-[5px] text-[var(--foreground)]">{siteText("وضوح بالا")}</h3>
+              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">{siteText("برای بهترین نتیجه از تصاویر با کیفیت استفاده کنید")}</p>
             </div>
             <div className="p-[var(--spacing-sm)] rounded-[var(--radius-card)] bg-[var(--secondary)] backdrop-blur-sm">
               <div className="text-[24px] mb-[var(--spacing-xs)]">💡</div>
-              <h3 className="mb-[5px] text-[var(--foreground)]">نور مناسب</h3>
-              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">نور طبیعی و یکنواخت جزئیات را بهتر نشان می‌دهد</p>
+              <h3 className="mb-[5px] text-[var(--foreground)]">{siteText("نور مناسب")}</h3>
+              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">{siteText("نور طبیعی و یکنواخت جزئیات را بهتر نشان می‌دهد")}</p>
             </div>
             <div className="p-[var(--spacing-sm)] rounded-[var(--radius-card)] bg-[var(--secondary)] backdrop-blur-sm">
               <div className="text-[24px] mb-[var(--spacing-xs)]">📐</div>
-              <h3 className="mb-[5px] text-[var(--foreground)]">زاویه دید</h3>
-              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">محصول را در مرکز کادر و با زاویه مناسب قرار دهید</p>
+              <h3 className="mb-[5px] text-[var(--foreground)]">{siteText("زاویه دید")}</h3>
+              <p className="text-[length:var(--text-caption-size)] text-[var(--muted-foreground)]">{siteText("محصول را در مرکز کادر و با زاویه مناسب قرار دهید")}</p>
             </div>
           </div>
         </motion.div>

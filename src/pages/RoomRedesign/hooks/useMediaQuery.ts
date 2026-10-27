@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
  *  the mobile bottom-sheet layout and the desktop workspace at the lg breakpoint. */
 export function useMediaQuery(query: string): boolean {
   const [match, setMatch] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+    () => typeof window !== 'undefined' && !!window.matchMedia?.(query).matches,
   );
 
   useEffect(() => {
-    const mql = window.matchMedia(query);
+    const mql = window.matchMedia?.(query);
+    if (!mql) return;
     const onChange = () => setMatch(mql.matches);
     mql.addEventListener('change', onChange);
     onChange();

@@ -1,15 +1,16 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Shared Service - اشتراک‌گذاری
  * Public API for fetching shared gallery items (no auth required)
  */
 
-import { apiGet } from '@/utils/apiClient';
 import { normalizeImageUrl } from '@/services/studioService';
 import type {
   SharedItem,
-  SharedStudioItem,
   SharedStudioCategoryItem,
+  SharedStudioItem,
 } from '@/types/shared';
+import { apiGet } from '@/utils/apiClient';
 
 /**
  * Normalize all image URLs in a shared item to use the frontend API host.
@@ -59,6 +60,6 @@ export async function fetchSharedItem(
 
   return {
     success: false,
-    error: response.error || 'این لینک معتبر نیست',
+    error: response.error || siteText("این لینک معتبر نیست"),
   };
 }

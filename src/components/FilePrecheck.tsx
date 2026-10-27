@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Camera } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Header } from "./Header";
 import svgPaths from "../imports/svg-m4kfj8jpfi";
+import { Header } from "./Header";
 
 interface FilePrecheckProps {
   file: File;
@@ -89,6 +90,7 @@ function AlertIcon() {
 }
 
 export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: FilePrecheckProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [checks, setChecks] = useState<CheckResult[]>([]);
   const [isChecking, setIsChecking] = useState(true);
@@ -219,7 +221,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
         {/* Checks List */}
         <div className="space-y-3 mb-8">
           <AnimatePresence mode="popLayout">
-            {checks.map((check, index) => {
+            {siteValue(checks.map((check, index) => {
               const bgColor = check.type === "success"
                 ? "#f7fcde"
                 : check.type === "warning"
@@ -257,7 +259,7 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                     className="flex-shrink-0 bg-[#212121] rounded-[16px] size-[39.985px] flex items-center justify-center"
                   >
                     <div className="size-[19.983px]">
-                      {check.type === "success" ? <SuccessIcon /> : <AlertIcon />}
+                      {siteValue(check.type === "success" ? <SuccessIcon /> : <AlertIcon />)}
                     </div>
                   </motion.div>
 
@@ -267,14 +269,14 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                       className="leading-relaxed"
                       style={{ color: textColor }}
                     >
-                      {check.message}
+                      {siteValue(check.message)}
                     </p>
                   </div>
                 </motion.div>
               );
-            })}
+            }))}
             
-            {isChecking && checks.length < 4 && (
+            {siteValue(isChecking && checks.length < 4 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -286,19 +288,19 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   <p className="text-[#6B7280]">{t('filePrecheck.checking')}</p>
                 </div>
               </motion.div>
-            )}
+            ))}
           </AnimatePresence>
         </div>
 
         {/* Action Buttons */}
-        {!isChecking && (
+        {siteValue(!isChecking && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
             className="space-y-3 mt-auto pt-8"
           >
-            {hasError ? (
+            {siteValue(hasError ? (
               <>
                 {/* Error: Must upload better image */}
                 <motion.button
@@ -351,9 +353,9 @@ export function FilePrecheck({ file, onApprove, onRetake, onContinueAnyway }: Fi
                   <span>✓ {t('filePrecheck.imageApproved')}</span>
                 </motion.div>
               </>
-            )}
+            ))}
           </motion.div>
-        )}
+        ))}
       </div>
     </div>
   );

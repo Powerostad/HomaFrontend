@@ -1,10 +1,13 @@
+import { siteText } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createChatSession, loadChatSession, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
-import { rebuildSessionView, chipGroupsFromQuestions } from '../services/transformers';
+import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
+import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
+import type { AnalysisPreview } from '../services/discoveryReview';
 
-const RECONCILE_MAX_ATTEMPTS = 90;
-const RECONCILE_MAX_MS = 180_000;
+const RECONCILE_MAX_ATTEMPTS = 120;
+const RECONCILE_MAX_MS = 600_000;
+const RECONCILE_INTERVAL_MS = 5000;
 const GENERIC_PROCESSING_ERROR = 'پردازش ناموفق بود. دوباره تلاش کن.';
 
 function localizedFailure(value: unknown): string {
@@ -14,23 +17,31 @@ function localizedFailure(value: unknown): string {
 }
 
 export interface SendTurnArgs {
+  imageOutputMode?: 'export' | 'api';
   text: string;
   images?: string[];
   prefsUpdate?: unknown;
-  action?: 'chat' | 'preview_product';
+  action?: StreamTurnParams['action'];
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: StreamTurnParams['reviewKind'];
 }
 export function useRedesignChat(path?: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
+  const [currentExecution, setCurrentExecution] = useState<ExecutionPlan | null>(null);
+  const [analysisPreview, setAnalysisPreview] = useState<AnalysisPreview | null>(null);
+  const [currentBaseVersionId, setCurrentBaseVersionId] = useState('original');
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [viewedId, setViewedId] = useState('original');
   const [readyId, setReadyId] = useState<string | null>(null);
   const [status, setStatus] = useState('idle');
   const [stage, setStage] = useState<string | null>(null);
+  const [stageKey, setStageKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [hydrating, setHydrating] = useState(!!path);
@@ -46,57 +57,98 @@ export function useRedesignChat(path?: string) {
   const versionsRef = useRef<DesignVersion[]>([]);
   const renderOperationId = useRef<string | null>(null);
   const generation = useRef(0);
+  const recovery = useRef<{ signal: AbortSignal; promise: Promise<void> } | null>(null);
 
   const apply = useCallback((data: SessionPayload) => {
     const rebuilt = rebuildSessionView(data);
-    setMessages(rebuilt.messages);
+    const failedIntent = intent.current && data.operations?.some(op =>
+      op.idempotency_key === intent.current?.idempotencyKey && op.status === 'failed' && op.kind === 'text_turn')
+      ? intent.current : null;
+    setMessages(failedIntent ? [...rebuilt.messages, { id: failedIntent.idempotencyKey, role: 'user',
+      text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
+    setCurrentExecution(data.current_execution || null);
+    setAnalysisPreview(data.analysis_preview || null);
+    setCurrentBaseVersionId(data.current_base_version_id || 'original');
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
-    if (versionsRef.current.length && next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
+    if (next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
     versionsRef.current = next;
     setVersions(next);
     if (following.current && next.length) {
-      viewedRef.current = next[next.length - 1].version_id;
+      viewedRef.current = data.current_execution ? 'current' : next[next.length - 1].version_id;
       setViewedId(viewedRef.current);
     }
   }, []);
 
-  const reconcile = useCallback(async (
+  const reconcile = useCallback((
     sid: string,
     signal: AbortSignal,
     key?: string,
-    waitForCompletion = true,
-  ) => {
-    const deadline = Date.now() + RECONCILE_MAX_MS;
-    for (let i = 0; i < RECONCILE_MAX_ATTEMPTS && Date.now() < deadline && !signal.aborted; i++) {
-      if (sidRef.current !== sid) return;
-      const loaded = await loadChatSession(sid, viewedRef.current);
-      if (signal.aborted || sidRef.current !== sid) return;
-      if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); break; }
-      const data = loaded.data as SessionPayload;
-      apply(data);
-      const ops = data.operations || [];
-      const tracked = key ? ops.find(o => o.idempotency_key === key || o.operation_id === key) : undefined;
-      const active = ops.find(o => o.status === 'running');
-      const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
-      const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
-      if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
-      if (!active) {
-        if (key && !tracked) { setError('وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.'); break; }
-        operation.current = null; completed.current = true;
-        setStatus('idle'); setError(null); setStage(null); locked.current = false;
-        return;
+  ): Promise<void> => {
+    // Push, disconnect and command completion share one bounded recovery loop.
+    // A late snapshot must never overwrite a newer command or another session.
+    if (recovery.current?.signal === signal) return recovery.current.promise;
+    const recoveryGeneration = generation.current;
+    const current = () => !signal.aborted && sidRef.current === sid && generation.current === recoveryGeneration;
+    const pause = () => new Promise<void>(resolve => {
+      const done = () => { clearTimeout(timer); signal.removeEventListener('abort', done); resolve(); };
+      const timer = setTimeout(done, RECONCILE_INTERVAL_MS);
+      signal.addEventListener('abort', done, { once: true });
+      if (signal.aborted) done();
+    });
+    const run = async () => {
+      const deadline = Date.now() + RECONCILE_MAX_MS;
+      let previousStamp: string | null = null;
+      for (let i = 0; i < RECONCILE_MAX_ATTEMPTS && Date.now() < deadline && current(); i++) {
+        const loaded = await loadChatSessionStatus(sid);
+        if (!current()) return;
+        if (!loaded.success) {
+          if ([401, 403, 404].includes(loaded.statusCode || 0)) {
+            setError(loaded.error || siteText("این گفتگو در دسترس نیست.")); break;
+          }
+          // A dropped connection is not evidence of a failed image operation.
+          await pause(); continue;
+        }
+        const data = loaded.data as Pick<SessionPayload, 'operations' | 'status'>;
+        const stamp = JSON.stringify(data.operations || []);
+        if (stamp !== previousStamp) {
+          const snapshot = await loadChatSession(sid, viewedRef.current);
+          if (!current()) return;
+          if (!snapshot.success) { await pause(); continue; }
+          apply(snapshot.data as SessionPayload);
+          previousStamp = stamp;
+        }
+        const ops = data.operations || [];
+        const tracked = key ? ops.find(o => o.idempotency_key === key || o.operation_id === key) : undefined;
+        const active = ops.find(o => o.status === 'running');
+        const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
+        const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
+        if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
+        if (!active) {
+          if (tracked?.render_operation_id && !child) { await pause(); continue; }
+          if (key && !tracked) {
+            if (i < 2) { await pause(); continue; }
+            setError(siteText("وضعیت درخواست مشخص نیست؛ دوباره بررسی کن.")); break;
+          }
+          operation.current = null; completed.current = true;
+          setStatus('idle'); setError(null); setStage(null); locked.current = false;
+          return;
+        }
+        operation.current = active;
+        setStatus(active.kind === 'render' ? 'rendering' : 'streaming');
+        if (active.kind === 'render') setStageKey('render');
+        setError(null);
+        await pause();
       }
-      operation.current = active;
-      setStatus(active.kind === 'render' ? 'rendering' : 'streaming');
-      if (!waitForCompletion) return;
-      await new Promise<void>(resolve => {
-        const timer = setTimeout(resolve, 2000);
-        signal.addEventListener('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
-      });
-    }
-    if (!signal.aborted && sidRef.current === sid) { setStatus('error'); locked.current = false; }
+      if (current()) {
+        setError(previous => previous || siteText("وضعیت درخواست مشخص نیست؛ دوباره بررسی کن."));
+        setStatus('error'); locked.current = false;
+      }
+    };
+    const promise = run().finally(() => { if (recovery.current?.promise === promise) recovery.current = null; });
+    recovery.current = { signal, promise };
+    return promise;
   }, [apply]);
 
   useEffect(() => {
@@ -105,19 +157,21 @@ export function useRedesignChat(path?: string) {
     controller.current?.abort();
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
-    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
+    setCurrentExecution(null);
+    setAnalysisPreview(null);
+    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); setStageKey(null); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
-    operation.current = null; intent.current = null; renderOperationId.current = null;
+    operation.current = null; intent.current = null; renderOperationId.current = null; setReadyId(null);
     if (!path) { setHydrating(false); return; }
     const ac = new AbortController(); controller.current = ac; setHydrating(true);
     void (async () => {
       const loaded = await loadChatSession(path);
       if (ac.signal.aborted) return;
       setHydrating(false);
-      if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || 'این گفتگو در دسترس نیست.'); return; }
+      if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || siteText("این گفتگو در دسترس نیست.")); return; }
       try {
         const saved = sessionStorage.getItem(`redesign-view:${path}`);
-        if (saved && (saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
+        if (!(loaded.data as SessionPayload).current_execution && saved && (saved === 'current' || saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
       } catch { /* optional view memory */ }
       apply(loaded.data as SessionPayload);
       locked.current = true;
@@ -128,9 +182,9 @@ export function useRedesignChat(path?: string) {
 
   const selectVersion = useCallback((id: string) => {
     viewedRef.current = id; setViewedId(id);
-    if (id === versionsRef.current[versionsRef.current.length - 1]?.version_id) setReadyId(null);
+    if (id === 'current' || id === versionsRef.current[versionsRef.current.length - 1]?.version_id) setReadyId(null);
     try { sessionStorage.setItem(`redesign-view:${sidRef.current}`, id); } catch { /* optional view memory */ }
-    following.current = id === versionsRef.current[versionsRef.current.length - 1]?.version_id || (!versionsRef.current.length && id === 'original');
+    following.current = id === 'current' || id === versionsRef.current[versionsRef.current.length - 1]?.version_id;
     const sid = sidRef.current;
     if (sid) void loadChatSession(sid, id).then(load => {
       if (load.success && sidRef.current === sid && viewedRef.current === id) {
@@ -149,7 +203,8 @@ export function useRedesignChat(path?: string) {
       && sidRef.current === params.sessionId
       && !ac.signal.aborted;
     completed.current = false;
-    locked.current = true; setError(null); setStage(null); setStatus('streaming');
+    locked.current = true; setError(null); setStage(null); setStageKey(null); setStatus('streaming');
+    setAnalysisPreview(null);
     const messageId = crypto.randomUUID();
     setChipGroups([]);
     const transport = await streamChatTurn(params, {
@@ -159,28 +214,47 @@ export function useRedesignChat(path?: string) {
           ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
-      onStage: event => { if (isCurrent()) setStage(event.label_fa); },
+      onStage: event => { if (isCurrent()) { setStage(event.label_fa); setStageKey(event.key || null); } },
+      onAnalysis: event => { if (isCurrent()) setAnalysisPreview(event); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
+      onResult: event => {
+        if (!isCurrent()) return;
+        if (event.execution) setCurrentExecution(event.execution);
+        if (event.design_version_id) {
+          following.current = true;
+          viewedRef.current = 'current'; setViewedId('current');
+        }
+        if (!event.design_version_id && (params.action === 'retry_search' || params.action === 'review_product' || params.action === 'select_product')) {
+          following.current = false; viewedRef.current = 'current'; setViewedId('current');
+          try { sessionStorage.setItem(`redesign-view:${params.sessionId}`, 'current'); } catch { /* optional view memory */ }
+        }
+      },
       onRenderPending: event => {
         if (!isCurrent()) return;
         renderOperationId.current = event.operation_id || null;
         setStatus('rendering');
+        setStageKey('render');
       },
       onRenderEvent: event => {
         if (!isCurrent()) return;
         if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
         if (event.operationId) renderOperationId.current = event.operationId;
-        if (event.event === 'image' || event.event === 'error') {
+        if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
           void reconcile(params.sessionId, ac.signal, event.operationId || params.idempotencyKey);
         }
       },
       onConnectionLost: () => {
         if (isCurrent()) void reconcile(params.sessionId, ac.signal, renderOperationId.current || params.idempotencyKey);
       },
-      onError: message => { if (isCurrent()) setError(message); },
+      onError: (message, kind) => {
+        if (isCurrent() && kind !== 'network') setError(message);
+      },
     }, ac.signal);
     if (!isCurrent()) return false;
-    await reconcile(params.sessionId, ac.signal, params.idempotencyKey, !transport.ok);
+    // Keep a low-frequency durable watchdog even with a healthy socket: an ack
+    // or chat.done is not completion of the queued image render.
+    await reconcile(params.sessionId, ac.signal, renderOperationId.current || params.idempotencyKey);
+    if (completed.current && generation.current === commandGeneration) ac.abort();
     return transport.ok || completed.current;
   }, [reconcile]);
 
@@ -192,16 +266,20 @@ export function useRedesignChat(path?: string) {
     locked.current = true; setStatus('creating');
     let sid = sidRef.current;
     if (!sid) {
-      const created = await createChatSession();
-      if (!created.success || !created.data) { setError(created.error || 'خطا در ایجاد گفتگو'); setStatus('error'); locked.current = false; return false; }
+      const created = await createChatSession(args.imageOutputMode);
+      if (!created.success || !created.data) { setError(created.error || siteText("خطا در ایجاد گفتگو")); setStatus('error'); locked.current = false; return false; }
       sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
     }
-    const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    const { imageOutputMode: _imageOutputMode, ...turnArgs } = args;
+    const params: StreamTurnParams = { ...turnArgs, sessionId: sid, images: args.images || [], baseVersionId: versionsRef.current.length || currentExecution ? 'current' : viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    following.current = true;
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);
-    setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
+    if (args.text.trim() || args.images?.length) {
+      setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
+    }
     return execute(params);
-  }, [execute, unavailable]);
+  }, [execute, unavailable, currentExecution]);
 
   const retry = useCallback(async () => {
     const sid = sidRef.current;
@@ -215,7 +293,8 @@ export function useRedesignChat(path?: string) {
       && sidRef.current === sid
       && !ac.signal.aborted;
     const loaded = await loadChatSession(sid, viewedRef.current);
-    if (!loaded.success) { setError(loaded.error || 'ارتباط برقرار نشد'); locked.current = false; return; }
+    if (!isCurrent()) return;
+    if (!loaded.success) { setError(loaded.error || siteText("ارتباط برقرار نشد")); locked.current = false; return; }
     const ops = (loaded.data as SessionPayload).operations || [];
     const active = ops.find(o => o.status === 'running');
     const failed = ops.find(o => o.operation_id === operation.current?.operation_id) || ops.find(o => o.idempotency_key === intent.current?.idempotencyKey) || ops[0];
@@ -234,7 +313,7 @@ export function useRedesignChat(path?: string) {
             const data = event.data as { delta?: unknown };
             if (typeof data?.delta === 'string') setStage(data.delta.trim());
           }
-          if (event.event === 'image' || event.event === 'error') {
+          if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
             void reconcile(sid, ac.signal, event.operationId || failed.operation_id);
           }
         },
@@ -243,24 +322,47 @@ export function useRedesignChat(path?: string) {
         },
       });
       if (!isCurrent()) return;
-      if (!result.success) { setError(result.error || 'خطا در ساخت تصویر'); locked.current = false; return; }
+      if (!result.success) { setError(result.error || siteText("خطا در ساخت تصویر")); locked.current = false; return; }
       setStatus('rendering');
       // A non-terminal ack must retain an operation identity for live pushes;
       // fall back to the durable session state if an older server cannot supply it.
-      if (result.terminal || !result.operationId) await reconcile(sid, ac.signal, failed.operation_id);
+      await reconcile(sid, ac.signal, failed.operation_id);
     } else if (failed?.status === 'failed' || (!failed && intent.current)) {
       if (intent.current) await execute(intent.current);
+      else if (failed?.kind === 'text_turn' && failed.idempotency_key) {
+        // The server restores the original durable request for this key. Only
+        // the user's explicit Retry action can resubmit it after a reload.
+        await execute({ sessionId: sid, idempotencyKey: failed.idempotency_key,
+          text: '', images: [], baseVersionId: failed.base_version_id || 'original' });
+      }
       else {
-        setError('جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن.');
+        setError(siteText("جزئیات درخواست قبلی مشخص نیست؛ دوباره تلاش کن."));
         locked.current = false;
       }
     } else { await reconcile(sid, ac.signal); }
   }, [execute, reconcile, sendTurn]);
+
+  useEffect(() => {
+    const resume = () => {
+      const sid = sidRef.current;
+      if (!sid || locked.current || document.visibilityState === 'hidden') return;
+      if (!controller.current || controller.current.signal.aborted) controller.current = new AbortController();
+      void reconcile(sid, controller.current.signal);
+    };
+    window.addEventListener('online', resume);
+    window.addEventListener('focus', resume);
+    document.addEventListener('visibilitychange', resume);
+    return () => {
+      window.removeEventListener('online', resume);
+      window.removeEventListener('focus', resume);
+      document.removeEventListener('visibilitychange', resume);
+    };
+  }, [reconcile]);
 
   const selectChip = (groupId: string, chipId: string) => {
     if (chipId.endsWith(':open-chat')) { window.dispatchEvent(new Event('homa-redesign-focus-composer')); return; }
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

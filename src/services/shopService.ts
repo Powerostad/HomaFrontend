@@ -1,17 +1,18 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Shop Service
  * API integration for shop/store data
  */
 
-import { apiGet, type RequestOptions } from '@/utils/apiClient';
 import {
   type BackendShop,
+  type PaginatedResponse,
   type Shop,
   type ShopListParams,
   type ShopListResult,
-  type PaginatedResponse,
   transformBackendShop,
 } from '@/types/shop';
+import { apiGet, type RequestOptions } from '@/utils/apiClient';
 
 // =============================================================================
 // API Functions
@@ -52,7 +53,7 @@ export async function fetchShops(
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت لیست فروشگاه‌ها',
+    error: response.error || siteText("خطا در دریافت لیست فروشگاه‌ها"),
   };
 }
 
@@ -83,7 +84,7 @@ export async function fetchShopByUsername(
 
   return {
     success: false,
-    error: 'فروشگاه یافت نشد',
+    error: siteText("فروشگاه یافت نشد"),
   };
 }
 

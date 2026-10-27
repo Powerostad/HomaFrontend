@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
+import { describe, expect, it } from "vitest";
 import { PublicPage } from "./PublicPage";
 import { createPublicI18n } from "./i18n";
 import type { PublicPageData } from "./types";
@@ -36,7 +36,10 @@ describe("public HTML content", () => {
   it("renders a single homepage heading and two crawlable task paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('href="/studio/upload"');
+    expect(html).toContain('href="/studio"');
+    expect(html).toContain('href="/hosts"');
+    expect(html).not.toContain('href="/studio/hosts"');
+    expect(html).toContain('href="/studio?room=bedroom"');
     expect(html).toContain('href="/ai-interior-design"');
     expect(html).toContain('href="/virtual-product-preview"');
     expect(html).not.toContain("seo.home.");
@@ -50,6 +53,14 @@ describe("public HTML content", () => {
     expect(html).toContain("طراحی دکوراسیون خانه با هوش مصنوعی");
     expect(html).toContain("ابعاد، رنگ‌ها و جزئیات");
     expect(html).not.toContain("seo.articles.");
+  });
+  it('gives hosts a separate landing and room links without embedding their purchase journey in the home hero', () => {
+    const html = render({ ...base, path: '/hosts' });
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toContain('href="/studio/hosts"');
+    expect(html).toContain('href="/studio/hosts?room=bedroom"');
+    expect(html).toContain('اقامتگاهت؛');
+    expect(html).not.toContain('/images/hero/before.png');
   });
   it("renders catalog pagination as ordinary URLs", () => {
     const html = render({
@@ -112,9 +123,11 @@ describe("public HTML content", () => {
         <PublicPage data={base} />
       </I18nextProvider>,
     );
-    expect(html).toContain('class="seo-public" dir="rtl" lang="fa"');
+    expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
+    expect(html).toContain("Choose a space.");
+    expect(html).toContain("HOMA for hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
     const data = { ...base, kind: "article" as const, path: "/contact" };

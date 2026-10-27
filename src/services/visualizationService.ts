@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Visualization Service
  * API integration for AI-powered product visualization (Try-On)
@@ -12,9 +13,9 @@
  * 2. pollTaskStatus() - Poll until completed/failed
  */
 
-import { apiUpload, apiGet, apiConfig, getStoredTokens } from '@/utils/apiClient';
-import { convertHeicToJpeg } from '@/utils/imageConversion';
 import { realtimeClient } from '@/services/realtimeClient';
+import { apiConfig, apiGet, apiUpload, getStoredTokens } from '@/utils/apiClient';
+import { convertHeicToJpeg } from '@/utils/imageConversion';
 
 // =============================================================================
 // Types
@@ -140,7 +141,7 @@ export async function submitVisualizationTask(
     console.error('[Visualization] No customer image provided');
     return {
       success: false,
-      error: 'فایل تصویر انتخاب نشده است.',
+      error: siteText("فایل تصویر انتخاب نشده است."),
     };
   }
 
@@ -150,7 +151,7 @@ export async function submitVisualizationTask(
     console.error('[Visualization] No auth tokens available');
     return {
       success: false,
-      error: 'لطفا ابتدا وارد حساب کاربری خود شوید.',
+      error: siteText("لطفا ابتدا وارد حساب کاربری خود شوید."),
     };
   }
 
@@ -162,7 +163,7 @@ export async function submitVisualizationTask(
   if (!validTypes.includes(convertedImage.type)) {
     return {
       success: false,
-      error: 'فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید.',
+      error: siteText("فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید."),
     };
   }
 
@@ -171,7 +172,7 @@ export async function submitVisualizationTask(
   if (convertedImage.size > maxSize) {
     return {
       success: false,
-      error: 'حجم تصویر بیش از ۱۰ مگابایت است.',
+      error: siteText("حجم تصویر بیش از ۱۰ مگابایت است."),
     };
   }
 
@@ -197,16 +198,16 @@ export async function submitVisualizationTask(
   }
 
   // Handle errors with Persian messages
-  let errorMessage = response.error || 'خطا در ارسال درخواست پردازش';
+  let errorMessage = response.error || siteText("خطا در ارسال درخواست پردازش");
 
   if (response.statusCode === 429) {
-    errorMessage = 'محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.';
+    errorMessage = siteText("محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.");
   }
   if (response.statusCode === 402) {
-    errorMessage = 'اعتبار کافی برای پردازش وجود ندارد.';
+    errorMessage = siteText("اعتبار کافی برای پردازش وجود ندارد.");
   }
   if (response.statusCode === 404) {
-    errorMessage = 'محصول یافت نشد.';
+    errorMessage = siteText("محصول یافت نشد.");
   }
 
   return { success: false, error: errorMessage };
@@ -228,7 +229,7 @@ export async function fetchTaskStatus(taskId: string): Promise<{
     return { success: true, data: response.data };
   }
 
-  return { success: false, error: response.error || 'خطا در دریافت وضعیت' };
+  return { success: false, error: response.error || siteText("خطا در دریافت وضعیت") };
 }
 
 /**
@@ -255,7 +256,7 @@ export async function pollTaskStatus(
       console.error('[Visualization] Polling timeout');
       return {
         success: false,
-        error: 'زمان انتظار برای پردازش به پایان رسید. لطفا دوباره امتحان کنید.',
+        error: siteText("زمان انتظار برای پردازش به پایان رسید. لطفا دوباره امتحان کنید."),
       };
     }
 
@@ -302,7 +303,7 @@ export async function pollTaskStatus(
     if (task.status === 'failed') {
       return {
         success: false,
-        error: task.error_message || 'خطا در پردازش تصویر',
+        error: task.error_message || siteText("خطا در پردازش تصویر"),
       };
     }
 
