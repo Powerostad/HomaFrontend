@@ -89,6 +89,16 @@ export function ConversationPanel({ messages, chipGroups, busy, failed = false, 
       </div>)}</div>}
       {busy && <div className="studio-processing" role="status"><Loader2 size={18} className="studio-spinner" aria-hidden="true" /><span>{statusText}</span></div>}
     </div>
+    {!busy && !failed && messages.length > 0 && <div className="studio-edit-examples">
+      <span className="studio-edit-examples-label">{t('studio.v9.editExamplesLabel', 'می‌تونی از اینجا شروع کنی:')}</span>
+      <div className="studio-edit-examples-options">
+        {[
+          t('studio.v9.editExampleColor', 'رنگ‌ها رو متفاوت پیشنهاد بده'),
+          t('studio.v9.editExampleProducts', 'محصولات دیگه‌ای پیشنهاد بده'),
+          t('studio.v9.editExampleLayout', 'چیدمان اتاق رو دوباره بررسی کن'),
+        ].map(example => <button key={example} type="button" onClick={() => { onChange(example); document.getElementById('studio-message')?.focus(); }}>{example}</button>)}
+      </div>
+    </div>}
     {showJump && <Button variant="secondary" className="studio-jump" onClick={scrollToLatest}><ArrowDown size={16} />{t('studioChat.jump')}</Button>}
     <form className="studio-composer" onSubmit={event => { event.preventDefault(); if (!busy && value.trim()) onSend(); }}>
       <label htmlFor="studio-message">{t('studioChat.message')}</label>
