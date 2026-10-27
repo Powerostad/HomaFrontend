@@ -5,6 +5,7 @@ import { ArrowDown, Check, Loader2, MessageSquare, Send, Sparkles } from 'lucide
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage, ChipGroup } from '../types';
+import '@/pages/Studio/result/design-edit-intro.css';
 
 /** A small, escaped text renderer: paragraphs, lists, headings and emphasis only.
  * Model text never becomes HTML, links, code or an executable instruction. */
@@ -89,7 +90,7 @@ export function ConversationPanel({ messages, chipGroups, busy, failed = false, 
       </div>)}</div>}
       {busy && <div className="studio-processing" role="status"><Loader2 size={18} className="studio-spinner" aria-hidden="true" /><span>{statusText}</span></div>}
     </div>
-    {!busy && !failed && messages.length > 0 && <div className="studio-edit-examples">
+    {!busy && !failed && <div className="studio-edit-examples">
       <span className="studio-edit-examples-label">{t('studio.v9.editExamplesLabel', 'می‌تونی از اینجا شروع کنی:')}</span>
       <div className="studio-edit-examples-options">
         {[
