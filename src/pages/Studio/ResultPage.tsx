@@ -9,6 +9,7 @@ import { AnimatePresence } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StudioProductSheet } from './result/StudioProductSheet';
 import { CollectionSummary } from './result/CollectionSummary';
+import { DesignEditIntro } from './result/DesignEditIntro';
 import { ActionRecommendationCard } from './result/ActionRecommendationCard';
 import { CompletionChecklist } from './result/CompletionChecklist';
 import type { DiagnosisAction } from './result/DiagnosisActionCard';
@@ -183,7 +184,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
         <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>
           <nav className="studio-workspace-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
             {(['recommendations', 'analysis', 'basket'] as const).map(phase => <button type="button" key={phase} aria-current={!conversation?.open && activePhase === phase ? 'page' : undefined} onClick={() => handlePhaseClick(phase)}>{t(`studio.result.v2.phase.${phase}`, phase)}</button>)}
-            {conversation && <button type="button" aria-current={conversation.open ? 'page' : undefined} onClick={conversation.onOpen}><MessageSquare size={16} />{t('studioWorkspace.conversation', 'گفتگو')}</button>}
+            {conversation && <button type="button" aria-current={conversation.open ? 'page' : undefined} onClick={conversation.onOpen}><MessageSquare size={16} />{t('studio.v9.editDesign', 'اصلاح طرح')}</button>}
           </nav>
           {conversation?.panel}
           <div className="studio-result-report" hidden={!!conversation?.open && !conversation.compact}>
@@ -221,7 +222,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
             <span>{t('studio.v9.productCount', '{{count}} پیشنهاد محصول', { count: toLocalizedDigits(purchasableCount) })}</span>
             {checklistItems.length > 0 && <span>{t('studio.v9.completionCount', '{{count}} مورد تکمیلی', { count: toLocalizedDigits(checklistItems.length) })}</span>}
           </div>
-          {conversation && <button type="button" className="studio-v9-discuss" onClick={conversation.onOpen}><MessageSquare size={16} aria-hidden="true" />{t('studio.v9.discuss', 'نظرت یا تغییری داری؟')}</button>}
+          {conversation && <button type="button" className="studio-v9-discuss" onClick={conversation.onOpen}><MessageSquare size={16} aria-hidden="true" />{t('studio.v9.editDesignCta', 'می‌خوای طرح رو تغییر بدی؟')}</button>}
           {conversation?.status}
 
           <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={activePhase !== 'analysis'}>
@@ -370,6 +371,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
       </main>
 
       {(journeyPhase === 'guide' || guideRequested) && journey && <AnalysisGuide findings={journey.findings} image={state.resultImage} onClose={() => finishGuide()} onProduct={key => finishGuide(key)} />}
+      {conversation && journeyPhase === 'recommendations' && !guideRequested && !conversation.open && !state.isFullScreen && <DesignEditIntro onOpenChat={conversation.onOpen} />}
       <CollectionSummary
         activePhase={activePhase}
         onNavigateToPhase={handlePhaseClick}
