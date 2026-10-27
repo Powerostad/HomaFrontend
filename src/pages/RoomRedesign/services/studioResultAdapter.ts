@@ -13,15 +13,15 @@ export function toStudioCategoryGroups(plan: ExecutionPlan | null, previousPlan:
     const seen = new Set<string>();
     const products: Product[] = [item.product, ...item.alternatives].flatMap(product => {
       if (!product) return [];
-      const key = `${product.product_id}/${product.candidate?.variant_id ?? 'parent'}`;
+      const key = `${product.product_id}/${product.candidate?.variant_id ?? product.variant_id ?? 'parent'}`;
       if (seen.has(key)) return [];
       seen.add(key);
       const price = product.price_rial ?? (product.price_toman != null ? product.price_toman * 10 : null);
       return [{
         id: plan.search_version ? `${item.item_id}/${key}` : `${item.item_id}/${product.product_id}`, name: product.name,
         studioItemId: item.source_item_id || item.item_id, studioPlacementId: item.placement_id,
-        studioProductId: product.product_id, variantId: product.candidate?.variant_id,
-        variantLabel: product.candidate?.variant_label, dimensionsCm: product.candidate?.dimensions_cm,
+        studioProductId: product.product_id, variantId: product.candidate?.variant_id ?? product.variant_id,
+        variantLabel: product.candidate?.variant_label || product.variant_label, dimensionsCm: product.candidate?.dimensions_cm || product.dimensions_cm,
         orderQuote: product.candidate?.order_quote,
         purchaseStatus: plan.search_version && !item.product ? 'needs_verification' : product.candidate?.purchase_status,
         image: product.image_url || '', price: price ?? 0, priceUnknown: price == null || price <= 0,

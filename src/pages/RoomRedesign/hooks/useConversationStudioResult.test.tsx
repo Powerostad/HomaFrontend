@@ -52,6 +52,18 @@ describe('conversation data in the original Studio', () => {
       expect(basket.openBasket).toHaveBeenCalledOnce();
     } finally { await ui.unmount(); }
   });
+  it('adds the recommended rug size to the basket instead of the parent default size', async () => {
+    const current: ExecutionPlan = { ...plan, purchases: [{ ...plan.purchases[0], item_id: 'rug', category: 'rug',
+      quantity: 1, alternatives: [], product: { product_id: 7, name: 'Rug', unique_link: 'rug-7',
+        price_rial: 9000000, variant_id: 70, variant_label: '۲۰۰ × ۳۰۰', dimensions_cm: { width_cm: 200, length_cm: 300 } } }] };
+    const ui = await mount(current);
+    try {
+      await act(async () => ui.state.toggleBasketProduct(ui.state.categoryGroups[0].products[0].id));
+      expect(ui.state.selectedPrice).toBe(9000000);
+      await act(async () => ui.state.handleFinalize());
+      expect(basket.addItem).toHaveBeenCalledExactlyOnceWith({ product_unique_link: 'rug-7', variant_id: 70, quantity: 1, source_context: 'studio' });
+    } finally { await ui.unmount(); }
+  });
   it('keeps product card identity and quantity when a preceding recommendation is removed', async () => {
     const initial = { ...plan, purchases: [{ ...plan.purchases[0], item_id: 'first', product: { product_id: 1, name: 'First' } }, plan.purchases[0]] };
     const ui = await mount(initial);

@@ -4,6 +4,15 @@ import type { MotherProduct } from './motherDocument';
 import { toStudioCategoryGroups } from './studioResultAdapter';
 
 describe('conversation Studio presentation adapter', () => {
+  it('preserves the exact rug size and its price on the server-style search path', () => {
+    const product = { product_id: 7, name: 'Rug', price_rial: 9000000, variant_id: 10,
+      variant_label: '۲۰۰ × ۳۰۰', dimensions_cm: { width_cm: 200, length_cm: 300 } };
+    const plan: ExecutionPlan = { purchases: [{ item_id: 'rug', category: 'rug', quantity: 2,
+      reason_fa: '', relation: 'similar', product, alternatives: [] }], free_actions: [], surface_actions: [],
+      known_subtotal_rial: 18000000, budget_ceiling_toman: null, budget_status: 'unspecified', unknown_cost_item_ids: [] };
+    expect(toStudioCategoryGroups(plan)[0].products[0]).toMatchObject({
+      variantId: 10, variantLabel: '۲۰۰ × ۳۰۰', dimensionsCm: { width_cm: 200, length_cm: 300 }, price: 9000000 });
+  });
   it('carries concrete external sourcing guidance without inventing a purchasable product', () => {
     const explanation = 'برای کنار پنجره، پردهٔ کتانی روشن با رنگ کرم جست‌وجو کنید.';
     const plan: ExecutionPlan = { purchases: [{ item_id: 'curtain', category: 'drapery_panel', quantity: 1,

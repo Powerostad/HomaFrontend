@@ -133,15 +133,19 @@ export function useConversationStudioResult({ plan, previousPlan = null, session
         }
         desired = mergeCheckedLines(checked.data.lines);
       } else {
-        const grouped = new Map<string, number>();
-        for (const { product, quantity: count } of selectedLines) if (product.uniqueLink) grouped.set(product.uniqueLink, (grouped.get(product.uniqueLink) || 0) + count);
-        desired = [...grouped].map(([link, count]) => ({ link, variantId: null, quantity: count }));
+        const grouped = new Map<string, { link: string; variantId: number | null; quantity: number }>();
+        for (const { product, quantity: count } of selectedLines) if (product.uniqueLink) {
+          const variantId = product.variantId ?? null;
+          const key = `${product.uniqueLink}/${variantId ?? 'parent'}`;
+          grouped.set(key, { link: product.uniqueLink, variantId, quantity: (grouped.get(key)?.quantity || 0) + count });
+        }
+        desired = [...grouped.values()];
       }
       for (const { link, variantId, quantity: count } of desired) {
         const existing = basket.basket.shop_groups.flatMap(group => group.items).find(item => item.product_unique_link === link && (item.variant_id ?? null) === variantId);
         if (existing) {
           if (existing.quantity < count && !await basket.updateQuantity(existing.id, count)) return;
-        } else if (!await basket.addItem({ product_unique_link: link, ...(isV2 ? { variant_id: variantId } : {}), source_context: 'studio', quantity: count })) return;
+        } else if (!await basket.addItem({ product_unique_link: link, ...(isV2 || variantId != null ? { variant_id: variantId } : {}), source_context: 'studio', quantity: count })) return;
       }
       basket.openBasket();
     } catch { toast.error(t('studioV2.purchaseBlocked'));

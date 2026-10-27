@@ -3,7 +3,7 @@ import type { Product } from '../components/ProductDetailSheet';
 
 export function StudioSkuDetails({ product }: { product: Product }) {
   const { t, i18n } = useTranslation();
-  if (!product.purchaseStatus) return null;
+  if (!product.purchaseStatus && product.variantId == null) return null;
   return <div className="studio-sku-details">
     {product.variantLabel && <p>{product.variantLabel}</p>}
     {!!Object.keys(product.dimensionsCm || {}).length && <p>{Object.entries(product.dimensionsCm || {}).map(([key, value]) =>
@@ -14,6 +14,6 @@ export function StudioSkuDetails({ product }: { product: Product }) {
       demand: Number(product.orderQuote.demand_quantity).toLocaleString(i18n.language),
       demandUnit: t(`studioOrder.unit.${product.orderQuote.demand_unit}`),
     })}</p>}
-    <p>{t(`studioV2.purchase.${product.purchaseStatus}`)}</p>
+    {product.purchaseStatus && <p>{t(`studioV2.purchase.${product.purchaseStatus}`)}</p>}
   </div>;
 }

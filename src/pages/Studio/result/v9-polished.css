@@ -97,6 +97,7 @@
 .homa-v9 .studio-product-row .studio-product-category { font-size: 10px; color: var(--v9-muted); line-height: 1.7; }
 .studio-result-page.homa-v9 .studio-product-row .studio-product-preview.is-primary .studio-product-name { font-size: 13px; font-weight: 600; line-height: 1.9; min-height: 43px; text-align: start; }
 .homa-v9 .studio-product-row .studio-price { font-size: 14px; font-weight: 700; line-height: 1.9; }
+.homa-v9 .studio-product-size { margin-block: 6px 0; font-size: 13px; line-height: 1.8; color: var(--v9-muted); }
 .homa-v9 .studio-product-row .studio-product-row-actions { display: contents; }
 .studio-result-page.homa-v9 .studio-product-row .studio-product-row-actions .studio-product-select { position: absolute; top: auto; bottom: auto; inset-inline-start: 10px; inset-inline-end: auto; inset-block-start: calc(var(--v9-product-photo-width) * 1.12 - 48px); width: 38px; min-width: 38px; height: 38px; min-height: 38px; flex: none; border-radius: 50%; border: 0; background: var(--v9-ink); color: var(--v9-paper); padding: 0; box-shadow: 0 6px 19px #0002; }
 .homa-v9 .studio-product-preview { container-type: normal; }

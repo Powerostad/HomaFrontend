@@ -80,6 +80,10 @@ function ProductPreview({
         <div className="studio-product-meta">
           <span className="studio-price">{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</span>
         </div>
+        {product.variantId != null && <p className="studio-product-size">
+          {product.dimensionsCm?.width_cm && product.dimensionsCm?.length_cm
+            ? `${toLocalizedDigits(product.dimensionsCm.width_cm)} × ${toLocalizedDigits(product.dimensionsCm.length_cm)} ${t('studioV2.cm')}` : product.variantLabel}
+        </p>}
         {isPrimary && isSelected && onUpdateQuantity && <div className="studio-quantity-control">
           <span>{t('studio.result.v2.basket.quantity', 'تعداد')}</span>
           <div className="studio-quantity-stepper" dir="ltr">

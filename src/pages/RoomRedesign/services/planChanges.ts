@@ -3,7 +3,7 @@ import type { DesignVersion, ExecutionPlan } from './redesignChatService';
 type Purchase = ExecutionPlan['purchases'][number];
 export const purchaseKey = (item: Purchase) => `${item.source_item_id || item.item_id}|${item.placement_id || ''}`;
 export const purchaseFingerprint = (item: Purchase) => JSON.stringify({
-  product: item.product?.product_id ?? null, variant: item.product?.candidate?.variant_id ?? null,
+  product: item.product?.product_id ?? null, variant: item.product?.candidate?.variant_id ?? item.product?.variant_id ?? null,
   category: item.category, quantity: item.quantity, reason: item.reason_fa,
   placement: item.placement_instruction_fa || item.mother_product?.placement_instruction || '',
   intent: item.mother_product?.search_brief || null,

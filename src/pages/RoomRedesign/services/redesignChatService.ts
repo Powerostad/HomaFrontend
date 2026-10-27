@@ -41,6 +41,9 @@ export interface QuestionsEvent {
 }
 
 export interface BackendProduct {
+  variant_id?: number | null;
+  variant_label?: string;
+  dimensions_cm?: Record<string, number>;
   search_version?: 'studio-search-v2';
   candidate?: StudioCandidate;
   variant_options?: { variant_id: number | null; price_rial: number | null; details: StudioCandidate }[];
