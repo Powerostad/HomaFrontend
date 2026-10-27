@@ -72,7 +72,7 @@ export function CollectionSummary({
     >
       <div className="studio-summary-inner">
         <nav className="studio-summary-nav" aria-label={t('studio.result.v2.phase.label', 'مراحل نتیجه')}>
-          {onOpenChat && <button type="button" onClick={onOpenChat}><MessageSquare size={16} aria-hidden="true" />{t('studioWorkspace.conversation')}</button>}
+          {onOpenChat && <button type="button" onClick={onOpenChat}><MessageSquare size={16} aria-hidden="true" />{t('studio.v9.editDesign', 'اصلاح طرح')}</button>}
           {siteValue(tabs.map((tab) => (
             <button
               type="button"
