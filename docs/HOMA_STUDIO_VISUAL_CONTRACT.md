@@ -11,6 +11,7 @@ This reference governs Studio graphics until the user explicitly replaces it. It
 - Preserve product image aspect ratio `1 / 1.12`, current photo scale, title/price hierarchy and circular image actions.
 - The latest authorized layout variation is one horizontal product row at a time. Swap expands a two-column alternatives panel under the same product, with bounded scrolling and close/selection controls. This does not authorize redesigning surrounding graphics.
 - Clicking an alternative opens the same product-detail sheet used by the main product. It does not promote the alternative or change the basket. Promotion requires the explicit “Choose as main product” action inside that sheet; closing the sheet leaves selection unchanged.
+- Product text actions (swap, design reasoning, design acceptance and feedback) use 14px text and at least 44px touch height. Keep these controls readable with the existing ink palette, 18px icons and clear disclosure direction. Do not shrink them to caption size to match dense product layouts.
 - A request to move, reorder, expand or change column count is scoped to layout/interaction. Do not also change colors, backgrounds, typography, borders, shadows or unrelated sections.
 - Keep real processing states, original/generated images, product data and existing commerce behavior. Do not import fake progress, prices, analysis or checkout behavior from the prototype.
 - Compare screenshots at 320, 390 and 430 pixels for affected mobile layouts. Check the specific requested variation without reinterpreting the overall style.

@@ -102,15 +102,19 @@
 .homa-v9 .studio-product-preview { container-type: normal; }
 .homa-v9 .studio-product-row .studio-product-select.is-selected { background: var(--v9-paper); color: var(--v9-ink); border: 1px solid var(--v9-line); }
 .homa-v9 .studio-product-select-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.studio-result-page.homa-v9 .studio-product-row .studio-product-row-actions .studio-swap-toggle { grid-column: 2; grid-row: 2; justify-self: start; align-self: start; flex: none; width: auto; min-height: 44px; padding: 8px 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: var(--v9-muted); font-size: 12px; text-decoration: underline; text-underline-offset: 4px; box-shadow: none; }
+.studio-result-page.homa-v9 .studio-product-row .studio-product-row-actions .studio-swap-toggle { grid-column: 2; grid-row: 2; justify-self: start; align-self: start; flex: none; width: auto; min-width: 88px; min-height: 44px; padding: 10px 0; margin: 0; border: 0; border-radius: 0; background: transparent; color: var(--v9-ink); font-size: 14px; font-weight: 600; line-height: 1.7; gap: 8px; text-decoration: underline; text-underline-offset: 4px; box-shadow: none; }
+.homa-v9 .studio-swap-toggle svg { width: 18px; height: 18px; flex-shrink: 0; }
 .homa-v9 .studio-product-key { font-size: 10px; padding: 7px 10px; background: #ffffffe6; box-shadow: none; }
 .homa-v9 .studio-product-key svg { display: none; }
 .homa-v9 .studio-v9-design-decision { margin-top: 0; font-size: 11px; line-height: 1.9; }
-.homa-v9 .studio-v9-design-decision summary { padding-block: 8px; cursor: pointer; color: var(--v9-muted); }
+.homa-v9 .studio-v9-design-decision summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding-block: 10px; list-style: none; cursor: pointer; color: var(--v9-ink); font-size: 14px; font-weight: 500; line-height: 1.8; }
+.homa-v9 .studio-v9-design-decision summary::-webkit-details-marker { display: none; }
+.homa-v9 .studio-v9-design-decision summary svg { flex-shrink: 0; transition: transform .2s ease; }
+.homa-v9 .studio-v9-design-decision[open] summary svg { transform: rotate(180deg); }
 .homa-v9 .studio-v9-design-decision[open] { padding-bottom: 12px; }
 .homa-v9 .studio-v9-design-decision p { padding-bottom: 8px; }
 .homa-v9 .studio-product-row .studio-recommendation-actions { margin: 0; padding: 0; }
-.homa-v9 .studio-product-row .studio-accept-button { width: 100%; border-radius: 999px; min-height: 40px; border: 1px solid var(--v9-line); background: transparent; color: var(--v9-ink); font-size: 11px; padding: 8px; }
+.homa-v9 .studio-product-row .studio-accept-button { width: 100%; border-radius: 999px; min-height: 44px; border: 1px solid var(--v9-line); background: transparent; color: var(--v9-ink); font-size: 14px; font-weight: 500; line-height: 1.7; padding: 10px 14px; }
 .homa-v9 .studio-product-row .studio-accept-button.is-selected { background: var(--v9-ink); color: var(--v9-paper); }
 .homa-v9 .studio-product-row .studio-quantity-control { width: auto; font-size: 11px; }
 .homa-v9 .studio-product-row .studio-alternatives { width: 100%; margin-top: 12px; border: 0; border-radius: 16px; background: var(--v9-soft); padding: 10px; }
@@ -118,7 +122,10 @@
 .homa-v9 .studio-swap-option { padding: 0; border: 0; background: transparent; grid-template-rows: auto auto auto auto; }
 .homa-v9 .studio-swap-image { border-radius: 12px; }
 .homa-v9 .studio-swap-image img { object-fit: cover; }
-.homa-v9 .studio-product-refinement > button { background: transparent; font-size: 11px; padding-inline: 0; }
+.homa-v9 .studio-product-refinement > button { background: transparent; color: var(--v9-ink); min-height: 44px; font-size: 14px; font-weight: 500; line-height: 1.7; padding: 10px 0; gap: 8px; }
+.homa-v9 .studio-product-refinement > button svg { width: 18px; height: 18px; flex-shrink: 0; }
+.homa-v9 .studio-product-row .studio-alternatives-heading > button { min-width: 44px; width: 44px; min-height: 44px; height: 44px; }
+.homa-v9 .studio-product-row .studio-alternatives-heading h4 { font-size: 14px; line-height: 1.8; }
 /* Real diagnosis content stays expandable rather than becoming a dashboard. */
 .homa-v9 .studio-v9-diagnosis { border: 0; background: transparent; padding: 0; box-shadow: none; }
 .homa-v9 .studio-diagnosis-intro h2 { font-size: 24px; line-height: 1.65; letter-spacing: -.035em; }
@@ -188,6 +195,7 @@
   .homa-v9 .homa-loading-screen[data-personal=true] .homa-loading-visual { height: 150px; }
 }
 @media(prefers-reduced-motion:reduce) {
+  .homa-v9 .studio-v9-design-decision summary svg { transition: none; }
   .homa-v9 .homa-loading-stages[data-running=true] i[data-state=active] { animation: none; }
   .homa-v9-reveal-divider { display: none; animation: none; }
   .homa-v9 .studio-product-image { transition: none; }

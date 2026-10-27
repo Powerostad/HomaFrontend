@@ -189,7 +189,7 @@ export function RecommendationCard({
       ))}
 
       {!isActionItem && <details className="studio-v9-design-decision">
-        <summary>{siteValue(group.categoryDisplay)} · {t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</summary>
+        <summary><span>{siteValue(group.categoryDisplay)} · {t('studio.result.v2.card.whyChange', 'چرا این تغییر؟')}</span><ChevronDown size={18} aria-hidden="true" /></summary>
         {problem && <p>{siteValue(problem)}</p>}
         {solution && solution !== problem && <p>{siteValue(solution)}</p>}
         {onToggleAccepted && <button type="button" className={`studio-primary-button studio-accept-button ${isAccepted ? 'is-selected' : ''}`} onClick={onToggleAccepted} aria-pressed={isAccepted}>

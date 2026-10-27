@@ -6,6 +6,8 @@ Visual authority: `HOMA_STUDIO_VISUAL_CONTRACT.md`. The row-layout follow-up doe
 
 ## Product-row follow-up
 
+Product text actions were increased to 14px with 44px minimum touch height, including swap, design reasoning, design acceptance and feedback. The disclosure has an explicit 18px chevron and visible open state. The alternatives close control is 44px square. Existing palette, card surfaces and product images remain unchanged. Browser revalidation for this small follow-up was unavailable because local browser access was disabled in Work settings; interaction tests, lint and build provide the automated checks.
+
 Alternative clicks now open the existing product-detail sheet rather than immediately promoting the item. Its explicit main-product action performs the change. Closing the detail sheet leaves the primary item and basket unchanged. The existing gallery, merchant details and visual styling are reused. Eighteen focused tests cover preview, dismiss, confirm and unchanged basket/model behavior.
 
 The latest product presentation is one horizontal row per product, keeping the previous photographic size and aspect ratio, typography, prices and shopping controls. Swap expands a two-column alternatives panel inside the same card, with bounded internal scrolling and the existing close/promote actions. It does not open a new page or issue a model request. Checked at 320/390/430 pixels, including quantity controls at 320; no horizontal page overflow. The 16 focused product/result interaction tests pass; production build passes.
