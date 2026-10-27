@@ -2,6 +2,12 @@
 
 Feature branch: `codex/homa-v9-polished`. Target: `dev`. Review before merging; no production deployment is part of this change.
 
+## Product-row follow-up
+
+The latest product presentation is one horizontal row per product, keeping the previous photographic size and aspect ratio, typography, prices and shopping controls. Swap expands a two-column alternatives panel inside the same card, with bounded internal scrolling and the existing close/promote actions. It does not open a new page or issue a model request. Checked at 320/390/430 pixels, including quantity controls at 320; no horizontal page overflow. The 16 focused product/result interaction tests pass; production build passes.
+
+![Inline product alternatives](v9-screenshots/product-rows/alternatives-390.png)
+
 ## Visual review revision
 
 A second comparison against the approved HTML found that the first integration retained too much of the previous shell: duplicated loading labels, a smaller image, redundant moodboard thumbnails, a reveal clipped by the result layout, and too many permanently expanded product actions.
@@ -24,7 +30,7 @@ The approved HTML is a visual reference, not an application dependency. Scoped `
 
 - `HomaLoadingExperience` and `ProgressScreen`: editorial title, inspiration comparison, moodboard and actual status presentation.
 - `ResultPage`, `IntegratedResultJourney`: result reveal, CSS transform/opacity animation, existing once-per-result journey and analysis sheets. No generated image means the original-image/analysis-only experience remains available.
-- `TierSection`, `RecommendationCard`: image-first grid, existing intervention groups, alternatives, quantities and pricing. Design acceptance is a separate action from adding to the basket; reasons remain available through disclosure.
+- `TierSection`, `RecommendationCard`: image-first product rows, existing intervention groups, inline alternatives, quantities and pricing. Design acceptance is a separate action from adding to the basket; reasons remain available through disclosure.
 - `SpatialDiagnosis`, `CompletionChecklist`, `UnifiedConsultationCTA`, `InlineFeedbackWidget`: consistent hierarchy and restrained controls, retaining their existing handlers.
 - Development-only previews: enabled under the existing loopback preview mode; added an analysis-only fixture. Production route gating remains intact.
 
