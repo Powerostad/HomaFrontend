@@ -12,6 +12,7 @@ import { StudioDiscovery } from '../../RoomRedesign/components/StudioDiscovery';
 import { journeyFindings } from '../../RoomRedesign/services/resultJourney';
 import type { StudioMotherDocument } from '../../RoomRedesign/services/motherDocument';
 import { studioV2Fixture } from './studioV2Fixture';
+import { RefinementInvitePrototype, RefinementPrototypeShell } from './RefinementInvitePrototype';
 
 // Illustrative data only. Never represents an account, quote or model result.
 const product = (id: number, name: string, category: string, price: number, image: string): BackendProduct => ({
@@ -71,7 +72,7 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
     setNotice(t('studioLocal.noModel'));
   };
   if (demoPhase !== 'result') return <StudioDiscovery plan={demoPhase === 'review' ? plan : null} originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={demoPhase === 'loading'} error={null} resultAvailable={demoPhase === 'review'} onRetry={() => {}} onNew={() => setDemoPhase('result')} onDiscuss={openChat} onComplete={() => setDemoPhase('result')} tools={<Button variant="outline" onClick={() => setDemoPhase(demoPhase === 'loading' ? 'review' : 'result')}>{t('studioLocal.hint')} · {demoPhase === 'loading' ? 'نمایش تحلیل نمونه' : 'نمایش نتیجه نمونه'}</Button>} />;
-  return <StudioResultView journey={preview === 'integrated' ? { key: 'local-integrated-preview-' + (new URLSearchParams(window.location.search).get('run') || 'one'), start: journeyStart, findings: journeyFindings(plan) } : undefined} state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
+  const result = <StudioResultView journey={preview === 'integrated' ? { key: 'local-integrated-preview-' + (new URLSearchParams(window.location.search).get('run') || 'one'), start: journeyStart, findings: journeyFindings(plan) } : undefined} state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
     open, compact, onOpen: openChat, onClose: () => setOpen(false), onExit: () => setNotice(t('studioLocal.hint')),
     busy: false, priceUnknown: true, onImageError: () => setNotice(t('studioLocal.imageError')),
     onPreview: () => setNotice(t('studioLocal.noModel')),
@@ -80,8 +81,10 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
       messages={messages} chipGroups={[]} busy={false} statusText="" value={input} onChange={setInput}
       onSend={() => { append(input); setInput(''); }} onSelectChip={() => {}} />,
     toolbar: <div><p>{t('studioLocal.hint')}</p><Button variant="outline" onClick={() => setEdited(value => !value)}>پیش‌نمایش ویرایش: تغییر میز، افزودن پرده و حذف روشنایی</Button></div>,
-    status: <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div>,
+    status: <>{preview === 'refinement' && <RefinementInvitePrototype onStart={draft => { if (draft !== undefined) setInput(draft); openChat(); }} />}
+      <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div></>,
     details: <p>{t('studioLocal.analysis')}</p>,
     afterReport: <><details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,
   }} />;
+  return preview === 'refinement' ? <RefinementPrototypeShell>{result}</RefinementPrototypeShell> : result;
 }
