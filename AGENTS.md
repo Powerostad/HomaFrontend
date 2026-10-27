@@ -32,6 +32,12 @@ existing UI primitives before adding variants or dependencies. User-facing copy
 must use the translation system; Persian is the default. For UI work, read and
 follow `DESIGN.md`; use semantic tokens instead of raw colors or z-index values.
 
+For Studio UI, also follow `docs/HOMA_STUDIO_VISUAL_CONTRACT.md`. The approved
+Homa V9 Polished reference is the visual authority. Requests to change layout
+or interaction do not authorize palette, backgrounds, card frames, typography
+or photo-treatment redesigns. Retain the latest explicitly requested product
+rows and inline alternatives while preserving that visual language.
+
 ## Testing Guidelines
 
 Vitest is the test runner; add `// @vitest-environment jsdom` when DOM APIs are

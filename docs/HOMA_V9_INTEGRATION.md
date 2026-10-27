@@ -2,11 +2,13 @@
 
 Feature branch: `codex/homa-v9-polished`. Target: `dev`. Review before merging; no production deployment is part of this change.
 
+Visual authority: `HOMA_STUDIO_VISUAL_CONTRACT.md`. The row-layout follow-up does not introduce a new visual style: added product frames and filled card surfaces were removed, while rows and inline alternatives remain. The V9 reference continues to govern the surrounding graphics.
+
 ## Product-row follow-up
 
 The latest product presentation is one horizontal row per product, keeping the previous photographic size and aspect ratio, typography, prices and shopping controls. Swap expands a two-column alternatives panel inside the same card, with bounded internal scrolling and the existing close/promote actions. It does not open a new page or issue a model request. Checked at 320/390/430 pixels, including quantity controls at 320; no horizontal page overflow. The 16 focused product/result interaction tests pass; production build passes.
 
-![Inline product alternatives](v9-screenshots/product-rows/alternatives-390.png)
+![Inline product alternatives in the approved visual style](v9-screenshots/product-rows/visual-authority-390.png)
 
 ## Visual review revision
 
