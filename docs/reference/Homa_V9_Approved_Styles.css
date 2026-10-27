@@ -163,5 +163,3 @@ button,input,textarea{font-family:inherit}
 .commentbox{font-size:13px;line-height:2.1;border-radius:15px}
 @media(max-width:355px){.revealwords{bottom:calc(224px + env(safe-area-inset-bottom));right:21px;left:21px}.revealwords h1{font-size:26px}.revealenter{left:17px;right:17px}.quick-actions{gap:6px;padding-inline:16px}.blackbtn,.whitebtn{font-size:11px}.product-grid{gap:23px 9px}}
 @media(prefers-reduced-motion:reduce){.revealpic .afterclip,.revealpic .divide{transition-duration:.01ms!important}.revealenter{transition-duration:.01ms!important}#result.entering{animation-duration:.01ms!important}}
-
-
