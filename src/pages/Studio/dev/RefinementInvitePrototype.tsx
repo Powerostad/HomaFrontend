@@ -14,11 +14,11 @@ export function RefinementPrototypeShell({ children }: { children: ReactNode }) 
       resources: structuredClone(i18n.store.data), initImmediate: false });
     instance.addResourceBundle('fa', 'translation', {
       studioWorkspace: { conversation: 'اصلاح طرح' },
-      studioChat: { chat: 'اصلاح طراحی', chatHint: 'دربارهٔ طراحی سؤال بپرس یا تغییر دلخواهت را بنویس.' },
+      studioChat: { chat: 'اصلاح طراحی', chatHint: 'دربارهٔ طراحی سؤال بپرس یا تغییر دلخواهت را بنویس.', questions: 'از کجا شروع کنیم؟' },
     }, true, true);
     instance.addResourceBundle('en', 'translation', {
       studioWorkspace: { conversation: 'Refine design' },
-      studioChat: { chat: 'Refine your design', chatHint: 'Ask about your design or describe a change.' },
+      studioChat: { chat: 'Refine your design', chatHint: 'Ask about your design or describe a change.', questions: 'Where shall we start?' },
     }, true, true);
     return instance;
   }, [i18n]);

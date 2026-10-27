@@ -43,7 +43,7 @@ export function StudioResultPage() {
   return <StudioResultView state={state} />;
 }
 
-export function StudioResultView({ state, conversation, journey }: { state: StudioResultViewState; conversation?: StudioResultConversation; journey?: { key: string; start: boolean; findings: JourneyFinding[] } }) {
+export function StudioResultView({ state, conversation, journey, onJourneyPhaseChange }: { state: StudioResultViewState; conversation?: StudioResultConversation; journey?: { key: string; start: boolean; findings: JourneyFinding[] }; onJourneyPhaseChange?: (phase: 'reveal' | 'guide' | 'recommendations') => void }) {
   const { siteValue, siteDirection, siteText } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [activePhase, setActivePhase] = useState<Phase>('recommendations');
@@ -52,6 +52,7 @@ export function StudioResultView({ state, conversation, journey }: { state: Stud
     journey?.start && !journeySeen(journey.key) && !state.analysisOnly && state.originalImage ? 'reveal' : 'recommendations');
   const revealing = journeyPhase === 'reveal';
   const [guideRequested, setGuideRequested] = useState(false);
+  useEffect(() => { onJourneyPhaseChange?.(revealing ? 'reveal' : guideRequested || journeyPhase === 'guide' ? 'guide' : 'recommendations'); }, [revealing, guideRequested, journeyPhase, onJourneyPhaseChange]);
   useEffect(() => { if (revealing && journey) markJourneySeen(journey.key); }, [revealing, journey]);
 
   const basketSectionRef = useRef<HTMLDivElement>(null);

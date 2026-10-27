@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Button } from '@/components/ui/button';
 import { StudioResultView } from '../ResultPage';
 import { StudioConversationDrawer } from '../../RoomRedesign/components/StudioConversationDrawer';
@@ -13,6 +14,7 @@ import { journeyFindings } from '../../RoomRedesign/services/resultJourney';
 import type { StudioMotherDocument } from '../../RoomRedesign/services/motherDocument';
 import { studioV2Fixture } from './studioV2Fixture';
 import { RefinementInvitePrototype, RefinementPrototypeShell } from './RefinementInvitePrototype';
+import { RefinementCoachmarkPrototype, refinementStarterExamples, refinementStarterGroups, useRefinementOnboardingPrototype } from './RefinementOnboardingPrototype';
 
 // Illustrative data only. Never represents an account, quote or model result.
 const product = (id: number, name: string, category: string, price: number, image: string): BackendProduct => ({
@@ -37,6 +39,8 @@ const legacyPlan: ExecutionPlan = {
 
 export default function LocalStudioPreview({ journeyStart = false }: { journeyStart?: boolean } = {}) {
   const preview = new URLSearchParams(window.location.search).get('preview');
+  const refinement = preview === 'refinement';
+  const intro = refinement && new URLSearchParams(window.location.search).get('intro') === '1';
   const [edited, setEdited] = useState(preview === 'changes');
   const basePlan: ExecutionPlan = preview === 'v2' ? studioV2Fixture : edited ? {
     ...legacyPlan, purchases: [
@@ -46,7 +50,7 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
         product: product(6, 'پردهٔ کتانی شیری', 'پرده', 12000000, '/images/studio/preset-warm-living.webp'), alternatives: [] },
     ],
   } : legacyPlan;
-  const plan: ExecutionPlan = preview === 'integrated' ? { ...basePlan, studio_documents: { room: {
+  const plan: ExecutionPlan = preview === 'integrated' || refinement ? { ...basePlan, studio_documents: { room: {
     room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'walkway', evidence: 'در این نمونه، میز به مسیر رفت‌وآمد نزدیک است.' }] } },
     existing_items_decision: [
       { existing_item_id: 'sofa', item_name: 'مبل نشیمن', decision: 'keep', action_instruction: 'مبل نمونه در جای خود حفظ شود.', decision_reason: 'رنگ و مقیاس آن با ترکیب پیشنهادی هماهنگ است.' },
@@ -55,14 +59,19 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
     product_recommendations: [{ item_id: 'rug', product_name_generic: 'فرش', why_needed: 'در این نمونه، بافت روشن محدودهٔ نشیمن را منسجم می‌کند.', placement_instruction: 'پایه‌های جلویی مبل روی فرش قرار بگیرند.', shopping_attributes: { replace_existing: true } }],
   } as unknown as StudioMotherDocument } } : basePlan;
   const { t } = useTranslation();
+  const { siteText: copy } = useSiteTranslation();
   const compact = useMediaQuery('(max-width: 1199px)');
   const [open, setOpen] = useState(false);
+  const [journeyReady, setJourneyReady] = useState(!intro);
+  const onJourneyPhaseChange = useCallback((phase: 'reveal' | 'guide' | 'recommendations') => setJourneyReady(phase === 'recommendations'), []);
+  const onboarding = useRefinementOnboardingPrototype({ enabled: refinement, ready: journeyReady, open });
   const [original, setOriginal] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [notice, setNotice] = useState('');
   const [demoPhase, setDemoPhase] = useState<'loading' | 'review' | 'result'>(() => new URLSearchParams(window.location.search).get('preview') === 'loading' ? 'loading' : 'result');
-  const openChat = () => setOpen(true);
+  const openChat = () => { onboarding.enterComposer(); setOpen(true); };
+  const closeChat = () => { setOpen(false); onboarding.closeComposer(); };
   const state = useConversationStudioResult({ plan, previousPlan: edited ? legacyPlan : null, sessionId: 'local-ui-preview', versionId: 'sample-v1',
     resultImage: preview === 'analysis-only' ? '' : '/images/studio/preset-warm-living.webp', originalImage: '/images/studio/preset-modern-living.webp',
     showOriginal: original, onToggleOriginal: setOriginal, onOpenChat: openChat });
@@ -72,19 +81,22 @@ export default function LocalStudioPreview({ journeyStart = false }: { journeySt
     setNotice(t('studioLocal.noModel'));
   };
   if (demoPhase !== 'result') return <StudioDiscovery plan={demoPhase === 'review' ? plan : null} originalImage="/images/studio/preset-modern-living.webp" sessionId={null} busy={demoPhase === 'loading'} error={null} resultAvailable={demoPhase === 'review'} onRetry={() => {}} onNew={() => setDemoPhase('result')} onDiscuss={openChat} onComplete={() => setDemoPhase('result')} tools={<Button variant="outline" onClick={() => setDemoPhase(demoPhase === 'loading' ? 'review' : 'result')}>{t('studioLocal.hint')} · {demoPhase === 'loading' ? 'نمایش تحلیل نمونه' : 'نمایش نتیجه نمونه'}</Button>} />;
-  const result = <StudioResultView journey={preview === 'integrated' ? { key: 'local-integrated-preview-' + (new URLSearchParams(window.location.search).get('run') || 'one'), start: journeyStart, findings: journeyFindings(plan) } : undefined} state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
-    open, compact, onOpen: openChat, onClose: () => setOpen(false), onExit: () => setNotice(t('studioLocal.hint')),
+  const result = <StudioResultView onJourneyPhaseChange={refinement ? onJourneyPhaseChange : undefined}
+    journey={preview === 'integrated' || intro ? { key: (intro ? 'local-refinement-preview-' : 'local-integrated-preview-') + (new URLSearchParams(window.location.search).get('run') || 'one'), start: journeyStart || intro, findings: journeyFindings(plan) } : undefined} state={{ ...state, handleFinalize: async () => setNotice(t('studioLocal.noCheckout')) }} conversation={{
+    open, compact, onOpen: openChat, onClose: closeChat, onExit: () => setNotice(t('studioLocal.hint')),
     busy: false, priceUnknown: true, onImageError: () => setNotice(t('studioLocal.imageError')),
     onPreview: () => setNotice(t('studioLocal.noModel')),
     onRefineProduct: async (_product, text) => { append(text); openChat(); return true; },
-    panel: <StudioConversationDrawer open={open} onOpenChange={setOpen} compact={compact}
-      messages={messages} chipGroups={[]} busy={false} statusText="" value={input} onChange={setInput}
-      onSend={() => { append(input); setInput(''); }} onSelectChip={() => {}} />,
+    panel: <StudioConversationDrawer open={open} onOpenChange={value => value ? openChat() : closeChat()} compact={compact}
+      messages={messages} chipGroups={onboarding.startersVisible && !messages.length ? refinementStarterGroups(copy) : []} busy={false} statusText="" value={input} onChange={setInput}
+      onSend={() => { append(input); setInput(''); }} onSelectChip={(_group, id) => { const example = refinementStarterExamples.find(item => item.id === id); if (example) setInput(copy(example.text)); }} />,
     toolbar: <div><p>{t('studioLocal.hint')}</p><Button variant="outline" onClick={() => setEdited(value => !value)}>پیش‌نمایش ویرایش: تغییر میز، افزودن پرده و حذف روشنایی</Button></div>,
     status: <>{preview === 'refinement' && <RefinementInvitePrototype onStart={draft => { if (draft !== undefined) setInput(draft); openChat(); }} />}
       <div className="studio-local-preview-note"><span>{t('studioLocal.hint')}</span>{notice && <p role="status">{notice}</p>}</div></>,
     details: <p>{t('studioLocal.analysis')}</p>,
     afterReport: <><details><summary>{t('studioLocal.report')}</summary><p>{t('studioLocal.noModel')}</p><Button variant="outline" onClick={() => setMessages([])}>{t('studioLocal.clearChat')}</Button></details></>,
   }} />;
-  return preview === 'refinement' ? <RefinementPrototypeShell>{result}</RefinementPrototypeShell> : result;
+  return refinement ? <RefinementPrototypeShell>{result}
+    {onboarding.hintVisible && <RefinementCoachmarkPrototype onDismiss={onboarding.dismiss} onStart={openChat} />}
+  </RefinementPrototypeShell> : result;
 }

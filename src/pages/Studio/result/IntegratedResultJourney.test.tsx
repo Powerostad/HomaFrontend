@@ -27,12 +27,12 @@ beforeEach(() => {
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
 });
 afterEach(async () => { await cleanup?.(); cleanup = undefined; vi.useRealTimers(); vi.unstubAllGlobals(); });
-async function mount(count: number, key = `journey-test-${++counter}`) {
+async function mount(count: number, key = `journey-test-${++counter}`, onPhaseChange?: (phase: 'reveal' | 'guide' | 'recommendations') => void) {
   const host = document.createElement('div'); document.body.append(host); const root = createRoot(host);
   const findings: JourneyFinding[] = Array.from({ length: count }, (_, index) => ({ id: `decision-${index}`, title: `تصمیم ${index + 1}`, kind: index ? 'add' : 'keep', before: `شاهد ${index + 1}`, recommendation: `پیشنهاد ${index + 1}`, reason: `دلیل ${index + 1}` }));
   function Harness() {
     const state = useConversationStudioResult({ plan, sessionId: key, versionId: 'current', resultImage: 'after.jpg', originalImage: 'before.jpg', showOriginal: false, onToggleOriginal: vi.fn(), onOpenChat: vi.fn() });
-    return <StudioResultView state={state} journey={{ key, start: true, findings }} />;
+    return <StudioResultView state={state} journey={{ key, start: true, findings }} onJourneyPhaseChange={onPhaseChange} />;
   }
   const render = async () => act(async () => root.render(<MemoryRouter><Harness /></MemoryRouter>));
   await render();
@@ -91,5 +91,15 @@ describe('integrated result journey in the existing result page', () => {
     const ui = await mount(1);
     expect(document.querySelector('.homa-result-reveal')).toBeNull(); expect(document.querySelector('.homa-analysis-sheet')).not.toBeNull();
     await click('رد کردن'); recommendationsActive(ui.host);
+  });
+  it('reports recommendation readiness only after the actual reveal and guide finish', async () => {
+    const phases = vi.fn();
+    await mount(1, undefined, phases);
+    expect(phases).toHaveBeenLastCalledWith('reveal');
+    await finishReveal();
+    expect(phases).toHaveBeenLastCalledWith('guide');
+    expect(phases.mock.calls.some(call => call[0] === 'recommendations')).toBe(false);
+    await click('دیدن پیشنهادهای محصول←');
+    expect(phases).toHaveBeenLastCalledWith('recommendations');
   });
 });
