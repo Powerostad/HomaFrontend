@@ -1,0 +1,8 @@
+services:
+  refinement-build:
+    image: homa_openai_frontend:refinement-d1b07b9-20261028
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    entrypoint: ["/bin/sh", "-c", "echo refinement-image-built"]
+    restart: "no"
