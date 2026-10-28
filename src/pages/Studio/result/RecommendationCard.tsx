@@ -1,3 +1,4 @@
+import { alternativePriceBand } from './alternativePriceBand';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
@@ -133,6 +134,7 @@ export function RecommendationCard({
   const [alternativesOpen, setAlternativesOpen] = useState(false);
   const heroProduct = group.products[0] || null;
   const alternatives = group.products.slice(1, 11);
+  const priceLabels = { economic: t('studioAlternatives.economic', 'اقتصادی‌تر'), similar: t('studioAlternatives.similar', 'قیمت هم‌رده'), higher: t('studioAlternatives.higher', 'قیمت بالاتر') };
   const isActionItem = group.actionStatus !== 'available' || !heroProduct;
   const problem = group.recommendationReasonFa;
   const solution = group.designRationaleFa;
@@ -218,6 +220,7 @@ export function RecommendationCard({
           onClick={() => onProductClick(product)} disabled={busy}>
           <span className="studio-swap-image"><AuthenticatedImage src={product.image} alt="" loading="lazy" /></span>
           <span className="studio-swap-label">{index < 3 && <span className="studio-swap-tag">{t('studioProductLayout.suggestionNumber', 'پیشنهاد')} {siteValue(toLocalizedDigits(index + 1))}</span>}</span>
+          {heroProduct && alternativePriceBand(product.price, product.priceUnknown, heroProduct.price, heroProduct.priceUnknown) && <span className="studio-swap-tag">{priceLabels[alternativePriceBand(product.price, product.priceUnknown, heroProduct.price, heroProduct.priceUnknown)!]}</span>}
           <strong>{product.priceUnknown ? t('redesignJourney.unpriced') : siteValue(formatPriceFromRial(product.price, true))}</strong>
           <span className="studio-swap-name" title={siteValue(product.name)}>{siteValue(product.name)}</span>
         </button>)}
