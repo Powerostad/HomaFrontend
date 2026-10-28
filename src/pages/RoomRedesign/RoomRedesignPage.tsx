@@ -1,8 +1,10 @@
+import { RefinementInvitePrototype, RefinementPrototypeShell } from '../Studio/dev/RefinementInvitePrototype';
+import { RefinementCoachmarkPrototype, refinementStarterGroups, refinementStarterExamples, useRefinementOnboardingPrototype } from '../Studio/dev/RefinementOnboardingPrototype';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { History, Loader2, Plus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { StudioResultView } from '../Studio/ResultPage';
@@ -36,7 +38,10 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   const { t } = useTranslation();
   const { siteValue, siteText } = useSiteTranslation();
   const navigate = useNavigate();
-  const openChat = () => { setChatOpen(true); if (!compact) window.scrollTo({ top: 0, behavior: 'instant' }); };
+  const [refinementReady, setRefinementReady] = useState(false);
+  const onJourneyPhaseChange = useCallback((phase: 'reveal' | 'guide' | 'recommendations') => setRefinementReady(phase === 'recommendations'), []);
+  const onboarding = useRefinementOnboardingPrototype({ enabled: true, ready: refinementReady && !chat.busy, open: chatOpen, profile: 'production-browser' });
+  const openChat = () => { onboarding.enterComposer(); setChatOpen(true); if (!compact) window.scrollTo({ top: 0, behavior: 'instant' }); };
   const state = useConversationStudioResult({ plan, previousPlan, sessionId: chat.sessionId, versionId, resultImage, originalImage,
     showOriginal, onToggleOriginal, onOpenChat: openChat,
     onChooseProduct: product => {
@@ -46,7 +51,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
         variantId: product.variantId, placementId: product.studioPlacementId });
     } });
   const statusText = chat.stage || t(chat.status === 'rendering' ? 'redesignJourney.rendering' : 'redesignJourney.thinking');
-  return <StudioResultView state={state} journey={{ key: chat.sessionId || 'new', start: journeyStart, findings: journeyFindings(plan) }} conversation={{
+  return <RefinementPrototypeShell><StudioResultView onJourneyPhaseChange={onJourneyPhaseChange} state={state} journey={{ key: chat.sessionId || 'new', start: journeyStart, findings: journeyFindings(plan) }} conversation={{
     open: chatOpen, compact, onOpen: openChat, onClose: () => setChatOpen(false), onExit: () => navigate('/studio/projects'), busy: chat.busy,
     priceUnknown: !!plan?.unknown_cost_item_ids.length, onImageError,
     printReview: buildDiscoveryReview(plan),
@@ -62,7 +67,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     },
     panel: <StudioConversationDrawer open={chatOpen} onOpenChange={setChatOpen} compact={compact}
       error={chat.error ? siteValue(chat.error) : null} onRetry={() => void chat.retry()}
-      messages={chat.messages} chipGroups={chat.chipGroups} onSelectChip={chat.selectChip}
+      messages={chat.messages} chipGroups={chat.chipGroups.length ? chat.chipGroups : onboarding.startersVisible ? refinementStarterGroups(siteText) : []} onSelectChip={(group, id) => { if (group === 'refinement-start') { const example = refinementStarterExamples.find(item => item.id === id); if (example) setInput(siteText(example.text)); } else chat.selectChip(group, id); }}
       busy={chat.busy} failed={!!chat.error} statusText={statusText} value={input} onChange={setInput} onSend={sendMessage} />,
     toolbar: <>
       <details className="studio-result-history"><summary>{t('redesignJourney.history')}</summary><div className="studio-result-version-row">
@@ -80,6 +85,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
       </nav>
     </>,
     status: <>
+      <RefinementInvitePrototype onStart={draft => { if (draft !== undefined) setInput(draft); openChat(); }} />
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
@@ -87,7 +93,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     afterReport: <>{!plan && <p className="studio-empty-state">{t(chat.versions.length ? 'redesignJourney.legacy' : 'studioChat.noPlan')}</p>}
             {chat.sessionId && import.meta.env.MODE === 'studio-local' && <StudioImageExport key={`export-${chat.sessionId}`} sessionId={chat.sessionId} busy={chat.busy} />}
             {chat.sessionId && <SessionDiagnostics key={chat.sessionId} sessionId={chat.sessionId} busy={chat.busy} />}</>,
-  }} />;
+  }} />{onboarding.hintVisible && <RefinementCoachmarkPrototype onDismiss={onboarding.dismiss} onStart={openChat} />}</RefinementPrototypeShell>;
 }
 
 export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: HomaIntakePayload | null } = {}) {

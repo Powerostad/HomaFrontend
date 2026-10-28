@@ -11,7 +11,7 @@ export function RefinementPrototypeShell({ children }: { children: ReactNode }) 
   const prototypeI18n = useMemo(() => {
     const instance = createInstance();
     void instance.init({ ...i18n.options, lng: i18n.language,
-      resources: structuredClone(i18n.store.data), initImmediate: false });
+      resources: structuredClone(i18n.store?.data || {}), initImmediate: false });
     instance.addResourceBundle('fa', 'translation', {
       studioWorkspace: { conversation: 'اصلاح طرح' },
       studioChat: { chat: 'اصلاح طراحی', chatHint: 'دربارهٔ طراحی سؤال بپرس یا تغییر دلخواهت را بنویس.', questions: 'از کجا شروع کنیم؟' },
