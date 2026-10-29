@@ -1,3 +1,4 @@
+import { HomeStudioIntake } from './HomeStudioIntake';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Camera, Check, History, ImagePlus, Loader2 } from 'lucide-react';
@@ -11,7 +12,7 @@ import { StylePhoto } from './StylePhoto';
 
 const STEPS = ['انتخاب اتاق', 'عکس فضا', 'اولویت شما', 'حال‌وهوای دلخواه', 'حدود تغییر', 'مرور و شروع'];
 /** One decision per screen. Only final confirmation hands off to AI. */
-export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysis: (payload: HomaIntakePayload) => void; host?: boolean }) {
+export function HostStudioIntake({ onStartAnalysis, host = false }: { onStartAnalysis: (payload: HomaIntakePayload) => void; host?: boolean }) {
   const { siteText: copy, siteDirection, siteLocale } = useSiteTranslation();
   const location = useLocation();
   const flow = useIntakeFlow();
@@ -94,4 +95,8 @@ export function StudioIntake({ onStartAnalysis, host = false }: { onStartAnalysi
     <input ref={gallery} className="sr-only" tabIndex={-1} type="file" aria-label={copy('انتخاب عکس از گالری')} accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={flow.preparing} onChange={event => { pick(event.target.files?.[0], 'gallery'); event.target.value = ''; }} />
     <input ref={camera} className="sr-only" tabIndex={-1} type="file" aria-label={copy('گرفتن عکس با دوربین')} accept="image/*" capture="environment" disabled={flow.preparing} onChange={event => { pick(event.target.files?.[0], 'camera'); event.target.value = ''; }} />
   </main></div>;
+}
+
+export function StudioIntake(props: { onStartAnalysis: (payload: HomaIntakePayload) => void; host?: boolean }) {
+  return props.host ? <HostStudioIntake {...props} /> : <HomeStudioIntake onStartAnalysis={props.onStartAnalysis} />;
 }

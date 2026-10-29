@@ -50,6 +50,7 @@ export interface IntakeImage {
 export interface HomaIntakePayload {
   imageOutputMode?: 'export' | 'api';
   image: IntakeImage;
+  inspirationImage?: IntakeImage;
   roomType?: RoomType;
   goals: Goal[];
   userNote?: string;
