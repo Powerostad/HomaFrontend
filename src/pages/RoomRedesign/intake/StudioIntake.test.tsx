@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { StudioIntake } from './StudioIntake';
+import { HostStudioIntake as StudioIntake } from './StudioIntake';
 
 const flow = vi.hoisted(() => ({ image: null as null | { dataUrl: string }, preparing: false, imageTooSmall: false,
   error: null, note: '', pickImage: vi.fn(), setNote: vi.fn(), buildPayload: vi.fn() }));

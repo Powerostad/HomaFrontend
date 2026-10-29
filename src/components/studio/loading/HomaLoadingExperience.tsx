@@ -96,7 +96,7 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
     return () => window.clearTimeout(timer);
   }, [personal, paused, ready, error, index, slides.length]);
   const openResult = () => { if (!completed.current) { completed.current = true; completion.current(); } };
-  const status = error ? copy('این مرحله کامل نشد.') : statusLabel || copy(
+  const status = error ? copy(stageKey === 'render' ? 'ساخت تصویر کامل نشد؛ تحلیل آماده محفوظ است.' : 'بررسی فضا کامل نشد.') : statusLabel || copy(
     !busy && !complete ? 'پاسخ این مرحله آماده است؛ گفت‌وگو را بررسی کن.'
       : !hasAnalysis ? 'در حال شناخت و تحلیل فضا…' : !plan ? 'در حال طراحی تغییرات…'
         : stageKey === 'render' ? 'در حال آماده‌سازی خروجی طراحی…' : 'در حال یافتن محصولات متناسب…');
