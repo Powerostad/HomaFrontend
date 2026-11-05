@@ -124,3 +124,9 @@ Uses `motion` (v11.15.0), not `framer-motion`. Same API but lighter bundle.
 
 ### Vendor Chunking
 Build splits into separate chunks: `react-vendor`, `ui-vendor` (motion), `radix-vendor`.
+
+## Persian Blog SEO Workflow
+
+When adding or editing pages under `/blog/`, read `docs/seo/claude-seo-setup.md` first. This project recommends the third-party `claude-seo@agricidaniel-claude-seo` **Claude Code** plugin via `.claude/settings.json`; it is optional tooling, not a runtime dependency.
+
+Use `/seo content-brief` and `/seo cluster` for Iranian search intent research when the plugin is installed, then `/seo page` and `/seo images` on the deployed URL. Do not infer Persian search volumes or keyword competitiveness without a real data source. Keep each article focused on one user decision and write in natural, useful Persian. Never present AI-generated images as photographs of executed customer projects. Confirm crawler-visible HTML, page canonical, live image URLs, and sitemap before claiming publication.
