@@ -57,9 +57,10 @@ export function recordStudioProcessingStarted(sessionId: string) {
   } catch { /* Storage denied: still count an unattributed start, once in memory. */ }
   startedInMemory.add(sessionId);
   const data: Record<string, unknown> = { schema_version: 1, attribution: 'unattributed' };
-  if (intent && typeof intent.article_path === 'string' && articlePath(intent.article_path) && intent.clicked_at <= Date.now()
+  const path = intent && typeof intent.article_path === 'string' ? articlePath(intent.article_path) : null;
+  if (intent && path && intent.clicked_at <= Date.now()
     && Date.now() - intent.clicked_at <= TTL) {
-    Object.assign(data, { attribution: 'article_cta_30m', article_path: intent.article_path, acquisition: intent.acquisition === 'google' ? 'google' : 'other' });
+    Object.assign(data, { attribution: 'article_cta_30m', article_path: path, acquisition: intent.acquisition === 'google' ? 'google' : 'other' });
   }
   umamiEditorialEvent('studio_processing_started', data);
 }

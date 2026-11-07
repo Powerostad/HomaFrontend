@@ -53,3 +53,10 @@ it('does not report index/error pages as articles or block processing if storage
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
   expect(() => recordStudioProcessingStarted('one')).not.toThrow();
 });
+it('normalizes stored attribution again before reporting, without sending query strings', () => {
+  sessionStorage.setItem('homa_blog_intent_v1', JSON.stringify({ article_path: '/blog/test?email=private#secret', clicked_at: Date.now(), acquisition: 'google' }));
+  recordStudioProcessingStarted('normalized-intent');
+  expect(umamiEditorialEvent).toHaveBeenLastCalledWith('studio_processing_started', {
+    article_path: '/blog/test', acquisition: 'google', attribution: 'article_cta_30m', schema_version: 1,
+  });
+});
