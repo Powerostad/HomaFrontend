@@ -97,8 +97,27 @@ export async function checkLive(url) {
     }catch(err){e.push(ua+': درخواست ناموفق '+err.message);}
   }
   if(first.image){
-    try{const res=await fetch(first.image,{method:'GET',signal:AbortSignal.timeout(15000)});fail(e,res.ok && /^image\//i.test(res.headers.get('content-type')||''),'og:image باید HTTP 200 و MIME تصویر برگرداند');await res.arrayBuffer();}catch(err){e.push('og:image قابل دریافت نیست: '+err.message);}
+    const imageUrl=validUrl(first.image);
+    if(!imageUrl || imageUrl.protocol !== 'https:' || !(imageUrl.hostname === 'myhoma.ir' || imageUrl.hostname.endsWith('.myhoma.ir')) || imageUrl.port) {
+      e.push('og:image باید آدرس HTTPS روی دامنه تأییدشده هما باشد؛ از واکشی URL ناشناس خودداری شد');
+    } else {
+      try {
+        const res = await fetch(imageUrl, {method:'HEAD', signal:AbortSignal.timeout(15000)});
+        fail(e, res.ok && /^image\//i.test(res.headers.get('content-type') || ''), 'og:image باید HTTP 200 و MIME تصویر برگرداند');
+      } catch(err) { e.push('og:image قابل دریافت نیست: ' + err.message); }
+    }
   }
+  try {
+    const robots = await fetch('https://myhoma.ir/robots.txt',{signal:AbortSignal.timeout(15000)});
+    const rules = await robots.text();
+    fail(e, robots.status === 200, 'robots.txt باید HTTP 200 باشد');
+    fail(e, !/^\s*Disallow:\s*\/blog(?:\/|\s|$)/im.test(rules), 'robots.txt مسیر بلاگ را مسدود می‌کند');
+  } catch(err) { e.push('robots.txt قابل بررسی نیست: ' + err.message); }
+  try {
+    const sitemap = await fetch('https://myhoma.ir/blog/sitemap.xml',{signal:AbortSignal.timeout(15000)});
+    const xml = await sitemap.text();
+    fail(e, sitemap.status === 200 && xml.includes('<loc>' + url + '</loc>'), 'مقاله باید در Sitemap بلاگ موجود باشد');
+  } catch(err) { e.push('Sitemap بلاگ قابل بررسی نیست: ' + err.message); }
   w.push('User-Agent simulation is not verification of real crawler IP/WAF allowlisting or Google indexing.');
   return {errors:e,warnings:w};
 }
