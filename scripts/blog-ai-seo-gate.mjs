@@ -49,7 +49,7 @@ export function checkBrief(b, approved = false) {
 // Conservative HTML snapshot gate, not an HTML validator or indexation proof.
 const meta = (html, key, property = false) => {
   const tags = html.match(/<meta\b[^>]*>/gi) || [];
-  const tag = tags.find(t => new RegExp('\\b' + (property ? 'property' : 'name') + '=["\\\']' + key + '["\\\']', 'i').test(t));
+  const needle = (property ? 'property' : 'name') + '='; const tag = tags.find(t => t.toLowerCase().includes(needle + '"' + key.toLowerCase() + '"') || t.toLowerCase().includes(needle + "'" + key.toLowerCase() + "'"));
   return tag?.match(/\bcontent=["']([^"']*)["']/i)?.[1] || '';
 };
 const canonical = html => html.match(/<link\b(?=[^>]*\brel=["']canonical["'])(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>/i)?.[1] || '';
