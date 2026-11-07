@@ -34,7 +34,8 @@ const UMAMI_WEBSITE_ID = appConfig.umamiWebsiteId;
 
 const isDev = import.meta.env.DEV;
 const isDevEnabled = appConfig.enableUmamiInDev;
-const isConfigured = Boolean(UMAMI_SRC && UMAMI_WEBSITE_ID);
+const isConfigured = Boolean(UMAMI_SRC && UMAMI_WEBSITE_ID && UMAMI_WEBSITE_ID !== 'disabled')
+  && /^(https?:\/\/|\/[^/])/.test(UMAMI_SRC);
 
 // Track unless we're in dev mode without the dev flag.
 const isEnabled = isConfigured && (!isDev || isDevEnabled);
@@ -92,12 +93,15 @@ function getSessionId(): string {
 // The Umami script loads asynchronously; events fired before it is ready
 // (e.g. on-mount events) are buffered here and flushed on the load event.
 let scriptLoaded = false;
+let scriptFailed = false;
 const pendingCalls: Array<() => void> = [];
 
 function runOrQueue(call: () => void) {
+  if (scriptFailed) return;
   if (scriptLoaded && window.umami) {
     call();
   } else {
+    if (pendingCalls.length >= 100) pendingCalls.shift();
     pendingCalls.push(call);
   }
 }
@@ -125,6 +129,7 @@ if (isEnabled) {
   script.addEventListener('error', () => {
     // Umami unreachable — drop queued events so they don't leak memory.
     pendingCalls.length = 0;
+    scriptFailed = true;
   });
   document.head.appendChild(script);
   // Disable Umami's automatic pageview and queue one sanitized pageview so
@@ -152,6 +157,22 @@ export function umamiTrack(event: string, data?: Record<string, unknown>) {
     ...data,
   };
   runOrQueue(() => window.umami?.track(event, payload));
+}
+
+/** Aggregate editorial events: no application session/user ID or private URL. */
+export function umamiEditorialEvent(event: string, data: Record<string, unknown>) {
+  if (!isEnabled) return;
+  runOrQueue(() => {
+    try {
+      window.umami?.track((defaults) => ({
+        website: defaults.website,
+        hostname: window.location.hostname,
+        url: typeof data.article_path === 'string' ? data.article_path : '/studio',
+        name: event,
+        data,
+      }));
+    } catch { /* Telemetry never blocks navigation or accepted design work. */ }
+  });
 }
 
 /**

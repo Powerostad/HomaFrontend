@@ -1,3 +1,4 @@
+import { recordStudioProcessingStarted } from '@/analytics/blogFunnel';
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { StudioProject } from "../types/studio";
 import type {
@@ -147,6 +148,9 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     const result = await createRedesignSession(file, options, onProgress);
 
     if (result.success && result.data) {
+      if (['pending', 'analyzing', 'generating', 'matching', 'retrying'].includes(result.data.status)) {
+        recordStudioProcessingStarted(result.data.sessionId);
+      }
       setActiveSessionId(result.data.sessionId);
       setSessionStatus(result.data.status);
       setIsCreatingSession(false);

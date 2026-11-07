@@ -2,10 +2,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runChatCommand } from './chatWebSocket';
 import { apiPost } from '@/utils/apiClient';
+import { recordDesignStage } from '@/analytics/blogFunnel';
 
 vi.mock('@/utils/apiClient', () => ({ apiPost: vi.fn() }));
 vi.mock('@/config/appConfig', () => ({ appConfig: { apiBaseUrl: 'https://site.example' } }));
 vi.mock('@/i18n/siteCopy', () => ({ siteText: (s: string) => s }));
+vi.mock('@/analytics/blogFunnel', () => ({ recordDesignStage: vi.fn() }));
 
 class Socket {
   static CLOSING = 2;
@@ -42,6 +44,16 @@ const push = (operation = 'render', session = 'session') => ({ type: 'chat.event
   session_id: session, operation_id: operation, event: 'image', data: { url: 'image' } });
 
 describe('durable Studio socket lifecycle', () => {
+  it('tracks backend processing evidence, not socket opening, errors or other requests', async () => {
+    const { socket, result } = await start();
+    expect(recordDesignStage).not.toHaveBeenCalled();
+    socket.frame({ type: 'chat.event', request_id: 'other', event: 'stage', data: { key: 'design' } });
+    expect(recordDesignStage).not.toHaveBeenCalled();
+    socket.frame({ type: 'chat.event', request_id: 'request', event: 'stage', data: { key: 'design' } });
+    expect(recordDesignStage).toHaveBeenCalledWith('session', 'stage', { key: 'design' });
+    socket.frame({ type: 'chat.done', request_id: 'request' });
+    await result;
+  });
   it('completes an export without waiting for an image or resending', async () => {
     const { socket, result, onEvent } = await start('chat.render');
     socket.frame({ type: 'chat.ack', request_id: 'request', data: { status: 'queued', operation_id: 'render' } });

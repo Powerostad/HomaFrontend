@@ -6,6 +6,7 @@ import { resolve, join } from 'node:path';
 import { createServer } from 'node:net';
 import assert from 'node:assert/strict';
 import { startFixture } from './release-fixture.mjs';
+import { verifyBlogAnalyticsBundle } from './blog-performance/verify-bundle.mjs';
 
 const image=process.argv.includes('--image') ? process.argv[process.argv.indexOf('--image')+1] : null;
 const fixture=await startFixture();
@@ -15,8 +16,15 @@ const report={architecture:'nginx-public-documents-blog-v1',mode:image?'image':'
 let child,container;
 const docker=args=>execFileSync('docker',args,{encoding:'utf8',timeout:60000}).trim();
 try {
+  report.blogAnalytics = await verifyBlogAnalyticsBundle();
   let base;
   if(image) {
+    for(const path of ['/blog-analytics.js','/config.js']) {
+      const response=await fetch(base+path);
+      assert.equal(response.status,200,path+' served');
+      assert(/javascript/.test(response.headers.get('content-type')||''),path+' JavaScript MIME');
+      assert(!/immutable/.test(response.headers.get('cache-control')||''),path+' revalidates');
+    }
     const probe=createServer();await new Promise(done=>probe.listen(0,'127.0.0.1',done));
     const port=probe.address().port;await new Promise(done=>probe.close(done));
     const args=['run','-d','--name',`homa-contract-${process.pid}`,'-p',`127.0.0.1:${port}:80`,'-e','SITE_URL=https://myhoma.ir','-e',`BLOG_API_URL=http://host.docker.internal:${fixturePort}/api/blog`];
@@ -60,6 +68,8 @@ try {
         assert(!/noindex/i.test(res.headers.get('x-robots-tag')||''),path+' indexable');
       }
       if(path==='/blog/release-test') {
+        assert(html.includes('data-article-path="/blog/release-test"'));
+        assert(html.includes('src="/blog-analytics.js"'));
         assert(html.includes('متن اختصاصی آزمون انتشار.'));
         assert(html.includes('BlogPosting'));assert(html.includes('BreadcrumbList'));
         assert(!html.includes('هُما؛ نسخه‌یِ بهترِ خونه‌ت.'));
