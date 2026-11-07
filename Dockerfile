@@ -56,6 +56,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Crawler meta-injection sidecar + its launcher (started before nginx).
 COPY render-bot.mjs /render-bot.mjs
+COPY blog-http.mjs public-documents.mjs /
+COPY --from=builder /app/dist-blog-server/blog-render.mjs /blog-render.mjs
 COPY render-bot-entrypoint.sh /docker-entrypoint.d/45-render-bot.sh
 
 # Generate /config.js from runtime container environment before Nginx starts.
@@ -75,4 +77,5 @@ RUN chown -R appuser:appgroup /usr/share/nginx/html
 EXPOSE 80
 
 # Start nginx
+HEALTHCHECK --interval=30s --timeout=8s --start-period=20s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1/health && node -e "fetch('http://127.0.0.1:8081/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["nginx", "-g", "daemon off;"]
