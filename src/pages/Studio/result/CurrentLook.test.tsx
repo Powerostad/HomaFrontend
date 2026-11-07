@@ -21,6 +21,6 @@ it('opens saved selections without changing them and restores focus on close', a
     await act(async()=>select.click());expect(toggle).toHaveBeenCalledExactlyOnceWith('rug2');
     await act(async()=>document.querySelector<HTMLButtonElement>('.studio-current-look-close')!.click());
     expect(document.querySelector('[role=dialog]')).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    await vi.waitFor(() => expect(document.activeElement).toBe(trigger));
   } finally { await act(async()=>root.unmount());container.remove(); }
 });
