@@ -4,8 +4,6 @@
 ARG NODE_IMAGE=node:24-alpine
 ARG NGINX_IMAGE=nginx:alpine
 FROM ${NODE_IMAGE} AS builder
-ARG SOURCE_REV=unversioned
-ENV SOURCE_REV=${SOURCE_REV}
 
 # Use Liara's Iranian npm mirror for JavaScript dependencies
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
@@ -27,6 +25,8 @@ RUN npm ci
 COPY . .
 
 # Build the application (outputs to dist/ per vite.config.ts)
+ARG SOURCE_REV=unversioned
+ENV SOURCE_REV=${SOURCE_REV}
 RUN npm run build
 
 # Verify build output - fail if index.html is missing

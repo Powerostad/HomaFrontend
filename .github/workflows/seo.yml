@@ -1,5 +1,8 @@
 name: Frontend SEO gates
 on: [push, pull_request]
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   seo:
     runs-on: ubuntu-latest
