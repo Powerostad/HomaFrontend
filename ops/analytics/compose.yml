@@ -1,0 +1,39 @@
+name: homa-analytics
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:3.4.1
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?required}@db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?required}
+      TWO_FACTOR_ENCRYPTION_KEY: ${UMAMI_2FA_KEY:?required}
+      DISABLE_TELEMETRY: "1"
+      TZ: UTC
+    depends_on:
+      db:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?required}
+      TZ: UTC
+    volumes:
+      - analytics-db:/var/lib/postgresql/data
+    restart: unless-stopped
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  analytics-db:

@@ -6,6 +6,7 @@ import { apiGet } from '@/utils/apiClient';
 import { BlogView, blogCopy, type BlogCopy } from './BlogView';
 import { blogSeo } from './seo';
 import type { BlogData } from './types';
+import { bindArticleAnalytics } from '../analytics/blogFunnel';
 
 export function BlogPage() {
   const location = useLocation();
@@ -28,6 +29,12 @@ export function BlogPage() {
   const path = location.pathname.replace(/\/$/, '') + (data?.kind === 'index' && data.page > 1 ? `?page=${data.page}` : '');
   const meta = blogSeo(data || { kind: 'unavailable' }, window.location.origin, path);
   useSeo(meta);
+  // Client-side navigation uses the same tracker as standalone article HTML.
+  useEffect(() => {
+    if (data?.kind !== 'article') return;
+    const root = document.querySelector<HTMLElement>('[data-article-path]');
+    if (root) return bindArticleAnalytics(root);
+  }, [data]);
   useEffect(() => {
     const robots = document.createElement('meta'); robots.name = 'robots'; robots.content = meta.robots; document.head.appendChild(robots);
     const schema = document.createElement('script'); schema.type = 'application/ld+json'; schema.textContent = JSON.stringify(meta.jsonLd).replace(/</g, '\\u003c'); document.head.appendChild(schema);

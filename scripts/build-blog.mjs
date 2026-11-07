@@ -20,3 +20,5 @@ const html = renderBlogDocument({kind:'not-found'}, 'https://myhoma.ir', '/blog/
   '<html><head></head><body><div id="root"></div></body></html>');
 if (!html.includes('noindex') || !html.includes('canonical')) throw new Error('Missing SEO metadata');
 console.log('BLOG_SSR_OK');
+
+await build({ entryPoints: ['src/blog/analytics.ts'], bundle: true, platform: 'browser', format: 'iife', minify: true, outfile: 'dist/blog-analytics.js', define: { 'import.meta.env': '{}', 'import.meta.env.DEV': 'false' } });

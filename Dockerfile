@@ -5,15 +5,15 @@ ARG NODE_IMAGE=node:24-alpine
 ARG NGINX_IMAGE=nginx:alpine
 FROM ${NODE_IMAGE} AS builder
 
-# Use Liara's Iranian npm mirror for JavaScript dependencies
+# Use the official npm registry for JavaScript dependencies
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 
 # Set working directory
 WORKDIR /app
 
-# Use ArvanCloud's Iranian Alpine mirrors for system packages
+# Use upstream Alpine repositories so missing/stale mirror packages cannot break releases
 RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \
-    printf 'http://mirror.arvancloud.ir/alpine/v%s/main\nhttp://mirror.arvancloud.ir/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
+    printf 'https://dl-cdn.alpinelinux.org/alpine/v%s/main\nhttps://dl-cdn.alpinelinux.org/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
 
 # Copy package files
 COPY package*.json ./
@@ -40,9 +40,9 @@ ARG SOURCE_REV=unversioned
 LABEL org.opencontainers.image.revision=${SOURCE_REV}
 LABEL ir.myhoma.release-contract="nginx-public-documents-blog-v1"
 
-# Use ArvanCloud's Iranian Alpine mirror for system packages
+# Use upstream Alpine repositories for runtime packages
 RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \
-    printf 'http://mirror.arvancloud.ir/alpine/v%s/main\nhttp://mirror.arvancloud.ir/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
+    printf 'https://dl-cdn.alpinelinux.org/alpine/v%s/main\nhttps://dl-cdn.alpinelinux.org/alpine/v%s/community\n' "$ALPINE_VERSION" "$ALPINE_VERSION" > /etc/apk/repositories
 
 # Node runtime for the crawler meta-injection sidecar (render-bot.mjs).
 # No npm needed — the sidecar has zero dependencies (built-in http + fetch).

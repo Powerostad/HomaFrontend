@@ -1,7 +1,6 @@
 import {
   trackStudioProcessingCompleted,
   trackStudioProcessingFailed,
-  trackStudioProcessingStarted,
 } from '@/analytics/events';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { fetchSessionStatus } from '@/services/studioService';
@@ -137,7 +136,6 @@ export function StudioProgressPage() {
     setIsPolling(true);
     setError(null);
     startTimeRef.current = Date.now();
-    trackStudioProcessingStarted({ session_id: activeSessionId });
 
     const startPolling = async () => {
       const result = await pollSession(activeSessionId, (status) => {

@@ -1,3 +1,4 @@
+import { recordDesignStage } from '@/analytics/blogFunnel';
 import { appConfig } from '@/config/appConfig';
 import { siteText } from '@/i18n/siteCopy';
 import { apiPost, type APIResponse, type RequestOptions } from '@/utils/apiClient';
@@ -215,6 +216,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
 
       if (frame.type === 'chat.event' && typeof frame.event === 'string') {
         const operationId = frameOperationId;
+        if (options.type === 'chat.turn') recordDesignStage(options.sessionId, frame.event, frame.data);
         if (operationId) expectedOperationId = operationId;
         options.onEvent?.({
           event: frame.event,

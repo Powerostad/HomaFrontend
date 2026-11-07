@@ -165,10 +165,6 @@ export function trackStudioUploadConfirmed(props: { session_id: string }) {
 // Studio Processing
 // =============================================================================
 
-export function trackStudioProcessingStarted(props: { session_id: string }) {
-  umamiTrack('studio_processing_started', props);
-}
-
 export function trackStudioProcessingCompleted(props: { session_id: string; duration_ms: number }) {
   umamiTrack('studio_processing_completed', props);
 }

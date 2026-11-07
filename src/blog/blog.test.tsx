@@ -16,6 +16,8 @@ describe('Homa blog', () => {
     expect(html).toContain('https://homa.test/blog/curtain-guide');
     expect(html).not.toContain('/assets/main.js');
     expect(html.match(/<title>/g)).toHaveLength(1);
+    expect(html).toContain('data-article-path="/blog/curtain-guide"');
+    expect(html).toContain('<script src="/config.js"></script><script defer src="/blog-analytics.js"></script>');
   });
   it('uses versioned editorial CSS without loading the Studio stylesheet', () => {
     const html = renderBlogDocument({ kind: 'article', post, related: [] }, 'https://homa.test', '/blog/curtain-guide', template.replace('</head>', '<link rel="stylesheet" href="/assets/studio.css"></head>'), '/blog-abcd1234.css');
@@ -44,6 +46,9 @@ describe('Homa blog', () => {
     expect(html).toContain('href="/blog/category/curtains"');
     expect(blogSeo({ ...data, posts: [] }, 'https://homa.test', '/blog').robots).toContain('noindex');
     expect(blogSeo({ kind: 'not-found' }, 'https://homa.test', '/blog/missing').jsonLd).toEqual([]);
+    const missing = renderBlogDocument({ kind: 'not-found' }, 'https://homa.test', '/blog/missing', template);
+    expect(missing).not.toContain('/blog-analytics.js');
+    expect(missing).not.toContain('data-article-path');
   });
   it('renders sanitized imported tables and inline illustrations in server HTML', () => {
     const imported: BlogPost = { ...post, body_format: 'html', body: '<h2 id="size">ابعاد</h2><table><tr><th>عرض</th><td>۸۰</td></tr></table><img src="/api/blog/assets/diagram.svg/" alt="نقشه میز">' };
