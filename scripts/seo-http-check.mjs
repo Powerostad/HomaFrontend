@@ -19,12 +19,6 @@ try {
   report.blogAnalytics = await verifyBlogAnalyticsBundle();
   let base;
   if(image) {
-    for(const path of ['/blog-analytics.js','/config.js']) {
-      const response=await fetch(base+path);
-      assert.equal(response.status,200,path+' served');
-      assert(/javascript/.test(response.headers.get('content-type')||''),path+' JavaScript MIME');
-      assert(!/immutable/.test(response.headers.get('cache-control')||''),path+' revalidates');
-    }
     const probe=createServer();await new Promise(done=>probe.listen(0,'127.0.0.1',done));
     const port=probe.address().port;await new Promise(done=>probe.close(done));
     const args=['run','-d','--name',`homa-contract-${process.pid}`,'-p',`127.0.0.1:${port}:80`,'-e','SITE_URL=https://myhoma.ir','-e',`BLOG_API_URL=http://host.docker.internal:${fixturePort}/api/blog`];
@@ -47,6 +41,12 @@ try {
   }
   assert(ready,'Production document service did not become ready');
   if(image) {
+    for(const path of ['/blog-analytics.js','/config.js']) {
+      const response=await fetch(base+path);
+      assert.equal(response.status,200,path+' served');
+      assert(/javascript/.test(response.headers.get('content-type')||''),path+' JavaScript MIME');
+      assert(!/immutable/.test(response.headers.get('cache-control')||''),path+' revalidates');
+    }
     const metadataResponse=await fetch(base+'/build-info.json');
     assert.equal(metadataResponse.status,200);
     const metadata=await metadataResponse.json();
