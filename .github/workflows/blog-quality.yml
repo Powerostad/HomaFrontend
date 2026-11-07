@@ -6,6 +6,8 @@ on:
       - 'content/blog/drafts/**'
       - 'scripts/blog-ai-seo-gate.mjs'
       - 'scripts/blog-ai-seo-gate.test.mjs'
+      - 'scripts/blog-publish-preflight.mjs'
+      - 'scripts/blog-publish-preflight.test.mjs'
       - '.github/workflows/blog-quality.yml'
   push:
     paths:
@@ -25,7 +27,7 @@ jobs:
         with:
           node-version: 24
       - name: Test the editorial and HTML gate
-        run: node --test scripts/blog-ai-seo-gate.test.mjs
+        run: node --test scripts/blog-ai-seo-gate.test.mjs scripts/blog-publish-preflight.test.mjs
       - name: Validate example brief as draft
         run: node scripts/blog-ai-seo-gate.mjs --file docs/blog/article-brief.example.json
       - name: Validate newly submitted draft briefs
