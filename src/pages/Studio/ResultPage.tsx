@@ -2,10 +2,11 @@ import { trackStudioResultAction } from '@/analytics/events';
 import { Header } from '@/components/Header';
 import { InlineFeedbackWidget } from '@/components/InlineFeedbackWidget';
 import { useSiteTranslation } from '@/i18n/siteCopy';
+import { toLocalizedDigits } from '@/utils/formatters';
 import { Bookmark, ChevronDown, Download as DownloadIcon, Loader2, MessageSquare, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'motion/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StudioProductSheet } from './result/StudioProductSheet';
 import { CollectionSummary } from './result/CollectionSummary';
 import { ActionRecommendationCard } from './result/ActionRecommendationCard';
@@ -29,6 +30,10 @@ import { UnifiedConsultationCTA } from './result/UnifiedConsultationCTA';
 import { useStudioResult } from './result/useStudioResult';
 import type { StudioResultConversation, StudioResultViewState } from './result/viewState';
 
+import { journeySeen, markJourneySeen, type JourneyFinding } from '../RoomRedesign/services/resultJourney';
+import { AnalysisGuide, ResultReveal } from './result/IntegratedResultJourney';
+import './result/v9-polished.css';
+
 type Phase = 'analysis' | 'recommendations' | 'basket';
 
 const FONT = 'var(--font-family-vazirmatn)';
@@ -38,11 +43,18 @@ export function StudioResultPage() {
   return <StudioResultView state={state} />;
 }
 
-export function StudioResultView({ state, conversation }: { state: StudioResultViewState; conversation?: StudioResultConversation }) {
-  const { siteValue, siteDirection } = useSiteTranslation();
+export function StudioResultView({ state, conversation, journey, onJourneyPhaseChange }: { state: StudioResultViewState; conversation?: StudioResultConversation; journey?: { key: string; start: boolean; findings: JourneyFinding[] }; onJourneyPhaseChange?: (phase: 'reveal' | 'guide' | 'recommendations') => void }) {
+  const { siteValue, siteDirection, siteText } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [activePhase, setActivePhase] = useState<Phase>('recommendations');
   const [linkCopied, setLinkCopied] = useState(false);
+  const [journeyPhase, setJourneyPhase] = useState<'reveal' | 'guide' | 'recommendations'>(() =>
+    journey?.start && !journeySeen(journey.key) && !state.analysisOnly && state.originalImage ? 'reveal' : 'recommendations');
+  const revealing = journeyPhase === 'reveal';
+  const [guideRequested, setGuideRequested] = useState(false);
+  useEffect(() => { onJourneyPhaseChange?.(revealing ? 'reveal' : guideRequested || journeyPhase === 'guide' ? 'guide' : 'recommendations'); }, [revealing, guideRequested, journeyPhase, onJourneyPhaseChange]);
+  useEffect(() => { if (revealing && journey) markJourneySeen(journey.key); }, [revealing, journey]);
+
   const basketSectionRef = useRef<HTMLDivElement>(null);
 
   const diagnosisActions = useMemo<DiagnosisAction[]>(
@@ -86,10 +98,12 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
     category: group.category,
     imageUrl: group.products[0]?.image || '',
     aiReasoning: group.recommendationReasonFa || group.designRationaleFa,
+    webSearchQuery: group.webSearchQuery, specifications: group.sourcingSpecs,
   }));
 
   const handlePhaseClick = useCallback((phase: Phase) => {
     conversation?.onClose?.();
+    if (revealing) { setJourneyPhase('recommendations'); state.setShowOriginal(false); }
     setActivePhase(phase);
     trackStudioResultAction({
       action: 'phase_navigation',
@@ -100,8 +114,25 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
       behavior: 'instant',
       block: 'start',
     }));
-  }, [state.activeSessionId, state.sessionId, conversation]);
+  }, [state.activeSessionId, state.sessionId, state.setShowOriginal, conversation, revealing]);
 
+  const finishGuide = (productKey?: string) => {
+    setJourneyPhase('recommendations'); setGuideRequested(false); state.setShowOriginal(false);
+    if (journey) markJourneySeen(journey.key);
+    handlePhaseClick('recommendations');
+    requestAnimationFrame(() => {
+      const group = productKey ? state.categoryGroups.find(item => item.workspaceKey === productKey) : null;
+      if (group) state.scrollToCard(group.itemId);
+      else {
+        const section = document.getElementById('section-products');
+        section?.setAttribute('tabindex', '-1'); section?.focus({ preventScroll: true });
+      }
+    });
+  };
+  const finishReveal = () => {
+    state.setShowOriginal(false);
+    if (journey?.findings.length) setJourneyPhase('guide'); else finishGuide();
+  };
   const handleMarkerClick = useCallback((itemId: number) => {
     setActivePhase('recommendations');
     requestAnimationFrame(() => state.handleImageMarkerClick(itemId));
@@ -118,6 +149,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
   );
 
   const heroProps = {
+    conceptImage: conversation?.conceptImage,
     resultImage: state.resultImage,
     originalImage: state.originalImage,
     showOriginal: state.showOriginal,
@@ -138,16 +170,16 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
 
   return (
     <div
-      className={`studio-result-page${conversation ? ' studio-result-with-conversation' : ''}`}
+      className={`studio-result-page homa-v9${conversation ? ' studio-result-with-conversation' : ''}`}
       dir={siteDirection()}
+      data-revealing={revealing}
       style={{ fontFamily: FONT }}
     >
-      {siteValue(!state.isFullScreen && <Header hideSpacer />)}
+        {siteValue(!state.isFullScreen && !revealing && <Header hideSpacer />)}
 
       <main className="studio-result-main" dir="ltr">
         <section className="studio-result-hero" aria-label={t('studio.result.v2.hero.title', 'تصویر نتیجه طراحی')}>
-          <DesktopHeroPanel {...heroProps} />
-          <MobileHeroSection {...heroProps} />
+          {revealing && state.originalImage ? <ResultReveal before={state.originalImage} after={state.resultImage} onComplete={finishReveal} /> : <><DesktopHeroPanel {...heroProps} /><MobileHeroSection {...heroProps} /></>}
         </section>
 
         <section className="studio-result-content" dir={siteDirection()} data-chat-open={!!conversation?.open && !conversation.compact}>
@@ -168,9 +200,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
                 {siteValue(state.projectName || t('studio.result.v2.roomFallback', 'فضای شما'))}
                 {siteValue(state.targetStyle && <span className="studio-result-heading-style">، {siteValue(state.targetStyle)}</span>)}
               </h1>
-              {!conversation && <p className="studio-result-heading-description">
-                {t('studio.result.v2.headingDescription', 'سه تغییر هماهنگ برای تبدیل ظرفیت فضا به یک انتخاب روشن و قابل اجرا.')}
-              </p>}
+              <p className="studio-result-heading-description">{t('studio.v9.intro', 'تصمیم‌هایی برای بهتر شدن فضایت؛ عناصر مناسب حفظ می‌شوند و خرید در خدمت طراحی است.')}</p>
             </div>
             <details className="studio-result-more">
               <summary>{t('studioProductLayout.more', 'بیشتر')}<ChevronDown size={16} aria-hidden="true" /></summary>
@@ -188,9 +218,16 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               </div>
             </details>
           </div>
+          <div className="studio-v9-result-overview">
+            {journey && journey.findings.length > 0 && <span>{t('studio.v9.designCount', '{{count}} تصمیم طراحی', { count: toLocalizedDigits(journey.findings.length) })}</span>}
+            <span>{t('studio.v9.productCount', '{{count}} پیشنهاد محصول', { count: toLocalizedDigits(purchasableCount) })}</span>
+            {checklistItems.length > 0 && <span>{t('studio.v9.completionCount', '{{count}} مورد تکمیلی', { count: toLocalizedDigits(checklistItems.length) })}</span>}
+          </div>
+          {conversation && <button type="button" className="studio-v9-discuss" onClick={conversation.onOpen}><MessageSquare size={16} aria-hidden="true" />{t('studio.v9.discuss', 'نظرت یا تغییری داری؟')}</button>}
           {conversation?.status}
 
           <section id="section-analysis" className="studio-result-section" aria-labelledby="analysis-title" hidden={activePhase !== 'analysis'}>
+            {journey && (journey.findings.length ? <button className="studio-result-guide-replay" type="button" onClick={() => setGuideRequested(true)}>{siteText('مرور مرحله‌به‌مرحلهٔ تصمیم‌های طراحی')}</button> : <p>{siteText('برای این طرح، تحلیل تفصیلی ثبت نشده است.')}</p>)}
             <h2 id="analysis-title" className="sr-only">
               {t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}
             </h2>
@@ -258,7 +295,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
             {siteValue(productTierGroups.map(({ tier, items }, tierIndex) => (
               <TierSection
                 key={tier}
-                hideHeading
+                hideHeading={false}
                 tier={tier}
                 items={items}
                 allCategoryGroups={state.categoryGroups}
@@ -288,7 +325,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
               </div>
             ))}
 
-            <CompletionChecklist
+            <CompletionChecklist key={state.sessionId || state.activeSessionId || 'draft'} sessionId={state.sessionId || state.activeSessionId || undefined}
               items={checklistItems}
               checkedIds={state.checklistCheckedIds}
               onToggleItem={state.toggleChecklistItem}
@@ -334,6 +371,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
         </section>
       </main>
 
+      {(journeyPhase === 'guide' || guideRequested) && journey && <AnalysisGuide findings={journey.findings} image={state.resultImage} onClose={() => finishGuide()} onProduct={key => finishGuide(key)} />}
       <CollectionSummary
         activePhase={activePhase}
         onNavigateToPhase={handlePhaseClick}
@@ -364,6 +402,7 @@ export function StudioResultView({ state, conversation }: { state: StudioResultV
 
       {siteValue(state.selectedProduct && (
         <StudioProductSheet
+          sessionId={state.sessionId || state.activeSessionId || undefined}
           product={state.selectedProduct}
           isOpen
           onClose={() => state.setSelectedProduct(null)}

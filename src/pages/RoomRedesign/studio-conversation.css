@@ -64,3 +64,25 @@
   .studio-result-with-conversation .studio-summary-nav svg { display:none; }
   .studio-conversation-drawer .studio-chat-log { padding:var(--space-4); }
 }
+.studio-v2-review { margin-block:var(--space-6); padding:var(--space-5); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); background:var(--color-surface-default); }
+.studio-v2-review-item { display:grid; gap:var(--space-2); padding-block:var(--space-4); border-top:1px solid var(--color-border-subtle); overflow-wrap:anywhere; }
+.studio-v2-review-item article { display:grid; gap:var(--space-2); padding:var(--space-3); background:var(--color-surface-muted); border-radius:var(--radius-md); }
+.studio-v2-review .studio-product-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
+.studio-v2-review button { min-height:44px; white-space:normal; }
+.studio-image-export { display:grid; gap:var(--space-3); padding:var(--space-5); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); background:var(--color-surface-default); }
+.studio-image-export p { font-size:var(--text-sm); line-height:1.8; color:var(--color-content-secondary); }
+.studio-image-export label { display:grid; gap:var(--space-2); }
+.studio-image-export select { width:100%; padding:var(--space-3); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); background:var(--color-surface-muted); color:var(--color-content-primary); }
+.studio-image-export-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); padding-block:var(--space-3); border-bottom:1px solid var(--color-border-subtle); }
+.studio-image-export-row > span { flex-basis:100%; overflow-wrap:anywhere; font-size:var(--text-sm); }
+
+/* Discovery keeps the room and analysis in view on desktop as well as mobile. */
+.studio-conversation-drawer[data-floating=true] { position:fixed; inset-inline:0; bottom:var(--studio-keyboard-offset,0px); height:min(82dvh,900px); max-height:var(--studio-visible-height,100dvh); min-height:0; border-radius:var(--radius-2xl) var(--radius-2xl) 0 0; box-shadow:var(--shadow-xl); }
+
+/* The current project stays primary; snapshots are an optional archive. */
+.studio-result-history { font-size: 12px; color: #68635d; }
+.studio-result-history summary { cursor: pointer; padding: 8px 0; }
+.studio-result-history .studio-result-version-row { padding-block: 8px; }
+.studio-project-removed { font-size: 12px; color: #776b60; margin: 4px 0; }
+.studio-product-change { display: inline-flex; align-self: flex-start; width: fit-content; padding: 3px 8px; margin-block: 3px; border-radius: 4px; background: #eef1e8; color: #4a5b3d; font-size: 10px; line-height: 1.5; }
+.studio-product-change[data-change="changed"] { background: #f2eadf; color: #795c35; }

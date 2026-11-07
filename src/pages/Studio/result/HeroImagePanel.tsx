@@ -22,6 +22,7 @@ export interface HeroMarker {
 
 interface HeroImagePanelProps {
   resultImage: string;
+  conceptImage?: string;
   originalImage: string | null;
   showOriginal: boolean;
   isSaved: boolean;
@@ -74,6 +75,7 @@ function GlassButton({
 
 function HeroImageStage({
   resultImage,
+  conceptImage,
   originalImage,
   showOriginal,
   isSaved,
@@ -90,10 +92,13 @@ function HeroImageStage({
   showSave = true,
   showActions = true,
   onImageError,
-}: HeroImagePanelProps) {
+  mobile = false,
+}: HeroImagePanelProps & { mobile?: boolean }) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const [selectedConcept, setSelectedConcept] = useState<string>();
+  const showingConcept = !!conceptImage && selectedConcept === conceptImage && !showOriginal;
   const hasGeneratedImage = !analysisOnly && !!resultImage;
   const visibleMarkers = markers.filter((entry) => entry.marker);
 
@@ -117,10 +122,10 @@ function HeroImageStage({
   }, [sessionId, t]);
 
   return (
-    <div className="studio-hero-stage" dir={siteDirection()}>
+    <div className="studio-hero-stage" dir={siteDirection()} data-actions={showActions}>
       {siteValue(resultImage ? (
         <AuthenticatedImage
-          src={resultImage}
+          src={showingConcept ? conceptImage : resultImage}
           alt={siteValue(analysisOnly
             ? t('studio.result.v2.analysisOnly.originalAlt', 'عکس اصلی فضای شما')
             : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما'))}
@@ -142,6 +147,15 @@ function HeroImageStage({
       ))}
 
       <div className="studio-hero-scrim" aria-hidden="true" />
+
+      {mobile && hasGeneratedImage && (
+        <button
+          type="button"
+          className="studio-hero-image-open"
+          aria-label={t('studio.result.v2.fullscreenView', 'نمای تمام‌صفحه')}
+          onClick={onFullscreen}
+        />
+      )}
 
       <div className="studio-hero-toolbar studio-hero-toolbar-top">
         <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
@@ -173,19 +187,27 @@ function HeroImageStage({
         <div className="studio-hero-before-after" role="group" aria-label={t('studio.result.v2.hero.compare', 'مقایسه قبل و بعد')}>
           <button
             type="button"
-            className={!showOriginal ? 'is-active' : ''}
+            className={!showOriginal && !showingConcept ? 'is-active' : ''}
+            aria-pressed={!showOriginal && !showingConcept}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'after' });
+              setSelectedConcept(undefined);
               onToggleOriginal(false);
             }}
           >
             {t('studio.result.v2.after', 'طرح جدید')}
           </button>
+          {conceptImage && <button type="button" className={showingConcept ? 'is-active' : ''} aria-pressed={showingConcept}
+            onClick={() => { onToggleOriginal(false); setSelectedConcept(conceptImage); }}>
+            {t('studio.result.v2.concept', 'کانسپت اولیه')}
+          </button>}
           <button
             type="button"
             className={showOriginal ? 'is-active' : ''}
+            aria-pressed={showOriginal}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'before' });
+              setSelectedConcept(undefined);
               onToggleOriginal(true);
             }}
           >
@@ -201,7 +223,7 @@ function HeroImageStage({
         </button>
       ))}
 
-      {siteValue(hasGeneratedImage && !showOriginal && visibleMarkers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
         <div className="studio-hero-markers" aria-label={t('studio.result.v2.hero.markerLabel', 'نشانه‌های پیشنهادها')}>
           {siteValue(visibleMarkers.map((entry) => (
             <button
@@ -218,7 +240,7 @@ function HeroImageStage({
         </div>
       ))}
 
-      {siteValue(hasGeneratedImage && !showOriginal && visibleMarkers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
         <div className="studio-hero-marker-legend" aria-label={t('studio.result.v2.hero.legend', 'راهنمای پیشنهادها')}>
           {siteValue(visibleMarkers.map((entry) => (
             <button type="button" key={entry.itemId} onClick={() => onMarkerClick?.(entry.itemId)}>
@@ -243,7 +265,7 @@ export function DesktopHeroPanel(props: HeroImagePanelProps) {
 export function MobileHeroSection(props: HeroImagePanelProps) {
   return (
     <div className="studio-mobile-hero">
-      <HeroImageStage {...props} />
+      <HeroImageStage {...props} mobile />
     </div>
   );
 }

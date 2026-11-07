@@ -1,6 +1,7 @@
 import type { ExecutionPlan } from './redesignChatService';
 
 export type DiscoveryTrack = 'layout' | 'harmony' | 'function' | 'surfaces' | 'idea';
+export interface AnalysisPreview { studio_documents: Record<string, unknown> }
 export interface DiscoveryFinding {
   id: string;
   track: DiscoveryTrack;
@@ -25,8 +26,9 @@ function text(value: unknown): string { return typeof value === 'string' ? value
 function ids(value: unknown): string[] { return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []; }
 
 /** Read-only presentation of saved mother output. Never changes model input or invents findings. */
-export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryReview {
-  if (!plan) return { summary: '', direction: '', findings: [] };
+export function buildDiscoveryReview(plan: ExecutionPlan | AnalysisPreview | null, preview: AnalysisPreview | null = null): DiscoveryReview {
+  if (!plan && !preview) return { summary: '', direction: '', findings: [] };
+  const source = plan || preview!;
   const findings: DiscoveryFinding[] = [];
   const seen = new Set<string>();
   const append = (finding: DiscoveryFinding) => {
@@ -35,8 +37,29 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
     seen.add(signature);
     findings.push(finding);
   };
-  const documents = Object.entries(plan.studio_documents || {}).map(([scene, document]) => [scene, record(document)] as const);
+  // An early analysis must not mask the later design instructions for its issues.
+  const early = preview?.studio_documents || {};
+  const saved = source.studio_documents || {};
+  const scenes = new Set([...Object.keys(early), ...Object.keys(saved)]);
+  const documents = [...scenes].map(scene => {
+    const first = record(early[scene]), latest = record(saved[scene]);
+    const combined: Record<string, unknown> = { ...first, ...latest,
+      room_analysis: { ...record(first.room_analysis), ...record(latest.room_analysis) },
+      user_facing_summary: { ...record(first.user_facing_summary), ...record(latest.user_facing_summary) },
+    };
+    return [scene, combined] as const;
+  });
   for (const [scene, document] of documents) {
+    if (document.pipeline_version === 'homa-design-first-v1' || document.pipeline_version === 'accommodation-compact-v2') {
+      rows(record(document.design_diagnosis).key_issues).forEach((issue, index) => {
+        const id = text(issue.issue_id), observation = text(issue.evidence);
+        if (!observation) return;
+        const existing = rows(document.existing_items_decision).find(item => id && ids(item.related_issue_ids).includes(id));
+        const product = rows(document.product_recommendations).find(item => id && ids(item.related_issue_ids).includes(id));
+        append({ id: `${scene}:design:${id || index}`, track: 'idea', observation,
+          suggestion: text(existing?.action_instruction) || text(product?.placement_instruction), isObservation: true });
+      });
+    }
     const analysis = record(document.room_analysis);
     const groups: Array<[DiscoveryTrack, string, Record<string, unknown>[]]> = [
       ['layout', 'issue_id', rows(record(analysis.layout_evaluation).layout_issues)],
@@ -60,12 +83,12 @@ export function buildDiscoveryReview(plan: ExecutionPlan | null): DiscoveryRevie
   }
   // Legacy plans may have no diagnostic document. Label their changes as ideas, not observed problems.
   if (!findings.length) {
-    plan.free_actions.forEach((action, index) => append({ id: `layout:${index}`, track: 'layout',
+    ('free_actions' in source ? source.free_actions : []).forEach((action, index) => append({ id: `layout:${index}`, track: 'layout',
       observation: action.reason_fa, suggestion: action.instruction_fa, isObservation: false }));
-    plan.purchases.forEach(item => append({ id: `product:${item.item_id}`, track: 'idea',
+    ('purchases' in source ? source.purchases : []).forEach(item => append({ id: `product:${item.item_id}`, track: 'idea',
       observation: item.reason_fa || item.mother_product?.why_needed || '',
       suggestion: item.placement_instruction_fa || item.mother_product?.placement_instruction || '', isObservation: false }));
-    plan.surface_actions.forEach((action, index) => append({ id: `surface:${index}`, track: 'surfaces',
+    ('surface_actions' in source ? source.surface_actions : []).forEach((action, index) => append({ id: `surface:${index}`, track: 'surfaces',
       observation: '', suggestion: action.change_fa, isObservation: false }));
   }
   return {

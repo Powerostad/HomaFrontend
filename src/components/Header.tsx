@@ -1,6 +1,7 @@
+import { apiGet } from '@/utils/apiClient';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Menu, ShoppingBag, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth, useBasket } from "../context/AppProviders";
@@ -24,7 +25,23 @@ export function Header({
   const { siteValue } = useSiteTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const { isLoggedIn, login } = useAuth();
+  const { isLoggedIn, login, user } = useAuth();
+  const [credits, setCredits] = useState<{ total_available_generations: number; is_unlimited?: boolean } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setCredits(null);
+    if (!isLoggedIn) return;
+    const refresh = async () => {
+      if (document.visibilityState === 'hidden') return;
+      const response = await apiGet<{ image_credit_summary?: { total_available_generations: number; is_unlimited?: boolean } }>('/users/profile/');
+      if (active && response.success) setCredits(response.data?.image_credit_summary || null);
+    };
+    void refresh();
+    const onFocus = () => { void refresh(); };
+    window.addEventListener('focus', onFocus);
+    const timer = window.setInterval(onFocus, 60000);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', onFocus); };
+  }, [isLoggedIn, user?.id]);
   const { itemCount, openBasket } = useBasket();
   const { t, i18n } = useTranslation();
 
@@ -58,6 +75,9 @@ export function Header({
             {/* Menu Trigger */}
             <div className="flex justify-start items-center">
               <BilingualSwitch />
+              {isLoggedIn && credits && <span className="text-xs whitespace-nowrap" role="status" title={t('credits.remaining', 'اعتبار باقی‌مانده برای تولید تصویر')}>
+                {t('credits.label', 'اعتبار')}: {credits.is_unlimited ? '∞' : toLocalizedDigits(credits.total_available_generations)}
+              </span>}
               {siteValue(!disableNavigation && (
                 <button
                   onClick={() => setIsMenuOpen(true)}

@@ -64,7 +64,7 @@ export function SpatialDiagnosis({
   const detail = diagnosisDetail || t('studio.result.v2.diagnosis.defaultDetail', 'با تمرکز روی چند نقطه کلیدی، می‌شود بدون شلوغ کردن فضا، تعادل و کاربرد آن را بهتر کرد.');
 
   return (
-    <section className="studio-diagnosis" aria-label={t('studio.result.v2.diagnosis.label', 'تحلیل فضا')} style={{ fontFamily: FONT }}>
+    <section className="studio-diagnosis studio-v9-diagnosis" aria-label={t('studio.result.v2.diagnosis.label', 'تحلیل فضا')} style={{ fontFamily: FONT }}>
       <div className="studio-diagnosis-intro">
         <div>
           <p className="studio-result-eyebrow">{t('studio.result.v2.diagnosis.label', 'تحلیل فضا')}</p>

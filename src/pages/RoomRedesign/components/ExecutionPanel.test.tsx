@@ -29,6 +29,16 @@ const plan: ExecutionPlan = {
 const render = (value: ExecutionPlan) => renderToStaticMarkup(<ExecutionPanel plan={value} busy={false} onPreview={() => undefined} />);
 
 describe('canonical mother execution', () => {
+  it('shows the full compact accommodation narrative when reconciliation failed, without fabricated purchases', () => {
+    const narrative = 'شرح کامل طراحی با منطق بافت و رنگ.\nجزئیات چیدمان بدون خلاصه‌سازی.';
+    const compact = { ...plan, purchases: [], pipeline_version: 'accommodation-compact-v2',
+      studio_documents: { room: { ...document, pipeline_version: 'accommodation-compact-v2',
+        design_narrative: narrative, phase: 'reconciliation_failed' } } };
+    const html=render(compact);
+    expect(html).toContain('شرح کامل طراحی با منطق بافت و رنگ.');
+    expect(html).toContain('جزئیات چیدمان بدون خلاصه‌سازی.');
+    expect(html).not.toContain(motherProduct.product_name_generic);
+  });
   it('shows canonical product name, placement and every summary section, keeping concepts unpriced', () => {
     const html = render(plan);
     expect(html).toContain(motherProduct.product_name_generic);

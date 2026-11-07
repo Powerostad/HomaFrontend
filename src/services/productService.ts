@@ -83,11 +83,10 @@ export async function fetchProducts(
  */
 export async function fetchProduct(
   uniqueLink: string,
-  options?: Pick<RequestOptions, 'signal'>
+  options?: Pick<RequestOptions, 'signal'> & { sessionId?: string }
 ): Promise<ProductDetailResult> {
-  const response = await apiGet<BackendProduct>(`/products/${uniqueLink}/`, undefined, {
-    skipAuth: true, // Public endpoint
-    ...options,
+  const response = await apiGet<BackendProduct>(`/products/${uniqueLink}/`, options?.sessionId ? { session_id: options.sessionId } : undefined, {
+    signal: options?.signal,
   });
 
   if (response.success && response.data) {

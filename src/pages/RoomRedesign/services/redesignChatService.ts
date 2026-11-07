@@ -41,6 +41,12 @@ export interface QuestionsEvent {
 }
 
 export interface BackendProduct {
+  variant_id?: number | null;
+  variant_label?: string;
+  dimensions_cm?: Record<string, number>;
+  search_version?: 'studio-search-v2';
+  candidate?: StudioCandidate;
+  variant_options?: { variant_id: number | null; price_rial: number | null; details: StudioCandidate }[];
   product_id: number;
   name: string;
   category_fa?: string;
@@ -60,6 +66,46 @@ export interface BackendProduct {
   /** Present only once the backend exposes it (see plan §6); optional for safety. */
   unique_link?: string;
 }
+
+export interface StudioProductIdentity {
+  version: 'product-identity-v1';
+  requested_subtype: string;
+  expected_subtype: string;
+  expected_label_fa: string;
+  catalogue_category: string | null;
+  status: 'resolved' | 'category_unavailable' | 'unmapped';
+  mapping_source: 'subtype_alias' | 'need_family_alias' | 'exact_catalogue_code' | 'unmapped';
+  observed_subtype: string | null;
+  observed_status: 'unobserved' | 'observed' | 'unknown' | 'ambiguous';
+  observed_candidates: string[];
+  observations: { subtype: string; source: 'catalogue_fact' | 'catalogue_title' | 'catalogue_category'; source_ref: string }[];
+}
+
+export interface StudioCandidate {
+  product_identity?: StudioProductIdentity;
+  variant_id: number | null;
+  variant_label: string;
+  dimensions_cm: Record<string, number>;
+  quantity: number;
+  catalog_revision?: string | null;
+  order_quote?: StudioOrderQuote | null;
+  eligibility: 'eligible' | 'needs_verification' | 'rejected';
+  purchase_status: 'ready' | 'needs_verification' | 'unavailable';
+  known_total_rial: number | null;
+  verification_reasons: string[];
+  missing_costs: string[];
+}
+export interface StudioOrderQuote {
+  status: 'quoted' | 'needs_verification';
+  sales_unit?: 'piece' | 'pair' | 'pack' | 'roll' | 'm' | 'm2' | 'litre';
+  order_quantity?: number;
+  demand_quantity?: string;
+  demand_unit?: string;
+  required_with_waste?: string;
+  supplied_quantity?: string;
+  reason?: string;
+}
+export type ReviewKind = 'wrong_size' | 'wrong_style' | 'verify_specification' | 'request_alternative';
 
 export interface BackendResultScores {
   impact_score?: number;
@@ -137,6 +183,8 @@ export interface BackendScene {
 }
 
 export interface ResultEvent {
+  design_version_id?: string | null;
+  execution?: ExecutionPlan;
   message_fa: string;
   items: BackendResultItem[];
   existing_item_decisions: BackendExistingDecision[];
@@ -166,6 +214,7 @@ export interface StageEvent {
 }
 
 export interface StreamTurnHandlers {
+  onAnalysis?: (e: import('./discoveryReview').AnalysisPreview) => void;
   onSession?: (e: SessionEvent) => void;
   onSay?: (delta: string) => void;
   onQuestions?: (e: QuestionsEvent) => void;
@@ -191,9 +240,12 @@ export interface StreamTurnParams {
   images: string[];
   prefsUpdate?: unknown;
   baseVersionId?: string;
-  action?: 'chat' | 'preview_product';
+  action?: 'chat' | 'preview_product' | 'select_product' | 'retry_search' | 'review_product';
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: ReviewKind;
   idempotencyKey: string;
 }
 
@@ -206,10 +258,15 @@ export interface CreateSessionResult {
   error?: string;
 }
 
-export async function createChatSession(): Promise<CreateSessionResult> {
+export async function createChatSession(imageOutputMode?: 'export' | 'api'): Promise<CreateSessionResult> {
   const res = await apiPost<{ session_id: string; status: string }>(
     '/recommendations/chat/sessions/',
-    {},
+    {
+      search_version: 'studio-search-v1',
+      ...(imageOutputMode ? { image_output_mode: imageOutputMode } : {}),
+      ...(import.meta.env.VITE_STUDIO_PRODUCT_TAXONOMY_V1 === 'true' ? { product_taxonomy_version: 'product-taxonomy-v1' } : {}),
+      prompt_split: 'server-split-v1',
+    },
   );
   if (res.success && res.data) {
     return { success: true, data: { sessionId: res.data.session_id, status: res.data.status } };
@@ -254,6 +311,15 @@ export async function loadChatSessionStatus(sessionId: string): Promise<LoadSess
 }
 
 export interface SessionExpenses {
+  receipts?: { request_id: string; kind: 'text' | 'image'; model?: string; stage?: string; turn_index?: number | null; usd: string; paid_toman?: string | null }[];
+  token_estimate?: {
+    status: 'complete' | 'partial' | 'unavailable';
+    lower_usd: string | null;
+    upper_usd: string | null;
+    estimated_calls: number;
+    unknown_calls: number;
+    stages: { stage: string; calls: number; estimated_calls: number; unknown_calls: number; low: string; high: string }[];
+  };
   status: 'pending' | 'partial' | 'settled' | 'unavailable';
   known_usd: string | null;
   text_usd: string | null;
@@ -267,8 +333,8 @@ export interface SessionExpenses {
 }
 export interface StudioPerformanceReport {
   status: 'ready' | 'pending' | 'unavailable' | 'incomplete';
-  runs: { id: string; workflow: string; status: string; duration_ms: number | null }[];
-  spans: { id: string; name: string; duration_ms: number; status: string }[];
+  runs: { id: string; workflow: string; status: string; duration_ms: number | null; started_at?: string; trace_id?: string }[];
+  spans: { id: string; name: string; duration_ms: number; status: string; started_at?: string; run_id?: string; metrics?: Record<string, string | number | null> }[];
   summary: { trace_elapsed_timestamp_ms: number | null; api_calls: number; estimated_cost_usd: number | null; tokens: Record<string, number | null> } | null;
 }
 export const loadStudioPerformance = (sessionId: string) => apiGet<StudioPerformanceReport>(
@@ -294,6 +360,9 @@ export async function selectChatProduct(params: {
   sessionId: string;
   category: string;
   productId: number;
+  itemId?: string;
+  variantId?: number | null;
+  placementId?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   const res = await runChatCommand({
     type: 'chat.select',
@@ -303,6 +372,9 @@ export async function selectChatProduct(params: {
       session_id: params.sessionId,
       category: params.category,
       product_id: params.productId,
+      item_id: params.itemId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
     },
     signal: new AbortController().signal,
   });
@@ -377,6 +449,9 @@ export interface SessionTurn {
   events?: SessionTurnEvent[];
 }
 export interface SessionPayload {
+  analysis_preview?: import('./discoveryReview').AnalysisPreview | null;
+  design_version?: string;
+  search_version?: string;
   session_id: string;
   status: string;
   title: string;
@@ -384,6 +459,7 @@ export interface SessionPayload {
   versions?: DesignVersion[];
   /** Validated design/retrieval, available before or despite image failure. */
   current_execution?: ExecutionPlan | null;
+  current_base_version_id?: string;
   operations?: DesignOperation[];
   original_image?: string | null;
 }
@@ -412,6 +488,9 @@ export async function streamChatTurn(
   const onEvent = (e: ChatSocketEvent) => {
     if (e.operationId) handlers.onRenderEvent?.(e);
     switch (e.event) {
+      case 'analysis':
+        handlers.onAnalysis?.(e.data as import('./discoveryReview').AnalysisPreview);
+        break;
       case 'session':
         handlers.onSession?.(e.data as SessionEvent);
         break;
@@ -464,6 +543,9 @@ export async function streamChatTurn(
       action: params.action ?? 'chat',
       item_id: params.itemId,
       product_id: params.productId,
+      ...(params.variantId != null ? { variant_id: params.variantId } : {}),
+      ...(params.placementId != null ? { placement_id: params.placementId } : {}),
+      review_kind: params.reviewKind,
       idempotency_key: params.idempotencyKey,
     },
     onEvent,
@@ -491,7 +573,18 @@ export async function streamChatTurn(
 }
 
 export interface ExecutionPlan {
-  purchases: { item_id: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  concept_image_url?: string;
+  pipeline_version?: string;
+  search_version?: 'studio-search-v2';
+  purchases: {
+    design_resolution?: 'selected_catalogue' | 'concept_only';
+    sourcing_guidance?: { mode: 'external_search'; title_fa: string; explanation_fa: string; search_query: string; specifications_fa: string[]; placement_fa: string; design_preserved: boolean; image_status: 'concept'; catalogue_status: string };
+    item_id: string; source_item_id?: string; canonical_item_id?: string; placement_id?: string | null; selection_status?: string; quantity: number; reason_fa: string; category: string; relation: string; product: BackendProduct | null; alternatives: BackendProduct[]; review_candidates?: BackendProduct[]; retrieval_report?: { status: string; reason_codes: string[] }; mother_product?: MotherProduct | null; placement_instruction_fa?: string; product_role?: string; recommendation_type?: string }[];
+  cost_gaps?: { item_id: string; reasons: string[] }[];
+  verification_gaps?: { item_id: string; reasons: string[] }[];
+  evaluation?: { status: 'accepted' | 'repaired' | 'needs_information' | 'replan_required'; purchase_ready: boolean; checked_at: string; blocked_actions: { action_id: string; kind: string; target_id: string }[];
+    coherence?: { status: string; summary_fa: string; assessments: { aspect: string; status: string; explanation_fa: string; item_ids: string[]; source_refs: string[] }[] } };
+  review_tasks?: { id: string; item_id: string; placement_id: string | null; route: string; missing_attributes: string[] }[];
   studio_documents?: Record<string, StudioMotherDocument>;
   free_actions: { instruction_fa: string; reason_fa: string }[];
   surface_actions: { change_fa: string; target?: string }[];
@@ -500,7 +593,26 @@ export interface ExecutionPlan {
   budget_status: string;
   unknown_cost_item_ids: string[];
 }
+
+export interface StudioPurchaseLine {
+  item_id: string;
+  placement_id?: string | null;
+  product_id: number;
+  variant_id: number | null;
+  quantity: number;
+}
+export interface PurchaseCheckResult {
+  ready: boolean;
+  checked_at?: string;
+  reasons: { item_id?: string; reason: string }[];
+  lines: (StudioPurchaseLine & { product_unique_link: string; unit_price_rial: number })[];
+}
+export const checkStudioPurchase = (sessionId: string, versionId: string, lines: StudioPurchaseLine[]) =>
+  apiPost<PurchaseCheckResult>(`/recommendations/chat/sessions/${encodeURIComponent(sessionId)}/purchase-check/`, { version_id: versionId, lines });
 export interface DesignVersion {
+  image_status?: 'pending' | 'failed' | 'ready' | 'exported' | 'not_requested';
+  image_pending?: boolean;
+  render_version_id?: string | null;
   version_id: string;
   base_version_id: string;
   image_url: string;

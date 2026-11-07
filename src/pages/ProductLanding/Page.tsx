@@ -1,5 +1,5 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import {
@@ -14,6 +14,7 @@ import { Header } from "../../components/Header";
 import { LazySection } from "../../components/LazySection";
 
 // Above-the-fold Components (loaded immediately)
+import { RoomEntrySection } from './components/RoomEntrySection';
 import { HeroSection } from "./components/HeroSection";
 import { OutputShowcase } from "./components/OutputShowcase";
 import { TrustBar } from "./components/TrustBar";
@@ -23,16 +24,15 @@ const ComparisonSection=lazy(() => import("./components/ComparisonSection").then
 const ShoppingPropSection=lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
 
 import { useSeo } from "@/hooks/useSeo";
-import { HomaLoader } from "../../components/HomaLoader";
 
 export function ProductLandingPage() {
   const { siteText } = useSiteTranslation();
   useSeo({
-    description: siteText("با هوش مصنوعی HOMA محصولات را قبل از خرید در فضای خانه خود ببینید."),
+    title: siteText("هما؛ طراحی داخلی خانه با هوش مصنوعی"),
+    description: siteText("عکس فضای خود را به هما بده؛ طراحی متناسب با اتاق، ایده‌های چیدمان و پیشنهاد محصولات را یکجا ببین."),
   });
   const navigate = useRouterNavigate();
   const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initPage = async () => {
@@ -62,8 +62,6 @@ export function ProductLandingPage() {
 
       } catch (error) {
         console.error("Failed to initialize page:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -72,26 +70,19 @@ export function ProductLandingPage() {
 
   const handleGetStarted = () => {
     trackKPI("CTA Clicked", { location: "Landing" });
-    // Navigate to explore page where users can select a product to try-on
-    // (Try-on flow now requires a product ID in URL: /try-on/:productId/upload)
-    navigate("/explore");
+    navigate("/studio");
   };
-
-  if (isLoading) {
-    return <HomaLoader />;
-  }
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
-      <Header 
-        hideSpacer={true}
-      />
+      <Header />
       
       <main className="flex-grow">
         {/* Above-the-fold content (loaded immediately) */}
         <HeroSection onGetStarted={handleGetStarted} />
         <OutputShowcase onGetStarted={handleGetStarted} />
         <TrustBar />
+        <RoomEntrySection />
 
         {/* Below-the-fold content (lazy loaded for better performance) */}
         <LazySection minHeight="600px">

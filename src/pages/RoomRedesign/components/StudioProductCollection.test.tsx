@@ -18,6 +18,23 @@ const items: ExecutionPlan['purchases'] = [
 ];
 
 describe('Studio product collection', () => {
+  it('shows accommodation concept sourcing without a fake product, price or purchase link', async () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const concept: ExecutionPlan['purchases'][number] = { ...items[1], design_resolution: 'concept_only',
+      sourcing_guidance: { mode: 'external_search', title_fa: 'فرش پیشنهادی', explanation_fa: 'تطبیق کاتالوگ هنوز تأیید نشده است.',
+        search_query: 'فرش آبی هندسی', specifications_fa: ['نقش هندسی ریز'], placement_fa: 'جلوی تخت',
+        design_preserved: true, image_status: 'concept', catalogue_status: 'catalogue_unverified' } };
+    try {
+      await act(async () => root.render(<StudioProductCollection items={[concept]} busy={false} onPreview={vi.fn()} />));
+      expect(container.textContent).toContain('تطبیق کاتالوگ هنوز تأیید نشده است.');
+      expect(container.textContent).toContain('فرش آبی هندسی');
+      expect(container.textContent).toContain('نقش هندسی ریز');
+      expect(container.querySelector('a')).toBeNull();
+      expect(container.querySelector('.studio-product-actions')).toBeNull();
+    } finally { await act(async () => root.unmount()); }
+  });
   it('filters locally and keeps preview actions attached to the correct item and product', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement('div');
@@ -34,11 +51,11 @@ describe('Studio product collection', () => {
       await act(async () => lighting.click());
       expect(container.querySelectorAll('article')).toHaveLength(1);
       expect(preview).not.toHaveBeenCalled();
-      const buttons = Array.from(container.querySelectorAll('button')).filter(button => button.textContent === 'redesignJourney.preview');
+      const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-actions button, .studio-swap-option'));
       await act(async () => buttons[1].click());
       expect(preview).toHaveBeenCalledWith('lamp', 2);
       await act(async () => render(true));
-      expect(Array.from(container.querySelectorAll('button')).filter(button => button.textContent === 'redesignJourney.preview').every(button => button.disabled)).toBe(true);
+      expect(Array.from(container.querySelectorAll<HTMLButtonElement>('.studio-product-actions button, .studio-swap-option')).every(button => button.disabled)).toBe(true);
     } finally { await act(async () => root.unmount()); }
   });
   it('does not carry an empty category filter into a different version', async () => {

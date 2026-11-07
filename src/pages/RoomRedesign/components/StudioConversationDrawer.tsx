@@ -24,7 +24,7 @@ export function StudioConversationDrawer({ open, onOpenChange, compact, error, o
     viewport.addEventListener('scroll', resize);
     return () => { viewport.removeEventListener('resize', resize); viewport.removeEventListener('scroll', resize); };
   }, [open, compact]);
-  const panel = <Dialog.Content ref={content} className="studio-conversation-drawer" dir={i18n.dir()}
+  const panel = <Dialog.Content ref={content} className="studio-conversation-drawer" data-floating={compact || undefined} dir={i18n.dir()}
         onInteractOutside={event => { if (!compact) event.preventDefault(); }}
         onOpenAutoFocus={event => {
           returnFocus.current = document.activeElement as HTMLElement;

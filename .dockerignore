@@ -110,3 +110,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Required build-provenance inputs
+!Dockerfile
+!.dockerignore

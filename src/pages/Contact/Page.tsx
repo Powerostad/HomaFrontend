@@ -1,3 +1,4 @@
+import { PublicChromeHeader } from '../../seo/PublicChrome';
 import { useSeo } from "@/hooks/useSeo";
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Mail, MessageCircle, Send, ShieldCheck } from "lucide-react";
@@ -5,7 +6,7 @@ import { motion } from "motion/react";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 
-export function ContactPage() {
+export function ContactPage({ staticDocument = false }: { staticDocument?: boolean } = {}) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   useSeo({
     title: siteText("تماس با ما"),
@@ -34,12 +35,12 @@ export function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFDFB] flex flex-col font-vazirmatn" dir={siteDirection()}>
-      <Header />
+      {staticDocument ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /></> : <Header />}
       
       <main className="flex-grow pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
         <div className="space-y-20">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={staticDocument ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center space-y-8"

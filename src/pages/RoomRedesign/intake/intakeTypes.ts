@@ -13,6 +13,8 @@
 /** Single-select room/category for the space. */
 export type RoomType =
   | 'bedroom'
+  | 'accommodation_room'
+  | 'accommodation_test'
   | 'living_room'
   | 'kitchen'
   | 'balcony'
@@ -27,7 +29,12 @@ export type Goal =
   | 'modernize'
   | 'declutter'
   | 'product_recommendations'
-  | 'improve_for_rent_or_sale';
+  | 'improve_for_rent_or_sale'
+  | 'photo_appeal'
+  | 'guest_comfort'
+  | 'easy_cleaning'
+  | 'durable';
+// Explicit host goals share the existing structured preferences boundary.
 
 /**
  * The captured photo. Stored as a base64 data URL — the redesign chat sends
@@ -43,6 +50,7 @@ export interface IntakeImage {
 
 /** Everything the intake flow hands to the analysis/chat flow. */
 export interface HomaIntakePayload {
+  imageOutputMode?: 'export' | 'api';
   image: IntakeImage;
   roomType?: RoomType;
   goals: Goal[];
@@ -66,6 +74,7 @@ export interface GoalOption {
 /** Single-select room types (Persian labels, label-only chips). */
 export const ROOM_TYPES: readonly RoomTypeOption[] = [
   { value: 'bedroom', label: 'اتاق خواب' },
+  { value: 'accommodation_room', label: 'اتاق اقامتگاه' },
   { value: 'living_room', label: 'پذیرایی' },
   { value: 'kitchen', label: 'آشپزخانه' },
   { value: 'balcony', label: 'بالکن' },

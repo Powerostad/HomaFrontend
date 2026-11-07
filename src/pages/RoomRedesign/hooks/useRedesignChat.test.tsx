@@ -37,6 +37,48 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); vi.useRealTimers(); });
 
 describe('Studio persisted-result recovery', () => {
+  it.each([undefined, 'review_product'] as const)('follows a new design after viewing an older version (%s)', async action => {
+    const first = { ...version, execution: { purchases: [{ item_id: 'old' }] } as unknown as service.ExecutionPlan };
+    const second = { ...version, version_id: 'dv-new', base_version_id: 'rh1', image_pending: true,
+      execution: { purchases: [{ item_id: 'new' }] } as unknown as service.ExecutionPlan };
+    vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([], [first]) });
+    await mount();
+    act(() => chat.selectVersion('rh1'));
+    await flush();
+    let key = '';
+    vi.mocked(service.streamChatTurn).mockImplementation(async (params, handlers) => {
+      key = params.idempotencyKey;
+      handlers.onResult?.({ design_version_id: 'dv-new', execution: second.execution } as service.ResultEvent);
+      return { ok: true };
+    });
+    vi.mocked(service.loadChatSession).mockImplementation(async () => ({ success: true,
+      data: payload([{ ...operation('succeeded', 'text'), kind: 'text_turn', idempotency_key: key }], [first, second]) }));
+    await act(async () => { await chat.sendTurn({ text: 'change the lamp', action }); });
+    expect(chat.viewedId).toBe('dv-new');
+    expect(chat.versions.map(v => v.execution?.purchases[0].item_id)).toEqual(['old', 'new']);
+    expect(service.streamChatTurn).toHaveBeenCalledOnce();
+  });
+  it('edits the current complete project after viewing the original and stays in one workspace', async () => {
+    const execution = { purchases: [{ item_id: 'bed' }, { item_id: 'lamp' }] } as service.ExecutionPlan;
+    const snapshot = { ...version, execution };
+    vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: { ...payload([], [snapshot]), current_execution: execution } });
+    await mount();
+    expect(chat.viewedId).toBe('current');
+    act(() => chat.selectVersion('original')); await flush();
+    let key = '';
+    vi.mocked(service.streamChatTurn).mockImplementation(async (params, handlers) => {
+      expect(params.baseVersionId).toBe('current'); key = params.idempotencyKey;
+      handlers.onResult?.({ design_version_id: 'v2', execution } as service.ResultEvent);
+      return { ok: true };
+    });
+    vi.mocked(service.loadChatSession).mockImplementation(async () => ({ success: true, data: {
+      ...payload([{ ...operation('succeeded', 'text'), kind: 'text_turn', idempotency_key: key }], [snapshot, { ...snapshot, version_id: 'v2' }]), current_execution: execution,
+    } }));
+    await act(async () => { await chat.sendTurn({ text: 'change the lamp' }); });
+    expect(chat.viewedId).toBe('current');
+    expect(chat.currentExecution?.purchases.map(p => p.item_id)).toEqual(['bed', 'lamp']);
+    expect(service.streamChatTurn).toHaveBeenCalledOnce();
+  });
   it('keeps the safe server failure stage, cause, attempts and tracking reference after reconnect', async () => {
     const message = 'مرحلهٔ تحلیل و طراحی ناموفق بود. پاسخ مدل دربارهٔ حفظ یا تعویض یک وسیله تناقض داشت. تعداد تلاش‌های این مرحله: 3. شناسهٔ پیگیری: operation-123';
     vi.mocked(service.loadChatSession).mockResolvedValue({ success: true, data: payload([

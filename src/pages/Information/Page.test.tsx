@@ -24,12 +24,14 @@ describe('public HOMA information pages', () => {
       expect(html).not.toContain('مواردی که پیش از نهایی‌شدن باید تکمیل شوند');
     });
   }
-  it('does not misrepresent proposed retention as an active deletion guarantee', () => {
+  it('describes actual Studio storage without invented deletion guarantees', () => {
     language = 'fa';
     const html = renderToStaticMarkup(<InformationPage page="privacy" />);
-    expect(html).toContain('نه اعلام وضعیت فعلی یا تضمین حذف خودکار');
-    expect(html).toContain('۳۰ روز');
-    expect(html).toContain('۶ ماه');
+    expect(html).toContain('عکس‌های بارگذاری‌شده');
+    expect(html).toContain('ارائه‌دهندهٔ مدل');
+    expect(html).toContain('حذف فوری');
+    expect(html).not.toContain('۳۰ روز');
+    expect(html).not.toContain('پیش‌نویس');
   });
   for (const page of ['support', 'privacy', 'terms'] as const) {
     it(`renders ${page} in English with LTR layout and a Persian switch`, () => {

@@ -1,3 +1,4 @@
+import { PublicChromeHeader } from '../../seo/PublicChrome';
 import { useSeo } from '@/hooks/useSeo';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { ArrowLeft, CheckCircle2, ChevronDown, LayoutTemplate } from 'lucide-react';
@@ -9,7 +10,7 @@ import { Header } from '../../components/Header';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { apiPost } from '../../utils/apiClient';
 
-export function CollaborationPage() {
+export function CollaborationPage({ staticDocument = false }: { staticDocument?: boolean } = {}) {
   const { siteValue, siteText, siteDirection } = useSiteTranslation();
   useSeo({
     title: siteText("همکاری با ما"),
@@ -78,7 +79,7 @@ export function CollaborationPage() {
         </svg>
       </div>
 
-      <Header theme="dark" />
+      {staticDocument ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /></> : <Header theme="dark" />}
       
       <main className="flex-grow flex flex-col md:flex-row relative z-10 pt-20">
         {/* Left Side: Editorial Image (Sticky on Desktop) - Hidden on mobile */}
@@ -105,7 +106,7 @@ export function CollaborationPage() {
         <div className="w-full md:w-1/2 flex flex-col justify-center py-12 md:py-24 px-6 md:px-20 lg:px-32">
           {siteValue(!isSubmitted ? (
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
+              initial={staticDocument ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-xl w-full"
@@ -127,6 +128,7 @@ export function CollaborationPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-8">
+                <fieldset disabled={staticDocument} className="contents">
                 <div className="space-y-6">
                   {/* Two Column Layout for Name and Shop */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -298,11 +300,13 @@ export function CollaborationPage() {
                       {siteText("بررسی درخواست شما در کمتر از ۲۴ ساعت انجام می‌شود.")}</p>
                   </div>
                 </div>
+                </fieldset>
+                {staticDocument && <noscript>برای ثبت درخواست در همین صفحه، JavaScript مرورگر را فعال کنید؛ یا از صفحهٔ تماس با پشتیبانی کمک بگیرید.</noscript>}
               </form>
             </motion.div>
           ) : (
             <motion.div 
-              initial={{ opacity: 0, scale: 0.98 }}
+              initial={staticDocument ? false : { opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-md w-full text-right space-y-10"
             >

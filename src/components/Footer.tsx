@@ -41,7 +41,8 @@ export function Footer() {
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
                 <li><Link to="/" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.home')}</Link></li>
-                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.stores')}</Link></li>
+                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('publicShowcase.nav', 'ایده‌های محصول')}</Link></li>
+                <li><Link to="/blog" className="hover:text-content-primary transition-colors text-p font-light">{i18n.language.startsWith("en") ? "Journal" : "مجله هما"}</Link></li>
                 <li><Link to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.gallery')}</Link></li>
               </ul>
             </div>

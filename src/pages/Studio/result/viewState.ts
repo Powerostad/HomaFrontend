@@ -25,6 +25,7 @@ export type StudioResultViewState = Pick<UseStudioResultReturn,
 > & Partial<Pick<UseStudioResultReturn, 'harmonyScore' | 'projectedScore' | 'liveProjectedScore'>>;
 
 export interface StudioResultConversation {
+  conceptImage?: string;
   open: boolean;
   compact: boolean;
   onOpen: () => void;

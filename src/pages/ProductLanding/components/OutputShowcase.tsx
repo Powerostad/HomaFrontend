@@ -1,9 +1,7 @@
 import { useSiteTranslation } from '@/i18n/siteCopy';
 "use client";
 
-import type { BackendProduct, PaginatedProductResponse } from "@/types/apiProduct";
-import { getProductImageUrl } from "@/types/apiProduct";
-import { apiGet } from "@/utils/apiClient";
+import { fetchPublicShowcase } from "@/services/publicShowcaseService";
 import { formatPriceFromRial, toLocalizedDigits } from "@/utils/formatters";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -19,8 +17,6 @@ export interface OutputShowcaseProps {
 
 interface DisplayProduct {
     id: string;
-    name: string;
-    category: string;
     price: string;
     image: string;
 }
@@ -40,22 +36,14 @@ export function OutputShowcase({
             setIsLoading(true);
             setError(null);
 
-            const response = await apiGet<PaginatedProductResponse>('/products/', { page_size: 3 }, { skipAuth: true });
-
-            if (response.success && response.data) {
-                const backendProducts = response.data.results || [];
-                const displayProducts: DisplayProduct[] = backendProducts.map((p: BackendProduct) => ({
-                    id: String(p.id),
-                    name: p.name,
-                    category: p.category_display,
-                    price: formatPriceFromRial(p.price, false),
-                    // Prefer the backend-built CDN URL; only fall back to building
-                    // from the bare path for older responses.
-                    image: p.image_urls?.card ?? p.image_url ?? getProductImageUrl(p.image_path),
-                }));
-                setProducts(displayProducts);
-            } else {
-                setError(response.error || siteText("خطا در دریافت محصولات"));
+            try {
+                const rows = await fetchPublicShowcase();
+                setProducts(rows.slice(0, 3).map(row => ({
+                    id: row.image_url, image: row.image_url,
+                    price: row.price === null ? t('publicShowcase.unpriced', 'قیمت اعلام نشده') : formatPriceFromRial(row.price, true),
+                })));
+            } catch {
+                setError(siteText("خطا در دریافت محصولات"));
             }
 
             setIsLoading(false);
@@ -156,16 +144,13 @@ export function OutputShowcase({
                                         <div key={product.id} className="group flex items-center justify-between gap-8">
                                             {/* Image on the Right */}
                                             <div className="w-28 h-28 bg-surface-default flex items-center justify-center overflow-hidden border transition-all duration-700 rounded-[1px] shrink-0" style={{ borderColor: 'var(--color-border-default)' }}>
-                                                <ImageWithFallback src={product.image} alt={siteValue(product.name)} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                                                <ImageWithFallback src={product.image} alt={t('publicShowcase.photo', 'تصویر محصول')} className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
                                             </div>
 
                                             {/* Description on the Left */}
                                             <div className="flex-1 text-right">
-                                                <h4 className="text-[18px] font-light mb-1 text-foreground/80 group-hover:text-foreground transition-colors">{siteValue(product.name)}</h4>
-                                                <p className="text-[12px] font-light opacity-60 tracking-widest mb-3 uppercase">{siteValue(product.category)}</p>
                                                 <div className="flex items-baseline justify-end gap-1.5">
                                                     <span className="text-[18px] font-medium tracking-tighter">{siteValue(product.price)}</span>
-                                                    <span className="text-[11px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -254,14 +239,11 @@ export function OutputShowcase({
                         ) : products.map((product) => (
                             <div key={product.id} className="flex items-center gap-8">
                                 <div className="w-20 h-20 bg-surface-page overflow-hidden border flex items-center justify-center shrink-0 rounded-[1px]" style={{ borderColor: 'var(--color-border-default)' }}>
-                                    <ImageWithFallback src={product.image} alt={siteValue(product.name)} className="w-full h-full object-cover grayscale-[0.2]" />
+                                    <ImageWithFallback src={product.image} alt={t('publicShowcase.photo', 'تصویر محصول')} className="w-full h-full object-cover grayscale-[0.2]" />
                                 </div>
                                 <div className="flex-1 min-w-0 text-right">
-                                    <h4 className="text-[15px] font-light truncate text-foreground/80">{siteValue(product.name)}</h4>
-                                    <p className="text-[10px] font-light opacity-60 tracking-widest uppercase mb-2">{siteValue(product.category)}</p>
                                     <div className="flex items-baseline justify-end gap-1.5">
                                         <span className="text-[15px] font-medium tracking-tighter">{siteValue(product.price)}</span>
-                                        <span className="text-[10px] font-light opacity-50">{t('common.toman', 'تومان')}</span>
                                     </div>
                                 </div>
                             </div>

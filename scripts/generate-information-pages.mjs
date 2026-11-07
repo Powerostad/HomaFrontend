@@ -12,7 +12,7 @@ for (const language of ['fa', 'en']) {
 const copy = JSON.parse(await read(`src/i18n/locales/information.${language}.json`));
 for (const id of ['support', 'privacy', 'terms']) {
   const page = copy[id];
-  const draft = id !== 'support';
+  const draft = false;
   const nav = ['support', 'privacy', 'terms'].map((target) =>
     `<a href="/${target}?lang=${language}"${target === id ? ' aria-current="page"' : ''}>${escape(copy[`${target}Label`])}</a>`,
   ).join('');
@@ -21,13 +21,13 @@ for (const id of ['support', 'privacy', 'terms']) {
   }</section>`).join('');
   const html = `<!doctype html>
 <html lang="${language}" dir="${language === 'fa' ? 'rtl' : 'ltr'}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escape(page.title)}</title><meta name="description" content="${escape(page.summary)}">
+<title>${escape(page.title)}</title><link rel="canonical" href="https://myhoma.ir/${id}"><meta name="description" content="${escape(page.summary)}">
 ${draft ? '<meta name="robots" content="noindex, nofollow">' : ''}
 <style>body{margin:0}${styles}</style></head><body>
 <div class="homa-information" lang="${language}"><header><a href="/?lang=${language}" class="homa-information-brand" dir="ltr">${escape(copy.brand)}</a><a href="/?lang=${language}">${escape(copy.home)}</a><a href="/${id}?lang=${language === 'fa' ? 'en' : 'fa'}" lang="${language === 'fa' ? 'en' : 'fa'}">${language === 'fa' ? 'English' : 'فارسی'}</a></header>
 <nav aria-label="${escape(copy.navigation)}">${nav}</nav>
 <main><h1>${escape(page.title)}</h1><p class="homa-information-summary">${escape(page.summary)}</p>
-${draft ? `<p class="homa-information-notice">${escape(copy.draftNotice)}</p>` : ''}
+${id === 'privacy' || id === 'terms' ? `<p class="homa-information-notice">${escape(copy.draftNotice)}</p>` : ''}
 <p class="homa-information-scope">${escape(copy.scope)}</p>${sections}</main>
 <footer><p>${escape(copy.contact)}: <a href="mailto:FARBOD.LOTFI@PARSMEHRAGRO.COM" dir="ltr">FARBOD.LOTFI@PARSMEHRAGRO.COM</a></p><p>${escape(copy.updated)}</p></footer>
 </div></body></html>`;

@@ -54,18 +54,21 @@ export function TierSection({
   const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const config = TIER_CONFIG[tier];
+  const tierTitle = t(`studio.v9.tier.${tier}`, {
+    quick_win: 'تغییرهای سریع', enhancement: 'ارتقای فضا', structural: 'تغییرهای اساسی',
+  }[tier]);
   if (items.length === 0) return null;
 
   return (
-    <section className="studio-tier-section" aria-label={siteValue(config.label)}>
+    <section className="studio-tier-section" aria-label={tierTitle}>
       {!hideHeading && <div className="studio-tier-heading">
         <div>
           <p className="studio-result-eyebrow">{t(`studio.result.v2.tier.${tier === 'quick_win' ? 'quickWin' : tier}`, config.label)}</p>
-          <h3>{siteValue(config.label)}</h3>
+          <h3>{tierTitle}</h3>
         </div>
         <span>{siteValue(items.length)} {t('studio.result.v2.card.options', 'گزینه')}</span>
       </div>}
-      <div>
+      <div className="studio-v9-product-grid">
         {siteValue(items.map((group, index) => (
           <RecommendationCard
             key={group.itemId}

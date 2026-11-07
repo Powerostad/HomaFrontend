@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { StudioSkuDetails } from './StudioSkuDetails';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -49,7 +50,7 @@ export function PrintReportDocument({ state, review, date }: { state:PrintReport
     <section className="studio-print-products"><h2>{t('studioPrint.products')}</h2><p>{t('studioPrint.selectionHint')}</p>{!report.products.length && <p>{t('studioPrint.noProducts')}</p>}
       {report.products.map(({ product, quantity, selected, reason, placement, known }) => <div key={product.id} className="studio-print-product">
         <ReportImage key={product.image} src={product.image} label={product.name} />
-        <div><h3>{product.name}</h3><p>{t(selected ? 'studioPrint.selected' : 'studioPrint.recommended')}</p>{reason && <p>{reason}</p>}{placement && placement !== reason && <p>{placement}</p>}
+        <div><h3>{product.name}</h3><StudioSkuDetails product={product} /><p>{t(selected ? 'studioPrint.selected' : 'studioPrint.recommended')}</p>{reason && <p>{reason}</p>}{placement && placement !== reason && <p>{placement}</p>}
           <dl><div><dt>{t('studioPrint.quantity')}</dt><dd>{count(quantity)}</dd></div><div><dt>{t('studioPrint.unitPrice')}</dt><dd>{known ? formatPriceFromRial(product.price) : t('studioPrint.unknown')}</dd></div><div><dt>{t('studioPrint.lineTotal')}</dt><dd>{known ? formatPriceFromRial(product.price * quantity) : t('studioPrint.unknown')}</dd></div></dl>
           {product.store && <p>{t('studioPrint.store')}: {product.store}</p>}
         </div>

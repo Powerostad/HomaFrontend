@@ -99,7 +99,7 @@ export function UnifiedConsultationCTA({
 
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col studio-v9-consultation"
       style={{
         fontFamily: FONT,
         marginTop: 'var(--spacing-sm)',

@@ -460,9 +460,23 @@ export default function SharedPage() {
   if (isLoading) return <SharedSkeleton />;
   if (error || !item) return <SharedErrorState />;
 
+  if (item.public_products) return <PublicSharedResult item={item} />;
+
   if (item.type === 'tryon') {
     return <TryOnSharedView item={item} />;
   }
 
   return <StudioSharedView item={item} />;
+}
+
+function PublicSharedResult({ item }: { item: SharedItem }) {
+  const { t } = useTranslation();
+  return <main className="max-w-5xl mx-auto px-5 py-8">
+    <img src={item.result_image_url} alt={t('publicShowcase.sharedDesign', 'طراحی به‌اشتراک‌گذاشته‌شده')} className="w-full max-h-[75vh] object-contain" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">{item.public_products?.map(row => <figure key={row.image_url}>
+      <img src={row.image_url} alt={t('publicShowcase.photo', 'تصویر محصول')} loading="lazy" className="w-full aspect-square object-contain" />
+      <figcaption className="mt-3 text-sm">{row.price === null ? t('publicShowcase.unpriced', 'قیمت اعلام نشده') : formatPriceFromRial(row.price, true)}</figcaption>
+    </figure>)}</div>
+    <Link to="/studio" className="block mt-8"><Button>{t('shared.designYourSpace')}</Button></Link>
+  </main>;
 }

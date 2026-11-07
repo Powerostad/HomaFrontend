@@ -113,6 +113,11 @@ export const LEVEL_BAR_WIDTHS: Record<string, string> = { low: '33%', medium: '6
 
 // --- Category Group type ---
 export interface CategoryGroup {
+  conceptAlternatives?: boolean;
+  imageFirstAlternatives?: boolean;
+  sourcingSpecs?: string[];
+  workspaceKey?: string;
+  changeKind?: 'added' | 'changed';
   category: string;
   categoryDisplay: string;
   itemId: number;
@@ -130,6 +135,7 @@ export interface CategoryGroup {
   impactKnown?: boolean;
   actionType?: string;
   actionGuidance?: string;
+  webSearchQuery?: string;
   /** Layout changes are not paid execution services or catalogue products. */
   actionKind?: 'layout' | 'service';
 }
@@ -161,6 +167,7 @@ export interface ResultSession {
     interventionTier?: InterventionTier;
     impactLevel?: ImpactLevel;
     actionGuidance?: string;
+  webSearchQuery?: string;
   }[];
 }
 
@@ -220,6 +227,7 @@ export interface TierGroup {
 
 // --- Completion Checklist ---
 export interface CompletionChecklistItem {
+  specifications?: string[];
   id: number;
   name: string;
   category: string;

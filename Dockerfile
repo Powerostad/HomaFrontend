@@ -1,10 +1,14 @@
 # Multi-stage build for React application
 # Node 24 / npm 11 — matches local dev and satisfies deps that require node >=20
 # (vite-plugin-pwa -> workbox-build@7, glob@11).
-FROM docker.arvancloud.ir/node:24-alpine AS builder
+ARG NODE_IMAGE=node:24-alpine
+ARG NGINX_IMAGE=nginx:alpine
+FROM ${NODE_IMAGE} AS builder
+ARG SOURCE_REV=unversioned
+ENV SOURCE_REV=${SOURCE_REV}
 
 # Use Liara's Iranian npm mirror for JavaScript dependencies
-ENV NPM_CONFIG_REGISTRY=https://package-mirror.liara.ir/repository/npm/
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 
 # Set working directory
 WORKDIR /app
@@ -31,7 +35,10 @@ RUN echo "=== Build output ===" && \
     test -f dist/index.html || (echo "ERROR: dist/index.html not found!" && exit 1)
 
 # Production stage with Nginx
-FROM docker.arvancloud.ir/nginx:alpine AS production
+FROM ${NGINX_IMAGE} AS production
+ARG SOURCE_REV=unversioned
+LABEL org.opencontainers.image.revision=${SOURCE_REV}
+LABEL ir.myhoma.release-contract="nginx-public-documents-blog-v1"
 
 # Use ArvanCloud's Iranian Alpine mirror for system packages
 RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \

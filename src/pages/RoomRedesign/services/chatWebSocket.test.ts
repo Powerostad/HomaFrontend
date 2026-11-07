@@ -42,6 +42,15 @@ const push = (operation = 'render', session = 'session') => ({ type: 'chat.event
   session_id: session, operation_id: operation, event: 'image', data: { url: 'image' } });
 
 describe('durable Studio socket lifecycle', () => {
+  it('completes an export without waiting for an image or resending', async () => {
+    const { socket, result, onEvent } = await start('chat.render');
+    socket.frame({ type: 'chat.ack', request_id: 'request', data: { status: 'queued', operation_id: 'render' } });
+    await result;
+    socket.frame({ ...push(), event: 'render_export', data: { export_id: 'saved' } });
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ event: 'render_export' }));
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(socket.send).toHaveBeenCalledOnce();
+  });
   it('waits past three minutes for the actual model result without resending', async () => {
     const { socket, result, onConnectionLost } = await start();
     await vi.advanceTimersByTimeAsync(193_000);

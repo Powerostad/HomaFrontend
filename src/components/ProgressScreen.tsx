@@ -1,3 +1,4 @@
+import '@/pages/Studio/result/v9-polished.css';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { toLocalizedDigits } from '@/utils/formatters';
 import { Check } from 'lucide-react';
@@ -141,7 +142,7 @@ export function ProgressScreen({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6">
+      <div className="homa-v9 studio-v9-progress relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6">
         {/* Stepped progress bar */}
         <div className="flex w-full gap-1.5 mb-6">
           {siteValue(steps.map((step, idx) => {

@@ -1,3 +1,4 @@
+import { HostsLandingContent } from '../pages/ProductLanding/HostsLandingContent';
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -75,7 +76,7 @@ export function PublicPage({
 
   let content: ReactNode;
   if (data.kind === "home") {
-    content = <SeoHome />;
+    content = data.path === '/hosts' ? <HostsLandingContent /> : <SeoHome />;
   } else if (data.kind === "explore") {
     content = <SeoExplorePage data={data} />;
   } else if (data.kind === "gallery") {

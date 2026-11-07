@@ -30,6 +30,9 @@ export interface MotherProduct {
 }
 
 export interface StudioMotherDocument {
+  pipeline_version?: string;
+  design_narrative?: string;
+  phase?: string;
   room_type_detection: Record<string, unknown>;
   improvement_mode: Record<string, unknown>;
   change_intensity: Record<string, unknown>;

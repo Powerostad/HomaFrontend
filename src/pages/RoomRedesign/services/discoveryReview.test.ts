@@ -8,6 +8,20 @@ function plan(document?: Partial<StudioMotherDocument>): ExecutionPlan {
     budget_status: 'incomplete', unknown_cost_item_ids: [], studio_documents: document ? { room: document as StudioMotherDocument } : {} };
 }
 describe('saved analysis for progressive discovery', () => {
+  it('uses genuine compact findings while the catalogue is still processing', () => {
+    const preview={studio_documents:{room:{pipeline_version:'accommodation-compact-v2',
+      design_narrative:'شرح کامل طرح',design_diagnosis:{key_issues:[{issue_id:'finding-0',evidence:'نور کنار تخت کم است.'}]}}}};
+    expect(buildDiscoveryReview(null,preview).findings).toEqual([
+      expect.objectContaining({observation:'نور کنار تخت کم است.',suggestion:'',isObservation:true}),
+    ]);
+  });
+  it('combines early analysis with later instructions without letting the early preview mask the design', () => {
+    const preview = { studio_documents: { room: { room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: '1', evidence: 'مسیر ورودی باریک است.' }] } } } } };
+    const later = plan({ room_analysis: {}, layout_fix_plan: [{ resolves_issue_id: '1', specific_instruction: 'میز را از ورودی دور کن.' }] });
+    const original = JSON.stringify({ preview, later });
+    expect(buildDiscoveryReview(later, preview).findings[0]).toMatchObject({ observation: 'مسیر ورودی باریک است.', suggestion: 'میز را از ورودی دور کن.' });
+    expect(JSON.stringify({ preview, later })).toBe(original);
+  });
   it('links observations to same-scene actions without modifying or inventing source data', () => {
     const source = plan({
       room_analysis: { layout_evaluation: { layout_issues: [{ issue_id: 'layout-1', evidence: 'مبل مسیر را تنگ کرده است.' }] },

@@ -1,3 +1,4 @@
+import { PublicChromeHeader } from '../../seo/PublicChrome';
 import { useSeo } from "@/hooks/useSeo";
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { ChevronDown, HelpCircle } from "lucide-react";
@@ -47,7 +48,7 @@ const faqData: FAQItem[] = [
   }
 ];
 
-function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boolean; onToggle: () => void }) {
+function FAQAccordion({ item, isOpen, onToggle, staticDocument = false }: { item: FAQItem; isOpen: boolean; onToggle: () => void; staticDocument?: boolean }) {
   const { siteValue } = useSiteTranslation();
   return (
     <div className="border-b border-black/[0.05] last:border-b-0">
@@ -69,7 +70,7 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
       <AnimatePresence>
         {siteValue(isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={staticDocument ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
@@ -85,7 +86,7 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
   );
 }
 
-export function FAQPage() {
+export function FAQPage({ staticDocument = false }: { staticDocument?: boolean } = {}) {
   const { siteValue, siteText, siteDirection } = useSiteTranslation();
   useSeo({
     title: siteText("سوالات متداول"),
@@ -100,11 +101,11 @@ export function FAQPage() {
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col" dir={siteDirection()}>
-      <Header />
+      {staticDocument ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /></> : <Header />}
 
       <main className="flex-grow pt-32 pb-24 px-6 max-w-4xl mx-auto w-full">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={staticDocument ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="space-y-12"
@@ -128,7 +129,8 @@ export function FAQPage() {
               <FAQAccordion
                 key={index}
                 item={item}
-                isOpen={openIndex === index}
+                staticDocument={staticDocument}
+                isOpen={staticDocument || openIndex === index}
                 onToggle={() => handleToggle(index)}
               />
             )))}

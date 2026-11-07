@@ -5,18 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:studio": "vite --mode studio-preview --host 127.0.0.1 --port 3000 --strictPort --open false",
+    "dev:studio": "vite --mode studio-local --host 127.0.0.1 --port 3000 --strictPort --open false",
+    "dev:studio:preview": "vite --mode studio-preview --host 127.0.0.1 --port 3000 --strictPort --open false",
     "dev:clean": "npm run clean && vite",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run generate:sitemap",
-    "build": "tsc && vite build",
-    "postbuild": "node scripts/generate-information-pages.mjs",
+    "build": "node scripts/build-client.mjs",
+    "postbuild": "node scripts/generate-information-pages.mjs && node scripts/build-blog.mjs && node scripts/build-marketing.mjs && node scripts/offline-shell.mjs && node scripts/build-provenance.mjs",
     "preview": "vite preview",
     "clean": "rm -rf node_modules/.vite dist .cache",
     "clean:all": "rm -rf node_modules/.vite dist .cache node_modules && npm install",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run && node --test scripts/public-documents.node-test.mjs",
+    "test:release": "node scripts/seo-http-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

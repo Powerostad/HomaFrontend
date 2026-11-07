@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
 import { chipGroupsFromQuestions, rebuildSessionView } from '../services/transformers';
 import type { ChatMessage, ChipGroup } from '../types';
+import type { AnalysisPreview } from '../services/discoveryReview';
 
 const RECONCILE_MAX_ATTEMPTS = 120;
 const RECONCILE_MAX_MS = 600_000;
@@ -16,12 +17,16 @@ function localizedFailure(value: unknown): string {
 }
 
 export interface SendTurnArgs {
+  imageOutputMode?: 'export' | 'api';
   text: string;
   images?: string[];
   prefsUpdate?: unknown;
-  action?: 'chat' | 'preview_product';
+  action?: StreamTurnParams['action'];
   itemId?: string;
   productId?: number;
+  variantId?: number | null;
+  placementId?: string | null;
+  reviewKind?: StreamTurnParams['reviewKind'];
 }
 export function useRedesignChat(path?: string) {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -29,11 +34,14 @@ export function useRedesignChat(path?: string) {
   const [chipGroups, setChipGroups] = useState<ChipGroup[]>([]);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
   const [currentExecution, setCurrentExecution] = useState<ExecutionPlan | null>(null);
+  const [analysisPreview, setAnalysisPreview] = useState<AnalysisPreview | null>(null);
+  const [currentBaseVersionId, setCurrentBaseVersionId] = useState('original');
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [viewedId, setViewedId] = useState('original');
   const [readyId, setReadyId] = useState<string | null>(null);
   const [status, setStatus] = useState('idle');
   const [stage, setStage] = useState<string | null>(null);
+  const [stageKey, setStageKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [hydrating, setHydrating] = useState(!!path);
@@ -60,13 +68,15 @@ export function useRedesignChat(path?: string) {
       text: failedIntent.text, imageUrl: failedIntent.images?.[0] }] : rebuilt.messages);
     setChipGroups(rebuilt.chipGroups);
     setCurrentExecution(data.current_execution || null);
+    setAnalysisPreview(data.analysis_preview || null);
+    setCurrentBaseVersionId(data.current_base_version_id || 'original');
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
     if (next.length > versionsRef.current.length && !following.current) setReadyId(next[next.length - 1].version_id);
     versionsRef.current = next;
     setVersions(next);
     if (following.current && next.length) {
-      viewedRef.current = next[next.length - 1].version_id;
+      viewedRef.current = data.current_execution ? 'current' : next[next.length - 1].version_id;
       setViewedId(viewedRef.current);
     }
   }, []);
@@ -127,6 +137,7 @@ export function useRedesignChat(path?: string) {
         }
         operation.current = active;
         setStatus(active.kind === 'render' ? 'rendering' : 'streaming');
+        if (active.kind === 'render') setStageKey('render');
         setError(null);
         await pause();
       }
@@ -147,7 +158,8 @@ export function useRedesignChat(path?: string) {
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
     setCurrentExecution(null);
-    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); locked.current = false;
+    setAnalysisPreview(null);
+    setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); setStageKey(null); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
     operation.current = null; intent.current = null; renderOperationId.current = null; setReadyId(null);
     if (!path) { setHydrating(false); return; }
@@ -159,7 +171,7 @@ export function useRedesignChat(path?: string) {
       if (!loaded.success) { setUnavailable(loaded.statusCode === 403 || loaded.statusCode === 404); setStatus('error'); setError(loaded.error || siteText("این گفتگو در دسترس نیست.")); return; }
       try {
         const saved = sessionStorage.getItem(`redesign-view:${path}`);
-        if (saved && (saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
+        if (!(loaded.data as SessionPayload).current_execution && saved && (saved === 'current' || saved === 'original' || (loaded.data as SessionPayload).versions?.some(v => v.version_id === saved))) { viewedRef.current = saved; setViewedId(saved); following.current = saved === (loaded.data as SessionPayload).versions?.slice(-1)[0]?.version_id; }
       } catch { /* optional view memory */ }
       apply(loaded.data as SessionPayload);
       locked.current = true;
@@ -170,9 +182,9 @@ export function useRedesignChat(path?: string) {
 
   const selectVersion = useCallback((id: string) => {
     viewedRef.current = id; setViewedId(id);
-    if (id === versionsRef.current[versionsRef.current.length - 1]?.version_id) setReadyId(null);
+    if (id === 'current' || id === versionsRef.current[versionsRef.current.length - 1]?.version_id) setReadyId(null);
     try { sessionStorage.setItem(`redesign-view:${sidRef.current}`, id); } catch { /* optional view memory */ }
-    following.current = id === versionsRef.current[versionsRef.current.length - 1]?.version_id;
+    following.current = id === 'current' || id === versionsRef.current[versionsRef.current.length - 1]?.version_id;
     const sid = sidRef.current;
     if (sid) void loadChatSession(sid, id).then(load => {
       if (load.success && sidRef.current === sid && viewedRef.current === id) {
@@ -191,7 +203,8 @@ export function useRedesignChat(path?: string) {
       && sidRef.current === params.sessionId
       && !ac.signal.aborted;
     completed.current = false;
-    locked.current = true; setError(null); setStage(null); setStatus('streaming');
+    locked.current = true; setError(null); setStage(null); setStageKey(null); setStatus('streaming');
+    setAnalysisPreview(null);
     const messageId = crypto.randomUUID();
     setChipGroups([]);
     const transport = await streamChatTurn(params, {
@@ -201,18 +214,32 @@ export function useRedesignChat(path?: string) {
           ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
-      onStage: event => { if (isCurrent()) setStage(event.label_fa); },
+      onStage: event => { if (isCurrent()) { setStage(event.label_fa); setStageKey(event.key || null); } },
+      onAnalysis: event => { if (isCurrent()) setAnalysisPreview(event); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
+      onResult: event => {
+        if (!isCurrent()) return;
+        if (event.execution) setCurrentExecution(event.execution);
+        if (event.design_version_id) {
+          following.current = true;
+          viewedRef.current = 'current'; setViewedId('current');
+        }
+        if (!event.design_version_id && (params.action === 'retry_search' || params.action === 'review_product' || params.action === 'select_product')) {
+          following.current = false; viewedRef.current = 'current'; setViewedId('current');
+          try { sessionStorage.setItem(`redesign-view:${params.sessionId}`, 'current'); } catch { /* optional view memory */ }
+        }
+      },
       onRenderPending: event => {
         if (!isCurrent()) return;
         renderOperationId.current = event.operation_id || null;
         setStatus('rendering');
+        setStageKey('render');
       },
       onRenderEvent: event => {
         if (!isCurrent()) return;
         if (event.operationId && renderOperationId.current && event.operationId !== renderOperationId.current) return;
         if (event.operationId) renderOperationId.current = event.operationId;
-        if (event.event === 'image' || event.event === 'error') {
+        if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
           void reconcile(params.sessionId, ac.signal, event.operationId || params.idempotencyKey);
         }
       },
@@ -239,18 +266,20 @@ export function useRedesignChat(path?: string) {
     locked.current = true; setStatus('creating');
     let sid = sidRef.current;
     if (!sid) {
-      const created = await createChatSession();
+      const created = await createChatSession(args.imageOutputMode);
       if (!created.success || !created.data) { setError(created.error || siteText("خطا در ایجاد گفتگو")); setStatus('error'); locked.current = false; return false; }
       sid = created.data.sessionId; sidRef.current = sid; setSessionId(sid);
     }
-    const params: StreamTurnParams = { ...args, sessionId: sid, images: args.images || [], baseVersionId: viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    const { imageOutputMode: _imageOutputMode, ...turnArgs } = args;
+    const params: StreamTurnParams = { ...turnArgs, sessionId: sid, images: args.images || [], baseVersionId: versionsRef.current.length || currentExecution ? 'current' : viewedRef.current, idempotencyKey: crypto.randomUUID() };
+    following.current = true;
     intent.current = params;
     if (args.images?.[0]) setOriginalImage(args.images[0]);
     if (args.text.trim() || args.images?.length) {
       setMessages(old => [...old, { id: params.idempotencyKey, role: 'user', text: args.text, imageUrl: args.images?.[0] }]);
     }
     return execute(params);
-  }, [execute, unavailable]);
+  }, [execute, unavailable, currentExecution]);
 
   const retry = useCallback(async () => {
     const sid = sidRef.current;
@@ -284,7 +313,7 @@ export function useRedesignChat(path?: string) {
             const data = event.data as { delta?: unknown };
             if (typeof data?.delta === 'string') setStage(data.delta.trim());
           }
-          if (event.event === 'image' || event.event === 'error') {
+          if (event.event === 'image' || event.event === 'render_export' || event.event === 'error') {
             void reconcile(sid, ac.signal, event.operationId || failed.operation_id);
           }
         },
@@ -335,5 +364,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, currentExecution, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

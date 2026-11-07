@@ -17,6 +17,10 @@ import { apiGet } from '@/utils/apiClient';
  * Backend returns CDN_BASE_URL which may differ from the frontend's API host.
  */
 function normalizeSharedItem(item: SharedItem): SharedItem {
+  if (item.public_products) return { ...item,
+    result_image_url: normalizeImageUrl(item.result_image_url) ?? item.result_image_url,
+    public_products: item.public_products.map(row => ({ image_url: normalizeImageUrl(row.image_url) ?? row.image_url, price: row.price })),
+  };
   if (item.type === 'tryon') {
     return {
       ...item,

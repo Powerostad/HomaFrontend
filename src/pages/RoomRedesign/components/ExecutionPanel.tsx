@@ -9,7 +9,7 @@ import { StudioProductCollection } from './StudioProductCollection';
 interface Props {
   plan: ExecutionPlan;
   busy: boolean;
-  onPreview: (itemId: string, productId: number) => void;
+  onPreview: (itemId: string, productId: number, variantId?: number | null, placementId?: string | null) => void;
   section?: 'all' | 'plan' | 'products';
 }
 
@@ -19,7 +19,12 @@ export function ExecutionPanel({ plan, busy, onPreview, section = 'all' }: Props
 
   return <div className="redesign-execution">
     {section !== 'products' && <div className="studio-plan-sections">
-      {Object.entries(plan.studio_documents ?? {}).map(([sceneId, document]) => <section className="studio-plan-summary" key={sceneId}>
+      {Object.entries(plan.studio_documents ?? {}).map(([sceneId, document]) => document.pipeline_version === 'accommodation-compact-v2'
+        ? <section className="studio-plan-summary" key={sceneId}><p className="studio-eyebrow">{siteValue('طراحی اختصاصی اقامتگاه')}</p>
+            <MessageText text={document.design_narrative || ''} />
+            {document.phase === 'reconciliation_failed' && <p>{siteValue('طرح شما محفوظ است؛ انتخاب محصولات هنوز کامل نشده است.')}</p>}
+          </section>
+        : <section className="studio-plan-summary" key={sceneId}>
         <p className="studio-eyebrow">{t('studioChat.summary')}</p>
         <h3>{siteValue(document.user_facing_summary.main_improvement_idea)}</h3>
         <MessageText text={siteValue(document.user_facing_summary.positive_diagnosis)} />
