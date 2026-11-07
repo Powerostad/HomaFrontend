@@ -75,3 +75,14 @@ node scripts/blog-ai-seo-gate.mjs --url https://myhoma.ir/blog/your-slug/
 - [Google: Article structured data](https://developers.google.com/search/docs/appearance/structured-data/article)
 - [OpenAI: Publisher FAQ / OAI-SearchBot](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq)
 - [Bing Webmaster: AI Performance](https://blogs.bing.com/webmaster/2026/2/Introducing-AI-Performance-in-Bing-Webmaster-Tools-Public-Preview/)
+
+## اتصال عملی به واردکننده (مرحله فعلی)
+
+برای جلوگیری از انتشار ناخواسته، علاوه بر بریف، یک **Publication Preflight** قابل فراخوانی از CMS اضافه شده است: `scripts/blog-publish-preflight.mjs`. مستندات نگاشت payload، قفل‌کردن revision، هش نسخه تأییدشده، نتیجه رد/قبول و وضعیت اتصال به سرویس واقعی در `docs/blog/production-sync-contract.fa.md` قرار دارد.
+
+```bash
+node --test scripts/blog-ai-seo-gate.test.mjs scripts/blog-publish-preflight.test.mjs
+node scripts/blog-publish-preflight.mjs --file /path/to/normalized-publication.json --json
+```
+
+بدون اتصال واقعی این مرحله در تراکنش انتشار CMS، اجرای ابزار در GitHub جلوی Sync خارج از گیت‌هاب را نمی‌گیرد. همچنین `approved_by` باید از لاگ احراز هویت سرور بیاید و فقط وجود متن در JSON احراز هویت نیست. `published` را برای این رکوردهای جانبی به معنی تأیید روی سایت تلقی نکنید.
