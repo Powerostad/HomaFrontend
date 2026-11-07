@@ -102,8 +102,9 @@ export async function checkLive(url) {
       e.push('og:image باید آدرس HTTPS روی دامنه تأییدشده هما باشد؛ از واکشی URL ناشناس خودداری شد');
     } else {
       try {
-        const res = await fetch(imageUrl, {method:'HEAD', signal:AbortSignal.timeout(15000)});
+        const res = await fetch(imageUrl, {method:'GET', signal:AbortSignal.timeout(15000)});
         fail(e, res.ok && /^image\//i.test(res.headers.get('content-type') || ''), 'og:image باید HTTP 200 و MIME تصویر برگرداند');
+        await res.body?.cancel();
       } catch(err) { e.push('og:image قابل دریافت نیست: ' + err.message); }
     }
   }
