@@ -1,12 +1,13 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * PhotoTipsBottomSheet — "how to take a good photo" guidance sheet.
  *
  * Vaul Drawer bottom sheet with 5 numbered tips, labelled good/bad examples
  * (icon rows, no image assets), and a dismiss CTA. RTL, RD tokens.
  */
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { Check, X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 
@@ -16,16 +17,17 @@ export interface PhotoTipsBottomSheetProps {
 }
 
 export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const reduce = useReducedMotion();
 
   return (
     <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DrawerContent>
         {/* a11y title — visually hidden; visible heading rendered below */}
-        <DrawerTitle className="sr-only">{INTAKE_COPY.tips.title}</DrawerTitle>
+        <DrawerTitle className="sr-only">{siteValue(INTAKE_COPY.tips.title)}</DrawerTitle>
 
         <div
-          dir="rtl"
+          dir={siteDirection()}
           style={{
             fontFamily: 'Vazirmatn, sans-serif',
             padding: '4px 20px',
@@ -47,7 +49,7 @@ export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProp
               textAlign: 'right',
             }}
           >
-            {INTAKE_COPY.tips.title}
+            {siteValue(INTAKE_COPY.tips.title)}
           </h2>
 
           {/* ── Numbered tips list ───────────────────────────────── */}
@@ -61,7 +63,7 @@ export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProp
               gap: '12px',
             }}
           >
-            {INTAKE_COPY.tips.items.map((item, i) => (
+            {siteValue(INTAKE_COPY.tips.items.map((item, i) => (
               <motion.li
                 key={item}
                 initial={{ opacity: 0, y: reduce ? 0 : 5 }}
@@ -78,9 +80,9 @@ export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProp
                   textAlign: 'right',
                 }}
               >
-                {item}
+                {siteValue(item)}
               </motion.li>
-            ))}
+            )))}
           </ol>
 
           {/* ── Examples block ───────────────────────────────────── */}
@@ -93,7 +95,7 @@ export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProp
                 textAlign: 'right',
               }}
             >
-              {INTAKE_COPY.tips.examplesTitle}
+              {siteValue(INTAKE_COPY.tips.examplesTitle)}
             </span>
 
             {/* Good example */}
@@ -138,7 +140,7 @@ export function PhotoTipsBottomSheet({ open, onClose }: PhotoTipsBottomSheetProp
               marginTop: '4px',
             }}
           >
-            {INTAKE_COPY.tips.dismiss}
+            {siteValue(INTAKE_COPY.tips.dismiss)}
           </motion.button>
         </div>
       </DrawerContent>
@@ -158,6 +160,7 @@ function ExampleRow({
   reduce: boolean;
   delay: number;
 }) {
+  const { siteValue } = useSiteTranslation();
   const isGood = icon === 'good';
   const badgeColor = isGood ? RD.accentGreen : RD.danger;
   const IconCmp = isGood ? Check : X;
@@ -199,7 +202,7 @@ function ExampleRow({
           flex: 1,
         }}
       >
-        {text}
+        {siteValue(text)}
       </span>
     </motion.div>
   );

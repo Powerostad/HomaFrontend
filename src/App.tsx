@@ -1,56 +1,72 @@
-import { Suspense } from "react";
-import { BrowserRouter as Router, Routes as RouterRoutes, Route as RouterRoute, Navigate } from "react-router-dom";
-import { AppProvider } from "./context/AppContext";
-import { Layout } from "./layout/Layout";
+const BlogPage = lazy(() => import("./blog/BlogPage").then(m => ({ default: m.BlogPage })));
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { lazy, Suspense } from "react";
+import { Navigate, BrowserRouter as Router, Route as RouterRoute, Routes as RouterRoutes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AppProvider } from "./context/AppContext";
+import { Layout } from "./layout/Layout";
 
-// Import Pages directly instead of lazy to prevent "white screen" hydration issues in this environment
-import { ProductLandingPage } from "./pages/ProductLanding/Page";
-import { UploadPage } from "./pages/Upload/Page";
-import { GalleryPage } from "./pages/Gallery";
-import { PrecheckPage } from "./pages/Precheck";
-import { ProcessingPage } from "./pages/Processing";
-import { ConfirmationPage } from "./pages/Confirmation";
-import { VisualizationPage } from "./pages/Visualization";
-import { ErrorPage } from "./pages/Error";
-import { ProductFallbackPage } from "./pages/ProductFallback";
-import { CollaborationPage } from "./pages/Collaboration/Page";
-import { StudioUploadPage } from "./pages/Studio/UploadPage";
-import { StudioProgressPage } from "./pages/Studio/ProgressPage";
-import { StudioResultPage } from "./pages/Studio/ResultPage";
-import { StudioProjectsDashboard } from "./pages/Studio/ProjectsDashboard";
-import { StudioProjectDetailsPage } from "./pages/Studio/ProjectDetailsPage";
-import { ExplorePage } from "./pages/Explore";
-import { StorePage } from "./pages/Store";
-import { ProductDetailsPage } from "./pages/ProductDetails";
-import { BasketPage } from "./pages/Basket";
-import { ContactPage } from "./pages/Contact/Page";
-import { FAQPage } from "./pages/FAQ/Page";
-import { TermsPage } from "./pages/Terms/Page";
-import { ScrollToTop } from "./components/ScrollToTop";
+// Keep the existing loading boundary while loading page code only when its route is used.
 import { HomaLoader } from "./components/HomaLoader";
+import { ScrollToTop } from "./components/ScrollToTop";
+const BasketPage = lazy(() => import("./pages/Basket").then(m => ({ default: m.BasketPage })));
+const CollaborationPage = lazy(() => import("./pages/Collaboration/Page").then(m => ({ default: m.CollaborationPage })));
+const ConfirmationPage = lazy(() => import("./pages/Confirmation").then(m => ({ default: m.ConfirmationPage })));
+const ContactPage = lazy(() => import("./pages/Contact/Page").then(m => ({ default: m.ContactPage })));
+const ErrorPage = lazy(() => import("./pages/Error").then(m => ({ default: m.ErrorPage })));
+
+const FAQPage = lazy(() => import("./pages/FAQ/Page").then(m => ({ default: m.FAQPage })));
+
+import { InformationPage } from "./pages/Information/Page";
+const PrecheckPage = lazy(() => import("./pages/Precheck").then(m => ({ default: m.PrecheckPage })));
+const ProcessingPage = lazy(() => import("./pages/Processing").then(m => ({ default: m.ProcessingPage })));
+
+const ProductFallbackPage = lazy(() => import("./pages/ProductFallback").then(m => ({ default: m.ProductFallbackPage })));
+import { HostsLandingPage } from './pages/ProductLanding/HostsPage';
+import { ProductLandingPage } from "./pages/ProductLanding/Page";
+import { PublicShowcase } from "./pages/Explore/PublicShowcase";
+const StudioProgressPage = lazy(() => import("./pages/Studio/ProgressPage").then(m => ({ default: m.StudioProgressPage })));
+const StudioProjectDetailsPage = lazy(() => import("./pages/Studio/ProjectDetailsPage").then(m => ({ default: m.StudioProjectDetailsPage })));
+const StudioProjectsDashboard = lazy(() => import("./pages/Studio/ProjectsDashboard").then(m => ({ default: m.StudioProjectsDashboard })));
+const StudioResultPage = lazy(() => import("./pages/Studio/ResultPage").then(m => ({ default: m.StudioResultPage })));
+const StudioUploadPage = lazy(() => import("./pages/Studio/UploadPage").then(m => ({ default: m.StudioUploadPage })));
+const UploadPage = lazy(() => import("./pages/Upload/Page").then(m => ({ default: m.UploadPage })));
+const VisualizationPage = lazy(() => import("./pages/Visualization").then(m => ({ default: m.VisualizationPage })));
 
 // Try On Flow
-import { TryOnUploadPage } from "./pages/TryOn/UploadPage";
-import { TryOnProgressPage } from "./pages/TryOn/ProgressPage";
-import { TryOnResultPage } from "./pages/TryOn/ResultPage";
+const TryOnProgressPage = lazy(() => import("./pages/TryOn/ProgressPage").then(m => ({ default: m.TryOnProgressPage })));
+const TryOnResultPage = lazy(() => import("./pages/TryOn/ResultPage").then(m => ({ default: m.TryOnResultPage })));
+const TryOnUploadPage = lazy(() => import("./pages/TryOn/UploadPage").then(m => ({ default: m.TryOnUploadPage })));
 
 // Room Redesign Flow (conversational recommendations - live chat backend)
-import { RoomRedesignPage } from "./pages/RoomRedesign/RoomRedesignPage";
+const RoomRedesignPage = lazy(() => import("./pages/RoomRedesign/RoomRedesignPage").then(m => ({ default: m.RoomRedesignPage })));
+const StudioStartPage = lazy(() => import("./pages/RoomRedesign/intake/StudioStartPage").then(m => ({ default: m.StudioStartPage })));
 
 // Account & Gallery
-import AccountGalleryPage from "./pages/Account/GalleryPage";
-import AccountGalleryDetailPage from "./pages/Account/GalleryDetailPage";
+const AccountGalleryDetailPage = lazy(() => import("./pages/Account/GalleryDetailPage"));
+const AccountGalleryPage = lazy(() => import("./pages/Account/GalleryPage"));
 
 // Shared (public)
-import SharedPage from "./pages/Shared/SharedPage";
+const SharedPage = lazy(() => import("./pages/Shared/SharedPage"));
 
 
 // Loading Component - Now using HOMA Loader
 const PageLoader = () => <HomaLoader />;
+// Preview is compiled out of production and can only be activated on loopback.
+const LocalStudioPreview = import.meta.env.DEV && import.meta.env.VITE_LOCAL_STUDIO_PREVIEW === 'true'
+  && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+  ? lazy(() => import('./pages/Studio/dev/LocalStudioPreview')) : null;
+const LocalStudioCompare = import.meta.env.DEV && import.meta.env.MODE === 'studio-local'
+  && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+  ? lazy(() => import('./pages/StudioCompare/StudioComparePage')) : null;
+
+const LocalModelCompare = LocalStudioCompare ? lazy(() => import('./pages/StudioCompare/ModelComparePage')) : null;
+const LocalDiscoveryPreview = (LocalStudioCompare || LocalStudioPreview) ? lazy(() => import('./pages/Studio/dev/DiscoveryPreview')) : null;
+const LocalCatalogue = LocalStudioCompare ? lazy(() => import('./pages/Catalogue/CataloguePage')) : null;
 
 export default function App() {
+  const { siteText } = useSiteTranslation();
   return (
     <ErrorBoundary>
       <Router>
@@ -59,10 +75,11 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <RouterRoutes>
             <RouterRoute path="/" element={<Layout />}>
-              <RouterRoute index element={<ProductLandingPage />} />
-              <RouterRoute path="gallery" element={<GalleryPage />} />
-              <RouterRoute path="explore" element={<ExplorePage />} />
-              <RouterRoute path="shop" element={<ExplorePage />} /> {/* Alias for ExplorePage */}
+              <RouterRoute index element={LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProductLandingPage />} />
+              <RouterRoute path="hosts" element={<HostsLandingPage />} />
+              <RouterRoute path="gallery" element={<Navigate to="/explore" replace />} />
+              <RouterRoute path="explore" element={<PublicShowcase />} />
+              <RouterRoute path="shop" element={<PublicShowcase />} /> {/* Alias for ExplorePage */}
               <RouterRoute path="upload" element={<UploadPage />} />
               <RouterRoute path="precheck" element={<PrecheckPage />} />
               <RouterRoute path="processing" element={<ProcessingPage />} />
@@ -71,32 +88,46 @@ export default function App() {
               <RouterRoute path="error" element={<ErrorPage />} />
               <RouterRoute path="product-not-found" element={<ProductFallbackPage />} />
               <RouterRoute path="collaboration" element={<CollaborationPage />} />
-              <RouterRoute path="store/:slug" element={<StorePage />} />
-              <RouterRoute path="store/:slug/product/:productId" element={<ProductDetailsPage />} />
+              <RouterRoute path="store/:slug" element={<Navigate to="/explore" replace />} />
+              <RouterRoute path="store/:slug/product/:productId" element={<Navigate to="/explore" replace />} />
               <RouterRoute path="basket" element={<BasketPage />} />
               <RouterRoute path="contact" element={<ContactPage />} />
               <RouterRoute path="faq" element={<FAQPage />} />
-              <RouterRoute path="terms" element={<TermsPage />} />
+              <RouterRoute path="support" element={<InformationPage page="support" />} />
+              <RouterRoute path="privacy" element={<InformationPage page="privacy" />} />
+              <RouterRoute path="terms" element={<InformationPage page="terms" />} />
 
               {/* Shared gallery items (public, no auth) */}
               <RouterRoute path="s/:token" element={<SharedPage />} />
 
-              {/* Room Redesign Flow: /redesign is the entry point; each chat has a canonical path */}
+              {/* Legacy chat URLs remain available for existing sessions. */}
               <RouterRoute path="redesign/:sessionId?" element={
                 <ProtectedRoute fallback="modal">
                   <RoomRedesignPage />
                 </ProtectedRoute>
               } />
 
-              {/* Studio Flow (Complex/Dark) */}
-              <RouterRoute path="studio" element={<Navigate to="/studio/upload" replace />} />
-              <RouterRoute path="studio/start" element={<Navigate to="/studio/upload" replace />} />
+              {/* Studio now starts the existing conversational flow. Legacy jobs remain accessible. */}
+              <RouterRoute path="studio" element={
+                LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />
+              } />
+              <RouterRoute path="studio/hosts" element={<StudioStartPage host />} />
+              {LocalDiscoveryPreview && <RouterRoute path="studio/preview" element={<LocalDiscoveryPreview />} />}
+              {LocalCatalogue && <RouterRoute path="studio/catalogue" element={<ProtectedRoute fallback="modal"><LocalCatalogue /></ProtectedRoute>} />}
+              <RouterRoute path="blog/*" element={<BlogPage />} />
+              {LocalModelCompare && <RouterRoute path="studio/model-compare" element={<ProtectedRoute fallback="modal"><LocalModelCompare /></ProtectedRoute>} />}
+              {(import.meta.env.DEV || import.meta.env.VITE_IMAGE_FIRST_ENABLED === 'true') && <RouterRoute path="studio/accommodation-test" element={<Navigate to="/studio?room=accommodation_test" replace />} />}
+              {LocalStudioCompare && <RouterRoute path="studio/compare" element={<ProtectedRoute fallback="modal"><LocalStudioCompare /></ProtectedRoute>} />}
+              <RouterRoute path="studio/chat/:sessionId" element={
+                LocalStudioPreview ? <LocalStudioPreview /> : <StudioStartPage />
+              } />
+              <RouterRoute path="studio/start" element={<Navigate to="/studio" replace />} />
               <RouterRoute path="studio/upload" element={<StudioUploadPage />} />
               <RouterRoute path="studio/progress" element={<StudioProgressPage />} />
               <RouterRoute path="studio/result/:jobId" element={<StudioResultPage />} />
               {/* Studio Projects - requires login */}
               <RouterRoute path="studio/projects" element={
-                <ProtectedRoute fallback="modal">
+                LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProtectedRoute fallback="modal">
                   <StudioProjectsDashboard />
                 </ProtectedRoute>
               } />
@@ -135,12 +166,12 @@ export default function App() {
               } />
               <RouterRoute path="account/orders" element={
                 <ProtectedRoute fallback="modal">
-                  <div className="p-20 text-center">صفحه سفارش‌ها (بزودی)</div>
+                  <div className="p-20 text-center">{siteText("صفحه سفارش‌ها (بزودی)")}</div>
                 </ProtectedRoute>
               } />
               <RouterRoute path="account/settings" element={
                 <ProtectedRoute fallback="modal">
-                  <div className="p-20 text-center">تنظیمات حساب (بزودی)</div>
+                  <div className="p-20 text-center">{siteText("تنظیمات حساب (بزودی)")}</div>
                 </ProtectedRoute>
               } />
             </RouterRoute>

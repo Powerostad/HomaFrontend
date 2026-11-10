@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * PhotoPicker — a hidden file input + render-prop trigger.
  *
@@ -10,8 +11,8 @@
  * Source is reported as 'gallery' by default — a single input can't reliably
  * distinguish camera vs library, and the payload's `source` is advisory only.
  */
-import { useRef, type ChangeEvent, type ReactNode } from 'react';
 import { IMAGE_ACCEPT_STRING } from '@/utils/imageConversion';
+import { useRef, type ChangeEvent, type ReactNode } from 'react';
 
 export interface PhotoPickerProps {
   onPick: (file: File, source: 'camera' | 'gallery') => void;
@@ -21,6 +22,7 @@ export interface PhotoPickerProps {
 }
 
 export function PhotoPicker({ onPick, disabled, children }: PhotoPickerProps): JSX.Element {
+  const { siteValue } = useSiteTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const open = () => {
@@ -46,7 +48,7 @@ export function PhotoPicker({ onPick, disabled, children }: PhotoPickerProps): J
         aria-hidden
         tabIndex={-1}
       />
-      {children(open)}
+      {siteValue(children(open))}
     </>
   );
 }

@@ -15,7 +15,7 @@ export function render(data: PublicPageData, template: string, verification: { g
   // Bootstrap is inert JSON; no request data is interpolated into executable JS.
   const bootstrap = data.kind === 'private' ? '' : `<script type="application/json" id="homa-page-data">${serializeJson(data)}</script>`;
   const hero = data.kind === 'home' || ['/ai-interior-design', '/virtual-product-preview'].includes(data.path);
-  const hints = hero ? '<link rel="preload" as="image" href="/images/hero/after-mobile.webp" media="(max-width: 640px)" fetchpriority="high"><link rel="preload" as="image" href="/images/hero/after.webp" media="(min-width: 641px)" fetchpriority="high">' : '';
+  const hints = hero ? '<link rel="preload" as="image" href="/images/hero/after-mobile.webp" media="(max-width: 767px)" fetchpriority="high"><link rel="preload" as="image" href="/images/hero/after.webp" media="(min-width: 768px)" fetchpriority="high">' : '';
   return template.replace('<!--seo-head-->', renderHead(data.seo, verification) + hints)
     .replace('<!--ssr-outlet-->', html).replace('<!--seo-data-->', bootstrap);
 }

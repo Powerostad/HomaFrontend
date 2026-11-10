@@ -1,0 +1,9 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HOMA static Studio reference</title></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
+import '/src/i18n/config';
+import '/src/styles/globals.css';
+import { StudioResultPage } from '/src/pages/Studio/ResultPage';
+createRoot(document.getElementById('root')).render(React.createElement(MemoryRouter,null,React.createElement(StudioResultPage)));
+</script></body></html>

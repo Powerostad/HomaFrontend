@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * BasketContext — unified shopping basket state.
  *
@@ -21,15 +22,15 @@ import {
 import { toast } from 'sonner';
 
 import { basketService } from '@/services/basketService';
-import { useAuth } from './AuthContext';
-import { trackEvent } from '@/utils/analytics';
-import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
 import {
   EMPTY_BASKET,
   type AddToBasketInput,
   type Basket,
   type CheckoutResult,
 } from '@/types/basket';
+import { trackEvent } from '@/utils/analytics';
+import { AUTH_LOGIN_EVENT, AUTH_LOGOUT_EVENT } from '@/utils/apiClient';
+import { useAuth } from './AuthContext';
 
 interface BasketContextValue {
   basket: Basket;
@@ -44,7 +45,7 @@ interface BasketContextValue {
   closeBasket: () => void;
   refresh: () => Promise<void>;
   addItem: (input: AddToBasketInput) => Promise<boolean>;
-  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => Promise<boolean>;
   acceptPrice: (itemId: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clear: () => Promise<void>;
@@ -56,6 +57,7 @@ interface BasketContextValue {
 const BasketContext = createContext<BasketContextValue | undefined>(undefined);
 
 export function BasketProvider({ children }: { children: ReactNode }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const { isInitialized, isLoggedIn } = useAuth();
   const [basket, setBasketState] = useState<Basket>(EMPTY_BASKET);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,14 +120,14 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           });
           return true;
         }
-        toast.error(res.error || 'خطا در افزودن به سبد خرید');
+        toast.error(res.error || siteText("خطا در افزودن به سبد خرید"));
         return false;
       }),
     [runExclusive, setBasket]
   );
 
   const updateQuantity = useCallback(
-    (itemId: string, quantity: number): Promise<void> =>
+    (itemId: string, quantity: number): Promise<boolean> =>
       runExclusive(async () => {
         const prev = basketRef.current;
         setBasket(applyQuantity(prev, itemId, quantity)); // optimistic
@@ -133,9 +135,11 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         if (res.success && res.data) {
           setBasket(res.data);
           trackEvent('basket_qty_changed', { item_id: itemId, quantity });
+          return true;
         } else {
           setBasket(prev); // rollback
-          toast.error(res.error || 'خطا در به‌روزرسانی سبد خرید');
+          toast.error(res.error || siteText("خطا در به‌روزرسانی سبد خرید"));
+          return false;
         }
       }),
     [runExclusive, setBasket]
@@ -152,7 +156,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           trackEvent('basket_removed', { item_id: itemId });
         } else {
           setBasket(prev); // rollback
-          toast.error(res.error || 'خطا در حذف آیتم');
+          toast.error(res.error || siteText("خطا در حذف آیتم"));
         }
       }),
     [runExclusive, setBasket]
@@ -166,7 +170,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           setBasket(res.data);
           trackEvent('basket_price_drift_accepted', { item_id: itemId });
         } else {
-          toast.error(res.error || 'خطا در تأیید قیمت');
+          toast.error(res.error || siteText("خطا در تأیید قیمت"));
         }
       }),
     [runExclusive, setBasket]
@@ -179,7 +183,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         if (res.success && res.data) {
           setBasket(res.data);
         } else {
-          toast.error(res.error || 'خطا در خالی کردن سبد خرید');
+          toast.error(res.error || siteText("خطا در خالی کردن سبد خرید"));
         }
       }),
     [runExclusive, setBasket]
@@ -199,7 +203,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         } else {
           // Merge failed — tell the user (their guest items may not have
           // carried over) and fall back to the user's server-side basket.
-          toast.error(res.error || 'خطا در ادغام سبد خرید');
+          toast.error(res.error || siteText("خطا در ادغام سبد خرید"));
           await refresh();
         }
       }),
@@ -223,7 +227,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           }
           return res.data;
         }
-        toast.error(res.error || 'خطا در نهایی کردن خرید');
+        toast.error(res.error || siteText("خطا در نهایی کردن خرید"));
         return null;
       }),
     [runExclusive, refresh]
@@ -295,7 +299,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <BasketContext.Provider value={value}>{children}</BasketContext.Provider>
+    <BasketContext.Provider value={value}>{siteValue(children)}</BasketContext.Provider>
   );
 }
 

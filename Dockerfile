@@ -1,10 +1,12 @@
 # Multi-stage build for React application
 # Node 24 / npm 11 — matches local dev and satisfies deps that require node >=20
 # (vite-plugin-pwa -> workbox-build@7, glob@11).
-FROM docker.arvancloud.ir/node:24-alpine AS builder
+ARG NODE_IMAGE=node:24-alpine
+ARG NGINX_IMAGE=nginx:alpine
+FROM ${NODE_IMAGE} AS builder
 
 # Use Liara's Iranian npm mirror for JavaScript dependencies
-ENV NPM_CONFIG_REGISTRY=https://package-mirror.liara.ir/repository/npm/
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 
 # Set working directory
 WORKDIR /app
@@ -23,6 +25,8 @@ RUN npm ci
 COPY . .
 
 # Build the application (outputs to dist/ per vite.config.ts)
+ARG SOURCE_REV=unversioned
+ENV SOURCE_REV=${SOURCE_REV}
 RUN npm run build
 
 # Verify build output - fail if index.html is missing
@@ -31,7 +35,10 @@ RUN echo "=== Build output ===" && \
     test -f dist/index.html || (echo "ERROR: dist/index.html not found!" && exit 1)
 
 # Production stage with Nginx
-FROM docker.arvancloud.ir/nginx:alpine AS production
+FROM ${NGINX_IMAGE} AS production
+ARG SOURCE_REV=unversioned
+LABEL org.opencontainers.image.revision=${SOURCE_REV}
+LABEL ir.myhoma.release-contract="nginx-public-documents-blog-v1"
 
 # Use ArvanCloud's Iranian Alpine mirror for system packages
 RUN ALPINE_VERSION="$(cut -d. -f1,2 /etc/alpine-release)" && \
@@ -49,6 +56,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Crawler meta-injection sidecar + its launcher (started before nginx).
 COPY render-bot.mjs /render-bot.mjs
+COPY blog-http.mjs public-documents.mjs /
+COPY --from=builder /app/dist-blog-server/blog-render.mjs /blog-render.mjs
 COPY render-bot-entrypoint.sh /docker-entrypoint.d/45-render-bot.sh
 
 # Generate /config.js from runtime container environment before Nginx starts.
@@ -68,4 +77,5 @@ RUN chown -R appuser:appgroup /usr/share/nginx/html
 EXPOSE 80
 
 # Start nginx
+HEALTHCHECK --interval=30s --timeout=8s --start-period=20s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1/health && node -e "fetch('http://127.0.0.1:8081/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["nginx", "-g", "daemon off;"]

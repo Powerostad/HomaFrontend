@@ -1,5 +1,8 @@
 name: Frontend SEO gates
 on: [push, pull_request]
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   seo:
     runs-on: ubuntu-latest
@@ -14,8 +17,17 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: node scripts/seo-http-check.mjs
+      - name: Build the deployable Nginx image from this exact revision
+        run: docker build --build-arg SOURCE_REV=${{ github.sha }} -t homa-release:${{ github.sha }} .
+      - name: Test the deployable image with fixture blog data
+        run: node scripts/seo-http-check.mjs --image homa-release:${{ github.sha }}
+      - name: Preserve the tested deployable image
+        run: docker save homa-release:${{ github.sha }} | gzip > reports/seo-ci/homa-frontend-${{ github.sha }}-nginx-blog-v1.tar.gz
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: seo-audit
-          path: reports/seo-ci/
+          retention-days: 7
+          path: |
+            reports/seo-ci/
+            dist-build-provenance/

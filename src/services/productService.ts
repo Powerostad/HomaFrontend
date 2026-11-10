@@ -1,17 +1,18 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Product Service
  * API integration for product catalog data
  */
 
-import { apiGet, type RequestOptions } from '@/utils/apiClient';
 import {
   type BackendProduct,
+  type PaginatedProductResponse,
+  type ProductDetailResult,
   type ProductListParams,
   type ProductListResult,
-  type ProductDetailResult,
-  type PaginatedProductResponse,
   transformBackendProduct,
 } from '@/types/apiProduct';
+import { apiGet, type RequestOptions } from '@/utils/apiClient';
 
 // =============================================================================
 // API Functions
@@ -69,7 +70,7 @@ export async function fetchProducts(
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت لیست محصولات',
+    error: response.error || siteText("خطا در دریافت لیست محصولات"),
   };
 }
 
@@ -82,11 +83,10 @@ export async function fetchProducts(
  */
 export async function fetchProduct(
   uniqueLink: string,
-  options?: Pick<RequestOptions, 'signal'>
+  options?: Pick<RequestOptions, 'signal'> & { sessionId?: string }
 ): Promise<ProductDetailResult> {
-  const response = await apiGet<BackendProduct>(`/products/${uniqueLink}/`, undefined, {
-    skipAuth: true, // Public endpoint
-    ...options,
+  const response = await apiGet<BackendProduct>(`/products/${uniqueLink}/`, options?.sessionId ? { session_id: options.sessionId } : undefined, {
+    signal: options?.signal,
   });
 
   if (response.success && response.data) {
@@ -98,7 +98,7 @@ export async function fetchProduct(
 
   return {
     success: false,
-    error: response.error || 'محصول یافت نشد',
+    error: response.error || siteText("محصول یافت نشد"),
   };
 }
 

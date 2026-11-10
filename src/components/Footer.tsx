@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const informationQuery = `?lang=${i18n.language.startsWith('en') ? 'en' : 'fa'}`;
   return (
     <footer
       className="w-full pt-16 pb-12 px-6 md:px-12 lg:px-24 overflow-hidden relative bg-surface-page text-content-primary border-t"
@@ -40,7 +41,8 @@ export function Footer() {
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
                 <li><Link to="/" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.home')}</Link></li>
-                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.stores')}</Link></li>
+                <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('publicShowcase.nav', 'ایده‌های محصول')}</Link></li>
+                <li><Link to="/blog" className="hover:text-content-primary transition-colors text-p font-light">{i18n.language.startsWith("en") ? "Journal" : "مجله هما"}</Link></li>
                 <li><Link to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.gallery')}</Link></li>
               </ul>
             </div>
@@ -73,7 +75,9 @@ export function Footer() {
               </h3>
               <ul className="flex flex-col gap-5 text-start md:text-end text-content-secondary">
                 <li><Link to="/faq" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.faq')}</Link></li>
-                <li><Link to="/terms" className="hover:text-content-primary transition-colors text-p font-light">{t('footer.terms')}</Link></li>
+                <li><a href={`/support${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{t('information:supportLabel')}</a></li>
+                <li><a href={`/privacy${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{t('information:privacyLabel')}</a></li>
+                <li><a href={`/terms${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{t('footer.terms')}</a></li>
                 <li><Link to="/contact" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.contactUs')}</Link></li>
               </ul>
             </div>

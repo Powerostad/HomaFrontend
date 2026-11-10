@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * PhotoIntakeScreen — Screen 1 of the intake flow.
  *
@@ -7,8 +8,8 @@
  */
 import { Camera, Check } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { RD } from '../theme';
 import { HeaderBadge } from '../components/chat';
+import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 import { PhotoPicker } from './PhotoPicker';
 
@@ -25,11 +26,12 @@ export function PhotoIntakeScreen({
   error,
   onOpenTips,
 }: PhotoIntakeScreenProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const reduce = useReducedMotion();
 
   return (
     <div
-      dir="rtl"
+      dir={siteDirection()}
       style={{
         fontFamily: 'Vazirmatn, sans-serif',
         backgroundColor: RD.cream,
@@ -63,7 +65,7 @@ export function PhotoIntakeScreen({
             letterSpacing: '0.01em',
           }}
         >
-          {INTAKE_COPY.brand}
+          {siteValue(INTAKE_COPY.brand)}
         </span>
       </div>
 
@@ -90,7 +92,7 @@ export function PhotoIntakeScreen({
             textAlign: 'right',
           }}
         >
-          {INTAKE_COPY.photo.title}
+          {siteValue(INTAKE_COPY.photo.title)}
         </motion.h1>
 
         {/* Subtitle */}
@@ -107,18 +109,18 @@ export function PhotoIntakeScreen({
             textAlign: 'right',
           }}
         >
-          {INTAKE_COPY.photo.subtitle}
+          {siteValue(INTAKE_COPY.photo.subtitle)}
         </motion.p>
 
         {/* ── PhotoPicker wraps both frame + CTA ─────────────────── */}
         <PhotoPicker onPick={onPick} disabled={preparing}>
-          {(open) => (
+          {siteValue((open) => (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Tappable photo-frame placeholder */}
               <motion.button
                 type="button"
                 onClick={open}
-                aria-label={INTAKE_COPY.a11y.pickPhoto}
+                aria-label={siteValue(INTAKE_COPY.a11y.pickPhoto)}
                 whileTap={preparing ? undefined : { scale: 0.97 }}
                 style={{
                   width: '100%',
@@ -143,7 +145,7 @@ export function PhotoIntakeScreen({
                     fontFamily: 'Vazirmatn, sans-serif',
                   }}
                 >
-                  {INTAKE_COPY.photo.primaryCta}
+                  {siteValue(INTAKE_COPY.photo.primaryCta)}
                 </span>
               </motion.button>
 
@@ -172,7 +174,7 @@ export function PhotoIntakeScreen({
                 }}
                 aria-busy={preparing}
               >
-                {preparing && (
+                {siteValue(preparing && (
                   <span
                     aria-hidden
                     style={{
@@ -185,18 +187,18 @@ export function PhotoIntakeScreen({
                       animation: reduce ? 'none' : 'spin 0.7s linear infinite',
                     }}
                   />
-                )}
-                {INTAKE_COPY.photo.primaryCta}
+                ))}
+                {siteValue(INTAKE_COPY.photo.primaryCta)}
               </motion.button>
 
               {/* Inline spinner keyframes (injected once) */}
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <style>{siteValue(`@keyframes spin { to { transform: rotate(360deg); } }`)}</style>
             </div>
-          )}
+          ))}
         </PhotoPicker>
 
         {/* Error message */}
-        {error && (
+        {siteValue(error && (
           <p
             role="alert"
             style={{
@@ -207,9 +209,9 @@ export function PhotoIntakeScreen({
               lineHeight: 1.6,
             }}
           >
-            {error}
+            {siteValue(error)}
           </p>
-        )}
+        ))}
 
         {/* Secondary text button → tips sheet */}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -237,13 +239,13 @@ export function PhotoIntakeScreen({
               (e.currentTarget as HTMLButtonElement).style.textDecoration = 'none';
             }}
           >
-            {INTAKE_COPY.photo.secondaryCta}
+            {siteValue(INTAKE_COPY.photo.secondaryCta)}
           </motion.button>
         </div>
 
         {/* ── Tip rows (staggered entrance) ─────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {INTAKE_COPY.photo.tips.map((tip, i) => (
+          {siteValue(INTAKE_COPY.photo.tips.map((tip, i) => (
             <motion.div
               key={tip}
               initial={{ opacity: 0, y: reduce ? 0 : 6 }}
@@ -268,10 +270,10 @@ export function PhotoIntakeScreen({
                   textAlign: 'right',
                 }}
               >
-                {tip}
+                {siteValue(tip)}
               </span>
             </motion.div>
-          ))}
+          )))}
         </div>
       </div>
     </div>

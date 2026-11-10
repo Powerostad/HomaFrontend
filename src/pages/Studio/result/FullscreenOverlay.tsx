@@ -1,10 +1,12 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Fullscreen Overlay — Quiet Luxury Redesign
  * Immersive image viewer with refined glass controls.
  */
-import { X, Download, Bookmark, Loader2 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Bookmark, Download, Loader2, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useSimpleTranslation } from './types';
 
 const FONT = 'var(--font-family-vazirmatn)';
@@ -32,18 +34,23 @@ export function FullscreenOverlay({
   onToggleSaved,
   onDownload,
 }: FullscreenOverlayProps) {
+  const { siteValue, siteText } = useSiteTranslation();
   const { t } = useSimpleTranslation();
 
   return (
+    <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
+    <Dialog.Portal>
+    <Dialog.Content asChild aria-describedby={undefined}>
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0 }}
       className="fixed inset-0 z-modal flex items-center justify-center overflow-hidden"
       style={{ background: 'var(--editorial-charcoal)' }}
       onClick={onClose}
     >
+      <Dialog.Title className="sr-only">{siteText("نتیجه طراحی")}</Dialog.Title>
       <motion.div
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
@@ -58,17 +65,17 @@ export function FullscreenOverlay({
         <div className="absolute inset-0 w-full h-full flex items-center justify-center p-4 md:p-8">
           <AuthenticatedImage
             src={resultImage}
-            alt="نتیجه طراحی"
+            alt={siteText("نتیجه طراحی")}
             className={`max-w-full max-h-full object-contain transition-all duration-700 ${showOriginal ? 'opacity-0 scale-[1.02]' : 'opacity-100 scale-100'}`}
           />
-          {originalImage && (
+          {siteValue(originalImage && (
             <AuthenticatedImage
               src={originalImage}
-              alt="تصویر اصلی"
+              alt={siteText("تصویر اصلی")}
               skipAuth={originalImage.startsWith('data:')}
               className={`absolute inset-0 m-auto max-w-full max-h-full object-contain transition-all duration-700 ${showOriginal ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.02]'}`}
             />
-          )}
+          ))}
         </div>
 
         {/* Vignette */}
@@ -104,7 +111,7 @@ export function FullscreenOverlay({
               border: '1px solid rgba(255,255,255,0.1)',
               color: 'rgba(255,255,255,0.9)',
             }}
-            aria-label="بستن"
+            aria-label={siteText("بستن")}
           >
             <X size={20} />
           </button>
@@ -125,9 +132,9 @@ export function FullscreenOverlay({
                 opacity: isDownloading ? 0.4 : 1,
                 cursor: isDownloading ? 'not-allowed' : 'pointer',
               }}
-              aria-label="دانلود"
+              aria-label={siteText("دانلود")}
             >
-              {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+              {siteValue(isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />)}
             </button>
             <button
               onClick={onToggleSaved}
@@ -141,7 +148,7 @@ export function FullscreenOverlay({
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: isSaved ? 'var(--accent)' : 'rgba(255,255,255,0.9)',
               }}
-              aria-label="ذخیره"
+              aria-label={siteText("ذخیره")}
             >
               <Bookmark size={18} className={isSaved ? 'fill-current' : ''} />
             </button>
@@ -202,10 +209,12 @@ export function FullscreenOverlay({
               letterSpacing: '0.2em',
             }}
           >
-            بکشید برای بستن
-          </span>
+            {siteText("بکشید برای بستن")}</span>
         </div>
       </motion.div>
     </motion.div>
+    </Dialog.Content>
+    </Dialog.Portal>
+    </Dialog.Root>
   );
 }

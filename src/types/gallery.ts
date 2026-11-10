@@ -1,10 +1,11 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Gallery Types
  * TypeScript definitions for user gallery (visualization results)
  */
 
-import { apiConfig } from '@/utils/apiClient';
 import { normalizeImageUrl } from '@/services/studioService';
+import { apiConfig } from '@/utils/apiClient';
 
 // =============================================================================
 // Backend Response Types
@@ -352,7 +353,7 @@ export function toResultCardData(
     id: item.id,
     type: item.type,
     coverImage: item.resultThumbnailUrl,
-    productName: item.productName ?? (item.type === 'studio' ? 'طراحی استودیو' : ''),
+    productName: item.productName ?? (item.type === 'studio' ? siteText("طراحی استودیو") : ''),
     storeName: item.productCategory, // Using category as store name for now
     timestamp: formatTimestamp(item.createdAt),
     isPinned: item.isPinned,

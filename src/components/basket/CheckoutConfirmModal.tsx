@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * CheckoutConfirmModal — final step of basket checkout.
  *
@@ -7,10 +8,15 @@
  *   2. open the tabs with a small stagger,
  *   3. always render the links as clickable cards as a popup-blocker fallback.
  */
-import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Store } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { CheckoutLine, CheckoutResult } from '../../types/basket';
+import { trackEvent } from '../../utils/analytics';
+import { apiConfig } from '../../utils/apiClient';
+import { formatPriceFromRial, toLocalizedDigits } from '../../utils/formatters';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -18,11 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { apiConfig } from '../../utils/apiClient';
-import { trackEvent } from '../../utils/analytics';
-import { toPersianDigits, formatPriceFromRial } from '../../utils/formatters';
-import type { CheckoutLine, CheckoutResult } from '../../types/basket';
 
 interface CheckoutConfirmModalProps {
   result: CheckoutResult | null;
@@ -44,6 +45,7 @@ export function CheckoutConfirmModal({
   onClose,
   onConfirmed,
 }: CheckoutConfirmModalProps) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   // Each item's click-through is reported at most once, no matter how many
@@ -84,25 +86,25 @@ export function CheckoutConfirmModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-md" dir="rtl">
+      <DialogContent className="max-w-md" dir={siteDirection()}>
         <DialogHeader>
           <DialogTitle>{t('basket.checkoutTitle', 'تکمیل خرید')}</DialogTitle>
           <DialogDescription>
             {t('basket.multiShopNotice', {
-              defaultValue: `شما به ${toPersianDigits(result.total_shops)} فروشگاه هدایت می‌شوید`,
-              shops: toPersianDigits(result.total_shops),
+              defaultValue: siteText("شما به {{v0}} فروشگاه هدایت می‌شوید", { v0: toLocalizedDigits(result.total_shops) }),
+              shops: toLocalizedDigits(result.total_shops),
             })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="max-h-[50vh] overflow-y-auto space-y-4 py-2">
-          {result.shops.map((shop) => (
+          {siteValue(result.shops.map((shop) => (
             <div key={shop.shop_id} className="space-y-2">
               <div className="flex items-center gap-2 text-content-secondary text-sm">
                 <Store size={14} />
-                <span>{shop.shop_name}</span>
+                <span>{siteValue(shop.shop_name)}</span>
               </div>
-              {shop.items.map((line) => (
+              {siteValue(shop.items.map((line) => (
                 <a
                   key={line.basket_item_id}
                   href={resolveTrackingUrl(line)}
@@ -112,16 +114,16 @@ export function CheckoutConfirmModal({
                   className="flex items-center justify-between gap-3 rounded-md border border-subtle p-3 hover:border-default transition-colors"
                 >
                   <span className="text-sm text-content-primary line-clamp-1">
-                    {line.product_name}
+                    {siteValue(line.product_name)}
                   </span>
                   <span className="flex items-center gap-2 shrink-0 text-xs text-content-muted">
-                    {formatPriceFromRial(line.snapshot_price_rial)}
+                    {siteValue(formatPriceFromRial(line.snapshot_price_rial))}
                     <ExternalLink size={14} />
                   </span>
                 </a>
-              ))}
+              )))}
             </div>
-          ))}
+          )))}
         </div>
 
         <p className="text-xs text-content-muted">
@@ -133,9 +135,9 @@ export function CheckoutConfirmModal({
 
         <div className="flex gap-2">
           <Button className="flex-1" onClick={handleOpenAll}>
-            {opened
+            {siteValue(opened
               ? t('basket.openAgain', 'باز کردن دوباره')
-              : t('basket.openAllShops', 'رفتن به فروشگاه‌ها')}
+              : t('basket.openAllShops', 'رفتن به فروشگاه‌ها'))}
           </Button>
           <Button variant="outline" onClick={handleClose}>
             {t('common.close', 'بستن')}

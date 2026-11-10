@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * API Product Types
  * TypeScript definitions for product data from the backend API
@@ -43,6 +44,11 @@ export interface ProductImageUrls {
   original: string | null;
 }
 
+export interface MerchantProductDetails {
+  description: string;
+  specifications: Array<{ label: string; value: string }>;
+}
+
 export interface BackendProduct {
   id: number;
   name: string;
@@ -57,6 +63,8 @@ export interface BackendProduct {
   shop_name: string;
   shop_slug: string;
   description?: string;
+  gallery_images?: string[];
+  merchant_details?: MerchantProductDetails;
   link?: string | null;
   extra_details?: Record<string, string | string[]> | null;
   variants?: BackendProductVariant[];
@@ -122,6 +130,8 @@ export interface APIProduct {
   shopName: string;
   shopSlug: string;
   description?: string;
+  galleryImages?: string[];
+  merchantDetails?: MerchantProductDetails;
   externalLink?: string;
   extraDetails?: Record<string, string | string[]> | null;
   variants?: ProductVariant[];
@@ -266,6 +276,8 @@ export function transformBackendProduct(backendProduct: BackendProduct): APIProd
     shopName: backendProduct.shop_name,
     shopSlug: backendProduct.shop_slug,
     description: backendProduct.description,
+    galleryImages: backendProduct.gallery_images,
+    merchantDetails: backendProduct.merchant_details,
     externalLink: backendProduct.link || undefined,
     extraDetails: backendProduct.extra_details,
     variants,
@@ -305,7 +317,7 @@ export function apiProductToProduct(apiProduct: APIProduct): Product {
     imageUrls: apiProduct.imageUrls,
     brand: apiProduct.shopName,
     description: apiProduct.description,
-    currency: 'تومان',
+    currency: siteText("تومان"),
     status: 'active',
     seller: {
       name: apiProduct.shopName,

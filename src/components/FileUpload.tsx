@@ -1,8 +1,9 @@
-import React, { useState, useRef } from "react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Upload, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SimpleButton } from "./SimpleButton";
-import { motion, AnimatePresence } from "motion/react";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -15,6 +16,7 @@ export function FileUpload({
   accept = "image/png, image/jpeg, image/jpg, image/webp",
   maxSizeMB = 10
 }: FileUploadProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,15 +122,15 @@ export function FileUpload({
             ${isDragging ? "bg-[var(--primary)]/10 text-[var(--primary)]" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}
             ${error ? "bg-[var(--destructive)]/10 text-[var(--destructive)]" : ""}
           `}>
-            {error ? (
+            {siteValue(error ? (
               <X className="w-8 h-8" />
             ) : (
               <Upload className="w-8 h-8" />
-            )}
+            ))}
           </div>
 
           <h3 className="mb-2 text-[var(--foreground)]">
-            {isDragging ? t('fileUpload.dropFile', 'فایل را رها کنید') : t('fileUpload.uploadImage', 'بارگذاری تصویر')}
+            {siteValue(isDragging ? t('fileUpload.dropFile', 'فایل را رها کنید') : t('fileUpload.uploadImage', 'بارگذاری تصویر'))}
           </h3>
 
           <p className="text-[var(--muted-foreground)] mb-[var(--spacing-lg)] max-w-xs mx-auto text-[length:14px] leading-relaxed">
@@ -153,16 +155,16 @@ export function FileUpload({
 
         {/* Error Message Toast inside component */}
         <AnimatePresence>
-          {error && (
+          {siteValue(error && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               className="absolute bottom-4 left-4 right-4 bg-[var(--destructive)] text-[var(--destructive-foreground)] p-3 rounded-[var(--radius-sm)] text-[length:14px] text-center font-medium"
             >
-              {error}
+              {siteValue(error)}
             </motion.div>
-          )}
+          ))}
         </AnimatePresence>
       </div>
     </div>

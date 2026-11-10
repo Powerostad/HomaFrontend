@@ -110,3 +110,10 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Required build-provenance inputs
+!Dockerfile
+!.dockerignore
+
+# Production build flags live in versioned JSON, never local env files.
+.env*

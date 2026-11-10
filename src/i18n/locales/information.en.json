@@ -1,0 +1,109 @@
+{
+  "brand": "HOMA",
+  "home": "Back to website",
+  "navigation": "HOMA information and support",
+  "supportLabel": "Support",
+  "privacyLabel": "Privacy",
+  "termsLabel": "Terms of use",
+  "contact": "Support email",
+  "scope": "These pages describe the Homa website and design Studio at myhoma.ir.",
+  "updated": "Text updated: 6 November 2026",
+  "draftNotice": "This page describes the current service. Exact retention periods and each model provider’s terms have not been confirmed here. Do not upload sensitive information.",
+  "support": {
+    "title": "Homa support",
+    "summary": "Studio help, request tracking and product guidance.",
+    "sections": [
+      {
+        "title": "Using the Studio",
+        "paragraphs": [
+          "Upload your room photo and describe what you want. Homa uses AI services for design, product search and optional image generation. Use the conversation attached to your design to request changes or ask questions.",
+          "To refine a design or ask a question, use the conversation for that design. Starting a new request may consume time and credits."
+        ]
+      },
+      {
+        "title": "An incomplete request",
+        "paragraphs": [
+          "Email the error, tracking ID or conversation link and approximate request time to support. Check the previous request and your account credit before submitting again."
+        ]
+      },
+      {
+        "title": "Contact safely",
+        "paragraphs": [
+          "Email FARBOD.LOTFI@PARSMEHRAGRO.COM. Hide personal information in screenshots. Never send passwords, login codes, API keys or payment details."
+        ]
+      },
+      {
+        "title": "Before buying",
+        "paragraphs": [
+          "Design images are previews. Check the selected size and colour, dimensions, final price, availability, shipping and returns before purchasing."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Homa privacy information",
+    "summary": "Data processed by the website and design Studio, and how to contact support.",
+    "sections": [
+      {
+        "title": "Account and design data",
+        "paragraphs": [
+          "Account and login details are processed for account features. Uploaded photos, messages, design requests, outputs and execution status may be stored to resume and display conversations. Technical logs may include stages, errors, models, usage and model input or output for debugging.",
+          "Technical logs may contain timing, processing stages, errors, model names and request usage. Diagnostic reports may also include model inputs and outputs."
+        ]
+      },
+      {
+        "title": "Model services",
+        "paragraphs": [
+          "Text and images required for analysis, design, matching or image generation are sent to the active model provider or API gateway. Processing by those services follows their own terms. Only upload images you are allowed to use, and remove faces, documents and unnecessary private details.",
+          "Before uploading, remove or cover faces, documents, contact details and unnecessary private information. Only upload images you are authorized to use."
+        ]
+      },
+      {
+        "title": "Public display and sharing",
+        "paragraphs": [
+          "The public product gallery shows photos and prices. Internal catalogue information is excluded from the public product display. Anyone given a shared-result link may be able to see that result; do not publish sensitive links.",
+          "A result you share by link may be visible to anyone who has that link. Do not publicly share private conversations, photos or sensitive results."
+        ]
+      },
+      {
+        "title": "Retention and requests",
+        "paragraphs": [
+          "This page does not announce a verified automatic deletion period for all photos, conversations, logs or backups. Removing a conversation from its list does not necessarily immediately erase every stored file or backup. Email support with an account or conversation reference to request access, correction or deletion; do not send passwords or login codes. Contact other services directly about data they retain independently.",
+          "For account-data access, correction or deletion requests, email support with your account or conversation identifier, without a password or login code. Contact other services directly about data they independently retain."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Using Homa",
+    "summary": "AI previews, account credits and purchasing decisions.",
+    "sections": [
+      {
+        "title": "Design and image suggestions",
+        "paragraphs": [
+          "Homa uses AI to support design decisions. Outputs can contain mistakes. Verify dimensions, installation safety, feasibility and product suitability independently. A generated image does not guarantee exact colour, texture, scale or an actual installation outcome.",
+          "Image previews do not guarantee exact colors, textures, scale or real-world results. Consult qualified professionals for structural changes, electrical work, installation and safety matters."
+        ]
+      },
+      {
+        "title": "Account and credits",
+        "paragraphs": [
+          "Available features depend on account credits and active settings. Check your account before starting or repeating requests. Processing status does not guarantee a fixed completion time or success at every stage."
+        ]
+      },
+      {
+        "title": "Product suggestions",
+        "paragraphs": [
+          "Catalogue information may differ from a seller’s current offer. Verify size, colour, piece count, final price, availability, shipping and returns before buying. A product shown in a design does not by itself confirm stock or manufacturing quality."
+        ]
+      },
+      {
+        "title": "Your content and support",
+        "paragraphs": [
+          "Use photos and content you have permission to use. Do not attempt unauthorised access or disruption. Contact FARBOD.LOTFI@PARSMEHRAGRO.COM about the service or your account data. These pages do not replace the terms independently provided by model services or sellers.",
+          "For service or account-data questions, email FARBOD.LOTFI@PARSMEHRAGRO.COM. This guide does not replace the independently published terms of model providers or sellers."
+        ]
+      }
+    ]
+  }
+}
