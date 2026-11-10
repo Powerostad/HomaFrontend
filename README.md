@@ -1,88 +1,15 @@
-# 🏠 HOMA - پلتفرم AI برای تست محصولات در فضای شما
+# Homa Frontend — راهنمای انتخاب نسخه
 
-پلتفرم HOMA به کاربران اجازه می‌دهد محصولات را در فضای خود تست کنند. این پروژه با استفاده از React، TypeScript و Tailwind CSS ساخته شده است.
+برای بررسی یا تغییر **نسخهٔ منتشرشدهٔ myhoma.ir** از اینجا شروع کنید:
 
----
+**[سورس تأییدشدهٔ فرانت سرور](https://github.com/Powerostad/HomaFrontend/tree/codex/production-server-20261110)**
 
-## 🚀 راه‌اندازی پروژه
+- [ساختار کد، Build و Runtime](https://github.com/Powerostad/HomaFrontend/blob/codex/production-server-20261110/docs/production/README.md)
+- [شناسهٔ ایمیج و شواهد تطبیق ۱۴۰ فایل انتشار](https://github.com/Powerostad/HomaFrontend/blob/codex/production-server-20261110/docs/production/source-manifest.json)
+- [شاخه‌های تاریخی و تگ‌های بایگانی](https://github.com/Powerostad/HomaFrontend/blob/codex/production-server-20261110/docs/history/branch-registry.json)
+- [کارهای منتشرنشده و محتوای بلاگ](https://github.com/Powerostad/HomaFrontend/blob/codex/production-server-20261110/docs/history/pull-requests.md)
+- [بک‌اند فعال](https://github.com/Powerostad/HomaBackend/tree/codex/production-server-20261110)
 
-### پیش‌نیازها
+`dev` شاخهٔ ادغام قدیمی است؛ صرف حضور فایل یا PR در آن به معنی انتشار روی سرور نیست. این شاخه بی‌صدا با سورس سرور جایگزین نشده است. نسخهٔ قبلی در تگ `archive/2026-11-10/dev` محفوظ است.
 
-- Node.js (نسخه 18 یا بالاتر)
-- npm یا yarn
-
-### نصب و اجرا
-
-```bash
-# نصب وابستگی‌ها
-npm install
-
-# اجرای نسخه توسعه
-npm run dev
-```
-
-اپلیکیشن در آدرس `http://localhost:5173` (یا پورت مشابه) در دسترس خواهد بود.
-
----
-
-## 🎯 ویژگی‌های اصلی
-
-- **Product-Aware Flow**: شناسایی محصول از URL و پارامترهای UTM
-- **AI Image Processing**: پردازش تصویر و جایگذاری محصول (شبیه‌سازی شده)
-- **KPI Tracking**: ردیابی کامل شاخص‌های کلیدی عملکرد
-- **RTL Support**: پشتیبانی کامل از راست‌چین و زبان فارسی
-- **Responsive Design**: طراحی واکنش‌گرا برای موبایل و دسکتاپ
-- **Dark Mode Support**: استایل‌دهی متناسب با تم تاریک و روشن
-
----
-
-## 🛠 تکنولوژی‌های استفاده شده
-
-- **React 18** + **TypeScript**
-- **Vite**
-- **Tailwind CSS v4.0**
-- **Framer Motion** (برای انیمیشن‌ها)
-- **shadcn/ui** (کامپوننت‌های رابط کاربری)
-- **Lucide React** (آیکون‌ها)
-
----
-
-## 🎨 رنگ‌های برند
-
-این پروژه از سیستم رنگی HOMA پیروی می‌کند:
-
-- **رنگ اصلی (Accent):** `#E31E24` (قرمز)
-- **رنگ ثانویه:** `#F5E6D3` (بژ/کرم)
-- **پس‌زمینه:** `#f2f2f7` (روشن) / `#000000` (تاریک)
-
-برای تغییر رنگ‌ها می‌توانید فایل `styles/globals.css` را ویرایش کنید.
-
----
-
-## 📁 ساختار پروژه
-
-```
-/
-├── components/        # کامپوننت‌های React
-├── pages/             # صفحات اصلی اپلیکیشن
-├── styles/            # فایل‌های CSS و استایل‌های جهانی
-├── utils/             # توابع کمکی و ابزارها
-├── types/             # تعاریف تایپ‌های TypeScript
-├── context/           # Context API (مدیریت وضعیت)
-└── src/               # فایل ورودی اصلی (main.tsx)
-```
-
----
-
-## 🧪 تست و توسعه
-
-برای تست فلوهای مختلف می‌توانید از ابزارهای توسعه‌دهنده در کنسول مرورگر استفاده کنید. توابع کمکی در `utils/testHelpers.ts` موجود هستند.
-
-```javascript
-// مثال: شبیه‌سازی یک فلوی کامل
-homaTest.simulateCompleteFlow()
-```
-
----
-
-**ساخته شده با ❤️ برای HOMA**
+مرجع مستقل فقط از نسخهٔ منتشرشده تهیه شده؛ تغییرات آزمایشی لوکال در آن وارد نشده‌اند. دیتابیس محصولات، عکس کاربران و کلیدها بخشی از سورس Git نیستند. وضعیت تست‌ها و محدودیت‌ها در راهنمای مرجع ثبت شده است.
