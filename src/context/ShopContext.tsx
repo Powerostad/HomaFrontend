@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useRef } from "react";
-import { Shop } from "@/types/shop";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { fetchShopByUsername } from "@/services/shopService";
+import { Shop } from "@/types/shop";
+import { createContext, ReactNode, useCallback, useContext, useRef, useState } from "react";
 
 /**
  * ShopContext - manages shop data with caching to prevent duplicate API calls
@@ -44,6 +45,7 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export function ShopProvider({ children }: { children: ReactNode }) {
+  const { siteText, siteValue } = useSiteTranslation();
   // Using ref for cache to avoid re-renders on cache updates
   const cacheRef = useRef<Map<string, ShopCacheEntry>>(new Map());
 
@@ -123,7 +125,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         } else {
           setErrorState(prev => ({
             ...prev,
-            [normalizedUsername]: result.error || 'فروشگاه یافت نشد'
+            [normalizedUsername]: result.error || siteText("فروشگاه یافت نشد")
           }));
           return null;
         }
@@ -139,7 +141,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
         const errorMessage = error instanceof Error
           ? error.message
-          : 'خطا در دریافت اطلاعات فروشگاه';
+          : siteText("خطا در دریافت اطلاعات فروشگاه");
         setErrorState(prev => ({ ...prev, [normalizedUsername]: errorMessage }));
         return null;
       } finally {
@@ -179,7 +181,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         clearCache,
       }}
     >
-      {children}
+      {siteValue(children)}
     </ShopContext.Provider>
   );
 }

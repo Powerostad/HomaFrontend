@@ -1,95 +1,47 @@
 #!/bin/sh
-set -eu
+# vim:sw=4:ts=4:et
 
-CONFIG_FILE=/usr/share/nginx/html/config.js
-CSP_FILE=/etc/nginx/conf.d/runtime-csp.conf
+set -e
 
-json_string() {
-  # Escape values as JavaScript/JSON strings so quotes, backslashes, tabs, and
-  # carriage returns cannot break the generated config.js syntax.
-  printf '"'
-  printf '%s' "${1:-}" \
-    | sed \
-      -e 's/\\/\\\\/g' \
-      -e 's/"/\\"/g' \
-      -e 's/	/\\t/g' \
-      -e 's/\r/\\r/g' \
-      -e ':a;N;$!ba;s/\n/\\n/g'
-  printf '"'
+entrypoint_log() {
+    if [ -z "${NGINX_ENTRYPOINT_QUIET_LOGS:-}" ]; then
+        echo "$@"
+    fi
 }
 
-write_config_value() {
-  key=$1
-  value=$2
-  comma=${3:-,}
-  printf '  %s: %s%s\n' "$key" "$(json_string "$value")" "$comma" >> "$CONFIG_FILE"
-}
+if [ "$1" = "nginx" ] || [ "$1" = "nginx-debug" ]; then
+    if /usr/bin/find "/docker-entrypoint.d/" -mindepth 1 -maxdepth 1 -type f -print -quit 2>/dev/null | read v; then
+        entrypoint_log "$0: /docker-entrypoint.d/ is not empty, will attempt to perform configuration"
 
-cat > "$CONFIG_FILE" <<'EOF'
-// Runtime configuration generated when the container starts.
-// Vite import.meta.env values are build-time only; use this file for Dokploy
-// Compose environment variables that must change without rebuilding the image.
-window.__APP_CONFIG__ = {
-EOF
+        entrypoint_log "$0: Looking for shell scripts in /docker-entrypoint.d/"
+        find "/docker-entrypoint.d/" -follow -type f -print | sort -V | while read -r f; do
+            case "$f" in
+                *.envsh)
+                    if [ -x "$f" ]; then
+                        entrypoint_log "$0: Sourcing $f";
+                        . "$f"
+                    else
+                        # warn on shell scripts without exec bit
+                        entrypoint_log "$0: Ignoring $f, not executable";
+                    fi
+                    ;;
+                *.sh)
+                    if [ -x "$f" ]; then
+                        entrypoint_log "$0: Launching $f";
+                        "$f"
+                    else
+                        # warn on shell scripts without exec bit
+                        entrypoint_log "$0: Ignoring $f, not executable";
+                    fi
+                    ;;
+                *) entrypoint_log "$0: Ignoring $f";;
+            esac
+        done
 
-write_config_value VITE_API_BASE_URL "${VITE_API_BASE_URL:-}"
-# VITE_PUBLIC_MEDIA_* no longer feed the app (backend returns full media URLs);
-# VITE_PUBLIC_MEDIA_BASE_URL / VITE_PRIVATE_MEDIA_BASE_URL are still read below
-# for the CSP connect-src (download/share blob fetch), straight from the env.
-write_config_value VITE_API_TIMEOUT "${VITE_API_TIMEOUT:-}"
-write_config_value VITE_API_IMAGE_PROCESSING_TIMEOUT "${VITE_API_IMAGE_PROCESSING_TIMEOUT:-}"
-write_config_value VITE_UMAMI_SRC "${VITE_UMAMI_SRC:-}"
-write_config_value VITE_UMAMI_WEBSITE_ID "${VITE_UMAMI_WEBSITE_ID:-}"
-write_config_value VITE_AUTH_MODE "${VITE_AUTH_MODE:-}"
-write_config_value VITE_ENABLE_UMAMI_IN_DEV "${VITE_ENABLE_UMAMI_IN_DEV:-}"
-write_config_value VITE_ENABLE_REALTIME "${VITE_ENABLE_REALTIME:-true}" ""
-
-cat >> "$CONFIG_FILE" <<'EOF'
-};
-EOF
-
-origin_from_url() {
-  printf '%s' "${1:-}" \
-    | sed -n 's#^\(https\{0,1\}://[A-Za-z0-9._:-][A-Za-z0-9._:-]*\).*#\1#p'
-}
-
-API_ORIGIN=$(origin_from_url "${VITE_API_BASE_URL:-https://api.myhoma.ir}")
-case "$API_ORIGIN" in
-  https://*) WS_ORIGIN="wss://${API_ORIGIN#https://}" ;;
-  http://*) WS_ORIGIN="ws://${API_ORIGIN#http://}" ;;
-  *) WS_ORIGIN='' ;;
-esac
-# Umami needs its origin in script-src (to load script.js) AND connect-src
-# (the tracker POSTs collected data to {origin}/api/send).
-UMAMI_ORIGIN=$(origin_from_url "${VITE_UMAMI_SRC:-https://analytics.myhoma.ir}")
-# Media origins — image download/share fetch() bytes from the CDN (public) and
-# the direct-MinIO host (presigned private), so both need to be in connect-src.
-PUBLIC_MEDIA_ORIGIN=$(origin_from_url "${VITE_PUBLIC_MEDIA_BASE_URL:-}")
-PRIVATE_MEDIA_ORIGIN=$(origin_from_url "${VITE_PRIVATE_MEDIA_BASE_URL:-}")
-
-CONNECT_SRC="'self'"
-if [ -n "$API_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $API_ORIGIN"
-fi
-if [ -n "$WS_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $WS_ORIGIN"
-fi
-if [ -n "$UMAMI_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $UMAMI_ORIGIN"
-fi
-if [ -n "$PUBLIC_MEDIA_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $PUBLIC_MEDIA_ORIGIN"
-fi
-if [ -n "$PRIVATE_MEDIA_ORIGIN" ]; then
-  CONNECT_SRC="$CONNECT_SRC $PRIVATE_MEDIA_ORIGIN"
+        entrypoint_log "$0: Configuration complete; ready for start up"
+    else
+        entrypoint_log "$0: No files found in /docker-entrypoint.d/, skipping configuration"
+    fi
 fi
 
-SCRIPT_SRC="'self' 'unsafe-inline'"
-if [ -n "$UMAMI_ORIGIN" ]; then
-  SCRIPT_SRC="$SCRIPT_SRC $UMAMI_ORIGIN"
-fi
-
-cat > "$CSP_FILE" <<EOF
-# Runtime CSP generated from public environment variables.
-add_header Content-Security-Policy "default-src 'self'; script-src $SCRIPT_SRC; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src $CONNECT_SRC; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self';" always;
-EOF
+exec "$@"

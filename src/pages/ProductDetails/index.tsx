@@ -1,34 +1,36 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import {
+  ChevronDown,
   Heart,
-  Sparkles,
   RefreshCw,
-  Store as StoreIcon,
-  ChevronDown
+  Sparkles,
+  Store as StoreIcon
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useProduct, useShop } from '../../context/AppProviders';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { Button } from '../../components/ui/button';
-import { trackEvent } from '../../utils/analytics';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { trackProductViewed, trackStoreViewed, trackTryOnCtaClicked } from '../../analytics/events';
+import { BuyButton } from '../../components/BuyButton';
+import { ContextBar } from '../../components/ContextBar';
 import { Header } from '../../components/Header';
 import { HomaLoader } from "../../components/HomaLoader";
-import { ContextBar } from '../../components/ContextBar';
-import { BuyButton } from '../../components/BuyButton';
 import { AddToBasketButton } from '../../components/basket/AddToBasketButton';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { Button } from '../../components/ui/button';
+import { useProduct, useShop } from '../../context/AppProviders';
+import { trackEvent } from '../../utils/analytics';
 import { formatPriceFromRial } from '../../utils/formatters';
 // TODO: Re-enable when backend /api/recommendations/gallery/product is ready
 // import { ProductSocialGallery } from '../../components/ProductSocialGallery';
-import { fetchProduct } from '../../services/productService';
-import { apiProductToProduct } from '../../types/apiProduct';
-import type { Shop } from '../../types/shop';
-import type { APIProduct } from '../../types/apiProduct';
-import type { Product } from '../../types/product';
 import { useSeo } from '@/hooks/useSeo';
+import { fetchProduct } from '../../services/productService';
+import type { APIProduct } from '../../types/apiProduct';
+import { apiProductToProduct } from '../../types/apiProduct';
+import type { Product } from '../../types/product';
+import type { Shop } from '../../types/shop';
 
 export function ProductDetailsPage() {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
   const navigate = useNavigate();
   const { setProduct } = useProduct();
@@ -47,7 +49,7 @@ export function ProductDetailsPage() {
     description: product?.description
       ? product.description.slice(0, 160)
       : product?.name
-        ? `${product.name} را با هوش مصنوعی HOMA در فضای خود ببینید.`
+        ? siteText("{{v0}} را با هوش مصنوعی HOMA در فضای خود ببینید.", { v0: product.name })
         : undefined,
     image: product?.images?.[0] || product?.thumbnail || undefined,
     type: 'product',
@@ -92,7 +94,7 @@ export function ProductDetailsPage() {
       if (!productResult.success || !productResult.data) {
         // Only show error if not aborted
         if (!abortController.signal.aborted) {
-          setProductError(productResult.error || 'محصول یافت نشد');
+          setProductError(productResult.error || siteText("محصول یافت نشد"));
           setIsLoadingProduct(false);
         }
         return;
@@ -158,11 +160,11 @@ export function ProductDetailsPage() {
   // Error state
   if (error && !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir={siteDirection()}>
         <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
           <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
         </div>
-        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{error}</h2>
+        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{siteValue(error)}</h2>
         <div className="flex gap-3 mt-4">
           <Button
             onClick={handleRetry}
@@ -170,28 +172,26 @@ export function ProductDetailsPage() {
             className="flex items-center gap-2"
           >
             <RefreshCw size={16} />
-            تلاش مجدد
-          </Button>
+            {siteText("تلاش مجدد")}</Button>
           <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
-            بازگشت
-          </Button>
+            {siteText("بازگشت")}</Button>
         </div>
       </div>
     );
   }
 
-  if (!product) return <div className="p-8 text-center text-muted-foreground">محصول یافت نشد</div>;
+  if (!product) return <div className="p-8 text-center text-muted-foreground">{siteText("محصول یافت نشد")}</div>;
 
   // Future use: const currentPrice = PRODUCT_SIZES.find(s => s.id === selectedSize)?.price || product.price;
 
   return (
-    <div className="min-h-screen bg-[#FDFDFB] selection:bg-black/5 flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-[#FDFDFB] selection:bg-black/5 flex flex-col" dir={siteDirection()}>
       <Header />
       <ContextBar 
         items={[
-          { label: 'خانه', href: '/' },
-          { label: 'فروشگاه‌ها', href: '/explore' },
-          { label: store?.name || 'فروشگاه', href: `/store/${slug}` },
+          { label: siteText("خانه"), href: '/' },
+          { label: siteText("فروشگاه‌ها"), href: '/explore' },
+          { label: store?.name || siteText("فروشگاه"), href: `/store/${slug}` },
           { label: product.name }
         ]}
       />
@@ -214,7 +214,7 @@ export function ProductDetailsPage() {
                 >
                   <ImageWithFallback
                     src={product.images?.[activeImageIdx] || product.thumbnail}
-                    alt={product.name}
+                    alt={siteValue(product.name)}
                     className="w-full h-full object-cover"
                   />
                 </motion.div>
@@ -222,9 +222,9 @@ export function ProductDetailsPage() {
             </div>
 
             {/* Vertical Thumbnails - only show if multiple images */}
-            {product.images && product.images.length > 1 && (
+            {siteValue(product.images && product.images.length > 1 && (
               <div className="hidden lg:flex flex-col gap-2 shrink-0">
-                {product.images.map((imgSrc, i) => (
+                {siteValue(product.images.map((imgSrc, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImageIdx(i)}
@@ -234,9 +234,9 @@ export function ProductDetailsPage() {
                   >
                     <ImageWithFallback src={imgSrc} className="w-full h-full object-cover" />
                   </button>
-                ))}
+                )))}
               </div>
-            )}
+            ))}
           </div>
 
           {/* EDITORIAL INFO PANEL */}
@@ -245,32 +245,32 @@ export function ProductDetailsPage() {
               
               {/* Product Heading */}
               <div className="space-y-4">
-                {product.category && (
+                {siteValue(product.category && (
                   <div className="flex items-center gap-2 text-[10px] text-black/40 font-bold uppercase tracking-widest">
-                    <span>{product.category}</span>
+                    <span>{siteValue(product.category)}</span>
                   </div>
-                )}
+                ))}
 
                 <div className="space-y-2">
                   <h1 className="text-[22px] lg:text-[24px] font-bold text-black leading-tight tracking-wide">
-                    {product.name}
+                    {siteValue(product.name)}
                   </h1>
                   <div className="flex items-baseline gap-2">
                     <span className="text-[16px] lg:text-[18px] font-bold text-black">
-                      {product.price ? formatPriceFromRial(product.price) : '۰ تومان'}
+                      {siteValue(product.price ? formatPriceFromRial(product.price) : siteText("۰ تومان"))}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Description */}
-              {product.description && (
+              {siteValue(product.description && (
                 <div className="py-6 border-t border-black/[0.05]">
                   <p className="text-[13px] text-black/60 leading-relaxed font-medium">
-                    {product.description}
+                    {siteValue(product.description)}
                   </p>
                 </div>
-              )}
+              ))}
 
               {/* Action Buttons */}
               <div className="pt-8 space-y-3">
@@ -280,10 +280,10 @@ export function ProductDetailsPage() {
                     className="w-full h-14 rounded-none bg-black text-white hover:bg-black/90 text-[12px] lg:text-[14px] font-bold tracking-wide lg:tracking-[0.2em] transition-all flex items-center justify-center gap-2 lg:gap-3 shadow-2xl"
                   >
                     <Sparkles size={18} className="shrink-0" />
-                    <span className="truncate">امتحانش کن در فضای خودت (AI Try-On)</span>
+                    <span className="truncate">{siteText("امتحانش کن در فضای خودت (AI Try-On)")}</span>
                   </Button>
                   <div className="flex gap-2 w-full">
-                    {apiProduct && (
+                    {siteValue(apiProduct && (
                       <AddToBasketButton
                         productUniqueLink={apiProduct.uniqueLink}
                         sourceContext="product_page"
@@ -291,14 +291,13 @@ export function ProductDetailsPage() {
                         size="lg"
                         className="flex-1 h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest"
                       />
-                    )}
+                    ))}
                     <button className="flex-1 h-12 flex items-center justify-center border border-black/10 hover:bg-black/5 transition-all text-black/60 font-bold text-[12px] gap-2">
                       <Heart size={18} strokeWidth={1} />
-                      ذخیره برای بعد
-                    </button>
+                      {siteText("ذخیره برای بعد")}</button>
                   </div>
                   {/* Buy Button - Opens retailer in new tab */}
-                  {apiProduct && (
+                  {siteValue(apiProduct && (
                     <BuyButton
                       productId={apiProduct.uniqueLink}
                       sourceContext="product_page"
@@ -307,17 +306,17 @@ export function ProductDetailsPage() {
                       size="lg"
                       className="w-full h-12 rounded-none border-black/10 text-black hover:bg-black/5 text-[13px] font-bold tracking-widest mt-3"
                     />
-                  )}
+                  ))}
                 </div>
 
                 {/* Product Details Toggle */}
-                {apiProduct?.extraDetails && Object.keys(apiProduct.extraDetails).length > 0 && (
+                {siteValue(apiProduct?.extraDetails && Object.keys(apiProduct.extraDetails).length > 0 && (
                   <div className="pt-6 border-t border-black/[0.05]">
                     <button
                       onClick={() => setShowDetails(!showDetails)}
                       className="flex items-center justify-between w-full text-[11px] font-bold text-black/60 uppercase tracking-widest hover:text-black transition-colors"
                     >
-                      <span>جزئیات محصول</span>
+                      <span>{siteText("جزئیات محصول")}</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}
@@ -325,7 +324,7 @@ export function ProductDetailsPage() {
                     </button>
 
                     <AnimatePresence>
-                      {showDetails && (
+                      {siteValue(showDetails && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
@@ -335,21 +334,21 @@ export function ProductDetailsPage() {
                         >
                           <table className="w-full mt-4 text-[13px]">
                             <tbody>
-                              {Object.entries(apiProduct.extraDetails).map(([key, value]) => (
+                              {siteValue(Object.entries(apiProduct.extraDetails).map(([key, value]) => (
                                 <tr key={key} className="border-b border-black/[0.05]">
-                                  <td className="py-3 text-black/40 font-medium w-1/3">{key}</td>
+                                  <td className="py-3 text-black/40 font-medium w-1/3">{siteValue(key)}</td>
                                   <td className="py-3 text-black/80 font-medium">
-                                    {Array.isArray(value) ? value.join('، ') : value}
+                                    {siteValue(Array.isArray(value) ? value.join('، ') : value)}
                                   </td>
                                 </tr>
-                              ))}
+                              )))}
                             </tbody>
                           </table>
                         </motion.div>
-                      )}
+                      ))}
                     </AnimatePresence>
                   </div>
-                )}
+                ))}
               </div>
 
             </div>
@@ -375,8 +374,7 @@ export function ProductDetailsPage() {
           onClick={handleTestDecor}
           className="w-full h-12 rounded-none bg-black text-white text-[13px] font-bold active:scale-[0.98]"
         >
-          امتحانش کن در فضای خودت
-        </Button>
+          {siteText("امتحانش کن در فضای خودت")}</Button>
       </div>
 
     </div>

@@ -21,7 +21,7 @@ export function EmptyGallery() {
       </div>
 
       <Button
-        onClick={() => navigate('/studio/upload')}
+        onClick={() => navigate('/studio')}
         className="h-[56px] px-10 bg-foreground text-background rounded-full font-bold text-[14px] active:scale-95 transition-all shadow-lg"
       >
         {t('tryOn.result.startExperience')}

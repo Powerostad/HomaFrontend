@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Product / suggestion rendering for the Room Redesign flow (Studio editorial skin):
  *  - ImpactRow          (ranked change: square rank badge, title, impact bars, cost)
@@ -5,10 +6,10 @@
  *  - ProductCarousel    (horizontal scroller of ProductCards)
  *  - SelectedProductCard / SelectedCarousel (Phase 3 carousel + basket rows)
  */
-import { Heart, X, ShoppingBag } from 'lucide-react';
-import { motion } from 'motion/react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { formatPriceFromRial, toPersianDigits } from '@/utils/formatters';
+import { formatPriceFromRial, toLocalizedDigits } from '@/utils/formatters';
+import { Heart, ShoppingBag, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { RD } from '../theme';
 import type { CostLevel, ImpactItem, RedesignProduct } from '../types';
 
@@ -22,21 +23,23 @@ const COST_META: Record<CostLevel, { label: string; color: string }> = {
 };
 
 export function ImpactBars({ value }: { value: number }) {
+  const { siteValue } = useSiteTranslation();
   const heights = [5, 7, 9, 11, 13];
   return (
     <span className="flex items-end gap-[2px] h-3.5">
-      {heights.map((h, i) => (
+      {siteValue(heights.map((h, i) => (
         <span
           key={i}
           className="w-[4px] rounded-full"
           style={{ height: h, backgroundColor: i < value ? RD.greenMid : RD.impactBarEmpty }}
         />
-      ))}
+      )))}
     </span>
   );
 }
 
 export function ImpactRow({ item }: { item: ImpactItem }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const cost = COST_META[item.cost];
   return (
     <div className="flex items-center justify-between py-3.5" style={{ fontFamily: 'Vazirmatn' }}>
@@ -46,23 +49,23 @@ export function ImpactRow({ item }: { item: ImpactItem }) {
           className="w-6 h-6 rounded-[6px] flex items-center justify-center text-[12px] font-black text-white shrink-0"
           style={{ backgroundColor: RD.greenDeep }}
         >
-          {toPersianDigits(item.rank)}
+          {siteValue(toLocalizedDigits(item.rank))}
         </span>
         <span className="text-[15px] font-bold" style={{ color: RD.ink }}>
-          {item.title}
+          {siteValue(item.title)}
         </span>
       </div>
 
       {/* Left (metrics) */}
       <div className="flex items-center gap-3.5 shrink-0">
         <span className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ color: RD.inkMuted }}>تأثیر</span>
+          <span className="text-[11px]" style={{ color: RD.inkMuted }}>{siteText("تأثیر")}</span>
           <ImpactBars value={item.impact} />
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ color: RD.inkMuted }}>هزینه</span>
+          <span className="text-[11px]" style={{ color: RD.inkMuted }}>{siteText("هزینه")}</span>
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cost.color }} />
-          <span className="text-[11.5px] font-medium" style={{ color: cost.color }}>{cost.label}</span>
+          <span className="text-[11.5px] font-medium" style={{ color: cost.color }}>{siteValue(cost.label)}</span>
         </span>
       </div>
     </div>
@@ -71,6 +74,7 @@ export function ImpactRow({ item }: { item: ImpactItem }) {
 
 // ── ProductCard (vertical, sharp editorial) ─────────────────────────
 export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAdd?: () => void }) {
+  const { siteText, siteValue } = useSiteTranslation();
   return (
     <div
       className="w-full min-w-0 overflow-hidden"
@@ -79,12 +83,12 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
       <div className="relative w-full aspect-[4/5]" style={{ backgroundColor: 'var(--editorial-product-bg)' }}>
         <ImageWithFallback
           src={product.imageUrl}
-          alt={product.name}
+          alt={siteValue(product.name)}
           className="w-full h-full object-cover mix-blend-multiply"
         />
         <button
           type="button"
-          aria-label="پسندیدن"
+          aria-label={siteText("پسندیدن")}
           className="absolute top-2 left-2 w-8 h-8 flex items-center justify-center active:scale-90 transition"
           style={{ background: 'transparent', border: `1px solid ${RD.line}`, color: RD.ink }}
         >
@@ -93,19 +97,19 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
       </div>
       <div className="pt-2 px-2.5 pb-2.5">
         <h4 className="text-[13px] font-semibold leading-tight line-clamp-1" style={{ color: RD.ink }}>
-          {product.name}
+          {siteValue(product.name)}
         </h4>
-        <p className="text-[11px] mt-0.5" style={{ color: RD.inkMuted }}>{product.subtitle}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: RD.inkMuted }}>{siteValue(product.subtitle)}</p>
         <div className="mt-2 space-y-2">
           <span className="flex items-baseline gap-1 min-w-0">
             <span className="text-[14px] font-normal tabular-nums truncate" style={{ color: RD.inkSoft }}>
-              {product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : 'قیمت نامشخص'}
+              {siteValue(product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : siteText("قیمت نامشخص"))}
             </span>
-            <span className="text-[11px] shrink-0" style={{ color: RD.inkMuted }}>تومان</span>
+            <span className="text-[11px] shrink-0" style={{ color: RD.inkMuted }}>{siteText("تومان")}</span>
           </span>
           <motion.button
             type="button"
-            aria-label="افزودن به سبد"
+            aria-label={siteText("افزودن به سبد")}
             onClick={onAdd}
             whileTap={TAP}
             transition={SPRING}
@@ -119,8 +123,7 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
               fontFamily: 'Vazirmatn',
             }}
           >
-            افزودن
-          </motion.button>
+            {siteText("افزودن")}</motion.button>
         </div>
       </div>
     </div>
@@ -128,13 +131,14 @@ export function ProductCard({ product, onAdd }: { product: RedesignProduct; onAd
 }
 
 export function ProductCarousel({ products, onAdd }: { products: RedesignProduct[]; onAdd?: (p: RedesignProduct) => void }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-3">
-      {products.map((p) => (
+      {siteValue(products.map((p) => (
         <div key={p.id} className="w-[150px] shrink-0">
           <ProductCard product={p} onAdd={() => onAdd?.(p)} />
         </div>
-      ))}
+      )))}
     </div>
   );
 }
@@ -149,6 +153,7 @@ export function SelectedProductCard({
   variant?: 'card' | 'row';
   onRemove?: () => void;
 }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const isRow = variant === 'row';
   return (
     <div
@@ -157,39 +162,40 @@ export function SelectedProductCard({
     >
       <motion.button
         type="button"
-        aria-label={isRow ? 'حذف از سبد' : 'افزودن به سبد'}
+        aria-label={siteValue(isRow ? siteText("حذف از سبد") : siteText("افزودن به سبد"))}
         onClick={onRemove}
         whileTap={{ scale: 0.92 }}
         transition={SPRING}
         className="w-9 h-9 flex items-center justify-center shrink-0 order-first"
         style={{ background: 'transparent', border: `1px solid ${RD.line}`, color: RD.ink }}
       >
-        {isRow ? <X size={15} strokeWidth={1.75} /> : <ShoppingBag size={15} strokeWidth={1.75} />}
+        {siteValue(isRow ? <X size={15} strokeWidth={1.75} /> : <ShoppingBag size={15} strokeWidth={1.75} />)}
       </motion.button>
       <div className="flex-1 min-w-0 text-right">
         <h4 className="text-[12.5px] font-semibold leading-tight line-clamp-1" style={{ color: RD.ink }}>
-          {product.name}
+          {siteValue(product.name)}
         </h4>
         <span className="flex items-baseline gap-1 justify-start mt-1">
           <span className="text-[12px] font-normal tabular-nums" style={{ color: RD.inkSoft }}>
-            {product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : 'قیمت نامشخص'}
+            {siteValue(product.priceRial != null ? formatPriceFromRial(product.priceRial, false) : siteText("قیمت نامشخص"))}
           </span>
-          <span className="text-[9.5px]" style={{ color: RD.inkMuted }}>تومان</span>
+          <span className="text-[9.5px]" style={{ color: RD.inkMuted }}>{siteText("تومان")}</span>
         </span>
       </div>
       <div className="w-16 h-16 overflow-hidden shrink-0" style={{ backgroundColor: 'var(--editorial-product-bg)' }}>
-        <ImageWithFallback src={product.imageUrl} alt={product.name} className="w-full h-full object-cover mix-blend-multiply" />
+        <ImageWithFallback src={product.imageUrl} alt={siteValue(product.name)} className="w-full h-full object-cover mix-blend-multiply" />
       </div>
     </div>
   );
 }
 
 export function SelectedCarousel({ products }: { products: RedesignProduct[] }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-5 px-5 pb-1">
-      {products.map((p) => (
+      {siteValue(products.map((p) => (
         <SelectedProductCard key={p.id} product={p} />
-      ))}
+      )))}
     </div>
   );
 }

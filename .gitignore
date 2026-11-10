@@ -25,6 +25,10 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.studio-local
+studio-pipeline-v3-*.log
+studio-pipeline-v4-*.log
+/docs/validation/screenshots/studio-v2-local-live.jpg
 
 # typescript
 *.tsbuildinfo
@@ -32,3 +36,19 @@ next-env.d.ts
 
 # Generated SEO audit artifacts
 /reports/
+
+# Production evidence must not contribute Tailwind class candidates.
+production/artifact/
+production/runtime/
+
+# Operational data and credentials are not source.
+.env*
+!.env.example
+*.private.*
+*.sqlite3
+*.bundle
+*.tar.gz
+
+# Versioned reference documents must not change Tailwind class discovery.
+/docs/production/
+/docs/history/

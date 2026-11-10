@@ -1,7 +1,8 @@
-import { SimpleButton as Button } from "./SimpleButton";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { AlertCircle, RefreshCcw, WifiOff } from "lucide-react";
 import { motion } from "motion/react";
-import { WifiOff, RefreshCcw, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SimpleButton as Button } from "./SimpleButton";
 
 interface ErrorRecoveryProps {
   errorType: "network" | "timeout" | "server" | "unknown";
@@ -10,6 +11,7 @@ interface ErrorRecoveryProps {
 }
 
 export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
 
   const getErrorContent = () => {
@@ -91,9 +93,9 @@ export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryPro
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-center mb-8"
           >
-            <h2 className="text-gray-900 mb-3">{content.title}</h2>
+            <h2 className="text-gray-900 mb-3">{siteValue(content.title)}</h2>
             <p className="text-gray-600 leading-relaxed">
-              {content.message}
+              {siteValue(content.message)}
             </p>
           </motion.div>
 
@@ -129,7 +131,7 @@ export function ErrorRecovery({ errorType, onRetry, onCancel }: ErrorRecoveryPro
             className="mt-6 text-center"
           >
             <p className="text-gray-500">
-              {t('errorRecovery.needHelp')}{" "}
+              {t('errorRecovery.needHelp')}{siteValue(" ")}
               <button className="text-gray-900 hover:underline">
                 {t('errorRecovery.contactSupport')}
               </button>

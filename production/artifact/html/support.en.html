@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homa support</title><link rel="canonical" href="https://myhoma.ir/support"><meta name="description" content="Studio help, request tracking and product guidance.">
+
+<style>body{margin:0}/**
+ * HOMA Design System - Design Tokens
+ * ===================================
+ * Single source of truth for all design values.
+ *
+ * Usage in Tailwind CSS v4:
+ * - Colors: bg-surface-page, text-content-primary, border-subtle
+ * - Z-Index: z-modal, z-toast, z-loader
+ * - Spacing: Uses Tailwind defaults (p-4, m-6, gap-8)
+ * - Typography: Uses Tailwind defaults + custom font families
+ *
+ * IMPORTANT: Do NOT use hardcoded values like bg-[#F7F7F5] or z-[9999]
+ * Always use semantic tokens defined here.
+ */
+
+:root {
+  /* ========================================
+     BRAND COLORS
+     ======================================== */
+  --color-brand-primary: #E31E24;        /* Homa Red - accent buttons, highlights */
+  --color-brand-secondary: #F5E6D3;      /* Homa Cream - secondary backgrounds */
+
+  /* ========================================
+     SURFACE/BACKGROUND COLORS
+     Reduced from 149 variations to 5 semantic tokens
+     ======================================== */
+  --color-surface-page: #F7F7F5;         /* Main page background (was: bg-[#F7F7F5]) */
+  --color-surface-default: #FFFFFF;      /* Cards, modals, containers */
+  --color-surface-elevated: #FDFDFB;     /* Elevated elements, dropdowns */
+  --color-surface-muted: #F2F2F7;        /* Subtle backgrounds, disabled states */
+  --color-surface-inverse: #080808;      /* Dark backgrounds, inverse sections */
+
+  /* ========================================
+     TEXT/CONTENT COLORS
+     ======================================== */
+  --color-content-primary: #1a1a1a;      /* Main text (was: text-[#1a1a1a]) */
+  --color-content-secondary: #6B7280;    /* Secondary text (was: text-[#6B7280]) */
+  --color-content-muted: #9CA3AF;        /* Placeholder, disabled text */
+  --color-content-inverse: #FFFFFF;      /* Text on dark backgrounds */
+  --color-content-brand: #E31E24;        /* Brand-colored text */
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --color-border-default: rgba(0, 0, 0, 0.03);   /* Subtle borders (was: border-black/[0.03]) */
+  --color-border-subtle: #E9E9E6;               /* Light borders */
+  --color-border-strong: rgba(0, 0, 0, 0.1);    /* More visible borders */
+  --color-border-inverse: rgba(255, 255, 255, 0.1); /* Borders on dark backgrounds */
+
+  /* ========================================
+     INTERACTIVE STATE COLORS
+     ======================================== */
+  --color-interactive-primary: #111111;         /* Primary button bg */
+  --color-interactive-primary-hover: #0B0B0B;
+  --color-interactive-primary-active: #000000;
+  --color-interactive-secondary: rgba(120, 120, 128, 0.16);
+  --color-interactive-destructive: #FF383C;
+
+  /* ========================================
+     FEEDBACK COLORS
+     ======================================== */
+  --color-feedback-success: #00312D;
+  --color-feedback-warning: #FC6F20;
+  --color-feedback-error: #5D0D02;
+  --color-feedback-info: #0088FF;
+  --color-feedback-bg: #FEE8D0;
+
+  /* ========================================
+     Z-INDEX SCALE
+     Systematic layering (was: chaos with z-[9999], z-[9998], etc.)
+     ======================================== */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-toast: 700;
+  --z-tooltip: 800;
+  --z-loader: 9999;
+
+  /* ========================================
+     SPACING SCALE
+     Based on 4px grid (matches Tailwind defaults)
+     ======================================== */
+  --space-0: 0;
+  --space-1: 4px;     /* Tailwind: p-1 */
+  --space-2: 8px;     /* Tailwind: p-2 */
+  --space-3: 12px;    /* Tailwind: p-3 */
+  --space-4: 16px;    /* Tailwind: p-4 */
+  --space-5: 20px;    /* Tailwind: p-5 */
+  --space-6: 24px;    /* Tailwind: p-6 */
+  --space-8: 32px;    /* Tailwind: p-8 */
+  --space-10: 40px;   /* Tailwind: p-10 */
+  --space-12: 48px;   /* Tailwind: p-12 */
+  --space-16: 64px;   /* Tailwind: p-16 */
+  --space-20: 80px;   /* Tailwind: p-20 */
+  --space-24: 96px;   /* Tailwind: p-24 */
+
+  /* ========================================
+     TYPOGRAPHY - Font Families
+     ======================================== */
+  --font-family-primary: 'Vazirmatn', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+
+  /* ========================================
+     TYPOGRAPHY - Font Sizes
+     ======================================== */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;
+
+  /* ========================================
+     TYPOGRAPHY - Font Weights
+     ======================================== */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-none: 0;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+  --radius-full: 9999px;
+
+  /* Button-specific radius */
+  --radius-button: 18px;
+  --radius-button-pill: 100px;
+
+  /* ========================================
+     SHADOWS / ELEVATION
+     ======================================== */
+  --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0px 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0px 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0px 16px 44px rgba(0, 0, 0, 0.10);
+
+  /* Button shadows */
+  --shadow-button: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-button-hover: 0 12px 34px rgba(0, 0, 0, 0.14);
+  --shadow-button-focus: 0 0 0 3px rgba(17, 17, 17, 0.18);
+
+  /* ========================================
+     GLASS / BLUR EFFECTS
+     ======================================== */
+  --glass-light: rgba(255, 255, 255, 0.8);
+  --glass-light-strong: rgba(255, 255, 255, 0.9);
+  --glass-dark: rgba(0, 0, 0, 0.6);
+  --glass-dark-strong: rgba(0, 0, 0, 0.8);
+
+  --blur-sm: 4px;
+  --blur-md: 12px;
+  --blur-lg: 24px;
+  --blur-xl: 40px;
+
+  /* ========================================
+     TRANSITIONS / ANIMATIONS
+     ======================================== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ========================================
+     LAYOUT CONSTANTS
+     ======================================== */
+  --header-height: 56px;
+  --max-width-content: 1440px;
+  --max-width-narrow: 680px;
+
+  /* ========================================
+     EDITORIAL PALETTE
+     Warm, editorial-inspired tones for Studio result pages
+     ======================================== */
+  --color-editorial-accent: #9A8C74;
+  --color-editorial-stone: #FAF9F6;
+  --color-editorial-charcoal: #1C1C1A;
+  --color-editorial-taupe: #8C8A84;
+  --color-editorial-hairline: #EAE8E3;
+  --color-editorial-product-bg: #F0EFEB;
+
+  /* ========================================
+     TIER COLORS
+     Intervention tier visual hierarchy
+     ======================================== */
+  --color-tier-quickwin: #2D6A4F;
+  --color-tier-quickwin-light: rgba(45, 106, 79, 0.06);
+  --color-tier-quickwin-border: rgba(45, 106, 79, 0.18);
+  --color-tier-enhancement: #B8860B;
+  --color-tier-enhancement-light: rgba(184, 134, 11, 0.06);
+  --color-tier-enhancement-border: rgba(184, 134, 11, 0.18);
+  --color-tier-structural: #8B6914;
+  --color-tier-structural-light: rgba(139, 105, 20, 0.06);
+  --color-tier-structural-border: rgba(139, 105, 20, 0.18);
+
+  /* ========================================
+     FEEDBACK COLORS
+     ======================================== */
+  --color-feedback-good: #00312D;
+  --color-feedback-neutral: #FC6F20;
+  --color-feedback-bad: #5D0D02;
+  --color-feedback-bg: #FEE8D0;
+
+  /* ========================================
+     EDITORIAL TYPOGRAPHY
+     Serif font for editorial accents
+     ======================================== */
+  --font-family-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+  /* ========================================
+     SCORE RING
+     ======================================== */
+  --score-ring-track: rgba(0, 0, 0, 0.06);
+  --score-ring-size: 120px;
+  --score-ring-stroke: 8px;
+
+  /* ========================================
+     FRIEND'S DESIGN SYSTEM ALIASES
+     These match the variable names used by the
+     vibecoded Studio result components.
+     ======================================== */
+
+  /* Editorial palette (unprefixed) */
+  --editorial-accent: #9A8C74;
+  --editorial-stone: #FAF9F6;
+  --editorial-charcoal: #1C1C1A;
+  --editorial-taupe: #8C8A84;
+  --editorial-hairline: #EAE8E3;
+  --editorial-product-bg: #F0EFEB;
+
+  /* Feedback (unprefixed) */
+  --feedback-good: #00312D;
+  --feedback-neutral: #FC6F20;
+  --feedback-bad: #5D0D02;
+  --feedback-bg: #FEE8D0;
+
+  /* Tier (unprefixed) */
+  --tier-structural: #8B6914;
+  --tier-structural-light: rgba(139, 105, 20, 0.06);
+  --tier-structural-border: rgba(139, 105, 20, 0.18);
+
+  /* Surfaces & primitives */
+  --surface: #FFFFFF;
+  --card: rgba(255, 255, 255, 1.00);
+  --card-foreground: rgba(0, 0, 0, 1.00);
+  --muted: rgba(118, 118, 128, 0.12);
+  --muted-foreground: rgba(60, 60, 67, 0.60);
+  --accent: #E31E24;
+  --accent-foreground: #ffffff;
+  --accent-light: #F5E6D3;
+  --accent-light-foreground: #1a1a1a;
+  --border-subtle: #E9E9E6;
+
+  /* Typography */
+  --font-family-vazirmatn: 'Vazirmatn', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-weight-regular: 400;
+
+  /* Typography — size tokens */
+  --text-h1-size: 34px;
+  --text-h2-size: 22px;
+  --text-h3-size: 20px;
+  --text-h4-size: 17px;
+  --text-label-size: 15px;
+  --text-caption-size: 12px;
+
+  /* Spacing (named) */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+  --spacing-2xl: 64px;
+
+  /* Elevation */
+  --elevation-sm: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  --elevation-md: 0px 4px 12px rgba(0, 0, 0, 0.10);
+  --elevation-lg: 0px 8px 24px rgba(0, 0, 0, 0.12);
+  --elevation-xl: 0px 16px 44px rgba(0, 0, 0, 0.10);
+
+  /* Button — dark CTA */
+  --btn-dark-bg: #111111;
+  --btn-dark-hover: #0B0B0B;
+  --btn-dark-pressed: #000000;
+  --btn-dark-text: #FFFFFF;
+  --btn-dark-radius: 18px;
+  --btn-dark-h-desktop: 52px;
+  --btn-dark-h-mobile: 48px;
+  --btn-dark-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  --btn-dark-shadow-hover: 0 12px 34px rgba(0,0,0,0.14);
+}
+
+/* ========================================
+   DARK MODE OVERRIDES
+   ======================================== */
+.dark {
+  --color-surface-page: #1C1C1E;
+  --color-surface-default: #2C2C2E;
+  --color-surface-elevated: #3A3A3C;
+  --color-surface-muted: #48484A;
+  --color-surface-inverse: #FFFFFF;
+
+  --color-content-primary: #FFFFFF;
+  --color-content-secondary: rgba(235, 235, 245, 0.6);
+  --color-content-muted: rgba(235, 235, 245, 0.3);
+  --color-content-inverse: #1a1a1a;
+
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-subtle: rgba(84, 84, 88, 1);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
+}
+
+.homa-information {
+  background: var(--color-surface-page);
+  color: var(--color-content-primary);
+  font-family: var(--font-family-vazirmatn), sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-wrap: anywhere;
+}
+.homa-information * { box-sizing: border-box; }
+.homa-information[lang="en"] { font-family: Inter, var(--font-family-display); }
+.homa-information header, .homa-information nav,
+.homa-information main, .homa-information footer {
+  max-width: 680px;
+  margin-inline: auto;
+}
+.homa-information header, .homa-information nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+.homa-information header { justify-content: space-between; padding-block: 16px; }
+.homa-information-brand { font-size: 24px; font-weight: 700; }
+.homa-information nav { padding-block: 24px; border-bottom: 1px solid var(--color-border-subtle); }
+.homa-information a { color: inherit; text-underline-offset: 6px; }
+.homa-information a:hover { color: var(--color-content-secondary); }
+.homa-information a:focus-visible { outline: 2px solid var(--color-content-primary); outline-offset: 4px; }
+.homa-information a[aria-current] { font-weight: 700; }
+.homa-information h1 { font-size: 36px; line-height: 1.3; margin-block: 40px 16px; }
+.homa-information h2 { font-size: 20px; line-height: 1.5; margin-block: 0 16px; }
+.homa-information p { margin-block: 0 16px; }
+.homa-information-summary { color: var(--color-content-secondary); }
+.homa-information-notice { border-inline-start: 4px solid var(--color-feedback-warning); padding-inline-start: 16px; font-weight: 600; }
+.homa-information-scope { font-size: 14px; }
+.homa-information section { margin-block: 32px; }
+.homa-information footer { border-top: 1px solid var(--color-border-subtle); padding-block: 24px; font-size: 14px; }
+@media (max-width: 480px) {
+  .homa-information { padding: 16px; }
+  .homa-information h1 { font-size: 24px; }
+  .homa-information nav { gap: 16px; }
+}
+</style></head><body>
+<div class="homa-information" lang="en"><header><a href="/?lang=en" class="homa-information-brand" dir="ltr">HOMA</a><a href="/?lang=en">Back to website</a><a href="/support?lang=fa" lang="fa">فارسی</a></header>
+<nav aria-label="HOMA information and support"><a href="/support?lang=en" aria-current="page">Support</a><a href="/privacy?lang=en">Privacy</a><a href="/terms?lang=en">Terms of use</a></nav>
+<main><h1>Homa support</h1><p class="homa-information-summary">Studio help, request tracking and product guidance.</p>
+
+<p class="homa-information-scope">These pages describe the Homa website and design Studio at myhoma.ir.</p><section><h2>Using the Studio</h2><p>Upload your room photo and describe what you want. Homa uses AI services for design, product search and optional image generation. Use the conversation attached to your design to request changes or ask questions.</p></section><section><h2>An incomplete request</h2><p>Email the error, tracking ID or conversation link and approximate request time to support. Check the previous request and your account credit before submitting again.</p></section><section><h2>Contact safely</h2><p>Email FARBOD.LOTFI@PARSMEHRAGRO.COM. Hide personal information in screenshots. Never send passwords, login codes, API keys or payment details.</p></section><section><h2>Before buying</h2><p>Design images are previews. Check the selected size and colour, dimensions, final price, availability, shipping and returns before purchasing.</p></section></main>
+<footer><p>Support email: <a href="mailto:FARBOD.LOTFI@PARSMEHRAGRO.COM" dir="ltr">FARBOD.LOTFI@PARSMEHRAGRO.COM</a></p><p>Text updated: 6 November 2026</p></footer>
+</div></body></html>

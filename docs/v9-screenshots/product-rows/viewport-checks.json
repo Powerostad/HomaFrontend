@@ -1,0 +1,47 @@
+[
+  {
+    "alternativeColumns": "repeat(2, minmax(0px, 1fr))",
+    "photos": [
+      {
+        "height": 141,
+        "width": 126
+      },
+      {
+        "height": 141,
+        "width": 126
+      }
+    ],
+    "scrollWidth": 305,
+    "width": 320
+  },
+  {
+    "alternativeColumns": "repeat(2, minmax(0px, 1fr))",
+    "photos": [
+      {
+        "height": 172,
+        "width": 153
+      },
+      {
+        "height": 172,
+        "width": 153
+      }
+    ],
+    "scrollWidth": 375,
+    "width": 390
+  },
+  {
+    "alternativeColumns": "repeat(2, minmax(0px, 1fr))",
+    "photos": [
+      {
+        "height": 175,
+        "width": 156
+      },
+      {
+        "height": 175,
+        "width": 156
+      }
+    ],
+    "scrollWidth": 415,
+    "width": 430
+  }
+]

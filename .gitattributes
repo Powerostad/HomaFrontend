@@ -1,0 +1,5 @@
+*.sh text eol=lf
+production/artifact/** -text linguist-generated=true linguist-vendored=true
+production/runtime/blog-render.mjs -text linguist-generated=true
+deploy/production/chat-worker-overlay/** linguist-vendored=true
+dist-blog-server/** -text linguist-generated=true linguist-vendored=true

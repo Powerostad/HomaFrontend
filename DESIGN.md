@@ -150,6 +150,82 @@ Design priorities, in order:
 4. Reuse shared tokens and primitives before introducing local styling.
 5. Prefer clarity and speed over ornamental effects.
 
+### Studio discovery and progressive disclosure
+
+Studio uses the Wayfair Next interaction benchmark recorded in
+`docs/wayfair-next-ux-benchmark-2026-10-17.md`: a persistent room image beside
+an independently scrollable desktop task panel, local alternative disclosures,
+and a compact current-selection summary with a contextual mobile sheet. Keep
+HOMA tokens and Persian-first copy; do not copy competitor branding or assets.
+Only one of recommendations, analysis, basket or conversation is active at a
+time. Optional guided intake edits the existing draft and never starts analysis
+or fabricates a user message when a step is skipped.
+
+Studio product recommendations use compact horizontal cards: complete product
+image, short category, identity, price, and explicit basket and swap actions.
+Open product details through the photo or name and display their descriptions
+directly, without another disclosure. Keep product-specific feedback visible
+on each main recommendation card, never on alternatives. Quantity controls
+stay compact, with only the numeric stepper LTR; card content follows the active
+language direction. Sourcing and layout sections use clear, readable item cards.
+Keep
+download, saved status, PDF and version/history tools in a single More disclosure.
+Avoid duplicate hero utility buttons, conversation CTAs, recommendation headings
+and selection sheets. External sourcing choices default to collapsed and never
+show an error-image placeholder for a missing catalog image.
+Alternatives and product-specific feedback open inline. Below 1200px the room
+photo precedes the content and only the fixed bottom task navigation is visible;
+desktop retains its image/sidebar layout and top task navigation. Above 1200px,
+the task sidebar is clamped to 440–560px (34vw preferred), rather than stretching
+to almost half of a wide monitor. The room image uses the remaining width.
+Keep bottom
+navigation fixed on the basket tab too, with safe-area and content clearance.
+
+The connected Studio ends with one collapsed report for performance, prompts and
+costs, available regardless of the active result section. Show measured timing
+separately from reconciled billing; unknown costs must never imply zero. Keep
+long technical documents behind disclosures, with readable LTR code blocks and
+an explicit copy-full-text action that preserves prompt whitespace. Load private
+report data only on expansion, and never generate an AI request to display it.
+
+Offer a separate print/PDF report for the currently viewed design. Use A4 print
+styles with before/after images, saved observed problems, proposed changes and
+product lines. Distinguish selected products from recommendations and separate
+layout work and execution services. Never print prompts, API costs or chat logs
+in the customer report. Preserve full product imagery and mark missing images
+and unknown prices explicitly; the report is not an invoice or a fresh quote.
+
+Before the first result, show real findings as soon as the saved analysis is
+available. Initial analysis reuses the original Studio `ProgressScreen` with
+the uploaded room as a blurred background, the segmented journey, and live
+service status. Live mode disables timed diagnostic claims and estimates. Do
+not show educational cards or review steps until the initial analysis arrives.
+After analysis, retain the interactive one-finding review. Never use
+timer-driven completion percentages or diagnostic claims. Stop loading motion
+on failure and respect reduced-motion preferences. Alternatives show up to ten
+actual returned products, not duplicated placeholders. Analysis becomes
+available. Keep the original room photo visible, present one observation and
+its linked proposed change at a time, and let the user move back or skip the
+review. Long explanations belong behind disclosure. Never fabricate a finding,
+certainty score, user message, or artificial processing delay to fill this flow.
+
+Reveal the saved positive diagnosis first when it exists, then let the user
+explore the observations individually and their linked changes. Preserve the
+current observation as later design data arrives. Announce a ready design in
+the existing status area and promote the result action, without taking over
+the user's reading. Use one short editorial reveal for the observation, the
+ready announcement and the final room image; do not add a timed waiting screen.
+On mobile, keep the status and navigation inside the viewport; only the reading
+area scrolls. Opening the final design moves keyboard focus to its heading.
+
+Image generation and product preparation continue during the review. A ready
+result must be available immediately without requiring every finding to be read;
+do not interrupt someone still reading. On the connected result page, show one
+task section at a time: suggestions, analysis, or basket. Preserve the product,
+service, sourcing, and invoice distinctions inside those sections. Optional
+conversation must retain explicit user authorship. Reuse the saved mother
+document for display rather than making another model call for narration.
+
 ## Colors
 
 Use semantic roles rather than choosing colors by appearance.

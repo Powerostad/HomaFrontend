@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Shared shell for the Room Redesign flow:
  *  - RedesignHeader  (share / هما wordmark / menu, overlaid on the image)
@@ -6,40 +7,41 @@
  *  - VersionRail     (analysis-review thumbnail history)
  *  - BottomNav       (سبد / محصولات / تحلیل فضا tab dock with sliding indicator)
  */
-import { useEffect, useState, type CSSProperties } from 'react';
-import { Share2, Menu, Check, ChevronDown, RotateCcw, Droplet } from 'lucide-react';
-import { motion } from 'motion/react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { toPersianDigits } from '@/utils/formatters';
-import { RD, FRAME } from '../theme';
-import type { AnnotationPin as PinType, NavTab, RoomVersion, PinStatus } from '../types';
+import { toLocalizedDigits } from '@/utils/formatters';
+import { Check, ChevronDown, Droplet, Menu, RotateCcw, Share2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { FRAME, RD } from '../theme';
+import type { NavTab, PinStatus, AnnotationPin as PinType, RoomVersion } from '../types';
 
 const SPRING = { type: 'spring' as const, stiffness: 500, damping: 30 };
 
 // ── RedesignHeader ──────────────────────────────────────────────────
 export function RedesignHeader({ onNewSession }: { onNewSession?: () => void }) {
+  const { siteValue, siteText } = useSiteTranslation();
   return (
     <div className="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 pt-4">
       {/* RTL: first child = visual-right → new-session / menu on the right, share on the left */}
       <motion.button
         type="button"
-        aria-label={onNewSession ? 'گفتگوی جدید' : 'منو'}
+        aria-label={siteValue(onNewSession ? siteText("گفتگوی جدید") : siteText("منو"))}
         onClick={onNewSession}
         whileTap={{ scale: 0.95 }}
         transition={SPRING}
         className="w-10 h-10 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-sm shadow-sm"
       >
-        {onNewSession ? (
+        {siteValue(onNewSession ? (
           <RotateCcw size={17} strokeWidth={1.9} style={{ color: RD.ink }} />
         ) : (
           <Menu size={18} strokeWidth={1.75} style={{ color: RD.ink }} />
-        )}
+        ))}
       </motion.button>
 
       {/* Brand lockup — matches the desktop BrandMark (هما + droplet box). Sits on
           the warm canvas margin above the matted photo, so the dark mark reads. */}
       <div className="flex items-center gap-1.5 select-none" style={{ fontFamily: 'Vazirmatn' }}>
-        <span className="text-[20px] font-bold leading-none" style={{ color: RD.ink, letterSpacing: '-0.03em' }}>هما</span>
+        <span className="text-[20px] font-bold leading-none" style={{ color: RD.ink, letterSpacing: '-0.03em' }}>{siteText("هما")}</span>
         <span className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ backgroundColor: RD.ink }}>
           <Droplet size={15} strokeWidth={2} color="#fff" />
         </span>
@@ -47,7 +49,7 @@ export function RedesignHeader({ onNewSession }: { onNewSession?: () => void }) 
 
       <motion.button
         type="button"
-        aria-label="اشتراک‌گذاری"
+        aria-label={siteText("اشتراک‌گذاری")}
         whileTap={{ scale: 0.95 }}
         transition={SPRING}
         className="w-10 h-10 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-sm shadow-sm"
@@ -110,6 +112,7 @@ export function AnnotationPin({
   open?: boolean;
   onToggle?: () => void;
 }) {
+  const { siteValue } = useSiteTranslation();
   const dotColor = PIN_DOT[pin.status];
   const showIcon = pin.status !== 'neutral';
   const connectorH = 20; // short link between the dot and its label pill
@@ -122,20 +125,20 @@ export function AnnotationPin({
       style={{ fontFamily: 'Vazirmatn', boxShadow: RD.pinPillShadow }}
     >
       <span className="text-[12px] font-medium leading-none whitespace-nowrap" style={{ color: RD.ink }}>
-        {pin.label}
+        {siteValue(pin.label)}
       </span>
-      {showIcon && (
+      {siteValue(showIcon && (
         <span
           className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
           style={{ backgroundColor: dotColor }}
         >
-          {pin.status === 'good' ? (
+          {siteValue(pin.status === 'good' ? (
             <Check size={12} strokeWidth={3} color="#fff" />
           ) : (
             <span className="text-[12px] font-bold leading-none text-white">!</span>
-          )}
+          ))}
         </span>
-      )}
+      ))}
     </div>
   );
   // Tappable dot with an enlarged transparent hit area (touch target). It is the
@@ -145,7 +148,7 @@ export function AnnotationPin({
     <button
       type="button"
       onClick={onToggle}
-      aria-label={pin.label}
+      aria-label={siteValue(pin.label)}
       aria-pressed={open}
       className="pointer-events-auto absolute flex items-center justify-center"
       style={{ left: 0, top: 0, width: 28, height: 28, zIndex: 1, transform: 'translate(-50%, -50%)', touchAction: 'manipulation' }}
@@ -165,8 +168,8 @@ export function AnnotationPin({
   // dir="rtl" and detaches the connector from the dot.
   return (
     <div className={`absolute ${open ? 'z-30' : 'z-20'} pointer-events-none`} style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>
-      {dot}
-      {open && (
+      {siteValue(dot)}
+      {siteValue(open && (
         <>
           <div
             className="absolute w-px"
@@ -188,10 +191,10 @@ export function AnnotationPin({
               maxWidth: '75vw',
             }}
           >
-            {pill}
+            {siteValue(pill)}
           </div>
         </>
-      )}
+      ))}
     </div>
   );
 }
@@ -223,6 +226,7 @@ export function PinnedImage({
    *  the shadow HERE — not on the wrapper — so open pin pills are never clipped. */
   imageStyle?: CSSProperties;
 }) {
+  const { siteValue, siteText } = useSiteTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
   // Presigned room renders can take a beat to download — show a shimmer skeleton
   // (sized to a sensible min box so the area isn't blank) until the photo paints.
@@ -232,12 +236,12 @@ export function PinnedImage({
   const matRadius = (imageStyle?.borderRadius as number | undefined) ?? 0;
   return (
     <div className={`relative inline-block leading-none ${className ?? ''}`}>
-      {!loaded && (
+      {siteValue(!loaded && (
         <div className="image-loading absolute inset-0 z-0" style={{ borderRadius: matRadius }} aria-hidden />
-      )}
+      ))}
       <img
         src={src}
-        alt="اتاق"
+        alt={siteText("اتاق")}
         draggable={false}
         onClick={() => setActiveId(null)}
         onLoad={() => setLoaded(true)}
@@ -252,7 +256,7 @@ export function PinnedImage({
           transition: 'opacity 300ms ease',
         }}
       />
-      {loaded && pins.map((p, i) => (
+      {siteValue(loaded && pins.map((p, i) => (
         <AnnotationPin
           key={p.id}
           pin={p}
@@ -261,7 +265,7 @@ export function PinnedImage({
           open={activeId === p.id}
           onToggle={() => setActiveId((id) => (id === p.id ? null : p.id))}
         />
-      ))}
+      )))}
     </div>
   );
 }
@@ -276,6 +280,7 @@ function VersionRail({
   activeIndex: number;
   onSelect: (index: number) => void;
 }) {
+  const { siteValue, siteText } = useSiteTranslation();
   // Collapsed by default so the rail keeps the photo's top-left corner clear of
   // pins. The chevron expands the full history; tapping it again collapses it.
   const [open, setOpen] = useState(false);
@@ -286,7 +291,7 @@ function VersionRail({
 
   return (
     <div className="absolute z-30 left-3 top-[72px] flex flex-col items-center gap-1.5">
-      {shown.map((v) => {
+      {siteValue(shown.map((v) => {
         const isActive = v.index === activeIndex;
         return (
           <button
@@ -300,21 +305,21 @@ function VersionRail({
                 : '0 0 0 1.5px rgba(255,255,255,0.4)',
             }}
           >
-            <ImageWithFallback src={v.thumbUrl} alt={`نسخه ${v.index}`} className="w-full h-full object-cover" />
+            <ImageWithFallback src={v.thumbUrl} alt={siteText("نسخه {{v0}}", { v0: v.index })} className="w-full h-full object-cover" />
             <span
               className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
               style={{ backgroundColor: isActive ? RD.green : RD.versionBadgeInactive }}
             >
-              {toPersianDigits(v.index)}
+              {siteValue(toLocalizedDigits(v.index))}
             </span>
           </button>
         );
-      })}
-      {hasMore && (
+      }))}
+      {siteValue(hasMore && (
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          aria-label={open ? 'بستن نسخه‌ها' : 'نمایش همه نسخه‌ها'}
+          aria-label={siteValue(open ? siteText("بستن نسخه‌ها") : siteText("نمایش همه نسخه‌ها"))}
           aria-expanded={open}
           className="w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm shadow-sm flex items-center justify-center mt-1"
         >
@@ -324,7 +329,7 @@ function VersionRail({
             style={{ color: RD.ink, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
           />
         </button>
-      )}
+      ))}
     </div>
   );
 }
@@ -345,6 +350,7 @@ export function RoomCanvas({
   onVersionChange?: (index: number) => void;
   onNewSession?: () => void;
 }) {
+  const { siteValue, siteText } = useSiteTranslation();
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
   const maxH = Math.round(vh * 0.62); // cap so a tall portrait doesn't eat the whole screen
 
@@ -355,21 +361,20 @@ export function RoomCanvas({
   // sheet model is preserved.
   return (
     <div className="relative w-full overflow-hidden" style={{ background: RD.canvas }}>
-      {imageUrl ? (
+      {siteValue(imageUrl ? (
         <div className="flex items-center justify-center" style={{ padding: '60px 16px 16px' }}>
           <PinnedImage src={imageUrl} pins={pins} maxHeight={maxH} imageStyle={FRAME} />
         </div>
       ) : (
         <div className="flex items-center justify-center px-8" style={{ height: Math.round(vh * 0.26) }}>
           <span className="text-[13px] text-center leading-[1.9]" style={{ color: RD.inkSoft, fontFamily: 'Vazirmatn' }}>
-            برای شروع، عکس اتاقت رو بفرست
-          </span>
+            {siteText("برای شروع، عکس اتاقت رو بفرست")}</span>
         </div>
-      )}
+      ))}
       <RedesignHeader onNewSession={onNewSession} />
-      {versions && activeVersion != null && onVersionChange && (
+      {siteValue(versions && activeVersion != null && onVersionChange && (
         <VersionRail versions={versions} activeIndex={activeVersion} onSelect={onVersionChange} />
-      )}
+      ))}
     </div>
   );
 }
@@ -394,6 +399,7 @@ export function BottomNav({
   onChange: (tab: NavTab) => void;
   itemCount?: number;
 }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div
       className="shrink-0 flex justify-center"
@@ -413,7 +419,7 @@ export function BottomNav({
           fontFamily: 'Vazirmatn',
         }}
       >
-        {NAV_ITEMS.map(({ id, label }) => {
+        {siteValue(NAV_ITEMS.map(({ id, label }) => {
           const isActive = id === active;
           return (
             <motion.button
@@ -437,19 +443,19 @@ export function BottomNav({
                 className="text-[12px] whitespace-nowrap leading-none"
                 style={{ color: isActive ? RD.ink : RD.inkSoft, fontWeight: isActive ? 600 : 400 }}
               >
-                {label}
+                {siteValue(label)}
               </span>
-              {id === 'basket' && itemCount > 0 && (
+              {siteValue(id === 'basket' && itemCount > 0 && (
                 <span
                   className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ backgroundColor: RD.greenMid }}
                 >
-                  {toPersianDigits(Math.min(itemCount, 9))}
+                  {siteValue(toLocalizedDigits(Math.min(itemCount, 9)))}
                 </span>
-              )}
+              ))}
             </motion.button>
           );
-        })}
+        }))}
       </nav>
     </div>
   );

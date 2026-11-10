@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * ContextLock — Editorial / Zara Home Style
  * Minimal project context bar (only used on mobile now).
@@ -18,6 +19,7 @@ export function ContextLock({
   targetStyle,
   variant = 'mobile',
 }: ContextLockProps) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const isDesktop = variant === 'desktop';
 
   return (
@@ -26,7 +28,7 @@ export function ContextLock({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="w-full z-50 sticky top-0"
-      dir="rtl"
+      dir={siteDirection()}
       style={{
         fontFamily: FONT,
         background: 'var(--editorial-stone)',
@@ -47,8 +49,7 @@ export function ContextLock({
             }}
             dir="ltr"
           >
-            پروژه شما — تحلیل اختصاصی
-          </span>
+            {siteText("پروژه شما — تحلیل اختصاصی")}</span>
           <span
             className="truncate"
             style={{
@@ -59,12 +60,12 @@ export function ContextLock({
               letterSpacing: '-0.01em',
             }}
           >
-            {projectName}
+            {siteValue(projectName)}
           </span>
         </div>
 
         {/* Target Style — Subtle */}
-        {targetStyle && (
+        {siteValue(targetStyle && (
           <span
             style={{
               fontSize: '11px',
@@ -75,9 +76,9 @@ export function ContextLock({
             }}
             dir="ltr"
           >
-            {targetStyle}
+            {siteValue(targetStyle)}
           </span>
-        )}
+        ))}
       </div>
     </motion.div>
   );

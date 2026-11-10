@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * OptionalUserNoteInput — optional free-text note textarea for the intake review screen.
  *
@@ -16,6 +17,7 @@ interface OptionalUserNoteInputProps {
 }
 
 export function OptionalUserNoteInput({ value, onChange }: OptionalUserNoteInputProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   return (
     <div
       style={{
@@ -23,7 +25,7 @@ export function OptionalUserNoteInput({ value, onChange }: OptionalUserNoteInput
         flexDirection: 'column',
         gap: '8px',
         fontFamily: 'Vazirmatn, sans-serif',
-        direction: 'rtl',
+        direction: siteDirection(),
       }}
     >
       <label
@@ -32,21 +34,21 @@ export function OptionalUserNoteInput({ value, onChange }: OptionalUserNoteInput
           fontSize: '13px',
           fontWeight: 600,
           color: RD.ink,
-          textAlign: 'right',
+          textAlign: 'start',
           cursor: 'pointer',
         }}
       >
-        {INTAKE_COPY.review.noteLabel}
+        {siteValue(INTAKE_COPY.review.noteLabel)}
       </label>
       <textarea
         id={TEXTAREA_ID}
         rows={3}
         value={value}
-        placeholder={INTAKE_COPY.review.notePlaceholder}
+        placeholder={siteValue(INTAKE_COPY.review.notePlaceholder)}
         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
         style={{
-          direction: 'rtl',
-          textAlign: 'right',
+          direction: siteDirection(),
+          textAlign: 'start',
           fontFamily: 'Vazirmatn, sans-serif',
           fontSize: '14px',
           lineHeight: '1.7',
@@ -75,11 +77,11 @@ export function OptionalUserNoteInput({ value, onChange }: OptionalUserNoteInput
         style={{
           fontSize: '12px',
           color: RD.inkMuted,
-          textAlign: 'right',
+          textAlign: 'start',
           lineHeight: '1.6',
         }}
       >
-        {INTAKE_COPY.review.noteHelper}
+        {siteValue(INTAKE_COPY.review.noteHelper)}
       </span>
     </div>
   );

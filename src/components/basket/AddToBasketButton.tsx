@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * AddToBasketButton — adds a product to the unified basket from any flow.
  *
@@ -8,17 +9,17 @@
  * stepper bound live to BasketContext. The morph happens *optimistically* on
  * click so the tap feels instant; it reverts if the server rejects the add.
  */
-import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '../ui/button';
 import { useBasket } from '../../context/AppProviders';
-import { toPersianDigits } from '../../utils/formatters';
 import type {
   AddToBasketOriginRefs,
   BasketSourceContext,
 } from '../../types/basket';
+import { toLocalizedDigits } from '../../utils/formatters';
+import { Button } from '../ui/button';
 
 interface AddToBasketButtonProps extends AddToBasketOriginRefs {
   /** Product.unique_link (UUID). */
@@ -39,6 +40,7 @@ export function AddToBasketButton({
   className = '',
   ...originRefs
 }: AddToBasketButtonProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const { basket, addItem, updateQuantity } = useBasket();
   const [isAdding, setIsAdding] = useState(false);
@@ -107,7 +109,7 @@ export function AddToBasketButton({
           <Plus size={14} />
         </button>
         <span className="min-w-[28px] text-center text-sm font-medium tabular-nums">
-          {toPersianDigits(quantity)}
+          {siteValue(toLocalizedDigits(quantity))}
         </span>
         <button
           type="button"
@@ -134,11 +136,11 @@ export function AddToBasketButton({
       onClick={handleAdd}
       data-ph-capture-attribute-action="add-to-basket"
     >
-      {isAdding ? (
+      {siteValue(isAdding ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <ShoppingBag className="h-4 w-4" />
-      )}
+      ))}
       {t('basket.add', 'افزودن به سبد')}
     </Button>
   );

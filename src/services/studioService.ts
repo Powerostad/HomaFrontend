@@ -1,3 +1,4 @@
+import { siteText } from '@/i18n/siteCopy';
 /**
  * Studio Service
  * API integration for AI-powered room redesign and product recommendations
@@ -9,9 +10,9 @@
  * 4. Try individual products on detected items
  */
 
-import { apiGet, apiPost, apiUpload, apiDelete, apiConfig, getStoredTokens } from '@/utils/apiClient';
-import { convertHeicToJpeg } from '@/utils/imageConversion';
 import { realtimeClient } from '@/services/realtimeClient';
+import { apiConfig, apiDelete, apiGet, apiPost, apiUpload, getStoredTokens } from '@/utils/apiClient';
+import { convertHeicToJpeg } from '@/utils/imageConversion';
 import {
   normalizeImagePlacementMarker,
   type ImagePlacementMarker,
@@ -495,7 +496,7 @@ export async function createRedesignSession(
     console.error('[StudioService] No auth tokens available for createRedesignSession');
     return {
       success: false,
-      error: 'لطفا ابتدا وارد حساب کاربری خود شوید.',
+      error: siteText("لطفا ابتدا وارد حساب کاربری خود شوید."),
     };
   }
 
@@ -507,7 +508,7 @@ export async function createRedesignSession(
   if (!validTypes.includes(convertedImage.type)) {
     return {
       success: false,
-      error: 'فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید.',
+      error: siteText("فرمت تصویر پشتیبانی نمی‌شود. لطفا تصویر JPG، PNG یا WebP آپلود کنید."),
     };
   }
 
@@ -516,7 +517,7 @@ export async function createRedesignSession(
   if (convertedImage.size > maxSize) {
     return {
       success: false,
-      error: 'حجم تصویر بیش از ۱۰ مگابایت است.',
+      error: siteText("حجم تصویر بیش از ۱۰ مگابایت است."),
     };
   }
 
@@ -525,7 +526,7 @@ export async function createRedesignSession(
   if (dimensions && (dimensions.width > 8000 || dimensions.height > 8000)) {
     return {
       success: false,
-      error: 'ابعاد تصویر بیش از حد مجاز است (حداکثر ۸۰۰۰ پیکسل در هر بعد).',
+      error: siteText("ابعاد تصویر بیش از حد مجاز است (حداکثر ۸۰۰۰ پیکسل در هر بعد)."),
     };
   }
 
@@ -556,7 +557,7 @@ export async function createRedesignSession(
           creditSummary: response.data.credit_summary,
           existingCreditRequest: response.data.existing_credit_request,
         },
-        error: response.message || 'اعتبار تولید تصویر شما تمام شده است',
+        error: response.message || siteText("اعتبار تولید تصویر شما تمام شده است"),
       };
     }
 
@@ -571,14 +572,14 @@ export async function createRedesignSession(
   }
 
   // Handle common errors with Persian messages
-  let errorMessage = response.error || 'خطا در ایجاد جلسه طراحی';
+  let errorMessage = response.error || siteText("خطا در ایجاد جلسه طراحی");
 
   if (response.statusCode === 429) {
-    errorMessage = 'محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.';
+    errorMessage = siteText("محدودیت تعداد درخواست. لطفا کمی صبر کنید و دوباره امتحان کنید.");
   }
 
   if (response.statusCode === 402) {
-    errorMessage = 'اعتبار کافی برای پردازش وجود ندارد.';
+    errorMessage = siteText("اعتبار کافی برای پردازش وجود ندارد.");
   }
 
   return {
@@ -613,7 +614,7 @@ export async function createImageCreditRequest(params: {
 
   return {
     success: false,
-    error: response.error || 'خطا در ثبت درخواست اعتبار',
+    error: response.error || siteText("خطا در ثبت درخواست اعتبار"),
   };
 }
 
@@ -640,7 +641,7 @@ export async function resumeSessionWithoutImage(pendingRequestId: string): Promi
 
   return {
     success: false,
-    error: response.error || 'خطا در ادامه بدون تصویر بازطراحی',
+    error: response.error || siteText("خطا در ادامه بدون تصویر بازطراحی"),
   };
 }
 
@@ -668,7 +669,7 @@ export async function fetchSessionStatus(sessionId: string): Promise<{
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت وضعیت جلسه',
+    error: response.error || siteText("خطا در دریافت وضعیت جلسه"),
   };
 }
 
@@ -710,7 +711,7 @@ export async function pollSessionStatus(
     if (attempts > maxAttempts) {
       return {
         success: false,
-        error: 'زمان انتظار برای پردازش به پایان رسید. لطفا دوباره امتحان کنید.',
+        error: siteText("زمان انتظار برای پردازش به پایان رسید. لطفا دوباره امتحان کنید."),
       };
     }
 
@@ -737,7 +738,7 @@ export async function pollSessionStatus(
       return {
         success: false,
         data: session,
-        error: session.errorMessage || 'خطا در پردازش تصویر',
+        error: session.errorMessage || siteText("خطا در پردازش تصویر"),
       };
     }
 
@@ -791,7 +792,7 @@ export async function fetchUserSessions(params?: {
 
   return {
     success: false,
-    error: response.error || 'خطا در دریافت لیست جلسات',
+    error: response.error || siteText("خطا در دریافت لیست جلسات"),
   };
 }
 
@@ -838,7 +839,7 @@ export async function tryProductOnItem(
 
   return {
     success: false,
-    error: response.data?.message || response.error || 'خطا در امتحان محصول',
+    error: response.data?.message || response.error || siteText("خطا در امتحان محصول"),
   };
 }
 
@@ -859,7 +860,7 @@ export async function deleteSession(sessionId: string): Promise<{
 
   return {
     success: false,
-    error: response.error || 'خطا در حذف جلسه',
+    error: response.error || siteText("خطا در حذف جلسه"),
   };
 }
 

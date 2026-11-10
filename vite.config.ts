@@ -1,4 +1,4 @@
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -39,7 +39,8 @@ async function loadPwaPlugin() {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ isSsrBuild, command }) => {
+export default defineConfig(async ({ isSsrBuild, command, mode }) => {
+    const devApiTarget = loadEnv(mode, process.cwd(), 'HOMA_DEV_').HOMA_DEV_API_TARGET;
     const plugins = [react()];
     // The PWA virtual modules (virtual:pwa-register) must also resolve in dev,
     // because src/seo/hydratePublic.tsx imports them on public pages.
@@ -72,6 +73,15 @@ export default defineConfig(async ({ isSsrBuild, command }) => {
             port: 3000,
             open: true,
             host: true,
+            // Optional local-only bridge to the existing server account/data.
+            proxy: devApiTarget ? {
+                ...(mode === 'studio-local' ? {
+                    '/__studio_ab/server': { target: 'http://127.0.0.1:8001', changeOrigin: true, ws: true, rewrite: (url: string) => url.replace(/^\/__studio_ab\/server/, '') },
+                    '/__studio_ab/local': { target: 'http://127.0.0.1:8002', changeOrigin: true, ws: true, rewrite: (url: string) => url.replace(/^\/__studio_ab\/local/, '') },
+                } : {}),
+                '/api': { target: devApiTarget, changeOrigin: true },
+                '/ws': { target: devApiTarget, changeOrigin: true, ws: true },
+            } : undefined,
         },
         build: {
             outDir: 'dist',

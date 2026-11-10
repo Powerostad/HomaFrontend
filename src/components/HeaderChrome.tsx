@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import type { ReactNode } from "react";
 
 interface HeaderChromeProps {
@@ -16,6 +17,7 @@ export function HeaderChrome({
   brand,
   utilities,
 }: HeaderChromeProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   return (
     <>
       <header
@@ -25,17 +27,17 @@ export function HeaderChrome({
           height: "var(--header-height)",
           borderColor: transparent ? "transparent" : "var(--color-border-default)",
         }}
-        dir="rtl"
+        dir={siteDirection()}
       >
         <div className="h-full border-b transition-colors duration-700" style={{ borderColor: transparent ? "rgba(255,255,255,0.1)" : "var(--color-border-default)" }}>
           <div className="h-full mx-auto px-8 md:px-16 grid grid-cols-3 items-center" style={{ maxWidth: "var(--max-width-content)" }}>
-            <div className="flex justify-start">{menu}</div>
-            <div className="flex justify-center">{brand}</div>
-            <div className="flex justify-end items-center gap-4 md:gap-6">{utilities}</div>
+            <div className="flex justify-start">{siteValue(menu)}</div>
+            <div className="flex justify-center">{siteValue(brand)}</div>
+            <div className="flex justify-end items-center gap-4 md:gap-6">{siteValue(utilities)}</div>
           </div>
         </div>
       </header>
-      {!transparent && !hideSpacer && <div className="h-[64px] md:h-[80px]" />}
+      {siteValue(!transparent && !hideSpacer && <div className="h-[64px] md:h-[80px]" />)}
     </>
   );
 }

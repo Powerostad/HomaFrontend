@@ -13,6 +13,7 @@
 export interface SharedTryOnItem {
   type: 'tryon';
   result_image_url: string;
+  public_products?: Array<{image_url: string; price: number | null}>;
   product_name: string | null;
   product_category: string;
   product_id: number | null;
@@ -73,6 +74,7 @@ export interface SharedStudioCategoryItem {
 export interface SharedStudioItem {
   type: 'studio';
   result_image_url: string;
+  public_products?: Array<{image_url: string; price: number | null}>;
   room_type: string;
   owner_name: string;
   created_at: string;

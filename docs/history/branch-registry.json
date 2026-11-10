@@ -1,0 +1,95 @@
+{
+  "captured_at": "2026-11-10",
+  "branches": [
+    {
+      "branch": "blog/curtain-punch-width-20261107",
+      "commit": "a6967345d8a65e6cfa38a7d7b5e9f10970c591ca",
+      "archive_tag": "archive/2026-11-10/blog/curtain-punch-width-20261107"
+    },
+    {
+      "branch": "chore/blog-seo-ai-search-publishing-v1-20261107",
+      "commit": "efbbee485431fe41f2185bd42aad19f39f1fbeca",
+      "archive_tag": "archive/2026-11-10/chore/blog-seo-ai-search-publishing-v1-20261107"
+    },
+    {
+      "branch": "chore/setup-claude-seo-2026-11-06",
+      "commit": "2c377fd64c24ca151c96e7521f4f69280031fffb",
+      "archive_tag": "archive/2026-11-10/chore/setup-claude-seo-2026-11-06"
+    },
+    {
+      "branch": "codex/blog-performance-funnel",
+      "commit": "d6629e58e1e424e41c7c7bf2b9ba2bbb655f4307",
+      "archive_tag": "archive/2026-11-10/codex/blog-performance-funnel"
+    },
+    {
+      "branch": "codex/homa-v9-polished",
+      "commit": "ed7b0539d5e548d5fd0715fa23974dbd81167453",
+      "archive_tag": "archive/2026-11-10/codex/homa-v9-polished"
+    },
+    {
+      "branch": "codex/isolated-development",
+      "commit": "3a0f23652bd7ddf64c00e794bd13b00e38ca0fa6",
+      "archive_tag": "archive/2026-11-10/codex/isolated-development"
+    },
+    {
+      "branch": "codex/production-release-contract",
+      "commit": "3bb7668c43563033fd08b9da56c779dbe48b5bba",
+      "archive_tag": "archive/2026-11-10/codex/production-release-contract"
+    },
+    {
+      "branch": "codex/refinement-production-20261028",
+      "commit": "614a1efe734f45ca95a44112927d1df02e1e73d5",
+      "archive_tag": "archive/2026-11-10/codex/refinement-production-20261028"
+    },
+    {
+      "branch": "codex/studio-catalog-v2",
+      "commit": "04ed84378690e0ff41de694875dd248ed94bf154",
+      "archive_tag": "archive/2026-11-10/codex/studio-catalog-v2"
+    },
+    {
+      "branch": "codex/studio-intake-v10-20261029",
+      "commit": "a8bf9083032eb88dbc3b0ca170dfe745e397fed9",
+      "archive_tag": "archive/2026-11-10/codex/studio-intake-v10-20261029"
+    },
+    {
+      "branch": "codex/studio-v2-integration",
+      "commit": "292313d4f02da33f6bd7324db8bfe616f1c35f50",
+      "archive_tag": "archive/2026-11-10/codex/studio-v2-integration"
+    },
+    {
+      "branch": "codex/v9-design-edit-discovery",
+      "commit": "22bceb4367a6f8c4ec4acf24f8f65b84009b1ac6",
+      "archive_tag": "archive/2026-11-10/codex/v9-design-edit-discovery"
+    },
+    {
+      "branch": "content/blog-coffee-table-2026-11-05",
+      "commit": "18086036fda33d4e28004896fa95436906077c01",
+      "archive_tag": "archive/2026-11-10/content/blog-coffee-table-2026-11-05"
+    },
+    {
+      "branch": "content/blog-lighting-2026-11-03",
+      "commit": "df1c2a90ad382a8aa0546503102f06b6640c5a80",
+      "archive_tag": "archive/2026-11-10/content/blog-lighting-2026-11-03"
+    },
+    {
+      "branch": "content/blog-pilot-2026-10-30",
+      "commit": "a2cbdbfaf2af4e45bbe4032228d256db2ca7251d",
+      "archive_tag": "archive/2026-11-10/content/blog-pilot-2026-10-30"
+    },
+    {
+      "branch": "content/blog-rug-size-2026-11-01",
+      "commit": "740345394500dd1541f108dec32b7a4997a3485f",
+      "archive_tag": "archive/2026-11-10/content/blog-rug-size-2026-11-01"
+    },
+    {
+      "branch": "dev",
+      "commit": "a6967345d8a65e6cfa38a7d7b5e9f10970c591ca",
+      "archive_tag": "archive/2026-11-10/dev"
+    },
+    {
+      "branch": "fix/blog-images-content-fa-seo-2026-11-06",
+      "commit": "f82c746a868d4d0e8e4897bd5d3a0f46bcf5256d",
+      "archive_tag": "archive/2026-11-10/fix/blog-images-content-fa-seo-2026-11-06"
+    }
+  ]
+}
