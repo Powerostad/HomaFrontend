@@ -1,0 +1,41 @@
+{
+  "archived_branches": [
+    {
+      "branch": "codex/homa-v9-polished",
+      "commit": "ed7b0539d5e548d5fd0715fa23974dbd81167453",
+      "archive_tag": "archive/2026-11-10/codex/homa-v9-polished"
+    },
+    {
+      "branch": "codex/isolated-development",
+      "commit": "3a0f23652bd7ddf64c00e794bd13b00e38ca0fa6",
+      "archive_tag": "archive/2026-11-10/codex/isolated-development"
+    },
+    {
+      "branch": "codex/refinement-production-20261028",
+      "commit": "614a1efe734f45ca95a44112927d1df02e1e73d5",
+      "archive_tag": "archive/2026-11-10/codex/refinement-production-20261028"
+    },
+    {
+      "branch": "codex/studio-catalog-v2",
+      "commit": "04ed84378690e0ff41de694875dd248ed94bf154",
+      "archive_tag": "archive/2026-11-10/codex/studio-catalog-v2"
+    },
+    {
+      "branch": "codex/studio-intake-v10-20261029",
+      "commit": "a8bf9083032eb88dbc3b0ca170dfe745e397fed9",
+      "archive_tag": "archive/2026-11-10/codex/studio-intake-v10-20261029"
+    },
+    {
+      "branch": "codex/studio-v2-integration",
+      "commit": "292313d4f02da33f6bd7324db8bfe616f1c35f50",
+      "archive_tag": "archive/2026-11-10/codex/studio-v2-integration"
+    },
+    {
+      "branch": "codex/v9-design-edit-discovery",
+      "commit": "22bceb4367a6f8c4ec4acf24f8f65b84009b1ac6",
+      "archive_tag": "archive/2026-11-10/codex/v9-design-edit-discovery"
+    }
+  ],
+  "deleted_branch_count": 7,
+  "history_deleted": false
+}
