@@ -1,3 +1,7 @@
+## Production source of truth — 2026-11-10
+
+When investigating the deployed myhoma.ir application, start from the verified reference at https://github.com/Powerostad/HomaFrontend/tree/codex/production-server-20261110 and read docs/production/README.md plus source-manifest.json there. The default dev branch and open PRs must not be assumed to be deployed. Do not reactivate archived catalogue rules or prompts without a specific user request. Preserve any existing worktree changes; use the isolated reference for production investigation instead of resetting another task's checkout.
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization
