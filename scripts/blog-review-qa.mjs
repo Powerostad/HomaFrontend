@@ -20,7 +20,7 @@ export async function checkDraft(root = process.cwd(), slug = 'living-room-befor
    eq(brief.editorial?.approval_source === 'chatgpt_conversation', 'Recorded approval source missing');
    eq(brief.editorial?.approval_reference === 'https://github.com/Powerostad/HomaFrontend/pull/16#issuecomment-6808526065', 'Approval reference is missing or changed');
    eq(Boolean(brief.editorial?.approved_by) && Boolean(brief.editorial?.approved_at), 'Editorial approval timestamp or attribution missing');
-   notes.push('Editorial approval is recorded from the requester's chat, NOT an authenticated GitHub/CMS approval or a release authorization.');
+   notes.push("Editorial approval is recorded from the requester's chat, NOT an authenticated GitHub/CMS approval or a release authorization.");
  } else {
    eq(!brief.editorial?.approved_by && !brief.editorial?.approved_at, 'Unapproved content cannot contain approval metadata');
  }
