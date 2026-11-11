@@ -1,0 +1,27 @@
+name: Review SEO article before-after
+on:
+  pull_request:
+    paths:
+      - 'content/blog/**'
+      - 'public/blog/images/living-room-before-after/**'
+      - 'scripts/blog-review-qa.mjs'
+      - '.github/workflows/blog-review-before-after.yml'
+  push:
+    paths:
+      - 'content/blog/**'
+      - 'public/blog/images/living-room-before-after/**'
+      - 'scripts/blog-review-qa.mjs'
+      - '.github/workflows/blog-review-before-after.yml'
+jobs:
+  draft-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate Persian SEO draft and real JPEG variants
+        run: node scripts/blog-review-qa.mjs
+# This job checks the review package ONLY. It cannot approve or publish articles.
