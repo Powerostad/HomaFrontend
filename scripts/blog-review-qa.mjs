@@ -12,11 +12,18 @@ export async function checkDraft(root = process.cwd(), slug = 'living-room-befor
    readFile(articlePath,'utf8'),readFile(briefPath,'utf8').then(JSON.parse)
  ]);
  const eq = (condition, message) => { if (!condition) problems.push(message); };
- eq(brief.status === 'draft', 'Review package must remain draft until approved');
+ eq(['draft','reviewed','approved'].includes(brief.status), 'Unknown editorial status');
  eq(brief.schema_version === 'homa-blog-brief-v1', 'Unexpected brief schema');
  eq(brief.slug === slug, 'Brief slug mismatch');
  eq(brief.search?.topic_overlap_checked === false, 'Topic overlap not fully verified; do not mark checked automatically');
- eq(brief.editorial?.approved_by === '' && brief.editorial?.approved_at === '', 'Unverified approval metadata');
+ if(brief.status === 'approved') {
+   eq(brief.editorial?.approval_source === 'chatgpt_conversation', 'Recorded approval source missing');
+   eq(brief.editorial?.approval_reference === 'https://github.com/Powerostad/HomaFrontend/pull/16#issuecomment-6808526065', 'Approval reference is missing or changed');
+   eq(Boolean(brief.editorial?.approved_by) && Boolean(brief.editorial?.approved_at), 'Editorial approval timestamp or attribution missing');
+   notes.push('Editorial approval is recorded from the requester's chat, NOT an authenticated GitHub/CMS approval or a release authorization.');
+ } else {
+   eq(!brief.editorial?.approved_by && !brief.editorial?.approved_at, 'Unapproved content cannot contain approval metadata');
+ }
  eq(brief.content?.cta?.href === '/studio/upload', 'Studio CTA missing from brief');
  eq((html.match(/<h1\b/g)||[]).length === 1, 'Expected exactly one H1');
  eq((html.match(/<h2\b/g)||[]).length >= 3, 'Missing descriptive H2s');
@@ -40,7 +47,7 @@ export async function checkDraft(root = process.cwd(), slug = 'living-room-befor
    catch(err){problems.push('Missing image '+name+': '+err.message);}
  }
  eq(Array.isArray(brief.sources)&&brief.sources.length>=2,'Missing research references');
- notes.push('PASS means the review package is structurally ready for HUMAN editorial review, not publication.');
+ notes.push('PASS means review-package structure is valid; it does not authorize publication in the live CMS.');
  notes.push('Live CMS sync, actual publication date, working internal links, image URLs and indexability remain unverified.');
  return {ok:problems.length===0,slug,problems,notes};
 }
