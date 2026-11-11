@@ -1,7 +1,7 @@
 {
   "schema_version": "homa-blog-brief-v1",
   "slug": "living-room-before-after",
-  "status": "draft",
+  "status": "approved",
   "locale": "fa-IR",
   "title": "قبل و بعد دکوراسیون پذیرایی؛ ۵ تغییر بدون تعویض مبل",
   "seo": {
@@ -85,16 +85,28 @@
   },
   "editorial": {
     "author": "تیم محتوای هما",
-    "fact_checked": false,
+    "fact_checked": true,
     "originality_checked": false,
-    "image_checked": false,
-    "approved_by": "",
-    "approved_at": ""
+    "image_checked": true,
+    "approved_by": "درخواست‌کننده مقاله در گفت‌وگوی ChatGPT (هویت CMS/GitHub احراز نشده)",
+    "approved_at": "2026-11-12T01:46:00+03:30",
+    "approval_source": "chatgpt_conversation",
+    "approval_reference": "https://github.com/Powerostad/HomaFrontend/pull/16#issuecomment-6808526065",
+    "approval_scope": "تأیید محتوای مقاله شماره ۱۶؛ بدون مجوز مستقل برای ادغام کد یا انتشار مستقیم در CMS",
+    "fact_review_note": "مقایسه از تصاویر ارسالی و ادعای نورپردازی با راهنمای IKEA تطبیق داده شد.",
+    "image_review_note": "چهار فایل JPEG در GitHub وجود دارند؛ تصاویر از کاربر دریافت شده‌اند و به عنوان مقایسه مفهومی معرفی شده‌اند.",
+    "pending_checks": [
+      "بازبینی کامل هم‌پوشانی با تمام مقالات زنده",
+      "تأیید منشأ/مجوز نهایی تصاویر در CMS",
+      "بازبینی اصالت و شواهد در سیستم انتشار",
+      "تأیید هویت ناشر در CMS و ثبت نسخه نهایی/هش",
+      "تست واقعی URL و تصاویر پس از انتشار"
+    ]
   },
   "files": {
     "review_html": "content/blog/review/living-room-before-after/article.html",
     "before": "public/blog/images/living-room-before-after/before-1080.jpg",
     "after": "public/blog/images/living-room-before-after/after-735.jpg",
-    "status_note": "Unpublished editorial review package; requires approval, live image upload / sync, and real publish date"
+    "status_note": "User approved article copy on 2026-11-12; approved for editorial content only. PR remains Draft/noindex. Production Sync and publish QA unresolved."
   }
 }
