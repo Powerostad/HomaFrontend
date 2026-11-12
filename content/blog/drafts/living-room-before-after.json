@@ -1,0 +1,134 @@
+{
+  "schema_version": "homa-blog-brief-v1",
+  "slug": "living-room-before-after",
+  "status": "approved",
+  "locale": "fa-IR",
+  "title": "قبل و بعد دکوراسیون پذیرایی؛ ۵ تغییر بدون تعویض مبل",
+  "seo": {
+    "title": "قبل و بعد دکوراسیون پذیرایی بدون تعویض مبل | هما",
+    "description": "این قبل و بعد پذیرایی نشان می‌دهد چطور با حفظ مبل‌ها و تغییر نور، فرش، کوسن و اکسسوری می‌توان فضای خانه را متحول کرد؛ همراه اولویت خرید.",
+    "canonical": "https://myhoma.ir/blog/living-room-before-after/"
+  },
+  "search": {
+    "primary_query": "تغییر دکوراسیون پذیرایی بدون تعویض مبل",
+    "intent": "informational_commercial_investigation",
+    "user_question": "چطور بدون خرید مبل جدید پذیرایی را زیباتر کنم و چه تغییرهایی واقعاً لازم است؟",
+    "iran_serp_review": "بررسی کیفی SERP فارسی ۱۱ نوامبر ۲۰۲۶: محتوای رایج بیشتر توصیه‌های عمومی درباره تعویض کوسن، نور و فرش است. وجه تمایز این مقاله تحلیل دو تصویر ارسالی، جدول حفظ/تغییر و اولویت هزینه است. حجم جست‌وجو، رتبه و سختی با ابزار تخصصی اندازه‌گیری نشده‌اند. صفحه زنده مجله هما از این محیط مستقیماً قابل واکشی نبود.",
+    "topic_overlap_checked": false
+  },
+  "content": {
+    "direct_answer": "در این مقایسه تصویری، مبل‌های روشن، تلویزیون و بخش اصلی چیدمان حفظ شده‌اند؛ بیشترین تغییر بصری با نورپردازی چندلایه، فرش لاکی، کوسن‌های زیتونی و آجری و گیاهان بیشتر ایجاد شده است. پیش از خرید، نور و چیدمان را اصلاح کنید و فقط در صورت وجود مشکل واقعی سراغ تعویض فرش یا افزودن اکسسوری بروید.",
+    "decision_value": "کاربر می‌تواند تغییرات را به حفظ، اصلاح بدون خرید، خرید کم‌هزینه و تغییر نیازمند کار فنی تفکیک کند.",
+    "sections": [
+      {
+        "heading": "در این قبل و بعد، چه چیزهایی واقعاً تغییر کرده‌اند؟",
+        "summary": "جدول مشاهده‌ای مبل‌ها و TV در برابر نور، فرش، کوسن و گیاه"
+      },
+      {
+        "heading": "نورپردازی؛ پیش از خرید وسیله جدید، نور را اصلاح کنید",
+        "summary": "اول نور موضعی قابل‌جابه‌جایی، سپس در صورت نیاز اجرای فنی"
+      },
+      {
+        "heading": "فرش و کوسن؛ هماهنگی رنگ مهم‌تر از خرید بیشتر است",
+        "summary": "فرش لاکی و کوسن زیتونی نمونه‌اند، خرید اجباری نیست"
+      },
+      {
+        "heading": "گیاه و اکسسوری؛ نقطه‌های خالی را انتخاب کنید",
+        "summary": "پرهیز از شلوغی و رعایت ایمنی دیوار و برق"
+      },
+      {
+        "heading": "اگر بودجه محدود باشد، تغییرها را با چه ترتیبی انجام دهیم؟",
+        "summary": "ترتیب بدون خرید تا تغییر فنی و سؤال رایج"
+      }
+    ],
+    "related_links": [
+      {
+        "href": "/blog/rug-size-living-room/",
+        "anchor": "راهنمای فرش ۶ متری یا ۹ متری"
+      },
+      {
+        "href": "/blog/small-living-room-lighting/",
+        "anchor": "نورپردازی پذیرایی کوچک"
+      },
+      {
+        "href": "/blog/coffee-table-size-shape/",
+        "anchor": "فاصله مناسب میز جلو مبلی"
+      }
+    ],
+    "cta": {
+      "label": "بررسی فضای من در هما",
+      "href": "/studio/upload"
+    }
+  },
+  "sources": [
+    {
+      "url": "https://www.ikea.com/in/en/rooms/living-room/how-to/making-the-most-of-your-living-room-lighting-pub1c4dd8a0/",
+      "claim": "ترکیب منابع نور متناسب با فعالیت‌های مختلف نشیمن",
+      "verified": true
+    },
+    {
+      "url": "https://developers.google.com/search/docs/appearance/google-images",
+      "claim": "تصاویر در HTML با alt مناسب و نسخه‌های responsive قابل کشف باشند",
+      "verified": true
+    },
+    {
+      "url": "https://developers.google.com/search/docs/appearance/ai-features",
+      "claim": "برای AI Overviews الزامات ویژه خارج از اصول SEO وجود ندارد",
+      "verified": true
+    }
+  ],
+  "image": {
+    "hero_url": "https://myhoma.ir/blog/images/living-room-before-after/after-735.jpg",
+    "alt": "کانسپت بازطراحی پذیرایی با مبل روشن، فرش لاکی، کوسن سبز، نور گرم و گیاهان بیشتر",
+    "is_ai_generated": true,
+    "disclosure": "تصاویر برای مقایسه مفهومی استفاده شده‌اند. تصویر بعد اثبات اجرای واقعی پروژه یا هزینه‌های انجام‌شده نیست؛ منشأ نهایی تصاویر نیز باید پیش از انتشار توسط تحریریه تأیید شود."
+  },
+  "editorial": {
+    "author": "تیم محتوای هما",
+    "fact_checked": true,
+    "originality_checked": false,
+    "image_checked": true,
+    "approved_by": "درخواست‌کننده مقاله در گفت‌وگوی ChatGPT (هویت CMS/GitHub احراز نشده)",
+    "approved_at": "2026-11-12T01:46:00+03:30",
+    "approval_source": "chatgpt_conversation",
+    "approval_reference": "https://github.com/Powerostad/HomaFrontend/pull/16#issuecomment-6808526065",
+    "approval_scope": "تأیید محتوای مقاله شماره ۱۶؛ بدون مجوز مستقل برای ادغام کد یا انتشار مستقیم در CMS",
+    "fact_review_note": "مقایسه از تصاویر ارسالی و ادعای نورپردازی با راهنمای IKEA تطبیق داده شد.",
+    "image_review_note": "چهار فایل JPEG در GitHub وجود دارند؛ تصاویر از کاربر دریافت شده‌اند و به عنوان مقایسه مفهومی معرفی شده‌اند.",
+    "pending_checks": [
+      "بازبینی کامل هم‌پوشانی با تمام مقالات زنده",
+      "تأیید منشأ/مجوز نهایی تصاویر در CMS",
+      "بازبینی اصالت و شواهد در سیستم انتشار",
+      "تأیید هویت ناشر در CMS و ثبت نسخه نهایی/هش",
+      "تست واقعی URL و تصاویر پس از انتشار"
+    ]
+  },
+  "files": {
+    "review_html": "content/blog/review/living-room-before-after/article.html",
+    "before": "public/blog/images/living-room-before-after/before-1080.jpg",
+    "after": "public/blog/images/living-room-before-after/after-735.jpg",
+    "status_note": "Content published via existing GitHub sync on 2026-11-12. Original review HTML remains noindex for historical review. No Studio build or backend behavior change.",
+    "published_html": "public/blog/living-room-before-after/index.html"
+  },
+  "publication": {
+    "status": "published",
+    "path": "public/blog/living-room-before-after/index.html",
+    "url": "https://myhoma.ir/blog/living-room-before-after",
+    "source_commit": "e4d2992ffeb47a7f8978d98fe6aeac79f1f8c5a1",
+    "published_at": "2026-11-12T11:52:25.197425+00:00",
+    "requested_change": "کاربر در گفت‌وگوی Codex خواست مسیر انتشار مقاله اصلاح و راهنمای ایجنت تولیدکننده ثبت شود.",
+    "verified_checks": [
+      "API 200",
+      "HTML 200",
+      "two mirrored JPEGs 200",
+      "canonical",
+      "indexable robots",
+      "BlogPosting",
+      "BreadcrumbList",
+      "human/crawler main-content agreement",
+      "blog sitemap inclusion",
+      "internal links HTTP 200"
+    ],
+    "unverified_editorial_fields_unchanged": true
+  }
+}
