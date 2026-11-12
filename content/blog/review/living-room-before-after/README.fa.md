@@ -1,3 +1,19 @@
+## وضعیت انتشار — 2026-11-12
+
+نسخهٔ نهایی مقاله در https://myhoma.ir/blog/living-room-before-after منتشر و بررسی شد. ورودی انتشار `public/blog/living-room-before-after/index.html` است؛ فایل review قدیمی با noindex برای سابقهٔ بازبینی حفظ شده است. زمان واقعی CMS: `2026-11-12T11:52:25.197425+00:00` (۱۵:۲۲ به وقت تهران). کامیت محتوای منتشرشده: `e4d2992ffeb47a7f8978d98fe6aeac79f1f8c5a1`.
+
+- Sync موجود: published=1، errors=[]؛ فقط worker بلاگ دوباره اجرا شد، بدون تغییر بازهٔ 48ساعته یا Build استودیو.
+- API و صفحهٔ مقاله و دو تصویر HTTP 200؛ فهرست دارای 8 مقاله است.
+- H1، canonical، robots=index,follow، BlogPosting و BreadcrumbList بررسی شدند؛ محتوای اصلی انسان، Googlebot، OAI-SearchBot و Bingbot یکسان بود.
+- هر دو sitemap پاسخ 200 دادند؛ sitemap بلاگ شامل مقاله است. لینک‌های داخلی و مسیر CTA نیز پاسخ 200 دارند.
+- راهنمای ایجنت: [docs/BLOG-PUBLISHING.md](https://github.com/Powerostad/HomaFrontend/blob/dev/docs/BLOG-PUBLISHING.md).
+
+این تأیید انتشار مقاله است، نه تأیید عبور همهٔ تست‌های عمومی فرانت یا مجوز Merge تغییرات غیرمحتوایی PR.
+
+---
+
+## یادداشت بازبینی پیش از انتشار (سابقه)
+
 # پیش‌نویس مقاله «قبل و بعد دکوراسیون پذیرایی» — ۲۰ آبان ۱۴۰۵
 
 ## موضوع و متمایزسازی
