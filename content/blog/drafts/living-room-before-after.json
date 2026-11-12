@@ -107,6 +107,28 @@
     "review_html": "content/blog/review/living-room-before-after/article.html",
     "before": "public/blog/images/living-room-before-after/before-1080.jpg",
     "after": "public/blog/images/living-room-before-after/after-735.jpg",
-    "status_note": "User approved article copy on 2026-11-12; approved for editorial content only. PR remains Draft/noindex. Production Sync and publish QA unresolved."
+    "status_note": "Content published via existing GitHub sync on 2026-11-12. Original review HTML remains noindex for historical review. No Studio build or backend behavior change.",
+    "published_html": "public/blog/living-room-before-after/index.html"
+  },
+  "publication": {
+    "status": "published",
+    "path": "public/blog/living-room-before-after/index.html",
+    "url": "https://myhoma.ir/blog/living-room-before-after",
+    "source_commit": "e4d2992ffeb47a7f8978d98fe6aeac79f1f8c5a1",
+    "published_at": "2026-11-12T11:52:25.197425+00:00",
+    "requested_change": "کاربر در گفت‌وگوی Codex خواست مسیر انتشار مقاله اصلاح و راهنمای ایجنت تولیدکننده ثبت شود.",
+    "verified_checks": [
+      "API 200",
+      "HTML 200",
+      "two mirrored JPEGs 200",
+      "canonical",
+      "indexable robots",
+      "BlogPosting",
+      "BreadcrumbList",
+      "human/crawler main-content agreement",
+      "blog sitemap inclusion",
+      "internal links HTTP 200"
+    ],
+    "unverified_editorial_fields_unchanged": true
   }
 }
