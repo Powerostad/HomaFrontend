@@ -65,3 +65,15 @@ node scripts/blog-review-qa.mjs
 5. `article_view`، `studio_cta_click` و شروع واقعی استودیو از طریق سیستم آنالیتیکس بلاگ پس از اتصال بررسی شود.
 
 خروجی این PR به داده خصوصی محصول، API فروشنده و موتور طراحی دست نمی‌زند.
+
+## اصلاح مسیر نشر براساس قرارداد رسمی ۱۲ نوامبر ۲۰۲۶
+
+**مرجع قطعی:** [`docs/BLOG-PUBLISHING.md` در `dev`](https://github.com/Powerostad/HomaFrontend/blob/dev/docs/BLOG-PUBLISHING.md).
+
+- مسیر `content/blog/review/living-room-before-after/article.html` در شاخه فعلی صرفاً فایل بازبینی قبلی است؛ **Sync آن را منتشر نمی‌کند**.
+- فایل `content/blog/review/living-room-before-after/publish-ready.html` نسخه سازگار با واردکننده است: متن تأییدشده همان مقاله، بدون CSS/JS سفارشی، بدون `srcset` غیرقابل‌حفظ و با canonical بدون اسلش پایانی، و دارای `robots=index,follow` برای زمان انتشار.
+- این فایل هم **خارج از مسیر تحت پایش Sync** است و به‌صورت خودکار منتشر نمی‌شود؛ هیچ فایلی در `public/blog/living-room-before-after/index.html` در این مرحله ایجاد نشده است.
+- پس از **درخواست صریح انتشار**، دقیقاً محتوای نسخه `publish-ready.html` باید در `public/blog/living-room-before-after/index.html` در همین شاخه محتوایی قرار بگیرد؛ چهار JPEG از قبل در `public/blog/images/living-room-before-after/` هستند.
+- قبل از Push مسیر عمومی، نمونه را با `apps/blog/github_content.py::parse_article` در محیط فعال Sync تست کنید؛ این کد در مخزن فرانت‌اند `dev` وجود ندارد.
+- انتشار توسط Sync هر ۴۸ ساعت انجام می‌شود، نه Merge PR یا تغییر status بریف؛ نتیجه واقعی را از Blog API، HTML مقاله، تصاویر خروجی Storage، Sitemap و Googlebot/OAI-SearchBot/Bingbot بررسی کنید.
+- `status=approved` در JSON یک ثبت تأیید محتوایی است، نه اجازه عبور از سیاست انتشار، و `noindex` فایل Preview در شاخه `content/blog-*` نیز به‌تنهایی محافظ انتشار نیست؛ تنها مسیرهای واقعی Sync تعیین‌کننده‌اند.
