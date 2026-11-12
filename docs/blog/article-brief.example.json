@@ -1,0 +1,62 @@
+{
+  "schema_version": "homa-blog-brief-v1",
+  "slug": "example-curtain-room-intent",
+  "status": "draft",
+  "locale": "fa-IR",
+  "title": "چه پرده‌ای برای پذیرایی کم‌نور مناسب است؟",
+  "seo": {
+    "title": "پرده مناسب پذیرایی کم‌نور؛ انتخاب رنگ و جنس | هما",
+    "description": "برای پذیرایی کم‌نور چه رنگ و جنسی برای پرده مناسب است؟ راهنمای انتخاب پرده با توجه به نور روز، حریم خصوصی و مبل‌های خانه.",
+    "canonical": "https://myhoma.ir/blog/example-curtain-room-intent/"
+  },
+  "search": {
+    "primary_query": "پرده مناسب پذیرایی کم نور",
+    "intent": "commercial_investigation",
+    "user_question": "نور پذیرایی من کم است؛ چه پرده‌ای بخرم؟",
+    "iran_serp_review": "هنوز انجام نشده؛ باید پیش از تایید، نتایج فارسی و صفحات نزدیک هما بررسی شوند.",
+    "topic_overlap_checked": false
+  },
+  "content": {
+    "direct_answer": "برای پذیرایی کم‌نور معمولاً حریر یا کتان نیمه‌شفاف روشن نقطه شروع مناسبی است، اما اگر دید مستقیم از بیرون دارید، ممکن است به لایه دوم نیاز باشد. انتخاب را با نور واقعی پنجره، رنگ مبلمان و شرایط استفاده در شب بسنجید.",
+    "decision_value": "کاربر می‌تواند با توجه به نور، دید همسایه و مبلمان بین حریر، پارچه نیمه‌شفاف و دولایه انتخاب کند.",
+    "sections": [
+      {
+        "heading": "چه رنگی بهتر است؟",
+        "summary": "پالت روشن را در نور واقعی خانه مقایسه کنید."
+      },
+      {
+        "heading": "حریر یا کتان؟",
+        "summary": "عبور نور و حریم خصوصی را بسنجید."
+      },
+      {
+        "heading": "قبل از خرید چه چیزهایی اندازه بگیرم؟",
+        "summary": "ارتفاع نصب و فضای جمع شدن پرده را بررسی کنید."
+      }
+    ],
+    "related_links": [
+      {
+        "href": "/blog/",
+        "anchor": "مقالات مجله هما"
+      }
+    ],
+    "cta": {
+      "label": "بررسی پذیرایی من در هما",
+      "href": "/studio/upload"
+    }
+  },
+  "sources": [],
+  "image": {
+    "hero_url": "",
+    "alt": "",
+    "is_ai_generated": true,
+    "disclosure": "این تصویرسازی با هوش مصنوعی تولید شده و پروژه واقعی مشتری نیست."
+  },
+  "editorial": {
+    "author": "تیم محتوای هما",
+    "fact_checked": false,
+    "originality_checked": false,
+    "image_checked": false,
+    "approved_by": "",
+    "approved_at": ""
+  }
+}

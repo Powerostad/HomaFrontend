@@ -1,0 +1,44 @@
+name: Blog SEO and AI Search quality
+on:
+  pull_request:
+    paths:
+      - 'docs/blog/**'
+      - 'content/blog/drafts/**'
+      - 'scripts/blog-ai-seo-gate.mjs'
+      - 'scripts/blog-ai-seo-gate.test.mjs'
+      - 'scripts/blog-publish-preflight.mjs'
+      - 'scripts/blog-publish-preflight.test.mjs'
+      - '.github/workflows/blog-quality.yml'
+  push:
+    paths:
+      - 'docs/blog/**'
+      - 'content/blog/drafts/**'
+      - 'scripts/blog-ai-seo-gate.mjs'
+      - 'scripts/blog-ai-seo-gate.test.mjs'
+      - 'scripts/blog-publish-preflight.mjs'
+      - 'scripts/blog-publish-preflight.test.mjs'
+      - '.github/workflows/blog-quality.yml'
+jobs:
+  blog-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test the editorial and HTML gate
+        run: node --test scripts/blog-ai-seo-gate.test.mjs scripts/blog-publish-preflight.test.mjs
+      - name: Validate example brief as draft
+        run: node scripts/blog-ai-seo-gate.mjs --file docs/blog/article-brief.example.json
+      - name: Validate newly submitted draft briefs
+        shell: bash
+        run: |
+          if [ -d content/blog/drafts ] && find content/blog/drafts -maxdepth 1 -name '*.json' | grep -q .; then
+            node scripts/blog-ai-seo-gate.mjs --draft-dir content/blog/drafts
+          else
+            echo "No submitted article briefs"
+          fi
+# Live checking is intentionally NOT in CI: only run after an actual deployment
+# from a network/environment that can access myhoma.ir, and store the result.
