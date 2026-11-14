@@ -53,7 +53,7 @@ export function SeoHome() {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
-      <main className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
+      <div className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
         <header className="text-center max-w-3xl mx-auto space-y-6 mb-14">
           <p className="text-[12px] tracking-wide opacity-60">{t('landing.hero.label', 'طراحی دکوراسیون خانه با هوش مصنوعی')}</p>
           <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
@@ -87,7 +87,7 @@ export function SeoHome() {
             <a href="/explore" className="underline underline-offset-4">{t('seo.home.browse', 'مشاهده محصولات دکوراسیون')}</a>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }
