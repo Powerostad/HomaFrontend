@@ -50,39 +50,44 @@ function formatDimension(value?: string | null): string {
 
 /** Static, browser-free homepage content for the SSR public document. */
 export function SeoHome() {
-  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
       <main className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
-        <div className="space-y-12 text-center">
-          <header className="space-y-5">
-            <p className="text-[11px] tracking-[0.2em] text-black/40">
-              {t('seo.home.eyebrow', 'طراحی و انتخاب با هوش مصنوعی')}
-            </p>
-            <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
-              {t('seo.home.title', 'دکوراسیون خانه با هوش مصنوعی')}
-            </h1>
-            <p className="text-[16px] md:text-lg opacity-60 leading-relaxed max-w-2xl mx-auto">
-              {t('seo.home.description', 'با عکس اتاق خود ایده‌های دکوراسیون را بررسی کنید؛ یا یک محصول را انتخاب کنید و آن را پیش از خرید در فضای خود ببینید.')}
-            </p>
-          </header>
-          <nav aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <a href="/ai-interior-design" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
-              {t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}
+        <header className="text-center max-w-3xl mx-auto space-y-6 mb-14">
+          <p className="text-[12px] tracking-wide opacity-60">طراحی دکوراسیون خانه با هوش مصنوعی</p>
+          <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
+            هُما؛ نسخه بهتر خونه‌ت.
+          </h1>
+          <p className="text-[16px] md:text-lg opacity-70 leading-relaxed">
+            عکس فضای خانه‌ات را در هما بررسی کن؛ ببین چه وسایلی را می‌توان حفظ یا جابه‌جا کرد،
+            چه چیزی نیاز به تغییر دارد و اگر خرید لازم بود، چه انتخابی با فضای تو هماهنگ‌تر است.
+          </p>
+          <nav aria-label="شروع استفاده از هما" className="flex flex-wrap justify-center gap-4">
+            <a href="/studio/upload" className="inline-flex h-12 items-center bg-black text-white px-6">
+              شروع طراحی با عکس خانه
             </a>
-            <a href="/virtual-product-preview" className="border border-black/10 px-6 py-5 text-[14px] font-medium hover:bg-black hover:text-white transition-colors">
-              {t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}
+            <a href="/blog/" className="inline-flex h-12 items-center border border-black/15 px-6">
+              راهنماهای انتخاب و تغییر دکوراسیون
             </a>
           </nav>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[13px]">
-            <a href="/studio/upload" className="inline-flex h-12 items-center bg-black text-white px-6">
-              {t('seo.home.start', 'طراحی با عکس اتاق')}
-            </a>
-            <a href="/explore" className="inline-flex h-12 items-center border border-black/15 px-6">
-              {t('seo.home.browse', 'مشاهده فروشگاه‌ها')}
-            </a>
+        </header>
+        <section aria-labelledby="seo-home-process" className="border-t border-black/10 pt-12">
+          <h2 id="seo-home-process" className="text-[24px] md:text-[32px] font-light mb-6">
+            قبل از خرید، ببین چه چیزی واقعاً باید تغییر کند.
+          </h2>
+          <p className="text-[15px] leading-[2] opacity-70 mb-7">
+            هما از عکس فضای واقعی تو شروع می‌کند. چیدمان و تغییرهای ممکن را بررسی کن،
+            وسایل مناسب را نگه دار و فقط اگر لازم بود به سراغ انتخاب محصول جدید برو.
+          </p>
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-7 text-[15px] leading-[1.9]">
+            <li><h3 className="font-medium">عکس فضای خودت</h3><p>یک عکس از پذیرایی یا اتاق خواب ارسال کن.</p></li>
+            <li><h3 className="font-medium">بررسی تغییرها</h3><p>حفظ یا جابه‌جایی وسایل و گزینه‌های بهتر را بررسی کن.</p></li>
+            <li><h3 className="font-medium">تصمیم برای خرید</h3><p>در صورت نیاز، محصول مناسب با فضای خودت را انتخاب کن.</p></li>
+          </ol>
+          <div className="mt-10">
+            <a href="/explore" className="underline underline-offset-4">مشاهده محصولات دکوراسیون</a>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
