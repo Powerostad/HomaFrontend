@@ -33,12 +33,13 @@ const render = (data: PublicPageData) =>
   );
 
 describe("public HTML content", () => {
-  it("renders a single homepage heading and two crawlable task paths without browser globals", () => {
+  it("renders a single homepage heading and crawlable studio/blog paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toContain('href="/studio/upload"');
-    expect(html).toContain('href="/ai-interior-design"');
-    expect(html).toContain('href="/virtual-product-preview"');
+    // The public homepage links only to destinations used by the actual site.
+    expect(html).toContain('href="/blog/"');
+    expect(html).toContain('href="/explore"');
     expect(html).not.toContain("seo.home.");
   });
   it("renders acquisition guidance as visible text rather than translation keys", () => {
