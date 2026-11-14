@@ -39,7 +39,6 @@ export default function ModelComparePage(){
     void poll();
     return ()=>clearInterval(timer);
     // Session IDs define polling; reading updates must not restart it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   },[ids]);
   useEffect(()=>()=>controllers.current.forEach(c=>c.abort()),[]);
   async function run(){

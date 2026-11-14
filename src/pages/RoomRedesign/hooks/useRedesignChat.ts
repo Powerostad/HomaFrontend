@@ -1,3 +1,4 @@
+import { trackStudioFunnelMilestone } from '@/analytics/studioFunnel';
 import { siteText } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
@@ -214,7 +215,15 @@ export function useRedesignChat(path?: string) {
           ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
-      onStage: event => { if (isCurrent()) { setStage(event.label_fa); setStageKey(event.key || null); } },
+      onStage: event => {
+        if (!isCurrent()) return;
+        if (params.images?.length && (!params.action || params.action === 'chat')) {
+          trackStudioFunnelMilestone('studio_upload_confirmed', params.sessionId);
+          trackStudioFunnelMilestone('studio_processing_started', params.sessionId);
+        }
+        setStage(event.label_fa);
+        setStageKey(event.key || null);
+      },
       onAnalysis: event => { if (isCurrent()) setAnalysisPreview(event); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
       onResult: event => {

@@ -1,3 +1,4 @@
+import { StaticRouter } from "react-router-dom/server";
 import { renderToStaticMarkup } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import { describe, expect, it } from "vitest";
@@ -28,7 +29,7 @@ const base: PublicPageData = {
 const render = (data: PublicPageData) =>
   renderToStaticMarkup(
     <I18nextProvider i18n={createPublicI18n()}>
-      <PublicPage data={data} />
+      <StaticRouter location={data.path}><PublicPage data={data} /></StaticRouter>
     </I18nextProvider>,
   );
 
@@ -36,8 +37,8 @@ describe("public HTML content", () => {
   it("renders a single homepage heading and two crawlable task paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('href="/studio"');
-    expect(html).toContain('href="/hosts"');
+    expect(html).toContain('href="/studio/upload"');
+    expect(html).toContain('href="/blog/"');
     expect(html).not.toContain('href="/studio/hosts"');
     expect(html).toContain('href="/studio?room=bedroom"');
     expect(html).toContain('href="/ai-interior-design"');
@@ -120,14 +121,14 @@ describe("public HTML content", () => {
     expect(two.language).toBe("fa");
     const html = renderToStaticMarkup(
       <I18nextProvider i18n={one}>
-        <PublicPage data={base} />
+        <StaticRouter location={base.path}><PublicPage data={base} /></StaticRouter>
       </I18nextProvider>,
     );
     expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
     expect(html).toContain("Choose a space.");
-    expect(html).toContain("HOMA for hosts");
+    expect(html).toContain("Start with a photo of my room");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
     const data = { ...base, kind: "article" as const, path: "/contact" };

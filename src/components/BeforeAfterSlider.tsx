@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronsLeftRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,59 +16,12 @@ interface BeforeAfterSliderProps {
 
 export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false }: BeforeAfterSliderProps) {
   const { t } = useTranslation();
-  const [sliderPosition, setSliderPosition] = useState(35); // Default to 35% so it's not dead center
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleMove = (clientX: number) => {
-    if (!containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const percentage = (x / rect.width) * 100;
-    
-    setSliderPosition(Math.min(Math.max(percentage, 0), 100));
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    handleMove(e.clientX);
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!isDragging) return;
-    handleMove(e.touches[0].clientX);
-  };
-
-  const handleStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleEnd = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleEnd);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleEnd);
-
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleEnd);
-        window.removeEventListener('touchmove', handleTouchMove);
-        window.removeEventListener('touchend', handleEnd);
-      };
-    }
-  }, [isDragging]);
+  const [sliderPosition, setSliderPosition] = useState(35);
 
   return (
     <div
-      ref={containerRef}
-      className={`relative w-full h-full overflow-hidden select-none bg-black ${className}`}
-      style={{ touchAction: 'pan-y' }}
+      className={`relative w-full h-full overflow-hidden select-none bg-black has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset ${className}`}
+      dir="ltr"
     >
       {/* Before Image (Full) - LCP element when priority is true */}
       <div className="absolute inset-0 w-full h-full">
@@ -96,6 +49,16 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
         />
       </div>
 
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={sliderPosition}
+        aria-label={t('landing.hero.compareLabel')}
+        onChange={event => setSliderPosition(event.currentTarget.valueAsNumber)}
+        className="absolute inset-0 z-30 h-full w-full cursor-ew-resize opacity-0 touch-pan-y"
+      />
+
       {/* Slider Line */}
       <div
         className="absolute top-0 bottom-0 w-[1px] cursor-ew-resize z-20"
@@ -103,8 +66,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
           left: `${sliderPosition}%`,
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
         }}
-        onMouseDown={handleStart}
-        onTouchStart={handleStart}
+        aria-hidden="true"
       >
         {/* Handle - Circular with Arrows (Reduced size for minimalist look) */}
         <div 

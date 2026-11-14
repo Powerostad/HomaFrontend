@@ -1,3 +1,4 @@
+import { trackStudioFunnelMilestone } from './studioFunnel';
 /**
  * Umami Analytics Events
  * Typed functions for every custom business event in the Homa platform.
@@ -6,32 +7,7 @@
  * providing a single source of truth for the event catalog.
  */
 
-import { umamiTrack, umamiIdentify, umamiReset } from '@/utils/umami';
-import type { User } from '@/types/auth';
-
-// =============================================================================
-// User Identification
-// =============================================================================
-
-/**
- * Identify a logged-in user in Umami.
- * Associates the current session with a real user.
- */
-export function identifyUser(user: User) {
-  umamiIdentify(user.id, {
-    name: user.name,
-    phone: user.phone,
-    created_at: user.createdAt,
-  });
-}
-
-/**
- * Reset user identity on logout.
- * Best-effort — Umami has no true reset.
- */
-export function resetUser() {
-  umamiReset();
-}
+import { umamiTrack } from '@/utils/umami';
 
 // =============================================================================
 // Try-On Funnel (Primary Conversion Path)
@@ -158,7 +134,7 @@ export function trackStudioPresetSelected(props: { preset_id: number; preset_nam
 }
 
 export function trackStudioUploadConfirmed(props: { session_id: string }) {
-  umamiTrack('studio_upload_confirmed', props);
+  trackStudioFunnelMilestone('studio_upload_confirmed', props.session_id);
 }
 
 // =============================================================================
@@ -166,7 +142,7 @@ export function trackStudioUploadConfirmed(props: { session_id: string }) {
 // =============================================================================
 
 export function trackStudioProcessingStarted(props: { session_id: string }) {
-  umamiTrack('studio_processing_started', props);
+  trackStudioFunnelMilestone('studio_processing_started', props.session_id);
 }
 
 export function trackStudioProcessingCompleted(props: { session_id: string; duration_ms: number }) {

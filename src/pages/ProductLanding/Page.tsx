@@ -1,9 +1,7 @@
-import { useSiteTranslation } from '@/i18n/siteCopy';
 import { lazy, Suspense, useEffect } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import {
-  fetchAllProducts,
   fetchProduct,
   parseEntryParams,
 } from "../../utils/productLoader";
@@ -15,7 +13,9 @@ import { LazySection } from "../../components/LazySection";
 
 // Above-the-fold Components (loaded immediately)
 import { RoomEntrySection } from './components/RoomEntrySection';
-import { HeroSection } from "./components/HeroSection";
+import { HomeIntro } from "./components/HomeIntro";
+import { homepageMetadata } from "./metadata";
+import { trackHomepageOrganicLanding, trackHomepageStudioClick } from "@/analytics/studioFunnel";
 import { OutputShowcase } from "./components/OutputShowcase";
 import { TrustBar } from "./components/TrustBar";
 
@@ -26,15 +26,12 @@ const ShoppingPropSection=lazy(() => import("./components/ShoppingPropSection").
 import { useSeo } from "@/hooks/useSeo";
 
 export function ProductLandingPage() {
-  const { siteText } = useSiteTranslation();
-  useSeo({
-    title: siteText("هما؛ طراحی داخلی خانه با هوش مصنوعی"),
-    description: siteText("عکس فضای خود را به هما بده؛ طراحی متناسب با اتاق، ایده‌های چیدمان و پیشنهاد محصولات را یکجا ببین."),
-  });
+  useSeo(homepageMetadata);
   const navigate = useRouterNavigate();
-  const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();
+  const { setProduct, setProductVariant } = useApp();
 
   useEffect(() => {
+    trackHomepageOrganicLanding();
     const initPage = async () => {
       try {
         // 1. Check for product ID in URL
@@ -50,26 +47,16 @@ export function ProductLandingPage() {
           }
         }
 
-        // 2. Load all products for the gallery/suggestions
-        const products = await fetchAllProducts();
-        setAllProducts(products);
-
-        // 3. Track page view
-        trackKPI("Page View", { 
-          page: "Landing", 
-          productId: entryContext?.productId 
-        });
-
       } catch (error) {
         console.error("Failed to initialize page:", error);
       }
     };
 
     initPage();
-  }, [setProduct, setAllProducts, trackKPI, setProductVariant]);
+  }, [setProduct, setProductVariant]);
 
   const handleGetStarted = () => {
-    trackKPI("CTA Clicked", { location: "Landing" });
+    trackHomepageStudioClick();
     navigate("/studio");
   };
 
@@ -79,7 +66,7 @@ export function ProductLandingPage() {
       
       <main className="flex-grow">
         {/* Above-the-fold content (loaded immediately) */}
-        <HeroSection onGetStarted={handleGetStarted} />
+        <HomeIntro onStudioStart={trackHomepageStudioClick} />
         <OutputShowcase onGetStarted={handleGetStarted} />
         <TrustBar />
         <RoomEntrySection />

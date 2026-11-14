@@ -9,7 +9,7 @@ import { useSiteTranslation } from '@/i18n/siteCopy';
  * - Loading states for UI feedback
  */
 
-import { identifyUser, resetUser, trackAuthEvent } from '@/analytics/events';
+import { trackAuthEvent } from '@/analytics/events';
 import {
   getProfile as authGetProfile,
   logout as authLogout,
@@ -89,14 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileResult.success && profileResult.user) {
           setUser(profileResult.user);
-          identifyUser(profileResult.user);
           console.log('[Auth] Session restored with fresh profile for:', profileResult.user.name || profileResult.user.phone);
         } else {
           // Profile fetch failed but we have stored data - use that
           const retained = getStoredAuthState();
           if (retained?.user && retained.tokens) {
             setUser(retained.user);
-            identifyUser(retained.user);
           }
         }
       } catch (error) {
@@ -136,7 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Store auth state and set user immediately for fast UI response
     storeAuthState(userData, tokens);
     setUser(userData);
-    identifyUser(userData);
     trackAuthEvent({ step: 'login_success' });
     console.log('[Auth] User logged in:', userData.name || userData.phone);
 
@@ -173,7 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Auth] Logout error:', error);
     } finally {
       setUser(null);
-      resetUser();
       trackAuthEvent({ step: 'logout' });
       setIsLoading(false);
       // Notify BasketContext (and other listeners) so user-scoped state is

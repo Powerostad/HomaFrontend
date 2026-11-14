@@ -1,7 +1,7 @@
 import { Footer } from "../../components/Footer";
 import { PublicChromeHeader } from "../../seo/PublicChrome";
 import { RoomEntrySection } from './components/RoomEntrySection';
-import { HeroSection } from "./components/HeroSection";
+import { HomeIntro } from "./components/HomeIntro";
 import { TrustBar } from "./components/TrustBar";
 import { OutputShowcase } from "./components/OutputShowcase";
 import { ComparisonSection } from "./components/ComparisonSection";
@@ -17,7 +17,7 @@ export interface ProductLandingContentProps {
 export function ProductLandingContent({ onStudioStart, onBrowseCollections, onCollaborate }: ProductLandingContentProps) {
   void onBrowseCollections;
   void onCollaborate;
-  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><RoomEntrySection /><ComparisonSection /><ShoppingPropSection /></main>;
+  return <main className="flex-grow"><HomeIntro onStudioStart={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><RoomEntrySection /><ComparisonSection /><ShoppingPropSection /></main>;
 }
 
 export function SeoProductLandingPage({ controllersEnabled = false }: { controllersEnabled?: boolean }) {

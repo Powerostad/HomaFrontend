@@ -684,12 +684,28 @@
   },
   "landing": {
     "hero": {
+      "compareLabel": "Önceki ve sonraki görüntüyü karşılaştır",
       "editorial": "Homa Editorial",
       "title": "Homa;",
       "titleAccent": "Evinizin daha iyi",
       "titleEnd": "versiyonu.",
-      "description": "Homa, eviniz için doğru dekorasyonu bulmanıza yardımcı olur.",
-      "cta": "Evinizin yeni görünümünü görün"
+      "description": "Odanızın fotoğrafını paylaşın. Neleri koruyabileceğinizi, neleri yeniden düzenleyebileceğinizi ve alışveriş gerekirse hangi ürünlerin uyacağını keşfedin.",
+      "cta": "Odamın fotoğrafıyla başla",
+      "label": "Evinizin fotoğrafından yapay zekâ ile iç mekân tasarımı",
+      "secondary": "Dekorasyon ve alışveriş rehberleri"
+    },
+    "decision": {
+      "eyebrow": "Odanızdan daha doğru kararlara",
+      "title": "Satın almadan önce gerçekten neyin değişmesi gerektiğini görün.",
+      "description": "Mekânınızın fotoğrafıyla başlayın. Neleri koruyup taşıyabileceğinizi ve nerede yeni bir ürünün işe yarayacağını keşfedin.",
+      "step1Title": "Odanızın fotoğrafı",
+      "step1Text": "Önerilerin gerçek mekânınıza dayanması için salonunuzun veya yatak odanızın fotoğrafını gönderin.",
+      "step2Title": "Değişiklikleri inceleyin",
+      "step2Text": "Hangi eşyaların kalabileceğini, taşınabileceğini veya iyileştirilebileceğini görün.",
+      "step3Title": "Alışverişe karar verin",
+      "step3Text": "Gerekliyse uygun ürünleri değerlendirin; her şeyi değiştirmeniz gerekmez.",
+      "cta": "Odamı Homa ile incele",
+      "blog": "Halı, perde, yerleşim ve ev yenileme rehberleri"
     },
     "showcase": {
       "label": "Interior visualization",

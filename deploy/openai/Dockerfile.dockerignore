@@ -1,0 +1,13 @@
+**
+!nginx.conf
+!deploy/
+!deploy/openai/
+!deploy/openai/runtime-config.sh
+!render-bot-entrypoint.sh
+!render-bot.mjs
+!blog-http.mjs
+!public-documents.mjs
+!dist/
+!dist/**
+!dist-blog-server/
+!dist-blog-server/blog-render.mjs

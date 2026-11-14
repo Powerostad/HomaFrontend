@@ -49,14 +49,12 @@ export default function CataloguePage() {
     }, 350);
     return () => window.clearTimeout(timer);
     // URL updates are handled by the search value and navigation below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
   useEffect(() => { setSearch(new URLSearchParams(key).get('search') || ''); setSelected([]); }, [key]);
   useEffect(() => {
     let active = true;
     catalogueFacets(source).then(result => { if (active) setFacets(result); }).catch(() => { if (active) setError(copy('دسترسی به کاتالوگ ممکن نشد؛ با حساب مجاز وارد شوید.')); });
     return () => { active = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision, source]);
   useEffect(() => {
     const controller = new AbortController();
@@ -71,7 +69,6 @@ export default function CataloguePage() {
       .catch(() => { if (!controller.signal.aborted) setError(copy('دریافت محصولات ناموفق بود. دوباره تلاش کنید یا دسترسی حساب را بررسی کنید.')); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, revision]);
   const refresh = () => { setSelected([]); setRevision(value => value + 1); };
   async function act(action: CatalogueAction, ids = selected, target?: string) {

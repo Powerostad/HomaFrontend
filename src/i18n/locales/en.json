@@ -672,6 +672,7 @@
         "recommendationsTitle": "Recommendations to explore",
         "noRecommendations": "No product recommendations are available for this space.",
         "hero": {
+      "compareLabel": "Compare before and after",
           "title": "Design result image",
           "generatedAlt": "Redesigned view of your space",
           "originalAlt": "Your space before redesign",
@@ -924,8 +925,23 @@
       "title": "Homa;",
       "titleAccent": "A better version of",
       "titleEnd": "your home.",
-      "description": "Homa helps you find the right decor for your home.",
-      "cta": "See your home's new look"
+      "description": "Share a photo of your room. Discover what you can keep or rearrange, what could improve, and which products might fit if you need to buy.",
+      "cta": "Start with a photo of my room",
+      "label": "AI interior design from a photo of your home",
+      "secondary": "Room design and buying guides"
+    },
+    "decision": {
+      "eyebrow": "From your room to a clearer decision",
+      "title": "Before buying, see what really needs to change.",
+      "description": "Start with a photo of your space. Explore what to keep, what to rearrange, and where a new item could make a difference.",
+      "step1Title": "Your room photo",
+      "step1Text": "Upload a photo of your living room or bedroom to get ideas grounded in your actual space.",
+      "step2Title": "Explore changes",
+      "step2Text": "See which items might stay, move or be improved to make your room more cohesive.",
+      "step3Title": "Decide what to buy",
+      "step3Text": "If a purchase makes sense, explore suitable options. Not every item needs replacing.",
+      "cta": "Explore my room in Homa",
+      "blog": "Guides to rugs, curtains, layouts and room improvements"
     },
     "showcase": {
       "label": "Interior visualization",

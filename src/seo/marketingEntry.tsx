@@ -1,3 +1,4 @@
+import { homepageMetadata } from '../pages/ProductLanding/metadata';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import { I18nextProvider } from 'react-i18next';
@@ -13,7 +14,7 @@ import { FAQPage } from '../pages/FAQ/Page';
 import { CollaborationPage } from '../pages/Collaboration/Page';
 
 const pages = {
-  '/': { title: 'هما؛ طراحی داخلی خانه با هوش مصنوعی', description: 'عکس فضای خود را به هما بده؛ طراحی متناسب با اتاق، ایده‌های چیدمان و پیشنهاد محصولات را یکجا ببین.' },
+  '/': { ...homepageMetadata, title: `${homepageMetadata.title} | HOMA` },
   '/hosts': { title: 'طراحی اقامتگاه برای میزبان‌ها | هُما', description: 'از عکس آگهی تا راحتی مهمان؛ طراحی فضای اقامتگاه با هما.' },
   '/contact': { title: 'تماس با هما', description: 'راه‌های تماس با پشتیبانی استودیو و تیم هما.' },
   '/faq': { title: 'سؤال‌های متداول هما', description: 'پاسخ پرسش‌های رایج دربارهٔ طراحی، تصاویر و استفاده از هما.' },
