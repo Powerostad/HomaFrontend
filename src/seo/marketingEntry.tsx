@@ -21,6 +21,12 @@ const pages = {
   '/collaboration': { title: 'همکاری با هما', description: 'درخواست همکاری فروشگاه‌ها و برندها با هما.' },
 };
 
+const homePreloads = [
+  '<link rel="preload" as="image" href="/images/hero/before.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high">',
+  '<link rel="preload" as="image" href="/images/hero/before-mobile.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high">',
+  '<link rel="preload" as="font" href="/fonts/vazirmatn-v33.003.woff2" type="font/woff2" crossorigin>',
+].join('');
+
 /** Existing public components only; never catalogues or user sessions. */
 export function renderMarketingDocument(path: keyof typeof pages, template: string) {
   const page = pages[path];
@@ -30,5 +36,5 @@ export function renderMarketingDocument(path: keyof typeof pages, template: stri
   const canonical = `https://myhoma.ir${path}`;
   const schema = JSON.stringify([{ '@context': 'https://schema.org', '@type': 'Organization', name: 'HOMA | هما', url: 'https://myhoma.ir', logo: 'https://myhoma.ir/icons/homa-icon-512.png' }, { '@context': 'https://schema.org', '@type': 'WebSite', name: 'HOMA | هما', url: 'https://myhoma.ir', inLanguage: 'fa-IR' }]).replace(/</g, '\\u003c');
   const head = `<title>${escapeHtml(page.title)}</title><meta name="description" content="${escapeHtml(page.description)}"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${escapeHtml(page.title)}"><meta property="og:description" content="${escapeHtml(page.description)}"><meta property="og:type" content="website"><meta property="og:url" content="${canonical}"><meta property="og:image" content="https://myhoma.ir/images/seo/homa-preview.png"><meta name="twitter:card" content="summary_large_image">${path === '/' ? `<script type="application/ld+json">${schema}</script>` : ''}`;
-  return template.replace(/<title>[\s\S]*?<\/title>/gi, '').replace(/<meta[^>]+(?:name="description"|property="og:[^"]+")[^>]*>/gi, '').replace(/<link[^>]+rel="canonical"[^>]*>/gi, '').replace('</head>', `${head}</head>`).replace('<div id="root"></div>', `<div id="root">${markup}</div>`);
+  return template.replace(/<title>[\s\S]*?<\/title>/gi, '').replace(/<meta[^>]+(?:name="description"|property="og:[^"]+")[^>]*>/gi, '').replace(/<link[^>]+rel="canonical"[^>]*>/gi, '').replace('</head>', `${path === '/' ? homePreloads : ''}${head}</head>`).replace('<div id="root"></div>', `<div id="root">${markup}</div>`);
 }

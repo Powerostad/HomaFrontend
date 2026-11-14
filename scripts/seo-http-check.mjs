@@ -62,6 +62,7 @@ try {
     assert.match(body, /هوش مصنوعی/);
     assert.match(body, /href="\/studio\/upload"/);
     assert.match(body, /href="\/blog\//);
+    assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);
     assert.match(body, /rel="canonical" href="https:\/\/myhoma\.ir\/"/);
     assert.equal((body.match(/<meta name="description"/g) ?? []).length, 1);
     const schema = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
@@ -73,6 +74,10 @@ try {
   const studio = await request('/studio/upload');
   assert.equal(studio.response.status, 200);
   assert.match(studio.response.headers.get('x-robots-tag'), /noindex/);
+  const font = await fetch(base + '/fonts/vazirmatn-v33.003.woff2');
+  assert.equal(font.status, 200);
+  assert.match(font.headers.get('content-type'), /font\/woff2/);
+  assert.equal(Buffer.from(await font.arrayBuffer()).subarray(0, 4).toString(), 'wOF2');
   assert.equal((await request('/store/private-fixture')).response.status, 404);
   assert.equal((await request('/unknown-public-route')).response.status, 404);
   assert.equal((await request('/blog/')).response.status, 308);
