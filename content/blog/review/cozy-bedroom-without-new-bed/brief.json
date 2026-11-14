@@ -1,0 +1,134 @@
+{
+  "schema_version": "homa-blog-brief-v1",
+  "slug": "cozy-bedroom-without-new-bed",
+  "status": "draft",
+  "locale": "fa-IR",
+  "title": "قبل و بعد دکوراسیون اتاق خواب؛ چطور بدون تعویض تخت، اتاقی دنج بسازیم؟",
+  "seo": {
+    "title": "تغییر دکوراسیون اتاق خواب بدون تعویض تخت | هما",
+    "description": "چطور بدون تعویض تخت، اتاق خواب را دنج و زیباتر کنیم؟ تحلیل تصویری قبل و بعد با تمرکز بر روتختی، نورپردازی، گیاهان و وسایل موجود.",
+    "canonical": "https://myhoma.ir/blog/cozy-bedroom-without-new-bed"
+  },
+  "search": {
+    "primary_query": "تغییر دکوراسیون اتاق خواب بدون تعویض تخت",
+    "user_question": "چطور بدون تعویض تخت اتاق خوابم را دنج‌تر کنم و چه چیزهایی را باید بخرم؟",
+    "intent": "informational-commercial",
+    "iran_serp_review": "بررسی کیفی نتایج فارسی ۱۵ نوامبر ۲۰۲۶ نشان می‌دهد راهنماهای عمومی تغییر دکوراسیون اتاق خواب و نورپردازی بسیارند؛ این مقاله با تحلیل دو عکس مشخص و تصمیم Keep/Change به جای فهرست ایده متمایز می‌شود. حجم سرچ، سختی کلمه و ارجاعات واقعی اندازه‌گیری نشده‌اند.",
+    "topic_overlap_checked": false
+  },
+  "content": {
+    "direct_answer": "اگر تخت و فرش و پرده مناسب‌اند، ابتدا نورپردازی و هماهنگی رنگ روتختی و محل اکسسوری‌های موجود را اصلاح کنید. تعویض تخت یا فرش معمولاً اولین قدم لازم برای دنج‌تر شدن اتاق نیست.",
+    "decision_value": "تفکیک عناصر حفظ‌شدنی از تغییرهای اختیاری و تعیین اولویت خرید در اتاق شخصی",
+    "sections": [
+      {
+        "heading": "قبل و بعد این اتاق خواب؛ چه چیزی تغییر کرده است؟",
+        "summary": "مقایسه تصویری صادقانه و تفکیک نور/رنگ از تغییر وسایل"
+      },
+      {
+        "heading": "کدام وسایل بهتر است حفظ شوند؟",
+        "summary": "حفظ فرش ایرانی، پرده و آینه"
+      },
+      {
+        "heading": "تغییر روتختی چه اثری بر دکوراسیون اتاق خواب دارد؟",
+        "summary": "آزمایش پارچه و رنگ سرمه‌ای بدون تعویض کامل"
+      },
+      {
+        "heading": "نورپردازی گرم چگونه اتاق را دنج‌تر نشان می‌دهد؟",
+        "summary": "نور مطالعه، آباژور و ایمنی شمع"
+      },
+      {
+        "heading": "آیا فرش سنتی با اتاق خواب مدرن هماهنگ می‌شود؟",
+        "summary": "ترکیب فرش ایرانی با زمینه ساده"
+      },
+      {
+        "heading": "گیاه و تابلو را کجا اضافه کنیم تا اتاق شلوغ نشود؟",
+        "summary": "محدودیت نور و مسیر عبور"
+      },
+      {
+        "heading": "برای تغییر دکوراسیون اتاق خواب چه چیزی بخریم؟",
+        "summary": "جدول حفظ و تغییر با شرایط واقعی"
+      }
+    ],
+    "related_links": [
+      {
+        "href": "/blog/",
+        "anchor": "مجله هما"
+      }
+    ],
+    "cta": {
+      "href": "/studio/upload",
+      "label": "بررسی اتاق خواب من در هما"
+    }
+  },
+  "sources": [
+    {
+      "url": "https://magerta.ir/lifestyle/bedroom-makeover-ideas/",
+      "claim": "وجود راهنمای عمومی تغییر دکور اتاق خواب در SERP فارسی؛ تمایز با کیس واقعی",
+      "verified": true
+    },
+    {
+      "url": "https://www.mostaghelonline.com/بخش-گوناگون-120/181113-چگونه-دکوراسیون-اتاق-خواب-بزرگسالان-را-با-هزینه-کم-تغییر-دهیم",
+      "claim": "پوشش موضوع تغییر دکوراسیون اتاق خواب کم‌هزینه در سایت‌های فارسی",
+      "verified": true
+    },
+    {
+      "url": "https://www.ikea.com/in/en/rooms/living-room/how-to/making-the-most-of-your-living-room-lighting-pub1c4dd8a0/",
+      "claim": "نورپردازی چندمنبعه برای استفاده‌های مختلف",
+      "verified": true
+    }
+  ],
+  "image": {
+    "hero_url": "https://myhoma.ir/blog/images/cozy-bedroom-without-new-bed/cover.jpg",
+    "alt": "تصویرسازی مفهومی اتاق خواب با نور گرم، روتختی سرمه‌ای، فرش ایرانی و آینه چوبی",
+    "is_ai_generated": true,
+    "disclosure": "کاور با AI تولید شده است؛ تصاویر قبل و بعد را کاربر ارائه کرده و تصویر بعد به‌عنوان کانسپت طراحی بررسی می‌شود، نه اجرای واقعی مشتری."
+  },
+  "editorial": {
+    "author": "تیم محتوای هما",
+    "approved_by": "",
+    "approved_at": "",
+    "fact_checked": false,
+    "originality_checked": false,
+    "image_checked": false
+  },
+  "media": [
+    {
+      "path": "public/blog/images/cozy-bedroom-without-new-bed/before.jpg",
+      "width": 872,
+      "height": 1550,
+      "bytes": 184365,
+      "origin": "user_uploaded",
+      "role": "before"
+    },
+    {
+      "path": "public/blog/images/cozy-bedroom-without-new-bed/after.jpg",
+      "width": 872,
+      "height": 1550,
+      "bytes": 206705,
+      "origin": "user_uploaded",
+      "role": "after_design_concept"
+    },
+    {
+      "path": "public/blog/images/cozy-bedroom-without-new-bed/cover.jpg",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 283522,
+      "origin": "generated_ai",
+      "role": "conceptual_hero"
+    }
+  ],
+  "publication": {
+    "source_contract": "docs/BLOG-PUBLISHING.md",
+    "source_branch": "draft/blog-cozy-bedroom-20261115",
+    "draft_path": "content/blog/review/cozy-bedroom-without-new-bed/article.html",
+    "ready_for_sync": false,
+    "not_yet_published": true,
+    "review_conditions": [
+      "بازبینی منشأ و مجوز انتشار تصاویر",
+      "بازبینی همپوشانی با مقالات زنده",
+      "تأیید صریح متن و ادعاها",
+      "فایل نهایی فقط پس از درخواست انتشار به public/blog/<slug>/index.html در شاخه content/blog-* منتقل شود",
+      "تست parser و HTTP پس از Sync"
+    ]
+  }
+}
