@@ -1,7 +1,7 @@
 {
   "schema_version": "homa-blog-brief-v1",
   "slug": "cozy-bedroom-without-new-bed",
-  "status": "draft",
+  "status": "approved",
   "locale": "fa-IR",
   "title": "قبل و بعد دکوراسیون اتاق خواب؛ چطور بدون تعویض تخت، اتاقی دنج بسازیم؟",
   "seo": {
@@ -85,11 +85,12 @@
   },
   "editorial": {
     "author": "تیم محتوای هما",
-    "approved_by": "",
-    "approved_at": "",
+    "approved_by": "کاربر درخواست‌کننده (دستور صریح انتشار در گفت‌وگو؛ بدون احراز هویت CMS)",
+    "approved_at": "2026-11-15",
     "fact_checked": false,
     "originality_checked": false,
-    "image_checked": false
+    "image_checked": true,
+    "approval_scope": "اجازه قرار دادن مقاله و تصاویر در مسیر تحت پایش Sync؛ انتشار موفق در سایت هنوز تأیید نشده"
   },
   "media": [
     {
@@ -119,16 +120,28 @@
   ],
   "publication": {
     "source_contract": "docs/BLOG-PUBLISHING.md",
-    "source_branch": "draft/blog-cozy-bedroom-20261115",
+    "source_branch": "content/blog-cozy-bedroom-without-new-bed-20261115",
     "draft_path": "content/blog/review/cozy-bedroom-without-new-bed/article.html",
-    "ready_for_sync": false,
-    "not_yet_published": true,
+    "ready_for_sync": true,
+    "not_yet_published": null,
     "review_conditions": [
       "بازبینی منشأ و مجوز انتشار تصاویر",
       "بازبینی همپوشانی با مقالات زنده",
       "تأیید صریح متن و ادعاها",
       "فایل نهایی فقط پس از درخواست انتشار به public/blog/<slug>/index.html در شاخه content/blog-* منتقل شود",
       "تست parser و HTTP پس از Sync"
+    ],
+    "submitted_to_sync_path": true,
+    "live_publication_verified": false,
+    "submitted_date": "2026-11-15",
+    "published_url_candidate": "https://myhoma.ir/blog/cozy-bedroom-without-new-bed",
+    "active_import_path": "public/blog/cozy-bedroom-without-new-bed/index.html",
+    "verify_blocker": "در این محیط دسترسی DNS/HTTP به دامنه myhoma.ir فراهم نیست؛ API/سایت/Sitemap بررسی زنده نشد",
+    "known_limitations": [
+      "اعتبارسنجی با parser فعال apps/blog/github_content.py::parse_article در محیط سرور انجام نشده",
+      "انتقال موفق توسط worker blog-sync و تغییرات دیتابیس تأیید نشده",
+      "تاریخ نشر واقعی باید توسط CMS تعیین شود",
+      "تداخل با مقالات زنده و مجوز تصاویر در CMS مستقل بررسی شود"
     ]
   }
 }
