@@ -665,16 +665,30 @@
   "landing": {
     "hero": {
       "editorial": "Homa Editorial",
+      "label": "AI interior design from a photo of your home",
       "title": "Homa;",
       "titleAccent": "A better version of",
       "titleEnd": "your home.",
-      "description": "Homa helps you find the right decor for your home.",
-      "cta": "See your home's new look"
+      "description": "Share a photo of your room. Discover what you can keep or rearrange, what could improve, and which products might fit if you need to buy.",
+      "cta": "Start with a photo of my room"
+    },
+    "decision": {
+      "eyebrow": "From your room to a clearer decision",
+      "title": "Before buying, see what really needs to change.",
+      "description": "Start with a photo of your space. Explore what to keep, what to rearrange, and where a new item could make a difference.",
+      "step1Title": "Your room photo",
+      "step1Text": "Upload a photo of your living room or bedroom to get ideas grounded in your actual space.",
+      "step2Title": "Explore changes",
+      "step2Text": "See which items might stay, move or be improved to make your room more cohesive.",
+      "step3Title": "Decide what to buy",
+      "step3Text": "If a purchase makes sense, explore suitable options. Not every item needs replacing.",
+      "cta": "Explore my room in Homa",
+      "blog": "Guides to rugs, curtains, layouts and room improvements"
     },
     "showcase": {
       "label": "Interior visualization",
       "titleAccent": "Show us your home photo",
-      "titleRest": "and we'll bring you furniture that matches.",
+      "titleRest": "Share a photo of your room and explore what to keep, rearrange or improve.",
       "originalSpace": "Original Space",
       "enhancedRoom": "Enhanced Room",
       "suggestedProducts": "Homa's Suggested Products",
@@ -685,9 +699,9 @@
     },
     "comparison": {
       "label": "Visual proof",
-      "title": "Buy furniture,",
+      "title": "Redesign your room,",
       "titleAccent": "without guessing",
-      "description": "Homa helps you see the result of your choice in your own space before buying.",
+      "description": "See how thoughtful changes could look in your space before you decide to buy.",
       "rug": "Rug",
       "rugTitle": "Magic of weaving",
       "rugDescription": "Complete transformation of living space with smart Persian rug selection.",
@@ -738,6 +752,7 @@
   "footer": {
     "tagline": "The distance between dream and reality is just one click. We help you experience a more confident, beautiful, and tasteful result in your space.",
     "quickAccess": "Quick Access",
+    "blog": "Homa Journal · Home improvement guides",
     "collaboration": "Collaboration",
     "collaborateWithHoma": "Collaborate with Homa",
     "support": "Support",
