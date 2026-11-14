@@ -1,5 +1,4 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
   FileText,
