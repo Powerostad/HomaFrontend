@@ -48,7 +48,7 @@
 
 ## تست و انتشار
 
-`node --test scripts/homepage-quality.test.mjs`
+`node --test scripts/homepage-quality-check.mjs`
 
 `.github/workflows/homepage-quality.yml` همچنین `npm run build` را اجرا می‌کند. این QA تنها مختص شاخه PR است؛ به‌معنی استقرار Production نیست.
 
