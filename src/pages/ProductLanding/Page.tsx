@@ -1,5 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
-import { useNavigate as useRouterNavigate } from "react-router-dom";
+import { useEffect, lazy, Suspense } from "react";
 import { useApp } from "../../context/AppContext";
 import {
   parseEntryParams,
@@ -15,22 +14,23 @@ import { LazySection } from "../../components/LazySection";
 // Above-the-fold Components (loaded immediately)
 import { HeroSection } from "./components/HeroSection";
 import { TrustBar } from "./components/TrustBar";
+import { HomeDecisionSection } from "./components/HomeDecisionSection";
 import { OutputShowcase } from "./components/OutputShowcase";
 
 // Below-the-fold Components (lazy loaded for better performance)
 const ComparisonSection = lazy(() => import("./components/ComparisonSection").then(m => ({ default: m.ComparisonSection })));
 const ShoppingPropSection = lazy(() => import("./components/ShoppingPropSection").then(m => ({ default: m.ShoppingPropSection })));
 
-import { HomaLoader } from "../../components/HomaLoader";
 import { useSeo } from "@/hooks/useSeo";
 
 export function ProductLandingPage() {
   useSeo({
-    description: "با هوش مصنوعی HOMA محصولات را قبل از خرید در فضای خانه خود ببینید.",
+    title: "طراحی دکوراسیون خانه با هوش مصنوعی از روی عکس",
+    description: "عکس خانه‌ات را در هما بررسی کن؛ ببین چه وسایلی را حفظ یا جابه‌جا کنی، چه چیزی نیاز به تغییر دارد و اگر خرید لازم بود، چه محصولی مناسب‌تر است.",
+    canonical: "https://myhoma.ir/",
+    image: "https://myhoma.ir/images/seo/homa-preview.png",
   });
-  const navigate = useRouterNavigate();
   const { setProduct, setAllProducts, trackKPI, setProductVariant } = useApp();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initPage = async () => {
@@ -60,8 +60,6 @@ export function ProductLandingPage() {
 
       } catch (error) {
         console.error("Failed to initialize page:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -70,14 +68,8 @@ export function ProductLandingPage() {
 
   const handleGetStarted = () => {
     trackKPI("CTA Clicked", { location: "Landing" });
-    // Navigate to explore page where users can select a product to try-on
-    // (Try-on flow now requires a product ID in URL: /try-on/:productId/upload)
-    navigate("/explore");
+    // The native anchor in HeroSection navigates to /studio/upload.
   };
-
-  if (isLoading) {
-    return <HomaLoader />;
-  }
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
@@ -88,6 +80,7 @@ export function ProductLandingPage() {
       <main className="flex-grow">
         {/* Above-the-fold content (loaded immediately) */}
         <HeroSection onGetStarted={handleGetStarted} />
+        <HomeDecisionSection />
         <OutputShowcase onGetStarted={handleGetStarted} />
         <TrustBar />
 

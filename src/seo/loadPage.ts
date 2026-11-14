@@ -7,7 +7,7 @@ import type { PublicPageData, PublicProduct, PublicShop } from './types';
 export interface PageOptions { origin: string; apiBase: string; indexable: boolean; supportUrl?: string; }
 export type PageResult = { redirect: string; status: 308 } | { data: PublicPageData; status: number };
 const titles: Record<string, [string, string]> = {
-  '/': ['طراحی دکوراسیون و مشاهده محصول با هوش مصنوعی', 'با هما برای دکوراسیون خانه ایده بگیرید و محصولات فروشگاه‌ها را پیش از خرید در عکس فضای خود ببینید.'],
+  '/': ['طراحی دکوراسیون خانه با هوش مصنوعی از روی عکس', 'عکس فضای خانه‌ات را در هما بررسی کن؛ ببین چه وسایلی را حفظ یا جابه‌جا کنی، چه چیزی نیاز به تغییر دارد و اگر خرید لازم بود، چه محصولی مناسب‌تر است.'],
   '/explore': ['فروشگاه‌های دکوراسیون و لوازم خانه', 'فروشگاه‌ها را در هما ببینید، محصولات را مقایسه کنید و محصول انتخابی را در فضای خانه خود امتحان کنید.'],
   '/gallery': ['گالری محصولات دکوراسیون خانه', 'محصولات فروشگاه‌های هما را ببینید و برای مشاهده در فضای خود انتخاب کنید.'],
 };

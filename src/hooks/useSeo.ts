@@ -30,9 +30,9 @@ const SITE_NAME = 'HOMA';
 // Falls back to these whenever a page omits a field or unmounts. Keep in sync
 // with the static defaults in index.html.
 const DEFAULTS = {
-  title: 'HOMA - مشاهده محصول در فضای شما',
-  description: 'HOMA - پلتفرم هوش مصنوعی برای مشاهده محصولات در فضای شما',
-  image: '',
+  title: 'طراحی دکوراسیون خانه با هوش مصنوعی از روی عکس | هما',
+  description: 'عکس خانه‌ات را در هما بررسی کن؛ ببین چه وسایلی را حفظ یا جابه‌جا کنی، چه چیزی نیاز به تغییر دارد و اگر خرید لازم بود، چه محصولی مناسب‌تر است.',
+  image: 'https://myhoma.ir/images/seo/homa-preview.png',
   type: 'website' as const,
 };
 
