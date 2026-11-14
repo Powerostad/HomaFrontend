@@ -9,7 +9,7 @@ on:
       - 'src/hooks/useSeo.ts'
       - 'src/components/Footer.tsx'
       - 'src/i18n/locales/fa.json'
-      - 'scripts/homepage-quality.test.mjs'
+      - 'scripts/homepage-quality-check.mjs'
       - '.github/workflows/homepage-quality.yml'
   push:
     paths:
@@ -20,7 +20,7 @@ on:
       - 'src/hooks/useSeo.ts'
       - 'src/components/Footer.tsx'
       - 'src/i18n/locales/fa.json'
-      - 'scripts/homepage-quality.test.mjs'
+      - 'scripts/homepage-quality-check.mjs'
       - '.github/workflows/homepage-quality.yml'
 jobs:
   homepage-quality:
@@ -34,7 +34,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Run homepage semantic and SEO guard
-        run: node --test scripts/homepage-quality.test.mjs
+        run: node --test scripts/homepage-quality-check.mjs
       - name: Install app dependencies
         run: npm ci
       - name: Validate TypeScript and production Vite build
