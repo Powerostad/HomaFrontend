@@ -36,6 +36,7 @@ describe("public HTML content", () => {
   it("renders a single homepage heading and crawlable studio/blog paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html.match(/<main\\b/g)).toHaveLength(1);
     expect(html).toContain('href="/studio/upload"');
     // The public homepage links only to destinations used by the actual site.
     expect(html).toContain('href="/blog/"');
