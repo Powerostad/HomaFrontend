@@ -42,6 +42,7 @@ export function Footer() {
                 <li><Link to="/" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.home')}</Link></li>
                 <li><Link to="/explore" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.stores')}</Link></li>
                 <li><Link to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">{t('nav.gallery')}</Link></li>
+                <li><a href="/blog/" className="hover:text-content-primary transition-colors text-p font-light">مجله هما؛ راهنمای تغییر دکوراسیون خانه</a></li>
               </ul>
             </div>
 
