@@ -62,7 +62,11 @@ try {
     assert.match(body, /هوش مصنوعی/);
     assert.match(body, /href="\/studio\/upload"/);
     assert.match(body, /href="\/blog\//);
+    assert.match(body, /href="\/hosts"/);
     assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);
+    const desktopPreload = body.indexOf('href="/images/hero/before.webp"');
+    assert.ok(desktopPreload > body.indexOf('name="viewport"'));
+    assert.ok(desktopPreload < body.indexOf('<script type="module"'));
     assert.match(body, /rel="canonical" href="https:\/\/myhoma\.ir\/"/);
     assert.equal((body.match(/<meta name="description"/g) ?? []).length, 1);
     const schema = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
@@ -74,6 +78,7 @@ try {
   const studio = await request('/studio/upload');
   assert.equal(studio.response.status, 200);
   assert.match(studio.response.headers.get('x-robots-tag'), /noindex/);
+  assert.equal((await request('/hosts')).response.status, 200);
   const font = await fetch(base + '/fonts/vazirmatn-v33.003.woff2');
   assert.equal(font.status, 200);
   assert.match(font.headers.get('content-type'), /font\/woff2/);

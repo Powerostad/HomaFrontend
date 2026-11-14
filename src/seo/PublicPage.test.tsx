@@ -39,6 +39,7 @@ describe("public HTML content", () => {
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toContain('href="/studio/upload"');
     expect(html).toContain('href="/blog/"');
+    expect(html).toContain('href="/hosts"');
     expect(html).not.toContain('href="/studio/hosts"');
     expect(html).toContain('href="/studio?room=bedroom"');
     expect(html).toContain('href="/ai-interior-design"');
@@ -129,6 +130,7 @@ describe("public HTML content", () => {
     expect(html).toContain("Products");
     expect(html).toContain("Choose a space.");
     expect(html).toContain("Start with a photo of my room");
+    expect(html).toContain("HOMA for hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
     const data = { ...base, kind: "article" as const, path: "/contact" };
