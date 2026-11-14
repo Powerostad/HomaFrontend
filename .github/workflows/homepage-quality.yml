@@ -1,0 +1,43 @@
+name: Homepage message, SEO and performance guard
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'src/pages/ProductLanding/**'
+      - 'src/pages/PublicSeoPages.tsx'
+      - 'src/seo/loadPage.ts'
+      - 'src/hooks/useSeo.ts'
+      - 'src/components/Footer.tsx'
+      - 'src/i18n/locales/fa.json'
+      - 'scripts/homepage-quality.test.mjs'
+      - '.github/workflows/homepage-quality.yml'
+  push:
+    paths:
+      - 'index.html'
+      - 'src/pages/ProductLanding/**'
+      - 'src/pages/PublicSeoPages.tsx'
+      - 'src/seo/loadPage.ts'
+      - 'src/hooks/useSeo.ts'
+      - 'src/components/Footer.tsx'
+      - 'src/i18n/locales/fa.json'
+      - 'scripts/homepage-quality.test.mjs'
+      - '.github/workflows/homepage-quality.yml'
+jobs:
+  homepage-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Run homepage semantic and SEO guard
+        run: node --test scripts/homepage-quality.test.mjs
+      - name: Install app dependencies
+        run: npm ci
+      - name: Validate TypeScript and production Vite build
+        run: npm run build
+# Note: this does not assert that the separate production Nginx/blog sync paths
+# have deployed these changes, nor does it replace an HTTP crawler audit.
