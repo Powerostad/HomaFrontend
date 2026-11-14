@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type FormEvent, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -49,42 +50,41 @@ function formatDimension(value?: string | null): string {
 
 /** Static, browser-free homepage content for the SSR public document. */
 export function SeoHome() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-surface-page flex flex-col" dir="rtl">
       <main className="flex-grow pt-20 md:pt-32 pb-24 px-6 max-w-5xl mx-auto w-full">
         <header className="text-center max-w-3xl mx-auto space-y-6 mb-14">
-          <p className="text-[12px] tracking-wide opacity-60">طراحی دکوراسیون خانه با هوش مصنوعی</p>
+          <p className="text-[12px] tracking-wide opacity-60">{t('landing.hero.label', 'طراحی دکوراسیون خانه با هوش مصنوعی')}</p>
           <h1 className="text-[38px] md:text-[56px] font-light leading-tight text-black">
-            هُما؛ نسخه بهتر خونه‌ت.
+            {t('landing.hero.title', 'هُما؛')}{' '}{t('landing.hero.titleAccent', 'نسخه بهتر')}{' '}{t('landing.hero.titleEnd', 'خونه‌ت.')}
           </h1>
           <p className="text-[16px] md:text-lg opacity-70 leading-relaxed">
-            عکس فضای خانه‌ات را در هما بررسی کن؛ ببین چه وسایلی را می‌توان حفظ یا جابه‌جا کرد،
-            چه چیزی نیاز به تغییر دارد و اگر خرید لازم بود، چه انتخابی با فضای تو هماهنگ‌تر است.
+            {t('landing.hero.description', 'عکس فضای خانه‌ات را بررسی کن و برای تغییرهای لازم تصمیم بگیر.')}
           </p>
           <nav aria-label="شروع استفاده از هما" className="flex flex-wrap justify-center gap-4">
             <a href="/studio/upload" className="inline-flex h-12 items-center bg-black text-white px-6">
-              شروع طراحی با عکس خانه
+              {t('landing.hero.cta', 'شروع طراحی با عکس خانه')}
             </a>
             <a href="/blog/" className="inline-flex h-12 items-center border border-black/15 px-6">
-              راهنماهای انتخاب و تغییر دکوراسیون
+              {t('landing.hero.secondary', 'راهنماهای انتخاب و تغییر دکوراسیون')}
             </a>
           </nav>
         </header>
         <section aria-labelledby="seo-home-process" className="border-t border-black/10 pt-12">
           <h2 id="seo-home-process" className="text-[24px] md:text-[32px] font-light mb-6">
-            قبل از خرید، ببین چه چیزی واقعاً باید تغییر کند.
+            {t('landing.decision.title', 'قبل از خرید، ببین چه چیزی واقعاً باید تغییر کند.')}
           </h2>
           <p className="text-[15px] leading-[2] opacity-70 mb-7">
-            هما از عکس فضای واقعی تو شروع می‌کند. چیدمان و تغییرهای ممکن را بررسی کن،
-            وسایل مناسب را نگه دار و فقط اگر لازم بود به سراغ انتخاب محصول جدید برو.
+            {t('landing.decision.description', 'هما از عکس فضای واقعی تو شروع می‌کند و تغییرهای ممکن را بررسی می‌کند.')}
           </p>
           <ol className="grid grid-cols-1 md:grid-cols-3 gap-7 text-[15px] leading-[1.9]">
-            <li><h3 className="font-medium">عکس فضای خودت</h3><p>یک عکس از پذیرایی یا اتاق خواب ارسال کن.</p></li>
-            <li><h3 className="font-medium">بررسی تغییرها</h3><p>حفظ یا جابه‌جایی وسایل و گزینه‌های بهتر را بررسی کن.</p></li>
-            <li><h3 className="font-medium">تصمیم برای خرید</h3><p>در صورت نیاز، محصول مناسب با فضای خودت را انتخاب کن.</p></li>
+            <li><h3 className="font-medium">{t('landing.decision.step1Title', 'عکس فضای خودت')}</h3><p>{t('landing.decision.step1Text', 'یک عکس از اتاق ارسال کن.')}</p></li>
+            <li><h3 className="font-medium">{t('landing.decision.step2Title', 'بررسی تغییرها')}</h3><p>{t('landing.decision.step2Text', 'تغییرهای ممکن را بررسی کن.')}</p></li>
+            <li><h3 className="font-medium">{t('landing.decision.step3Title', 'تصمیم برای خرید')}</h3><p>{t('landing.decision.step3Text', 'در صورت نیاز محصول انتخاب کن.')}</p></li>
           </ol>
           <div className="mt-10">
-            <a href="/explore" className="underline underline-offset-4">مشاهده محصولات دکوراسیون</a>
+            <a href="/explore" className="underline underline-offset-4">{t('seo.home.browse', 'مشاهده محصولات دکوراسیون')}</a>
           </div>
         </section>
       </main>
