@@ -47,7 +47,7 @@ export function HeroSection({ onGetStarted }: { onGetStarted?: () => void }) {
                             <ArrowLeft size={16} aria-hidden="true" />
                         </a>
                         <a href="/blog/" className="inline-flex items-center min-h-[32px] text-[12px] text-foreground/65 underline underline-offset-4 hover:text-foreground transition-colors">
-                            راهنماهای انتخاب و تغییر دکوراسیون
+                            {t('landing.hero.secondary', 'راهنماهای انتخاب و تغییر دکوراسیون')}
                         </a>
                     </div>
                 </div>
