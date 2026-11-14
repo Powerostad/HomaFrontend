@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
  * The same visible message is shown to people and search engines.
  * OptimizedImage inside BeforeAfterSlider selects the existing responsive WebPs.
  */
-export function HeroSection() {
+export function HeroSection({ onGetStarted }: { onGetStarted?: () => void }) {
     const { t } = useTranslation();
 
     return (
@@ -42,7 +42,7 @@ export function HeroSection() {
                         {t('landing.hero.description', 'عکس فضای خونه‌ت رو به هما بده. ببین کدوم وسایل بهتره حفظ یا جابه‌جا بشن، چه چیزی نیاز به تغییر داره و اگر خرید لازمه، چه انتخابی با خونه‌ت هماهنگ‌تره.')}
                     </p>
                     <div className="flex flex-col items-center md:items-start gap-4 w-full">
-                        <a href="/studio/upload" className="bg-black text-white w-full max-w-[315px] md:w-auto md:min-w-[265px] h-[58px] px-7 flex items-center justify-center gap-4 text-[15px] hover:bg-black/90 transition-colors rounded-[2px]">
+                        <a href="/studio/upload" onClick={onGetStarted} className="bg-black text-white w-full max-w-[315px] md:w-auto md:min-w-[265px] h-[58px] px-7 flex items-center justify-center gap-4 text-[15px] hover:bg-black/90 transition-colors rounded-[2px]">
                             <span>{t('landing.hero.cta', 'شروع طراحی با عکس خونه')}</span>
                             <ArrowLeft size={16} aria-hidden="true" />
                         </a>
