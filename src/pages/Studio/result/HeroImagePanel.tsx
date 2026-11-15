@@ -1,3 +1,6 @@
+import { trackStudioResultAction } from '@/analytics/events';
+import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import {
   ArrowRight,
   Download,
@@ -7,10 +10,8 @@ import {
   Share2,
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
-import { trackStudioResultAction } from '@/analytics/events';
-import { useSimpleTranslation } from './types';
 import type { ImagePlacementMarker } from './types';
+import { useSimpleTranslation } from './types';
 
 export interface HeroMarker {
   itemId: number;
@@ -21,6 +22,7 @@ export interface HeroMarker {
 
 interface HeroImagePanelProps {
   resultImage: string;
+  conceptImage?: string;
   originalImage: string | null;
   showOriginal: boolean;
   isSaved: boolean;
@@ -34,6 +36,9 @@ interface HeroImagePanelProps {
   onFullscreen: () => void;
   onExit: () => void;
   onMarkerClick?: (itemId: number) => void;
+  showSave?: boolean;
+  showActions?: boolean;
+  onImageError?: () => void;
 }
 
 function GlassButton({
@@ -49,12 +54,13 @@ function GlassButton({
   disabled?: boolean;
   active?: boolean;
 }) {
+  const { siteValue } = useSiteTranslation();
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={ariaLabel}
+      aria-label={siteValue(ariaLabel)}
       aria-pressed={active || undefined}
       className="studio-hero-glass-button"
       style={{
@@ -62,13 +68,14 @@ function GlassButton({
         color: active ? 'var(--color-brand-primary)' : 'var(--color-content-inverse)',
       }}
     >
-      {children}
+      {siteValue(children)}
     </button>
   );
 }
 
 function HeroImageStage({
   resultImage,
+  conceptImage,
   originalImage,
   showOriginal,
   isSaved,
@@ -82,9 +89,16 @@ function HeroImageStage({
   onFullscreen,
   onExit,
   onMarkerClick,
-}: HeroImagePanelProps) {
+  showSave = true,
+  showActions = true,
+  onImageError,
+  mobile = false,
+}: HeroImagePanelProps & { mobile?: boolean }) {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const [selectedConcept, setSelectedConcept] = useState<string>();
+  const showingConcept = !!conceptImage && selectedConcept === conceptImage && !showOriginal;
   const hasGeneratedImage = !analysisOnly && !!resultImage;
   const visibleMarkers = markers.filter((entry) => entry.marker);
 
@@ -108,116 +122,134 @@ function HeroImageStage({
   }, [sessionId, t]);
 
   return (
-    <div className="studio-hero-stage" dir="rtl">
-      {resultImage ? (
+    <div className="studio-hero-stage" dir={siteDirection()} data-actions={showActions}>
+      {siteValue(resultImage ? (
         <AuthenticatedImage
-          src={resultImage}
-          alt={analysisOnly
+          src={showingConcept ? conceptImage : resultImage}
+          alt={siteValue(analysisOnly
             ? t('studio.result.v2.analysisOnly.originalAlt', 'عکس اصلی فضای شما')
-            : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما')}
+            : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما'))}
           skipAuth={resultImage.startsWith('data:')}
           className={`studio-hero-image ${showOriginal && hasGeneratedImage ? 'studio-hero-image-hidden' : ''}`}
+          onError={onImageError}
         />
       ) : (
         <div className="studio-hero-placeholder" role="img" aria-label={t('common.loading', 'در حال بارگذاری...')} />
-      )}
+      ))}
 
-      {hasGeneratedImage && originalImage && (
+      {siteValue(hasGeneratedImage && originalImage && (
         <AuthenticatedImage
           src={originalImage}
           alt={t('studio.result.v2.hero.originalAlt', 'تصویر قبل از بازطراحی')}
           skipAuth={originalImage.startsWith('data:')}
           className={`studio-hero-image studio-hero-original ${showOriginal ? '' : 'studio-hero-image-hidden'}`}
         />
-      )}
+      ))}
 
       <div className="studio-hero-scrim" aria-hidden="true" />
+
+      {mobile && hasGeneratedImage && (
+        <button
+          type="button"
+          className="studio-hero-image-open"
+          aria-label={t('studio.result.v2.fullscreenView', 'نمای تمام‌صفحه')}
+          onClick={onFullscreen}
+        />
+      )}
 
       <div className="studio-hero-toolbar studio-hero-toolbar-top">
         <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
           <ArrowRight size={20} />
         </GlassButton>
-        <div className="studio-hero-toolbar-actions">
-          <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
+        {showActions && <div className="studio-hero-toolbar-actions">
+          {showSave && <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
             <Heart size={19} fill={isSaved ? 'currentColor' : 'none'} />
-          </GlassButton>
-          {!analysisOnly && (
+          </GlassButton>}
+          {siteValue(!analysisOnly && (
             <GlassButton onClick={onDownload} disabled={isDownloading} ariaLabel={t('common.download', 'دانلود')}>
-              {isDownloading ? <Loader2 size={19} className="animate-spin" /> : <Download size={19} />}
+              {siteValue(isDownloading ? <Loader2 size={19} className="animate-spin" /> : <Download size={19} />)}
             </GlassButton>
-          )}
+          ))}
           <GlassButton onClick={handleShare} ariaLabel={shareState === 'copied' ? t('common.copied', 'کپی شد') : t('common.share', 'اشتراک‌گذاری')}>
             <Share2 size={19} />
           </GlassButton>
-        </div>
+        </div>}
       </div>
 
-      {analysisOnly && (
+      {siteValue(analysisOnly && (
         <div className="studio-hero-analysis-badge">
           <span>{t('studio.result.v2.analysisOnly.label', 'تحلیل اولیه فضا')}</span>
           <small>{t('studio.result.v2.analysisOnly.heroHint', 'تصویر بازطراحی در این جلسه تولید نشده است')}</small>
         </div>
-      )}
+      ))}
 
-      {hasGeneratedImage && originalImage && (
+      {siteValue(hasGeneratedImage && originalImage && (
         <div className="studio-hero-before-after" role="group" aria-label={t('studio.result.v2.hero.compare', 'مقایسه قبل و بعد')}>
           <button
             type="button"
-            className={!showOriginal ? 'is-active' : ''}
+            className={!showOriginal && !showingConcept ? 'is-active' : ''}
+            aria-pressed={!showOriginal && !showingConcept}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'after' });
+              setSelectedConcept(undefined);
               onToggleOriginal(false);
             }}
           >
             {t('studio.result.v2.after', 'طرح جدید')}
           </button>
+          {conceptImage && <button type="button" className={showingConcept ? 'is-active' : ''} aria-pressed={showingConcept}
+            onClick={() => { onToggleOriginal(false); setSelectedConcept(conceptImage); }}>
+            {t('studio.result.v2.concept', 'کانسپت اولیه')}
+          </button>}
           <button
             type="button"
             className={showOriginal ? 'is-active' : ''}
+            aria-pressed={showOriginal}
             onClick={() => {
               trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'before' });
+              setSelectedConcept(undefined);
               onToggleOriginal(true);
             }}
           >
             {t('studio.result.v2.before', 'وضعیت موجود')}
           </button>
         </div>
-      )}
+      ))}
 
-      {hasGeneratedImage && (
+      {siteValue(hasGeneratedImage && (
         <button type="button" className="studio-hero-fullscreen" onClick={onFullscreen}>
           <Maximize2 size={16} />
           <span>{t('studio.result.v2.fullscreenView', 'نمای تمام‌صفحه')}</span>
         </button>
-      )}
+      ))}
 
-      {hasGeneratedImage && visibleMarkers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
         <div className="studio-hero-markers" aria-label={t('studio.result.v2.hero.markerLabel', 'نشانه‌های پیشنهادها')}>
-          {visibleMarkers.map((entry) => (
+          {siteValue(visibleMarkers.map((entry) => (
             <button
               type="button"
               key={entry.itemId}
               className="studio-hero-marker"
               style={{ left: `${entry.marker!.x * 100}%`, top: `${entry.marker!.y * 100}%` }}
               onClick={() => onMarkerClick?.(entry.itemId)}
-              aria-label={`${t('studio.result.v2.hero.marker', 'پیشنهاد')} ${entry.number}: ${entry.label}`}
+              aria-label={siteText("{{v0}} {{v1}}: {{v2}}", { v0: t('studio.result.v2.hero.marker', 'پیشنهاد'), v1: entry.number, v2: entry.label })}
             >
-              <span>{entry.number}</span>
+              <span>{siteValue(entry.number)}</span>
             </button>
-          ))}
+          )))}
         </div>
-      )}
+      ))}
 
-      {hasGeneratedImage && markers.length > 0 && (
+      {siteValue(hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
         <div className="studio-hero-marker-legend" aria-label={t('studio.result.v2.hero.legend', 'راهنمای پیشنهادها')}>
-          {markers.map((entry) => (
+          {siteValue(visibleMarkers.map((entry) => (
             <button type="button" key={entry.itemId} onClick={() => onMarkerClick?.(entry.itemId)}>
-              <span>{entry.number}</span>
-              {entry.label}
+              <span>{siteValue(entry.number)}</span>
+              {siteValue(entry.label)}
             </button>
-          ))}
+          )))}
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -233,7 +265,7 @@ export function DesktopHeroPanel(props: HeroImagePanelProps) {
 export function MobileHeroSection(props: HeroImagePanelProps) {
   return (
     <div className="studio-mobile-hero">
-      <HeroImageStage {...props} />
+      <HeroImageStage {...props} mobile />
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { apiPost, type APIResponse, type RequestOptions } from '@/utils/apiClient';
 import { appConfig } from '@/config/appConfig';
+import { siteText } from '@/i18n/siteCopy';
+import { apiPost, type APIResponse, type RequestOptions } from '@/utils/apiClient';
 
 export type ChatErrorKind = 'network' | 'auth' | 'server';
 
@@ -47,9 +48,11 @@ interface RunChatCommandOptions {
 }
 
 const COMMAND_TIMEOUT_MS = 120_000;
-const TURN_TIMEOUT_MS = 180_000;
+// The server permits 600 seconds per model attempt. Keep the connection long
+// enough to receive that result; disconnect recovery never resubmits a turn.
+const TURN_TIMEOUT_MS = 660_000;
 const RENDER_IDLE_TIMEOUT_MS = 180_000;
-const TERMINAL_RENDER_EVENTS = new Set(['image', 'error']);
+const TERMINAL_RENDER_EVENTS = new Set(['image', 'render_export', 'error']);
 
 function websocketUrl(ticket: string): string {
   const url = new URL(appConfig.apiBaseUrl);
@@ -65,7 +68,7 @@ function isAbort(signal: AbortSignal, error?: unknown): boolean {
 
 function userError(value: unknown): string {
   const raw = typeof value === 'string' ? value : '';
-  return /[؀-ۿ]/.test(raw) ? raw : 'خطایی رخ داد. لطفاً دوباره تلاش کن.';
+  return /[؀-ۿ]/.test(raw) ? raw : siteText("خطایی رخ داد. لطفاً دوباره تلاش کن.");
 }
 
 function operationIdFromData(value: unknown): string | undefined {
@@ -128,7 +131,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
           finish({
             ok: false,
             status: 408,
-            error: 'مهلت ارتباط با سرور تمام شد.',
+            error: siteText("مهلت ارتباط با سرور تمام شد."),
             errorKind: 'network',
           }, true);
           return;
@@ -231,7 +234,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
         // release it as soon as the turn completes.
         const keepRenderSocket = options.type === 'chat.turn' && !!expectedOperationId;
         if (keepRenderSocket) armTimer(RENDER_IDLE_TIMEOUT_MS);
-        finish({ ok: true, status: 200 }, keepRenderSocket);
+        finish({ ok: true, status: 200 }, !keepRenderSocket);
         return;
       }
       if (frame.type === 'chat.ack') {
@@ -243,7 +246,7 @@ export async function runChatCommand(options: RunChatCommandOptions): Promise<Ch
         const terminal = typeof status === 'string' && ['ready', 'succeeded', 'duplicate', 'completed'].includes(status);
         const keepRenderSocket = options.type === 'chat.render' && !terminal && !!expectedOperationId;
         if (keepRenderSocket) armTimer(RENDER_IDLE_TIMEOUT_MS);
-        finish({ ok: true, status: 200, data: frame.data }, keepRenderSocket);
+        finish({ ok: true, status: 200, data: frame.data }, !keepRenderSocket);
         if (
           options.type === 'chat.render'
           && !terminal

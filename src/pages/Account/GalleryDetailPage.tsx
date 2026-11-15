@@ -1,30 +1,31 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import {
-  ArrowRight,
-  Share2,
-  Download,
-  X,
-  Menu,
-  Maximize2,
-  Trash2,
-  RefreshCw,
-  Loader2,
-  Bookmark,
-} from 'lucide-react';
+import { trackGalleryShared } from '@/analytics/events';
 import { AuthenticatedImage } from '@/components/figma/AuthenticatedImage';
-import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { SidebarMenu } from '@/components/SidebarMenu';
+import { Button } from '@/components/ui/button';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { ProductDetailSheet, type Product } from '@/pages/Studio/components/ProductDetailSheet';
-import { toast } from 'sonner';
-import { fetchGalleryItem, deleteGalleryItem } from '@/services/galleryService';
-import { fetchAuthenticatedImage } from '@/utils/apiClient';
+import { deleteGalleryItem, fetchGalleryItem } from '@/services/galleryService';
 import { type GalleryItem, type GalleryStudioProduct } from '@/types/gallery';
-import { formatRelativeTime, formatPriceFromRial, formatPriceStartingFrom, toLocalizedDigits } from '@/utils/formatters';
-import { trackGalleryShared } from '@/analytics/events';
+import { fetchAuthenticatedImage } from '@/utils/apiClient';
+import { formatPriceFromRial, formatPriceStartingFrom, formatRelativeTime, toLocalizedDigits } from '@/utils/formatters';
+import {
+  ArrowRight,
+  Bookmark,
+  Download,
+  Loader2,
+  Maximize2,
+  Menu,
+  RefreshCw,
+  Share2,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // =============================================================================
 // Loading Skeleton
@@ -67,6 +68,7 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ onRetry, isRetrying, onBack, t }: ErrorStateProps) {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="h-screen w-full bg-background flex flex-col items-center justify-center gap-6 p-8">
       <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center text-destructive">
@@ -83,7 +85,7 @@ function ErrorState({ onRetry, isRetrying, onBack, t }: ErrorStateProps) {
           {t('gallery.detail.backToGallery')}
         </Button>
         <Button onClick={onRetry} disabled={isRetrying} className="rounded-full">
-          {isRetrying ? t('common.wait') : t('common.retry')}
+          {siteValue(isRetrying ? t('common.wait') : t('common.retry'))}
         </Button>
       </div>
     </div>
@@ -95,6 +97,7 @@ function ErrorState({ onRetry, isRetrying, onBack, t }: ErrorStateProps) {
 // =============================================================================
 
 export default function GalleryDetailPage() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -362,7 +365,7 @@ export default function GalleryDetailPage() {
   // ==========================================================================
   const isStudio = item.type === 'studio';
 
-  const ProductContent = ({ isDesktop = false }: { isDesktop?: boolean }) => (
+  const ProductContent = ({ isDesktop = false }: { isDesktop?: boolean }) => { const { siteValue } = useSiteTranslation(); return ((
     <div className={`flex flex-col ${isDesktop ? 'gap-8 px-10 pb-24' : 'gap-5 px-6 pb-8'}`}>
       {/* Gallery Context Label */}
       <div className="flex items-center gap-2">
@@ -370,12 +373,12 @@ export default function GalleryDetailPage() {
           <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{t('gallery.detail.fromMyGallery')}</span>
         </div>
         <span className="text-[11px] font-medium text-muted-foreground">
-          {formatRelativeTime(item.createdAt)}
+          {siteValue(formatRelativeTime(item.createdAt))}
         </span>
       </div>
 
       {/* --- Try-on: Used Product Section --- */}
-      {!isStudio && (
+      {siteValue(!isStudio && (
         <div className="flex flex-col gap-4 pb-6 border-b border-border">
           <div className="flex justify-between items-center">
             <h4 className="text-[16px] font-bold text-foreground">{t('gallery.detail.usedProduct')}</h4>
@@ -387,7 +390,7 @@ export default function GalleryDetailPage() {
             <div className="relative w-[84px] h-[84px] rounded-[14px] overflow-hidden flex-shrink-0 border border-border bg-secondary/30">
               <AuthenticatedImage
                 src={item.productImageUrl || item.customerImageUrl}
-                alt={item.productName ?? undefined}
+                alt={siteValue(item.productName ?? undefined)}
                 imageWidth={200}
                 imageQuality={80}
                 className="w-full h-full object-cover"
@@ -395,18 +398,18 @@ export default function GalleryDetailPage() {
             </div>
             <div className="flex-1 flex flex-col gap-1">
               <h1 className="text-[18px] font-bold text-foreground leading-tight">
-                {item.productName}
+                {siteValue(item.productName)}
               </h1>
               <span className="text-[12px] font-medium text-muted-foreground">
-                {item.productCategory}
+                {siteValue(item.productCategory)}
               </span>
             </div>
           </div>
         </div>
-      )}
+      ))}
 
       {/* --- Studio: Recommended Products by Category --- */}
-      {isStudio && categoryGroups.length > 0 && (
+      {siteValue(isStudio && categoryGroups.length > 0 && (
         <div className="space-y-2 pt-0">
           <div className="flex items-baseline justify-between border-b border-black/[0.05] pb-2">
             <h2 className="text-[20px] font-medium text-foreground tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
@@ -418,7 +421,7 @@ export default function GalleryDetailPage() {
           </div>
 
           <div className="flex flex-col gap-8">
-            {categoryGroups.map((group) => {
+            {siteValue(categoryGroups.map((group) => {
               const topPick = group.products[0];
               const alternatives = group.products.slice(1);
 
@@ -427,40 +430,40 @@ export default function GalleryDetailPage() {
                   {/* Category Header */}
                   <div className="flex items-center gap-3 pt-4">
                     <span className="text-[16px] font-bold text-foreground" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                      {group.categoryDisplay}
+                      {siteValue(group.categoryDisplay)}
                     </span>
                     <div className="flex-1 h-px bg-foreground/[0.06]" />
                   </div>
 
                   {/* Item Metadata (quantity, size, placement) */}
-                  {(group.quantity > 1 || group.recommendedSize || group.placement) && (
+                  {siteValue((group.quantity > 1 || group.recommendedSize || group.placement) && (
                     <div className="flex items-center gap-2 flex-wrap px-1">
-                      {group.quantity > 1 && (
+                      {siteValue(group.quantity > 1 && (
                         <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                           {t('studio.result.quantity', '{{amount}} عدد', { amount: toLocalizedDigits(group.quantity) })}
                         </span>
-                      )}
-                      {group.quantity > 1 && (group.recommendedSize || group.placement) && (
+                      ))}
+                      {siteValue(group.quantity > 1 && (group.recommendedSize || group.placement) && (
                         <span className="w-0.5 h-0.5 rounded-full bg-foreground/20" />
-                      )}
-                      {group.recommendedSize && (
+                      ))}
+                      {siteValue(group.recommendedSize && (
                         <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                           {t('studio.result.recommendedSize', 'سایز: {{size}}', { size: group.recommendedSize })}
                         </span>
-                      )}
-                      {group.recommendedSize && group.placement && (
+                      ))}
+                      {siteValue(group.recommendedSize && group.placement && (
                         <span className="w-0.5 h-0.5 rounded-full bg-foreground/20" />
-                      )}
-                      {group.placement && (
+                      ))}
+                      {siteValue(group.placement && (
                         <span className="text-[10px] font-bold text-foreground/40 tracking-wide" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                           {t('studio.result.placement', 'جایگاه: {{placement}}', { placement: group.placement })}
                         </span>
-                      )}
+                      ))}
                     </div>
-                  )}
+                  ))}
 
                   {/* Top Pick - Large Editorial Card */}
-                  {topPick && (
+                  {siteValue(topPick && (
                     <div className="group flex flex-row gap-5 py-4">
                       <div
                         className="relative w-[170px] aspect-[3/4] bg-foreground/[0.02] overflow-hidden cursor-pointer shrink-0 transition-all duration-500"
@@ -468,7 +471,7 @@ export default function GalleryDetailPage() {
                       >
                         <AuthenticatedImage
                           src={topPick.image}
-                          alt={topPick.name}
+                          alt={siteValue(topPick.name)}
                           imageWidth={400}
                           imageQuality={80}
                           className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
@@ -486,32 +489,32 @@ export default function GalleryDetailPage() {
                           <div className="flex justify-between items-start">
                             <div className="flex flex-col gap-1 min-w-0">
                               <h3 className="text-[13px] font-bold text-foreground uppercase tracking-[0.05em] leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                                {topPick.name}
+                                {siteValue(topPick.name)}
                               </h3>
                               <div className="flex items-center gap-2 opacity-30">
-                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{topPick.category}</span>
+                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{siteValue(topPick.category)}</span>
                                 <span className="w-0.5 h-0.5 rounded-full bg-foreground" />
-                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{topPick.store}</span>
+                                <span className="text-[8px] text-foreground font-bold uppercase tracking-[0.1em]">{siteValue(topPick.store)}</span>
                               </div>
                             </div>
                             <Bookmark size={16} strokeWidth={1.5} className="text-foreground/10 shrink-0" />
                           </div>
 
                           <div className="flex items-baseline gap-1.5 mt-2">
-                            {topPick.priceRange ? (
+                            {siteValue(topPick.priceRange ? (
                               <span className="text-[15px] font-bold text-foreground tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                                {formatPriceStartingFrom(topPick.priceRange.min)}
+                                {siteValue(formatPriceStartingFrom(topPick.priceRange.min))}
                               </span>
                             ) : (
                               <>
                                 <span className="text-[18px] font-bold text-foreground tabular-nums tracking-tighter">
-                                  {formatPriceFromRial(topPick.price, false)}
+                                  {siteValue(formatPriceFromRial(topPick.price, false))}
                                 </span>
                                 <span className="text-[9px] text-foreground/40 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                                   {t('common.toman', 'تومان')}
                                 </span>
                               </>
-                            )}
+                            ))}
                           </div>
                         </div>
 
@@ -524,12 +527,12 @@ export default function GalleryDetailPage() {
                         </button>
                       </div>
                     </div>
-                  )}
+                  ))}
 
                   {/* Alternative Products - Compact Thumbnails */}
-                  {alternatives.length > 0 && (
+                  {siteValue(alternatives.length > 0 && (
                     <div className="flex gap-3">
-                      {alternatives.map((alt) => (
+                      {siteValue(alternatives.map((alt) => (
                         <div
                           key={alt.id}
                           className="w-[100px] shrink-0 cursor-pointer group/alt"
@@ -538,44 +541,44 @@ export default function GalleryDetailPage() {
                           <div className="relative aspect-[3/4] bg-foreground/[0.02] overflow-hidden mb-1.5">
                             <AuthenticatedImage
                               src={alt.image}
-                              alt={alt.name}
+                              alt={siteValue(alt.name)}
                               imageWidth={200}
                               imageQuality={75}
                               className="w-full h-full object-cover grayscale-[0.2] group-hover/alt:grayscale-0 transition-all duration-700 group-hover/alt:scale-105"
                             />
                           </div>
                           <h4 className="text-[10px] font-bold text-foreground truncate leading-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                            {alt.name}
+                            {siteValue(alt.name)}
                           </h4>
                           <div className="flex items-baseline gap-1 mt-0.5">
-                            {alt.priceRange ? (
+                            {siteValue(alt.priceRange ? (
                               <span className="text-[10px] font-bold text-foreground tabular-nums tracking-tighter" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                                {formatPriceStartingFrom(alt.priceRange.min)}
+                                {siteValue(formatPriceStartingFrom(alt.priceRange.min))}
                               </span>
                             ) : (
                               <>
                                 <span className="text-[11px] font-bold text-foreground tabular-nums tracking-tighter">
-                                  {formatPriceFromRial(alt.price, false)}
+                                  {siteValue(formatPriceFromRial(alt.price, false))}
                                 </span>
                                 <span className="text-[7px] text-foreground/40 font-bold" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
                                   {t('common.toman', 'تومان')}
                                 </span>
                               </>
-                            )}
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      )))}
                     </div>
-                  )}
+                  ))}
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* Studio: empty state when no products */}
-      {isStudio && categoryGroups.length === 0 && (
+      {siteValue(isStudio && categoryGroups.length === 0 && (
         <div className="flex flex-col gap-2 pb-6 border-b border-border">
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-secondary text-foreground text-[10px] font-bold rounded-sm">
@@ -583,10 +586,10 @@ export default function GalleryDetailPage() {
             </span>
           </div>
           <span className="text-[12px] font-medium text-muted-foreground">
-            {item.productCategory}
+            {siteValue(item.productCategory)}
           </span>
         </div>
-      )}
+      ))}
 
       {/* Actions */}
       <div className="grid grid-cols-3 gap-3 border-b border-border pb-6">
@@ -605,7 +608,7 @@ export default function GalleryDetailPage() {
           className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-secondary transition-colors group disabled:opacity-50"
         >
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:bg-foreground group-hover:text-background transition-colors">
-            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            {siteValue(isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />)}
           </div>
           <span className="text-[11px] font-bold">{t('common.download')}</span>
         </button>
@@ -622,18 +625,18 @@ export default function GalleryDetailPage() {
       </div>
 
       {/* Score/Rating Section */}
-      {item.score && (
+      {siteValue(item.score && (
         <div className="flex flex-col gap-3 pb-6 border-b border-border">
           <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[1.5px]">
             {t('gallery.detail.yourScore')}
           </h3>
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-bold text-foreground">
-              {item.score === 1 ? `👍 ${t('feedback.ratings.good')}` : item.score === 2 ? `😐 ${t('feedback.ratings.average')}` : `👎 ${t('feedback.ratings.poor')}`}
+              {siteValue(item.score === 1 ? `👍 ${t('feedback.ratings.good')}` : item.score === 2 ? `😐 ${t('feedback.ratings.average')}` : `👎 ${t('feedback.ratings.poor')}`)}
             </span>
           </div>
         </div>
-      )}
+      ))}
 
       <div className="text-center opacity-10 pb-4">
         <p className="text-[9px] font-bold uppercase tracking-[0.5em] text-foreground">
@@ -641,7 +644,7 @@ export default function GalleryDetailPage() {
         </p>
       </div>
     </div>
-  );
+  )); };
 
   // ==========================================================================
   // Render
@@ -649,13 +652,13 @@ export default function GalleryDetailPage() {
   return (
     <div
       className="min-h-screen md:h-screen w-full bg-background relative flex flex-col font-vazirmatn select-none md:overflow-hidden"
-      dir="rtl"
+      dir={siteDirection()}
     >
-      {!isFullScreen && (
+      {siteValue(!isFullScreen && (
         <div className="md:hidden">
           <Header />
         </div>
-      )}
+      ))}
 
       <SidebarMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
@@ -685,12 +688,12 @@ export default function GalleryDetailPage() {
 
             <div className="flex flex-col gap-2">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-                {isStudio ? item.productCategory : item.productCategory}
+                {siteValue(isStudio ? item.productCategory : item.productCategory)}
               </span>
               <h1 className="text-[28px] font-bold text-foreground leading-tight">
-                {isStudio
+                {siteValue(isStudio
                   ? t('gallery.detail.studioDesign', 'طراحی استودیو')
-                  : item.productName}
+                  : item.productName)}
               </h1>
             </div>
           </div>
@@ -707,7 +710,7 @@ export default function GalleryDetailPage() {
             imageQuality={85}
             className={`w-full h-full object-cover transition-opacity duration-700 ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
           />
-          {hasBeforeImage && (
+          {siteValue(hasBeforeImage && (
             <AuthenticatedImage
               src={item.customerImageUrl}
               imageWidth={1200}
@@ -715,7 +718,7 @@ export default function GalleryDetailPage() {
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
               alt="Before"
             />
-          )}
+          ))}
 
           {/* Desktop Controls */}
           <div className="hidden md:block absolute inset-0 pointer-events-none">
@@ -755,7 +758,7 @@ export default function GalleryDetailPage() {
 
       {/* Full Screen Overlay */}
       <AnimatePresence>
-        {isFullScreen && (
+        {siteValue(isFullScreen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -775,7 +778,7 @@ export default function GalleryDetailPage() {
                 imageQuality={85}
                 className={`w-full h-full object-contain transition-opacity ${hasBeforeImage && showOriginal ? 'opacity-0' : 'opacity-100'}`}
               />
-              {hasBeforeImage && (
+              {siteValue(hasBeforeImage && (
                 <AuthenticatedImage
                   src={item.customerImageUrl}
                   imageWidth={1200}
@@ -783,9 +786,9 @@ export default function GalleryDetailPage() {
                   className={`absolute inset-0 w-full h-full object-contain transition-opacity ${showOriginal ? 'opacity-100' : 'opacity-0'}`}
                   alt="Before"
                 />
-              )}
+              ))}
             </div>
-            {hasBeforeImage && (
+            {siteValue(hasBeforeImage && (
               <div className="mt-10 flex items-center p-1 bg-white/10 backdrop-blur-xl rounded-full border border-white/10">
                 <button
                   onClick={() => setShowOriginal(false)}
@@ -800,13 +803,13 @@ export default function GalleryDetailPage() {
                   {t('tryOn.result.before')}
                 </button>
               </div>
-            )}
+            ))}
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
 
       {/* Product Detail Sheet (Studio items) */}
-      {selectedProduct && (
+      {siteValue(selectedProduct && (
         <ProductDetailSheet
           product={selectedProduct}
           isOpen={!!selectedProduct}
@@ -814,7 +817,7 @@ export default function GalleryDetailPage() {
           onReplace={() => {}}
           alternatives={productAlternatives}
         />
-      )}
+      ))}
     </div>
   );
 }

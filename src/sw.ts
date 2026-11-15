@@ -11,7 +11,9 @@ self.addEventListener('install', (event) => {
     const cache = await caches.open(cacheName);
     // includeAssets and globPatterns can both include the same icon. Cache.addAll
     // rejects duplicate requests and would prevent the entire worker installing.
-    const urls = new Set(manifest.map((asset) => new URL(asset.url, self.location.origin).href));
+    // Route chunks stay on demand. Installing the worker must not download the
+    // complete Studio/result application in the background of a landing visit.
+    const urls = new Set(manifest.filter(asset => !/\.(?:js|css)$/.test(asset.url)).map((asset) => new URL(asset.url, self.location.origin).href));
     urls.delete(new URL('/config.js', self.location.origin).href);
     urls.add(new URL(offlineShell, self.location.origin).href);
     await cache.addAll([...urls]);
@@ -35,5 +37,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request).catch(async () => (await caches.match(offlineShell)) || Response.error()));
     return;
   }
-  if (url.pathname.startsWith('/assets/')) event.respondWith(caches.match(event.request).then((hit) => hit || fetch(event.request)));
+  if (url.pathname.startsWith('/assets/')) event.respondWith((async () => {
+    const hit = await caches.match(event.request);
+    if (hit) return hit;
+    const response = await fetch(event.request);
+    if (response.ok) {
+      const copy = response.clone();
+      event.waitUntil(caches.open(cacheName).then(cache => cache.put(event.request, copy)));
+    }
+    return response;
+  })());
 });

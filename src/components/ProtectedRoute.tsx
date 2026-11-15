@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * ProtectedRoute - محافظت از مسیرهای احراز هویت شده
  *
@@ -8,12 +9,12 @@
  * - Stores intended destination for post-login redirect
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import type { AuthTokens, User } from '@/types/auth';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthModal } from './AuthModal';
 import { HomaLoader } from './HomaLoader';
-import type { User, AuthTokens } from '@/types/auth';
 
 // =============================================================================
 // Constants
@@ -74,6 +75,7 @@ export function ProtectedRoute({
   fallback = 'modal',
   redirectTo = '/login',
 }: ProtectedRouteProps) {
+  const { siteValue } = useSiteTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, isInitialized, login } = useAuth();
@@ -142,7 +144,7 @@ export function ProtectedRoute({
 
   // User is logged in - render protected content
   if (isLoggedIn) {
-    return <>{children}</>;
+    return <>{siteValue(children)}</>;
   }
 
   // Redirect fallback - will redirect in useEffect, render nothing
@@ -155,7 +157,7 @@ export function ProtectedRoute({
     <>
       {/* Render children in background (possibly blurred/dimmed) */}
       <div className="pointer-events-none opacity-50 blur-sm">
-        {children}
+        {siteValue(children)}
       </div>
 
       {/* Auth modal overlay */}

@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useSeo } from '@/hooks/useSeo';
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import {
+  ArrowLeft,
+  RefreshCw,
   // SlidersHorizontal, // TODO: Uncomment when filter UI is implemented
   // Search, // TODO: Uncomment when search UI is implemented
   Sparkles,
-  ArrowLeft,
-  RefreshCw,
   Store as StoreIcon,
 } from 'lucide-react';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { ContextBar } from '../../components/ContextBar';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Header } from '../../components/Header';
 import { fetchShops } from '../../services/shopService';
 import { type Shop } from '../../types/shop';
-import { useSeo } from '@/hooks/useSeo';
 
 // --- Categories ---
 // Note: Labels are set dynamically using t() in the component
@@ -54,14 +55,15 @@ function PromotedCardSkeleton() {
 }
 
 function ExploreSkeleton() {
+  const { siteValue } = useSiteTranslation();
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-x-[16px] gap-y-[24px] md:gap-y-[32px]">
       <div className="col-span-2 md:col-span-2">
         <PromotedCardSkeleton />
       </div>
-      {[...Array(6)].map((_, i) => (
+      {siteValue([...Array(6)].map((_, i) => (
         <ShopCardSkeleton key={i} />
-      ))}
+      )))}
     </div>
   );
 }
@@ -99,6 +101,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 // =============================================================================
 
 function EmptyState({ searchTerm }: { searchTerm?: string }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -106,12 +109,12 @@ function EmptyState({ searchTerm }: { searchTerm?: string }) {
         <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
       </div>
       <h3 className="text-[16px] font-medium text-black/80 mb-2">
-        {searchTerm ? t('explore.noStoreFound', 'فروشگاهی یافت نشد') : t('explore.noStoresYet', 'هنوز فروشگاهی ثبت نشده')}
+        {siteValue(searchTerm ? t('explore.noStoreFound', 'فروشگاهی یافت نشد') : t('explore.noStoresYet', 'هنوز فروشگاهی ثبت نشده'))}
       </h3>
       <p className="text-[13px] text-black/40 max-w-xs">
-        {searchTerm
+        {siteValue(searchTerm
           ? t('explore.noResultsFor', 'نتیجه‌ای برای "{{term}}" پیدا نشد. عبارت دیگری را امتحان کنید.', { term: searchTerm })
-          : t('explore.storesComingSoon', 'به زودی فروشگاه‌های منتخب به این بخش اضافه می‌شوند.')}
+          : t('explore.storesComingSoon', 'به زودی فروشگاه‌های منتخب به این بخش اضافه می‌شوند.'))}
       </p>
     </div>
   );
@@ -122,9 +125,10 @@ function EmptyState({ searchTerm }: { searchTerm?: string }) {
 // =============================================================================
 
 export function ExplorePage() {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   useSeo({
-    title: 'فروشگاه‌ها و محصولات',
-    description: 'مرور فروشگاه‌ها و محصولات HOMA و مشاهده آن‌ها در فضای شما با هوش مصنوعی.',
+    title: siteText("فروشگاه‌ها و محصولات"),
+    description: siteText("مرور فروشگاه‌ها و محصولات HOMA و مشاهده آن‌ها در فضای شما با هوش مصنوعی."),
   });
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -185,7 +189,7 @@ export function ExplorePage() {
     : shops; // TODO: Add category filtering when backend supports it
 
   return (
-    <div className="min-h-screen bg-white font-vazirmatn pb-32" dir="rtl">
+    <div className="min-h-screen bg-white font-vazirmatn pb-32" dir={siteDirection()}>
 
       {/* 1. TOP UTILITY BAR (Fixed) */}
       <Header />
@@ -226,7 +230,7 @@ export function ExplorePage() {
       {/* 4. FILTER ROW (Zara Home Editorial) */}
       <div className="px-6 md:px-16 max-w-[1440px] mx-auto w-full mt-10 mb-12 flex items-center justify-between">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {CATEGORIES.map((cat) => (
+          {siteValue(CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -236,9 +240,9 @@ export function ExplorePage() {
                 }`}
               style={{ fontFamily: 'var(--font-family-vazirmatn)' }}
             >
-              {cat.label}
+              {siteValue(cat.label)}
             </button>
-          ))}
+          )))}
         </div>
 
         {/* TODO: Uncomment when filter functionality is implemented */}
@@ -263,20 +267,20 @@ export function ExplorePage() {
       {/* 5. MAIN CONTENT */}
       <main className="px-6 md:px-16 max-w-[1440px] mx-auto w-full pb-32">
         {/* Loading State */}
-        {isLoading && <ExploreSkeleton />}
+        {siteValue(isLoading && <ExploreSkeleton />)}
 
         {/* Error State */}
-        {!isLoading && error && <ErrorState onRetry={loadShops} />}
+        {siteValue(!isLoading && error && <ErrorState onRetry={loadShops} />)}
 
         {/* Empty State */}
-        {!isLoading && !error && filteredShops.length === 0 && (
+        {siteValue(!isLoading && !error && filteredShops.length === 0 && (
           <EmptyState searchTerm={debouncedSearch} />
-        )}
+        ))}
 
         {/* Shop Grid */}
-        {!isLoading && !error && filteredShops.length > 0 && (
+        {siteValue(!isLoading && !error && filteredShops.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-[16px] gap-y-[24px] md:gap-y-[32px]">
-            {filteredShops.map((shop, idx) => {
+            {siteValue(filteredShops.map((shop, idx) => {
               // Only show as promoted if the shop is actually marked as promoted in the backend
               const isPromoted = shop.isPromoted && idx === 0 && selectedCategory === 'all' && !debouncedSearch;
 
@@ -307,11 +311,11 @@ export function ExplorePage() {
                 >
                   {/* Image Tile - Editorial Ratio */}
                   <div className="relative aspect-[4/5] w-full rounded-none overflow-hidden bg-black/[0.02]">
-                    {shop.logoUrl ? (
+                    {siteValue(shop.logoUrl ? (
                       <div className="w-full h-full flex items-center justify-center p-6 bg-black/[0.02]">
                         <ImageWithFallback
                           src={shop.logoUrl}
-                          alt={shop.name}
+                          alt={siteValue(shop.name)}
                           className="max-w-full max-h-full object-contain grayscale-[0.1] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-[1.02]"
                         />
                       </div>
@@ -319,7 +323,7 @@ export function ExplorePage() {
                       <div className="w-full h-full flex items-center justify-center bg-black/[0.03]">
                         <StoreIcon size={48} className="text-black/10" strokeWidth={1} />
                       </div>
-                    )}
+                    ))}
 
                     {/* Subtle Label on Image */}
                     <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
@@ -332,7 +336,7 @@ export function ExplorePage() {
                   {/* Text Under Tile - Zara Home Minimalist Typography */}
                   <div className="flex flex-col pt-4 px-0">
                     <h3 className="text-[14px] md:text-[16px] font-medium text-black/80 tracking-tight leading-none group-hover:text-black transition-colors" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                      {shop.name}
+                      {siteValue(shop.name)}
                     </h3>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.1em]">
@@ -340,25 +344,25 @@ export function ExplorePage() {
                       </span>
                       <span className="w-1 h-1 rounded-full bg-black/10" />
                       <span className="text-[10px] font-bold text-black/20 uppercase tracking-[0.1em]">
-                        @{shop.username}
+                        @{siteValue(shop.username)}
                       </span>
                     </div>
                   </div>
                 </motion.div>
               );
-            })}
+            }))}
           </div>
-        )}
+        ))}
 
         {/* Subtle Footer Quote */}
-        {!isLoading && !error && filteredShops.length > 0 && (
+        {siteValue(!isLoading && !error && filteredShops.length > 0 && (
           <div className="mt-24 mb-12 flex flex-col items-center text-center">
             <div className="w-8 h-[1px] bg-black/5 mb-6" />
             <p className="text-[11px] font-bold text-black/15 max-w-[280px] leading-relaxed">
               {t('explore.smartCurated', 'این لیست بر اساس سلیقه و فضاهای انتخابی شما به صورت هوشمند گردآوری شده است.')}
             </p>
           </div>
-        )}
+        ))}
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#FDFDFB] to-transparent pointer-events-none z-10" />
@@ -371,6 +375,7 @@ export function ExplorePage() {
 // =============================================================================
 
 function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   return (
     <div
@@ -387,10 +392,10 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
 
           <div className="space-y-1 md:space-y-3">
             <h2 className="text-[18px] md:text-[36px] font-medium text-black leading-tight tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              {shop.name}
+              {siteValue(shop.name)}
             </h2>
             <p className="text-[11px] md:text-[15px] text-black/60 md:text-black/40 font-medium leading-relaxed max-w-[180px] md:max-w-xs line-clamp-2 md:line-clamp-none">
-              {t('explore.productCount', '{{count}} محصول', { count: shop.productCount })} • @{shop.username}
+              {t('explore.productCount', '{{count}} محصول', { count: shop.productCount })} • @{siteValue(shop.username)}
             </p>
           </div>
         </div>
@@ -407,7 +412,7 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
 
       {/* Image Section */}
       <div className="absolute inset-0 md:relative md:w-1/2 overflow-hidden z-10">
-        {shop.logoUrl ? (
+        {siteValue(shop.logoUrl ? (
           <div className="w-full h-full flex items-center justify-center p-8 bg-black/[0.02]">
             <ImageWithFallback
               src={shop.logoUrl}
@@ -418,7 +423,7 @@ function PromotedStoreCard({ shop, onClick }: { shop: Shop; onClick: () => void 
           <div className="w-full h-full flex items-center justify-center bg-black/[0.03]">
             <StoreIcon size={64} className="text-black/10" strokeWidth={1} />
           </div>
-        )}
+        ))}
         {/* Editorial Overlay for Mobile to ensure text legibility with 1.6/1 ratio */}
         <div className="absolute inset-0 bg-gradient-to-l from-[var(--accent-light)] via-[var(--accent-light)]/90 to-transparent md:hidden" />
       </div>

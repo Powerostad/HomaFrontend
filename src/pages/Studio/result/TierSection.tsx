@@ -1,7 +1,9 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useTranslation } from 'react-i18next';
 import type { Product } from '../components/ProductDetailSheet';
-import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 import { RecommendationCard } from './RecommendationCard';
+import type { RefineProduct } from './ProductRefinement';
+import { type CategoryGroup, type InterventionTier, TIER_CONFIG } from './types';
 
 interface TierSectionProps {
   tier: InterventionTier;
@@ -21,6 +23,10 @@ interface TierSectionProps {
   onToggleBasketProduct: (productId: string) => void;
   onScrollToAnalysis?: () => void;
   onUpdateQuantity?: (itemId: number, newQuantity: number) => void;
+  onRefineProduct?: RefineProduct;
+  busy?: boolean;
+  hideHeading?: boolean;
+  onMakePrimary?: (itemId: number, productId: string) => void;
 }
 
 export function TierSection({
@@ -40,25 +46,34 @@ export function TierSection({
   onToggleBasketProduct,
   onScrollToAnalysis,
   onUpdateQuantity,
+  onRefineProduct,
+  busy,
+  hideHeading = false,
+  onMakePrimary,
 }: TierSectionProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const config = TIER_CONFIG[tier];
+  const tierTitle = t(`studio.v9.tier.${tier}`, {
+    quick_win: 'تغییرهای سریع', enhancement: 'ارتقای فضا', structural: 'تغییرهای اساسی',
+  }[tier]);
   if (items.length === 0) return null;
 
   return (
-    <section className="studio-tier-section" aria-label={config.label}>
-      <div className="studio-tier-heading">
+    <section className="studio-tier-section" aria-label={tierTitle}>
+      {!hideHeading && <div className="studio-tier-heading">
         <div>
           <p className="studio-result-eyebrow">{t(`studio.result.v2.tier.${tier === 'quick_win' ? 'quickWin' : tier}`, config.label)}</p>
-          <h3>{config.label}</h3>
+          <h3>{tierTitle}</h3>
         </div>
-        <span>{items.length} {t('studio.result.v2.card.options', 'گزینه')}</span>
-      </div>
-      <div>
-        {items.map((group, index) => (
+        <span>{siteValue(items.length)} {t('studio.result.v2.card.options', 'گزینه')}</span>
+      </div>}
+      <div className="studio-v9-product-grid">
+        {siteValue(items.map((group, index) => (
           <RecommendationCard
             key={group.itemId}
             group={group}
+            onMakePrimary={onMakePrimary ? productId => onMakePrimary(group.itemId, productId) : undefined}
             tier={tier}
             isTopPriority={priorityRankedIds[0] === group.itemId}
             priorityRank={priorityRankedIds.indexOf(group.itemId) + 1}
@@ -70,13 +85,15 @@ export function TierSection({
             basketProductIds={basketProductIds}
             onToggleWhy={() => onToggleWhy(group.itemId)}
             onProductClick={onProductClick}
+            onRefineProduct={onRefineProduct}
+            busy={busy}
             onToggleSaved={onToggleSaved}
             onToggleAccepted={() => onToggleAccepted(group.itemId)}
             onToggleBasketProduct={onToggleBasketProduct}
             onScrollToAnalysis={onScrollToAnalysis}
             onUpdateQuantity={onUpdateQuantity ? (quantity) => onUpdateQuantity(group.itemId, quantity) : undefined}
           />
-        ))}
+        )))}
       </div>
     </section>
   );

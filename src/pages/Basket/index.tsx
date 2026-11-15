@@ -1,10 +1,9 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * BasketPage — full-page view of the unified basket at /basket.
  *
  * Deep-linkable companion to the BasketSheet. Same data, roomier layout.
  */
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   Loader2,
@@ -14,17 +13,20 @@ import {
   Store,
   Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import { Header } from '../../components/Header';
-import { Footer } from '../../components/Footer';
-import { Button } from '../../components/ui/button';
 import { CheckoutConfirmModal } from '../../components/basket/CheckoutConfirmModal';
+import { Footer } from '../../components/Footer';
+import { Header } from '../../components/Header';
+import { Button } from '../../components/ui/button';
 import { useBasket } from '../../context/AppProviders';
-import { formatPriceFromRial, toPersianDigits } from '../../utils/formatters';
 import type { CheckoutResult } from '../../types/basket';
+import { formatPriceFromRial, toLocalizedDigits } from '../../utils/formatters';
 
 export function BasketPage() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
@@ -57,7 +59,7 @@ export function BasketPage() {
   const isEmpty = itemCount === 0;
 
   return (
-    <div className="min-h-screen bg-surface-page" dir="rtl">
+    <div className="min-h-screen bg-surface-page" dir={siteDirection()}>
       <Header />
 
       <main className="mx-auto px-6 md:px-12 py-8" style={{ maxWidth: 'var(--max-width-content)' }}>
@@ -65,13 +67,13 @@ export function BasketPage() {
           <h1 className="text-xl font-semibold text-content-primary flex items-center gap-2">
             <ShoppingBag size={22} strokeWidth={1.5} />
             {t('basket.title', 'سبد خرید')}
-            {!isEmpty && (
+            {siteValue(!isEmpty && (
               <span className="text-content-muted font-normal text-base">
-                ({toPersianDigits(itemCount)})
+                ({siteValue(toLocalizedDigits(itemCount))})
               </span>
-            )}
+            ))}
           </h1>
-          {!isEmpty && (
+          {siteValue(!isEmpty && (
             <button
               type="button"
               onClick={() => clear()}
@@ -79,10 +81,10 @@ export function BasketPage() {
             >
               {t('basket.clearAll', 'خالی کردن سبد')}
             </button>
-          )}
+          ))}
         </div>
 
-        {isLoading ? (
+        {siteValue(isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-content-muted" />
           </div>
@@ -100,7 +102,7 @@ export function BasketPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* items */}
             <div className="lg:col-span-2 space-y-4">
-              {basket.shop_groups.map((group) => (
+              {siteValue(basket.shop_groups.map((group) => (
                 <div
                   key={group.shop_id}
                   className="rounded-lg border border-subtle bg-surface-default p-4"
@@ -108,7 +110,7 @@ export function BasketPage() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2 text-sm text-content-secondary">
                       <Store size={15} />
-                      <span>{group.shop_name}</span>
+                      <span>{siteValue(group.shop_name)}</span>
                     </div>
                     <button
                       type="button"
@@ -121,7 +123,7 @@ export function BasketPage() {
                   </div>
 
                   <div className="divide-y divide-subtle">
-                    {group.items.map((item) => {
+                    {siteValue(group.items.map((item) => {
                       const unavailable = item.status === 'unavailable';
                       return (
                         <div
@@ -129,14 +131,14 @@ export function BasketPage() {
                           className={`flex gap-4 py-4 ${unavailable ? 'opacity-60' : ''}`}
                         >
                           <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-surface-page">
-                            {item.product_image_url && (
+                            {siteValue(item.product_image_url && (
                               <img
                                 src={item.product_image_url}
-                                alt={item.product_name}
+                                alt={siteValue(item.product_name)}
                                 className="h-full w-full object-cover"
                                 loading="lazy"
                               />
-                            )}
+                            ))}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -145,15 +147,15 @@ export function BasketPage() {
                                 unavailable ? 'line-through' : ''
                               }`}
                             >
-                              {item.product_name}
+                              {siteValue(item.product_name)}
                             </p>
-                            {item.variant_label && (
+                            {siteValue(item.variant_label && (
                               <p className="text-xs text-content-muted mt-0.5">
-                                {item.variant_label}
+                                {siteValue(item.variant_label)}
                               </p>
-                            )}
+                            ))}
 
-                            {unavailable ? (
+                            {siteValue(unavailable ? (
                               <p className="text-xs text-brand-primary mt-2">
                                 {t('basket.unavailable', 'این محصول دیگر موجود نیست')}
                               </p>
@@ -174,7 +176,7 @@ export function BasketPage() {
                                     <Plus size={13} />
                                   </button>
                                   <span className="min-w-[28px] text-center text-xs font-medium tabular-nums">
-                                    {toPersianDigits(item.quantity)}
+                                    {siteValue(toLocalizedDigits(item.quantity))}
                                   </span>
                                   <button
                                     type="button"
@@ -191,12 +193,12 @@ export function BasketPage() {
                                   </button>
                                 </div>
                                 <span className="text-sm font-medium text-content-primary">
-                                  {formatPriceFromRial(item.line_total_rial)}
+                                  {siteValue(formatPriceFromRial(item.line_total_rial))}
                                 </span>
                               </div>
-                            )}
+                            ))}
 
-                            {item.price_changed && !unavailable && (
+                            {siteValue(item.price_changed && !unavailable && (
                               <div className="mt-2 flex items-center gap-2 rounded-md bg-surface-page p-2">
                                 <AlertTriangle
                                   size={13}
@@ -213,7 +215,7 @@ export function BasketPage() {
                                   {t('basket.acceptNewPrice', 'تأیید قیمت جدید')}
                                 </button>
                               </div>
-                            )}
+                            ))}
                           </div>
 
                           <button
@@ -226,10 +228,10 @@ export function BasketPage() {
                           </button>
                         </div>
                       );
-                    })}
+                    }))}
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
 
             {/* summary */}
@@ -240,14 +242,14 @@ export function BasketPage() {
                 </h2>
                 <div className="flex justify-between text-sm text-content-secondary">
                   <span>{t('basket.itemsCount', 'تعداد اقلام')}</span>
-                  <span>{toPersianDigits(itemCount)}</span>
+                  <span>{siteValue(toLocalizedDigits(itemCount))}</span>
                 </div>
                 <div className="flex justify-between border-t border-subtle pt-3">
                   <span className="text-content-secondary">
                     {t('basket.total', 'مجموع')}
                   </span>
                   <span className="text-lg font-semibold text-content-primary">
-                    {formatPriceFromRial(totalRial)}
+                    {siteValue(formatPriceFromRial(totalRial))}
                   </span>
                 </div>
                 <Button
@@ -255,13 +257,13 @@ export function BasketPage() {
                   disabled={isMutating}
                   onClick={() => runCheckout()}
                 >
-                  {isMutating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {siteValue(isMutating && <Loader2 className="h-4 w-4 animate-spin" />)}
                   {t('basket.checkout', 'تکمیل خرید')}
                 </Button>
               </div>
             </div>
           </div>
-        )}
+        ))}
       </main>
 
       <Footer />

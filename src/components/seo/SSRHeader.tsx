@@ -1,5 +1,6 @@
-import { useEffect, useState, type ComponentType } from "react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { Menu, ShoppingBag, User } from "lucide-react";
+import { useEffect, useState, type ComponentType } from "react";
 import { HeaderChrome } from "../HeaderChrome";
 
 type HeaderController = ComponentType<{ hideSpacer?: boolean }>;
@@ -18,6 +19,7 @@ interface SSRHeaderProps {
  * interactive header after client-side hydration.
  */
 export function SSRHeader({ hideSpacer = false, transparent = false }: SSRHeaderProps) {
+  const { siteText } = useSiteTranslation();
   const [HeaderController, setHeaderController] = useState<HeaderController | null>(null);
   const utilityClass = `transition-all duration-500 ${transparent ? "text-white/60 hover:text-white" : "text-black/40 hover:text-black hover:scale-110"}`;
 
@@ -38,7 +40,7 @@ export function SSRHeader({ hideSpacer = false, transparent = false }: SSRHeader
       hideSpacer={hideSpacer}
       transparent={transparent}
       menu={
-        <a href="#homa-navigation" className={`p-2 ${utilityClass}`} aria-label="منو">
+        <a href="#homa-navigation" className={`p-2 ${utilityClass}`} aria-label={siteText("منو")}>
           <Menu size={18} strokeWidth={1} />
         </a>
       }
@@ -54,10 +56,10 @@ export function SSRHeader({ hideSpacer = false, transparent = false }: SSRHeader
       }
       utilities={
         <>
-          <a href="/basket" className={`relative p-2 ${utilityClass}`} aria-label="سبد خرید">
+          <a href="/basket" className={`relative p-2 ${utilityClass}`} aria-label={siteText("سبد خرید")}>
             <ShoppingBag size={18} strokeWidth={1} />
           </a>
-          <a href="/account/gallery" className={utilityClass} aria-label="حساب کاربری">
+          <a href="/account/gallery" className={utilityClass} aria-label={siteText("حساب کاربری")}>
             <User size={18} strokeWidth={1} />
           </a>
         </>

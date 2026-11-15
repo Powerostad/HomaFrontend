@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * CheckoutReviewModal — shown when prices or availability changed (vs. the
  * source site's last crawl) since the items were added.
@@ -10,6 +11,9 @@
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import type { CheckoutChange } from '../../types/basket';
+import { formatPriceFromRial } from '../../utils/formatters';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -17,9 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { formatPriceFromRial } from '../../utils/formatters';
-import type { CheckoutChange } from '../../types/basket';
 
 interface CheckoutReviewModalProps {
   changes: CheckoutChange[];
@@ -37,13 +38,14 @@ export function CheckoutReviewModal({
   onClose,
   onConfirm,
 }: CheckoutReviewModalProps) {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
 
   const hasUnavailable = changes.some((c) => c.change_type === 'unavailable');
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md" dir="rtl">
+      <DialogContent className="max-w-md" dir={siteDirection()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle size={18} className="text-brand-primary" />
@@ -58,41 +60,41 @@ export function CheckoutReviewModal({
         </DialogHeader>
 
         <div className="max-h-[50vh] overflow-y-auto space-y-2 py-2">
-          {changes.map((c) => (
+          {siteValue(changes.map((c) => (
             <div
               key={c.basket_item_id}
               className="flex items-center justify-between gap-3 rounded-md border border-subtle p-3"
             >
               <span className="text-sm text-content-primary line-clamp-1">
-                {c.product_name}
+                {siteValue(c.product_name)}
               </span>
-              {c.change_type === 'unavailable' ? (
+              {siteValue(c.change_type === 'unavailable' ? (
                 <span className="shrink-0 text-xs text-brand-primary">
                   {t('basket.reviewRemoved', 'ناموجود — حذف می‌شود')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 shrink-0 text-xs text-content-muted">
                   <span className="line-through">
-                    {formatPriceFromRial(c.old_price_rial)}
+                    {siteValue(formatPriceFromRial(c.old_price_rial))}
                   </span>
                   <ArrowLeft size={12} />
                   <span className="text-content-primary font-medium">
-                    {formatPriceFromRial(c.new_price_rial ?? c.old_price_rial)}
+                    {siteValue(formatPriceFromRial(c.new_price_rial ?? c.old_price_rial))}
                   </span>
                 </span>
-              )}
+              ))}
             </div>
-          ))}
+          )))}
         </div>
 
-        {hasUnavailable && (
+        {siteValue(hasUnavailable && (
           <p className="text-xs text-content-muted">
             {t(
               'basket.reviewUnavailableNote',
               'محصولات ناموجود به سفارش اضافه نمی‌شوند.'
             )}
           </p>
-        )}
+        ))}
 
         <div className="flex gap-2">
           <Button className="flex-1" onClick={onConfirm} disabled={busy}>

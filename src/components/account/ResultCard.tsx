@@ -1,7 +1,8 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { MoreVertical, Pin, PinOff, Share2, Trash2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { AuthenticatedImage } from '../figma/AuthenticatedImage';
-import { MoreVertical, Share2, Trash2, Pin, PinOff } from 'lucide-react';
 
 interface ResultCardProps {
   result: {
@@ -20,6 +21,7 @@ interface ResultCardProps {
 }
 
 export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: ResultCardProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const [showMenu, setShowMenu] = React.useState(false);
 
   return (
@@ -34,23 +36,23 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
       <div className="relative aspect-[4/5] bg-secondary rounded-[var(--radius-card)] overflow-hidden border border-border transition-all duration-500 hover:shadow-xl hover:shadow-black/5">
         <AuthenticatedImage
           src={result.coverImage}
-          alt={result.productName}
+          alt={siteValue(result.productName)}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
         {/* Badge */}
         <div className="absolute top-4 right-4 z-10">
           <div className="px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
-            <span className="text-[10px] font-bold text-white uppercase tracking-wider">{result.type === 'studio' ? 'استودیو' : 'تری‌آن'}</span>
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">{siteValue(result.type === 'studio' ? siteText("استودیو") : siteText("تری‌آن"))}</span>
           </div>
         </div>
 
         {/* Pin Indicator */}
-        {result.isPinned && (
+        {siteValue(result.isPinned && (
           <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-accent shadow-sm">
             <Pin size={14} className="fill-current" />
           </div>
-        )}
+        ))}
 
         {/* Overlay Actions (Desktop) */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/[0.02] transition-colors" />
@@ -65,15 +67,15 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
       <div className="flex justify-between items-start px-1">
         <div className="flex flex-col gap-0.5 max-w-[80%]">
           <h5 className="text-[14px] font-bold text-foreground leading-tight truncate">
-            {result.productName}
+            {siteValue(result.productName)}
           </h5>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground truncate">
-              {result.storeName}
+              {siteValue(result.storeName)}
             </span>
             <span className="w-1 h-1 rounded-full bg-border" />
             <span className="text-[11px] font-medium text-muted-foreground">
-              {result.timestamp}
+              {siteValue(result.timestamp)}
             </span>
           </div>
         </div>
@@ -91,7 +93,7 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
           </button>
 
           <AnimatePresence>
-            {showMenu && (
+            {siteValue(showMenu && (
               <>
                 <div 
                   className="fixed inset-0 z-[100]" 
@@ -111,15 +113,15 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
                     onClick={() => { onTogglePin(result.id); setShowMenu(false); }}
                     className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors text-right"
                   >
-                    {result.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
-                    <span className="text-[13px] font-bold">{result.isPinned ? 'حذف از پین' : 'پین کردن'}</span>
+                    {siteValue(result.isPinned ? <PinOff size={16} /> : <Pin size={16} />)}
+                    <span className="text-[13px] font-bold">{siteValue(result.isPinned ? siteText("حذف از پین") : siteText("پین کردن"))}</span>
                   </button>
                   <button 
                     onClick={() => { onShare(result.id); setShowMenu(false); }}
                     className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary transition-colors text-right"
                   >
                     <Share2 size={16} />
-                    <span className="text-[13px] font-bold">اشتراک‌گذاری</span>
+                    <span className="text-[13px] font-bold">{siteText("اشتراک‌گذاری")}</span>
                   </button>
                   <div className="h-[1px] bg-border mx-2 my-1" />
                   <button 
@@ -127,11 +129,11 @@ export function ResultCard({ result, onDelete, onShare, onTogglePin, onClick }: 
                     className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-destructive/10 text-destructive transition-colors text-right"
                   >
                     <Trash2 size={16} />
-                    <span className="text-[13px] font-bold">حذف طرح</span>
+                    <span className="text-[13px] font-bold">{siteText("حذف طرح")}</span>
                   </button>
                 </motion.div>
               </>
-            )}
+            ))}
           </AnimatePresence>
         </div>
       </div>

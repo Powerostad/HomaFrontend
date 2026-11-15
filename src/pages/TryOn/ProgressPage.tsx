@@ -1,24 +1,26 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, AlertCircle } from 'lucide-react';
-import { useAuth, useUpload } from '../../context/AppProviders';
-import { Header } from '../../components/Header';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { trackProcessingCompleted, trackProcessingFailed, trackProcessingStarted } from '../../analytics/events';
 import { AuthModal } from '../../components/AuthModal';
+import { Header } from '../../components/Header';
 import { ProgressScreen, type ProgressStep } from '../../components/ProgressScreen';
+import { useAuth, useUpload } from '../../context/AppProviders';
+import type { User } from '../../context/AuthContext';
+import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import {
-  submitVisualizationTask,
   pollTaskStatus,
+  submitVisualizationTask,
   type TaskStatus,
 } from '../../services/visualizationService';
-import { useNavigationGuard } from '../../hooks/useNavigationGuard';
-import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 import { getStoredTokens, setStoredTokens } from '../../utils/apiClient';
-import { trackProcessingStarted, trackProcessingCompleted, trackProcessingFailed } from '../../analytics/events';
-import { toast } from 'sonner';
-import type { User } from '../../context/AuthContext';
+import { loadFromStorage, STORAGE_KEYS, type StoredTryOnResult } from '../../utils/storageUtils';
 
 export function TryOnProgressPage() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const { t } = useTranslation();
@@ -349,10 +351,10 @@ export function TryOnProgressPage() {
   // Error state UI
   if (processingStatus === 'error') {
     return (
-      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
+      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir={siteDirection()}>
         {/* Background */}
         <div className="absolute inset-0 z-0">
-          {bgImage ? (
+          {siteValue(bgImage ? (
             <>
               <img
                 src={bgImage}
@@ -363,7 +365,7 @@ export function TryOnProgressPage() {
             </>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-zinc-50 to-zinc-200" />
-          )}
+          ))}
         </div>
 
         <Header theme="light" disableNavigation={true} />
@@ -379,7 +381,7 @@ export function TryOnProgressPage() {
           </h1>
 
           <p className="text-[15px] text-black/60 mb-8 leading-relaxed">
-            {processingError || t('errors.tryAgain')}
+            {siteValue(processingError || t('errors.tryAgain'))}
           </p>
 
           <div className="flex flex-col gap-3 w-full max-w-[280px]">
@@ -405,7 +407,7 @@ export function TryOnProgressPage() {
 
   // Normal processing UI with ProgressScreen
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir="rtl">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-background flex flex-col items-center justify-center font-vazirmatn text-foreground" dir={siteDirection()}>
 
       <Header theme="light" disableNavigation={true} />
 

@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * BasketSheet — the global slide-over basket.
  *
@@ -6,8 +7,6 @@
  * because a basket routinely spans several vendors; checkout is available per
  * shop and for the whole basket.
  */
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   Loader2,
@@ -17,26 +16,29 @@ import {
   Store,
   Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
+import { useBasket } from '../../context/AppProviders';
+import type { BasketItem, CheckoutChange, CheckoutResult } from '../../types/basket';
+import { formatPriceFromRial, toLocalizedDigits } from '../../utils/formatters';
+import { Button } from '../ui/button';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '../ui/sheet';
-import { Button } from '../ui/button';
-import { useBasket } from '../../context/AppProviders';
-import { formatPriceFromRial, toPersianDigits } from '../../utils/formatters';
 import { CheckoutConfirmModal } from './CheckoutConfirmModal';
 import { CheckoutReviewModal } from './CheckoutReviewModal';
-import type { BasketItem, CheckoutChange, CheckoutResult } from '../../types/basket';
 
 function BasketLine({
   item,
 }: {
   item: BasketItem;
 }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const { updateQuantity, removeItem, acceptPrice } = useBasket();
   const unavailable = item.status === 'unavailable';
@@ -46,14 +48,14 @@ function BasketLine({
       className={`flex gap-3 py-3 ${unavailable ? 'opacity-60' : ''}`}
     >
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-surface-default">
-        {item.product_image_url && (
+        {siteValue(item.product_image_url && (
           <img
             src={item.product_image_url}
-            alt={item.product_name}
+            alt={siteValue(item.product_name)}
             className="h-full w-full object-cover"
             loading="lazy"
           />
-        )}
+        ))}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -62,15 +64,15 @@ function BasketLine({
             unavailable ? 'line-through' : ''
           }`}
         >
-          {item.product_name}
+          {siteValue(item.product_name)}
         </p>
-        {item.variant_label && (
+        {siteValue(item.variant_label && (
           <p className="text-xs text-content-muted mt-0.5">
-            {item.variant_label}
+            {siteValue(item.variant_label)}
           </p>
-        )}
+        ))}
 
-        {unavailable ? (
+        {siteValue(unavailable ? (
           <p className="text-xs text-brand-primary mt-1">
             {t('basket.unavailable', 'این محصول دیگر موجود نیست')}
           </p>
@@ -91,7 +93,7 @@ function BasketLine({
                 <Plus size={13} />
               </button>
               <span className="min-w-[24px] text-center text-xs font-medium tabular-nums">
-                {toPersianDigits(item.quantity)}
+                {siteValue(toLocalizedDigits(item.quantity))}
               </span>
               <button
                 type="button"
@@ -107,13 +109,13 @@ function BasketLine({
             </div>
 
             <span className="text-sm font-medium text-content-primary">
-              {formatPriceFromRial(item.line_total_rial)}
+              {siteValue(formatPriceFromRial(item.line_total_rial))}
             </span>
           </div>
-        )}
+        ))}
 
         {/* price drift banner */}
-        {item.price_changed && !unavailable && (
+        {siteValue(item.price_changed && !unavailable && (
           <div className="mt-2 flex items-center gap-2 rounded-md bg-surface-default p-2">
             <AlertTriangle size={13} className="text-brand-primary shrink-0" />
             <span className="text-xs text-content-secondary flex-1">
@@ -127,7 +129,7 @@ function BasketLine({
               {t('basket.acceptNewPrice', 'تأیید قیمت جدید')}
             </button>
           </div>
-        )}
+        ))}
       </div>
 
       <button
@@ -143,6 +145,7 @@ function BasketLine({
 }
 
 export function BasketSheet() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
@@ -195,21 +198,21 @@ export function BasketSheet() {
           side="left"
           className="w-full sm:max-w-md flex flex-col p-0 z-modal"
           overlayClassName="z-modal-backdrop"
-          dir="rtl"
+          dir={siteDirection()}
         >
           <SheetHeader className="px-5 py-4 border-b border-subtle">
             <SheetTitle className="flex items-center gap-2">
               <ShoppingBag size={18} />
               {t('basket.title', 'سبد خرید')}
-              {!isEmpty && (
+              {siteValue(!isEmpty && (
                 <span className="text-sm text-content-muted font-normal">
-                  ({toPersianDigits(itemCount)})
+                  ({siteValue(toLocalizedDigits(itemCount))})
                 </span>
-              )}
+              ))}
             </SheetTitle>
           </SheetHeader>
 
-          {isEmpty ? (
+          {siteValue(isEmpty ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
               <ShoppingBag size={40} className="text-content-muted" strokeWidth={1} />
               <p className="text-content-secondary">
@@ -218,12 +221,12 @@ export function BasketSheet() {
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto px-5">
-              {basket.shop_groups.map((group) => (
+              {siteValue(basket.shop_groups.map((group) => (
                 <div key={group.shop_id} className="py-3 border-b border-subtle last:border-0">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2 text-sm text-content-secondary">
                       <Store size={14} />
-                      <span>{group.shop_name}</span>
+                      <span>{siteValue(group.shop_name)}</span>
                     </div>
                     <button
                       type="button"
@@ -235,27 +238,27 @@ export function BasketSheet() {
                     </button>
                   </div>
                   <div className="divide-y divide-subtle">
-                    {group.items.map((item) => (
+                    {siteValue(group.items.map((item) => (
                       <BasketLine key={item.id} item={item} />
-                    ))}
+                    )))}
                   </div>
                   <div className="flex justify-between pt-2 text-xs text-content-muted">
                     <span>{t('basket.subtotal', 'جمع فروشگاه')}</span>
-                    <span>{formatPriceFromRial(group.subtotal_rial)}</span>
+                    <span>{siteValue(formatPriceFromRial(group.subtotal_rial))}</span>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
-          )}
+          ))}
 
-          {!isEmpty && (
+          {siteValue(!isEmpty && (
             <div className="border-t border-subtle px-5 py-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-content-secondary">
                   {t('basket.total', 'مجموع')}
                 </span>
                 <span className="text-lg font-semibold text-content-primary">
-                  {formatPriceFromRial(totalRial)}
+                  {siteValue(formatPriceFromRial(totalRial))}
                 </span>
               </div>
               <Button
@@ -263,9 +266,9 @@ export function BasketSheet() {
                 disabled={isMutating}
                 onClick={() => runCheckout()}
               >
-                {isMutating ? (
+                {siteValue(isMutating ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
+                ) : null)}
                 {t('basket.checkout', 'تکمیل خرید')}
               </Button>
               <button
@@ -279,7 +282,7 @@ export function BasketSheet() {
                 {t('basket.viewFullPage', 'مشاهده صفحه کامل سبد خرید')}
               </button>
             </div>
-          )}
+          ))}
         </SheetContent>
       </Sheet>
 

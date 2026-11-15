@@ -1,9 +1,11 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { motion as Motion } from "motion/react";
 import { useEffect } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
-import { motion as Motion } from "motion/react";
 import { useApp } from "../../context/AppContext";
 
 export function ConfirmationPage() {
+  const { siteText, siteValue } = useSiteTranslation();
   const navigate = useRouterNavigate();
   const { product } = useApp();
 
@@ -47,14 +49,14 @@ export function ConfirmationPage() {
 
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
+            {siteValue([0, 1, 2].map((i) => (
               <Motion.div
                 key={i}
                 className="w-3 h-3 bg-gray-900 rounded-full"
                 animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
               />
-            ))}
+            )))}
           </div>
         </div>
 
@@ -65,10 +67,9 @@ export function ConfirmationPage() {
           className="text-gray-600"
           style={{ fontSize: "16px" }}
         >
-          منتظر باشید
-        </Motion.p>
+          {siteText("منتظر باشید")}</Motion.p>
 
-        {product && (
+        {siteValue(product && (
           <Motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -76,9 +77,8 @@ export function ConfirmationPage() {
             className="text-gray-400 mt-4"
             style={{ fontSize: "14px" }}
           >
-            در حال تست {product.name} در فضای شما...
-          </Motion.p>
-        )}
+            {siteText("در حال تست")}{siteValue(product.name)} {siteText("در فضای شما...")}</Motion.p>
+        ))}
       </div>
     </Motion.div>
   );

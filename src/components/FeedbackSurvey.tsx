@@ -1,7 +1,8 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { trackFeedbackSubmitted } from '../analytics/events';
 
 type FeedbackState = 'good' | 'neutral' | 'bad';
@@ -55,6 +56,7 @@ interface FeedbackSurveyProps {
 }
 
 export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const [sliderValue, setSliderValue] = useState(100);
   const [currentState, setCurrentState] = useState<FeedbackState>('good');
   const sliderRef = useRef<HTMLInputElement>(null);
@@ -219,8 +221,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
               fontWeight: 'var(--font-weight-semibold)',
             }}
           >
-            تجربه‌ات چطور بود؟
-          </motion.h1>
+            {siteText("تجربه‌ات چطور بود؟")}</motion.h1>
 
           {/* Face */}
           <div className="mb-10">
@@ -249,7 +250,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
             </div>
 
             {/* Mouth */}
-            {config.mouthClass === 'neutral' ? (
+            {siteValue(config.mouthClass === 'neutral' ? (
               <motion.div
                 initial={false}
                 animate={{
@@ -308,7 +309,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
                   borderRadius: '0 0 80px 80px',
                 }}
               />
-            )}
+            ))}
           </div>
 
           {/* Status Text */}
@@ -322,7 +323,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
               opacity: 0.3,
             }}
           >
-            {config.text}
+            {siteValue(config.text)}
           </motion.div>
         </div>
 
@@ -354,7 +355,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
               style={{
                 WebkitAppearance: 'none',
               }}
-              aria-label="اسلایدر رضایت"
+              aria-label={siteText("اسلایدر رضایت")}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={sliderValue}
@@ -374,8 +375,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
                 fontSize: '32px',
               }}
             >
-              بد
-            </motion.span>
+              {siteText("بد")}</motion.span>
             <motion.span
               animate={{
                 color: config.textColor,
@@ -387,8 +387,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
                 fontSize: '32px',
               }}
             >
-              معمولی
-            </motion.span>
+              {siteText("معمولی")}</motion.span>
             <motion.span
               animate={{
                 color: config.textColor,
@@ -400,8 +399,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
                 fontSize: '32px',
               }}
             >
-              خوب
-            </motion.span>
+              {siteText("خوب")}</motion.span>
           </div>
         </div>
 
@@ -418,8 +416,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
               fontFamily: 'var(--font-family-vazirmatn)',
             }}
           >
-            انصراف
-          </button>
+            {siteText("انصراف")}</button>
           <motion.button
             onClick={handleSubmit}
             whileHover={{
@@ -436,8 +433,7 @@ export function FeedbackSurvey({ productId, onFeedbackSubmit }: FeedbackSurveyPr
               fontFamily: 'var(--font-family-vazirmatn)',
             }}
           >
-            ثبت ←
-          </motion.button>
+            {siteText("ثبت ←")}</motion.button>
         </div>
       </div>
     </motion.div>

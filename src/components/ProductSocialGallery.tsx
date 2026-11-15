@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * ProductSocialGallery Component
  *
@@ -5,11 +6,11 @@
  * Shows how other users have styled the product in their spaces.
  */
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Users, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { fetchProductGallery, type PublicGalleryItem } from '@/services/socialGalleryService';
+import { ChevronLeft, ChevronRight, Loader2, Users, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface ProductSocialGalleryProps {
   productId: string | number;
@@ -22,6 +23,7 @@ export function ProductSocialGallery({
   productName: _productName,
   className = ''
 }: ProductSocialGalleryProps) {
+  const { siteText, siteValue, siteDirection, siteLocale } = useSiteTranslation();
   const [items, setItems] = useState<PublicGalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function ProductSocialGallery({
   };
 
   return (
-    <div className={`${className}`} dir="rtl">
+    <div className={`${className}`} dir={siteDirection()}>
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -75,33 +77,32 @@ export function ProductSocialGallery({
           </div>
           <div>
             <h3 className="text-[16px] font-bold text-black">
-              کاربران امتحان کردند
-            </h3>
+              {siteText("کاربران امتحان کردند")}</h3>
             <p className="text-[12px] text-black/50">
-              {items.length > 0 ? `${items.length} تصویر از کاربران` : 'در حال بارگذاری...'}
+              {siteValue(items.length > 0 ? siteText("{{v0}} تصویر از کاربران", { v0: items.length }) : siteText("در حال بارگذاری..."))}
             </p>
           </div>
         </div>
       </div>
 
       {/* Loading State */}
-      {isLoading && (
+      {siteValue(isLoading && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-black/30" />
         </div>
-      )}
+      ))}
 
       {/* Error State */}
-      {error && !isLoading && (
+      {siteValue(error && !isLoading && (
         <div className="text-center py-8 text-black/40 text-[13px]">
-          {error}
+          {siteValue(error)}
         </div>
-      )}
+      ))}
 
       {/* Gallery Grid */}
-      {!isLoading && items.length > 0 && (
+      {siteValue(!isLoading && items.length > 0 && (
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-          {items.map((item, index) => (
+          {siteValue(items.map((item, index) => (
             <motion.button
               key={item.id}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -112,18 +113,18 @@ export function ProductSocialGallery({
             >
               <ImageWithFallback
                 src={item.thumbnailUrl || item.imageUrl}
-                alt={`تصویر از کاربر`}
+                alt={siteText("تصویر از کاربر")}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
             </motion.button>
-          ))}
+          )))}
         </div>
-      )}
+      ))}
 
       {/* Lightbox */}
       <AnimatePresence>
-        {selectedIndex !== null && items[selectedIndex] && (
+        {siteValue(selectedIndex !== null && items[selectedIndex] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -140,22 +141,22 @@ export function ProductSocialGallery({
             </button>
 
             {/* Navigation Buttons */}
-            {selectedIndex > 0 && (
+            {siteValue(selectedIndex > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); showPrevious(); }}
                 className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all z-10"
               >
                 <ChevronLeft size={24} />
               </button>
-            )}
-            {selectedIndex < items.length - 1 && (
+            ))}
+            {siteValue(selectedIndex < items.length - 1 && (
               <button
                 onClick={(e) => { e.stopPropagation(); showNext(); }}
                 className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all z-10"
               >
                 <ChevronRight size={24} />
               </button>
-            )}
+            ))}
 
             {/* Main Image */}
             <motion.div
@@ -168,7 +169,7 @@ export function ProductSocialGallery({
             >
               <ImageWithFallback
                 src={items[selectedIndex].imageUrl}
-                alt={`تصویر ${selectedIndex + 1}`}
+                alt={siteText("تصویر {{v0}}", { v0: selectedIndex + 1 })}
                 className="max-w-full max-h-[80vh] object-contain rounded-lg"
               />
 
@@ -176,16 +177,16 @@ export function ProductSocialGallery({
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
                 <div className="flex items-center justify-between text-white">
                   <span className="text-[12px] opacity-70">
-                    {new Date(items[selectedIndex].submittedAt).toLocaleDateString('fa-IR')}
+                    {siteValue(new Date(items[selectedIndex].submittedAt).toLocaleDateString(siteLocale()))}
                   </span>
                   <span className="text-[12px] font-medium">
-                    {selectedIndex + 1} / {items.length}
+                    {siteValue(selectedIndex + 1)} / {siteValue(items.length)}
                   </span>
                 </div>
               </div>
             </motion.div>
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
     </div>
   );

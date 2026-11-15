@@ -1,0 +1,28 @@
+services:
+  openai-frontend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: homa_openai_frontend:${HOMA_IMAGE_TAG:-baseline-a696734}
+    restart: unless-stopped
+    expose: ["80"]
+    environment:
+      NODE_ENV: production
+      VITE_API_BASE_URL: https://openai.parsmehragro.com
+      VITE_AUTH_MODE: otp
+      VITE_ENABLE_REALTIME: "true"
+      VITE_PUBLIC_MEDIA_BASE_URL: https://cdn.myhoma.ir
+      VITE_PRIVATE_MEDIA_BASE_URL: https://openai.parsmehragro.com
+      VITE_UMAMI_SRC: about:blank
+      VITE_UMAMI_WEBSITE_ID: disabled
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1/health]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [dokploy-network]
+networks:
+  dokploy-network:
+    external: true

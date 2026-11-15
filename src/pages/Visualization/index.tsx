@@ -1,12 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate as useRouterNavigate } from "react-router-dom";
-import { ProductVisualization } from "../../components/ProductVisualization";
-import { ProductDetailsModal } from "../../components/ProductDetailsModal";
 import { FeedbackSurvey } from "../../components/FeedbackSurvey";
+import { ProductDetailsModal } from "../../components/ProductDetailsModal";
+import { ProductVisualization } from "../../components/ProductVisualization";
 import { useApp } from "../../context/AppContext";
 import { trackEvent } from "../../utils/aiImageProcessor";
 
 export function VisualizationPage() {
+  const { siteValue, siteText } = useSiteTranslation();
   const navigate = useRouterNavigate();
   const {
     product,
@@ -60,7 +62,7 @@ export function VisualizationPage() {
       metadata: { action: "save", feedback: userFeedback },
     });
 
-    alert("تصویر ذخیره شد! 💾");
+    alert(siteText("تصویر ذخیره شد! 💾"));
     setShowFeedback(false);
   };
 
@@ -142,12 +144,12 @@ export function VisualizationPage() {
       variant: productVariant,
       placementSuccess,
     });
-    alert(`خرید ${product.name} - به زودی! 🛒`);
+    alert(siteText("خرید {{v0}} - به زودی! 🛒", { v0: product.name }));
   };
 
   const handleShare = () => {
     trackKPI("Action: Share", { productId: product.id });
-    alert("اشتراک‌گذاری... 📤");
+    alert(siteText("اشتراک‌گذاری... 📤"));
   };
 
   return (
@@ -167,12 +169,12 @@ export function VisualizationPage() {
       />
 
       {/* Feedback Modal */}
-      {showFeedback && (
+      {siteValue(showFeedback && (
         <FeedbackSurvey
           productId={product.id}
           onFeedbackSubmit={handleFeedbackSubmit}
         />
-      )}
+      ))}
 
       {/* Details Modal */}
       <ProductDetailsModal

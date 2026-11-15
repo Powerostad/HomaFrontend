@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * Brand Colors Showcase
  * نمایش رنگ‌های برند HOMA
@@ -5,10 +6,11 @@
  */
 
 import { useEffect, useState } from "react";
-import { Card } from "./ui/card";
 import { SimpleButton as Button } from "./SimpleButton";
+import { Card } from "./ui/card";
 
 export function BrandColors() {
+  const { siteValue } = useSiteTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   // برای باز کردن با کلید میانبر: Shift + Ctrl + B
@@ -115,7 +117,7 @@ export function BrandColors() {
           <div>
             <h3 className="mb-4 text-gray-700">🎨 پالت رنگ</h3>
             <div className="grid gap-4">
-              {colors.map((color) => (
+              {siteValue(colors.map((color) => (
                 <Card key={color.varName} className="p-6">
                   <div className="flex gap-6 items-start">
                     {/* Color Swatch */}
@@ -128,33 +130,33 @@ export function BrandColors() {
 
                     {/* Color Info */}
                     <div className="flex-1">
-                      <h4 className="mb-2">{color.name}</h4>
+                      <h4 className="mb-2">{siteValue(color.name)}</h4>
                       <div className="space-y-1 text-sm text-gray-600">
                         <div>
                           <span className="font-mono bg-gray-100 px-2 py-1 rounded">
-                            {color.value}
+                            {siteValue(color.value)}
                           </span>
                         </div>
                         <div>
-                          CSS Variable:{" "}
+                          CSS Variable:{siteValue(" ")}
                           <code className="bg-gray-100 px-2 py-1 rounded">
-                            var({color.varName})
+                            var({siteValue(color.varName)})
                           </code>
                         </div>
                         <div>
-                          Tailwind:{" "}
+                          Tailwind:{siteValue(" ")}
                           <code className="bg-gray-100 px-2 py-1 rounded">
-                            {color.tailwind}
+                            {siteValue(color.tailwind)}
                           </code>
                         </div>
                       </div>
                       <p className="text-sm text-gray-500 mt-3">
-                        {color.description}
+                        {siteValue(color.description)}
                       </p>
                     </div>
                   </div>
                 </Card>
-              ))}
+              )))}
             </div>
           </div>
 
@@ -162,24 +164,24 @@ export function BrandColors() {
           <div>
             <h3 className="mb-4 text-gray-700">💡 نمونه‌های استفاده</h3>
             <div className="grid gap-4">
-              {usageExamples.map((example, idx) => (
+              {siteValue(usageExamples.map((example, idx) => (
                 <Card key={idx} className="p-6">
                   <div className="flex gap-6 items-center">
                     {/* Preview */}
                     <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 rounded-lg min-h-[80px]">
-                      {example.preview}
+                      {siteValue(example.preview)}
                     </div>
 
                     {/* Code */}
                     <div className="flex-1">
-                      <h4 className="text-sm mb-2">{example.title}</h4>
+                      <h4 className="text-sm mb-2">{siteValue(example.title)}</h4>
                       <pre className="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto">
-                        {example.code}
+                        {siteValue(example.code)}
                       </pre>
                     </div>
                   </div>
                 </Card>
-              ))}
+              )))}
             </div>
           </div>
 

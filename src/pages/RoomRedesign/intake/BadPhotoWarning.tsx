@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * BadPhotoWarning — bottom-sheet warning shown when the uploaded photo is
  * unlikely to yield a quality analysis.
@@ -5,9 +6,9 @@
  * Offers two actions: retry (pick a new photo) or continue anyway with the
  * existing photo. Swipe-to-dismiss and overlay tap both call onClose.
  */
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { AlertTriangle } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { RD } from '../theme';
 import { INTAKE_COPY } from './intakeCopy';
 
@@ -22,16 +23,17 @@ interface BadPhotoWarningProps {
 }
 
 export function BadPhotoWarning({ open, onRetry, onContinue, onClose }: BadPhotoWarningProps): JSX.Element {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const reduce = useReducedMotion();
   const tap = reduce ? undefined : TAP;
   return (
     <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DrawerContent>
         <DrawerTitle className="sr-only">
-          {INTAKE_COPY.badPhoto.title}
+          {siteValue(INTAKE_COPY.badPhoto.title)}
         </DrawerTitle>
         <div
-          dir="rtl"
+          dir={siteDirection()}
           style={{
             fontFamily: 'Vazirmatn, sans-serif',
             padding: '24px 20px',
@@ -67,7 +69,7 @@ export function BadPhotoWarning({ open, onRetry, onContinue, onClose }: BadPhoto
                   lineHeight: '1.4',
                 }}
               >
-                {INTAKE_COPY.badPhoto.title}
+                {siteValue(INTAKE_COPY.badPhoto.title)}
               </h2>
               <p
                 style={{
@@ -77,7 +79,7 @@ export function BadPhotoWarning({ open, onRetry, onContinue, onClose }: BadPhoto
                   lineHeight: '1.75',
                 }}
               >
-                {INTAKE_COPY.badPhoto.body}
+                {siteValue(INTAKE_COPY.badPhoto.body)}
               </p>
             </div>
           </div>
@@ -103,7 +105,7 @@ export function BadPhotoWarning({ open, onRetry, onContinue, onClose }: BadPhoto
                 cursor: 'pointer',
               }}
             >
-              {INTAKE_COPY.badPhoto.retry}
+              {siteValue(INTAKE_COPY.badPhoto.retry)}
             </motion.button>
 
             {/* Secondary: continue anyway */}
@@ -125,7 +127,7 @@ export function BadPhotoWarning({ open, onRetry, onContinue, onClose }: BadPhoto
                 cursor: 'pointer',
               }}
             >
-              {INTAKE_COPY.badPhoto.continueAnyway}
+              {siteValue(INTAKE_COPY.badPhoto.continueAnyway)}
             </motion.button>
           </div>
         </div>

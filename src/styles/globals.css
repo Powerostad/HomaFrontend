@@ -256,6 +256,14 @@ body.auth-modal-open .studio-upload-action-bar {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     direction: ltr;
   }
+  html[lang="en"] .font-vazirmatn,
+  html[lang="en"] [style*="font-family: Vazirmatn"],
+  html[lang="en"] input,
+  html[lang="en"] textarea,
+  html[lang="en"] select,
+  html[lang="en"] button {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 
   /* Turkish language */
   html[lang="tr"] {

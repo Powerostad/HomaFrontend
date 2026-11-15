@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * SizeSelectionModal - مودال انتخاب سایز فرش
  *
@@ -5,9 +6,9 @@
  * User must select one size before proceeding to try-on.
  */
 
+import { Check, Ruler, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Ruler, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 // =============================================================================
@@ -38,6 +39,7 @@ export function SizeSelectionModal({
   onSelect,
   onClose,
 }: SizeSelectionModalProps) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
@@ -101,16 +103,16 @@ export function SizeSelectionModal({
                 {t('sizeSelection.title')}
               </h2>
 
-              {productName && (
+              {siteValue(productName && (
                 <p className="text-[14px] text-black/50">
                   {t('sizeSelection.selectSizeFor', { productName })}
                 </p>
-              )}
+              ))}
             </div>
 
             {/* Size Options */}
             <div className="space-y-3 mb-8">
-              {sizes.map((size) => (
+              {siteValue(sizes.map((size) => (
                 <button
                   key={size.code}
                   onClick={() => setSelectedCode(size.code)}
@@ -124,8 +126,8 @@ export function SizeSelectionModal({
                     }
                   `}
                 >
-                  <span className="text-[15px] font-bold">{size.display}</span>
-                  {selectedCode === size.code && (
+                  <span className="text-[15px] font-bold">{siteValue(size.display)}</span>
+                  {siteValue(selectedCode === size.code && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -133,9 +135,9 @@ export function SizeSelectionModal({
                     >
                       <Check size={14} className="text-black" />
                     </motion.div>
-                  )}
+                  ))}
                 </button>
-              ))}
+              )))}
             </div>
 
             {/* Confirm Button */}

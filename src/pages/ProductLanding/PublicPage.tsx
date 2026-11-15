@@ -1,5 +1,6 @@
 import { Footer } from "../../components/Footer";
 import { PublicChromeHeader } from "../../seo/PublicChrome";
+import { RoomEntrySection } from './components/RoomEntrySection';
 import { HeroSection } from "./components/HeroSection";
 import { TrustBar } from "./components/TrustBar";
 import { OutputShowcase } from "./components/OutputShowcase";
@@ -16,9 +17,9 @@ export interface ProductLandingContentProps {
 export function ProductLandingContent({ onStudioStart, onBrowseCollections, onCollaborate }: ProductLandingContentProps) {
   void onBrowseCollections;
   void onCollaborate;
-  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><ComparisonSection /><ShoppingPropSection /></main>;
+  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><RoomEntrySection /><ComparisonSection /><ShoppingPropSection /></main>;
 }
 
 export function SeoProductLandingPage({ controllersEnabled = false }: { controllersEnabled?: boolean }) {
-  return <div className="min-h-screen bg-surface-page flex flex-col"><PublicChromeHeader controllersEnabled={controllersEnabled} /><ProductLandingContent /><Footer /></div>;
+  return <div className="min-h-screen bg-surface-page flex flex-col"><PublicChromeHeader controllersEnabled={controllersEnabled} /><div className="h-[64px] md:h-[80px]" /><ProductLandingContent /><Footer /></div>;
 }

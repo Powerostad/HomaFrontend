@@ -1,25 +1,26 @@
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { siteText, useSiteTranslation } from '@/i18n/siteCopy';
+import { RefreshCw, Sparkles, Star, Store as StoreIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, Sparkles, RefreshCw, Store as StoreIcon } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 // SlidersHorizontal - TODO: Uncomment when filter UI is implemented
-import { useProduct, useShop } from '../../context/AppProviders';
-import { trackEvent } from '../../utils/analytics';
-import { trackStoreViewed, trackTryOnCtaClicked } from '../../analytics/events';
+import { useSeo } from '@/hooks/useSeo';
 import { motion } from 'motion/react';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { GalleryProductCard } from '../../components/store/GalleryProductCard';
-import { Skeleton } from '../../components/ui/skeleton';
-import { Button } from '../../components/ui/button';
+import { trackStoreViewed, trackTryOnCtaClicked } from '../../analytics/events';
 import { ContextBar } from '../../components/ContextBar';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Header } from '../../components/Header';
 import { HomaLoader } from '../../components/HomaLoader';
+import { GalleryProductCard } from '../../components/store/GalleryProductCard';
+import { Button } from '../../components/ui/button';
+import { Skeleton } from '../../components/ui/skeleton';
+import { useProduct, useShop } from '../../context/AppProviders';
 import { fetchProductsByShop } from '../../services/productService';
-import { formatPriceFromRial } from '../../utils/formatters';
-import type { Shop } from '../../types/shop';
 import type { APIProduct } from '../../types/apiProduct';
 import type { Product } from '../../types/product';
-import { useSeo } from '@/hooks/useSeo';
+import type { Shop } from '../../types/shop';
+import { trackEvent } from '../../utils/analytics';
+import { formatPriceFromRial } from '../../utils/formatters';
 
 /**
  * Convert APIProduct to the legacy Product type for existing components
@@ -34,7 +35,7 @@ function apiProductToProduct(apiProduct: APIProduct): Product {
     thumbnail: apiProduct.imageUrl,
     brand: apiProduct.shopName,
     description: apiProduct.description,
-    currency: 'تومان',
+    currency: siteText("تومان"),
     status: 'active',
     seller: {
       name: apiProduct.shopName,
@@ -48,6 +49,7 @@ function apiProductToProduct(apiProduct: APIProduct): Product {
 // =============================================================================
 
 export function StorePage() {
+  const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -66,7 +68,7 @@ export function StorePage() {
   useSeo({
     title: shop?.name,
     description: shop?.name
-      ? `محصولات فروشگاه ${shop.name} در HOMA — مشاهده در فضای شما با هوش مصنوعی.`
+      ? siteText("محصولات فروشگاه {{v0}} در HOMA — مشاهده در فضای شما با هوش مصنوعی.", { v0: shop.name })
       : undefined,
     image: shop?.logoUrl || undefined,
   });
@@ -204,11 +206,11 @@ export function StorePage() {
   // Error state
   if (shopError && !shop) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir={siteDirection()}>
         <div className="w-16 h-16 rounded-full bg-black/[0.03] flex items-center justify-center mb-6">
           <StoreIcon size={24} className="text-black/20" strokeWidth={1.5} />
         </div>
-        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{shopError}</h2>
+        <h2 className="text-xl font-bold mb-2 font-vazirmatn">{siteValue(shopError)}</h2>
         <div className="flex gap-3 mt-4">
           <Button
             onClick={handleRetry}
@@ -229,7 +231,7 @@ export function StorePage() {
   // Not found state
   if (!shop) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir="rtl">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFB] p-6 text-center" dir={siteDirection()}>
         <h2 className="text-xl font-bold mb-2 font-vazirmatn">{t('store.notFound', 'فروشگاه پیدا نشد')}</h2>
         <Button onClick={() => navigate('/explore')} className="btn-primary rounded-full px-8">
           {t('common.back', 'بازگشت')}
@@ -239,7 +241,7 @@ export function StorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFDFB] selection:bg-black/5 flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-[#FDFDFB] selection:bg-black/5 flex flex-col" dir={siteDirection()}>
 
       {/* 1. TOP UTILITY BAR (Fixed) */}
       <Header />
@@ -259,20 +261,20 @@ export function StorePage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white border border-black/5 overflow-hidden shrink-0 shadow-sm">
-                {shop.logoUrl ? (
+                {siteValue(shop.logoUrl ? (
                   <ImageWithFallback src={shop.logoUrl} className="w-full h-full object-cover scale-110" />
                 ) : (
                   <StoreIcon size={32} className="text-black/20" strokeWidth={1} />
-                )}
+                ))}
               </div>
               <div className="space-y-1">
                 <h1 className="text-[28px] md:text-[34px] font-medium text-black tracking-tight leading-none" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-                  {shop.name}
+                  {siteValue(shop.name)}
                 </h1>
                 <div className="flex items-center gap-2">
                   <div className="px-2 py-0.5 bg-black/[0.03] rounded-sm flex items-center gap-1.5 border border-black/[0.05]">
                     <Star size={10} className="fill-black text-black opacity-30" />
-                    <span className="text-[10px] font-bold text-black/40">@{shop.username}</span>
+                    <span className="text-[10px] font-bold text-black/40">@{siteValue(shop.username)}</span>
                   </div>
                   <span className="text-[11px] text-black/30 font-medium uppercase tracking-widest">{t('explore.productCount', '{{count}} محصول', { count: shop.productCount })}</span>
                 </div>
@@ -329,7 +331,7 @@ export function StorePage() {
       {/* 5. PRODUCT GRID */}
       <main className="px-6 md:px-16 max-w-[1440px] mx-auto w-full pb-32">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-[16px] gap-y-[18px] md:gap-y-[20px]">
-          {isLoadingProducts ? (
+          {siteValue(isLoadingProducts ? (
             // Loading skeleton
             [...Array(8)].map((_, i) => (
               <div key={i} className="flex flex-col gap-2">
@@ -392,11 +394,11 @@ export function StorePage() {
                 </motion.div>
               );
             })
-          )}
+          ))}
         </div>
 
         {/* Load More Button */}
-        {!isLoadingProducts && products.length > 0 && hasMore && (
+        {siteValue(!isLoadingProducts && products.length > 0 && hasMore && (
           <div className="flex justify-center mt-12 mb-8">
             <Button
               onClick={handleLoadMore}
@@ -404,17 +406,17 @@ export function StorePage() {
               variant="outline"
               className="h-12 px-8 rounded-none border-black/10 text-black hover:bg-black/5 text-[12px] font-bold tracking-widest"
             >
-              {isLoadingMore ? (
+              {siteValue(isLoadingMore ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-black/20 border-t-black/60 rounded-full animate-spin" />
                   {t('common.loading', 'در حال بارگذاری...')}
                 </span>
               ) : (
                 t('store.loadMore', 'مشاهده بیشتر')
-              )}
+              ))}
             </Button>
           </div>
-        )}
+        ))}
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#FDFDFB] to-transparent pointer-events-none z-10" />
@@ -435,6 +437,7 @@ function HomaSpecialCard({
   apiProduct: APIProduct;
   onTryOn: () => void;
 }) {
+  const { siteValue } = useSiteTranslation();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { slug } = useParams();
@@ -454,7 +457,7 @@ function HomaSpecialCard({
 
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-[18px] md:text-[32px] font-medium text-black leading-tight tracking-tight" style={{ fontFamily: 'var(--font-family-vazirmatn)' }}>
-              {product.name}
+              {siteValue(product.name)}
             </h2>
             <p className="text-[11px] md:text-[14px] text-black/60 md:text-black/40 font-medium leading-relaxed max-w-[180px] md:max-w-xs line-clamp-2 md:line-clamp-none">
               {t('store.smartColorPick', 'انتخابی هوشمند بر اساس پالت رنگی فضای شما.')}
@@ -473,7 +476,7 @@ function HomaSpecialCard({
             {t('store.tryInMySpace', 'امتحان در فضای من')}
           </button>
           <span className="text-[14px] md:text-[18px] font-bold text-[var(--accent)]">
-            {formatPriceFromRial(product.price ?? 0)}
+            {siteValue(formatPriceFromRial(product.price ?? 0))}
           </span>
         </div>
       </div>

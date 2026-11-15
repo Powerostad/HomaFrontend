@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { useState } from 'react';
 
 interface OptimizedImageProps {
@@ -30,6 +31,7 @@ export function OptimizedImage({
   priority = false,
   lazy = false,
 }: OptimizedImageProps) {
+  const { siteValue } = useSiteTranslation();
   const [error, setError] = useState(false);
 
   // The webp/-mobile.webp sibling convention only exists for local static
@@ -52,7 +54,7 @@ export function OptimizedImage({
     return (
       <img
         src={src}
-        alt={alt}
+        alt={siteValue(alt)}
         className={className}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}
@@ -81,7 +83,7 @@ export function OptimizedImage({
       {/* Fallback to original format */}
       <img
         src={src}
-        alt={alt}
+        alt={siteValue(alt)}
         className={className}
         loading={lazy ? 'lazy' : undefined}
         decoding={priority ? 'sync' : 'async'}

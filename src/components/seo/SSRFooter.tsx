@@ -1,3 +1,7 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
+import { useTranslation } from 'react-i18next';
+import informationEn from "../../i18n/locales/information.en.json";
+import information from "../../i18n/locales/information.fa.json";
 import { SSRSafeLink } from "./SSRSafeLink";
 
 interface SSRFooterProps {
@@ -18,22 +22,27 @@ interface SSRFooterProps {
 
 /**
  * SSR-safe Footer: renders navigation links with plain <a> tags on server,
- * hydrates to React Router <Link> after mount. Accepts optional translations
- * to avoid requiring useTranslation during server render.
+ * hydrates to React Router <Link> after mount. An SSR-safe i18n provider
+ * supplies the active language; optional translations can override labels.
  */
 export function SSRFooter({ translations = {} }: SSRFooterProps) {
+  const { siteText, siteValue } = useSiteTranslation();
+  const { t: translate, i18n } = useTranslation();
+  const english = i18n.language?.startsWith('en');
+  const copy = english ? informationEn : information;
+  const informationQuery = `?lang=${english ? 'en' : 'fa'}`;
   const t = {
-    tagline: translations.tagline || "طراحی دکوراسیون خانه با هوش مصنوعی",
-    quickAccess: translations.quickAccess || "دسترسی سریع",
-    home: translations.home || "خانه",
-    stores: translations.stores || "فروشگاه‌ها",
-    gallery: translations.gallery || "گالری",
-    collaboration: translations.collaboration || "همکاری",
-    collaborateWithHoma: translations.collaborateWithHoma || "همکاری با هما",
-    support: translations.support || "پشتیبانی",
-    faq: translations.faq || "سوالات متداول",
-    terms: translations.terms || "قوانین و مقررات",
-    contactUs: translations.contactUs || "تماس با ما",
+    tagline: translations.tagline || translate('footer.tagline', siteText("طراحی دکوراسیون خانه با هوش مصنوعی")),
+    quickAccess: translations.quickAccess || translate('footer.quickAccess', siteText("دسترسی سریع")),
+    home: translations.home || translate('nav.home', siteText("خانه")),
+    stores: translations.stores || translate('nav.stores', siteText("فروشگاه‌ها")),
+    gallery: translations.gallery || translate('nav.gallery', siteText("گالری")),
+    collaboration: translations.collaboration || translate('footer.collaboration', siteText("همکاری")),
+    collaborateWithHoma: translations.collaborateWithHoma || translate('footer.collaborateWithHoma', siteText("همکاری با هما")),
+    support: translations.support || translate('footer.support', siteText("پشتیبانی")),
+    faq: translations.faq || translate('nav.faq', siteText("سوالات متداول")),
+    terms: translations.terms || translate('footer.terms', siteText("قوانین و مقررات")),
+    contactUs: translations.contactUs || translate('nav.contactUs', siteText("تماس با ما")),
   };
 
   return (
@@ -55,7 +64,7 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
               className="text-p font-light leading-relaxed opacity-40"
               style={{ fontFamily: "var(--font-family-vazirmatn)" }}
             >
-              {t.tagline}
+              {siteValue(t.tagline)}
             </p>
           </div>
 
@@ -64,22 +73,22 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
             {/* Column 1 */}
             <div className="flex flex-col gap-8 items-start lg:items-end">
               <h3 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80">
-                {t.quickAccess}
+                {siteValue(t.quickAccess)}
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
                 <li>
                   <SSRSafeLink to="/" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.home}
+                    {siteValue(t.home)}
                   </SSRSafeLink>
                 </li>
                 <li>
                   <SSRSafeLink to="/explore" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.stores}
+                    {siteValue(t.stores)}
                   </SSRSafeLink>
                 </li>
                 <li>
                   <SSRSafeLink to="/gallery" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.gallery}
+                    {siteValue(t.gallery)}
                   </SSRSafeLink>
                 </li>
               </ul>
@@ -88,12 +97,12 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
             {/* Column 2 */}
             <div className="flex flex-col gap-8 items-start lg:items-end">
               <h3 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80">
-                {t.collaboration}
+                {siteValue(t.collaboration)}
               </h3>
               <ul className="flex flex-col gap-5 text-content-secondary">
                 <li>
                   <SSRSafeLink to="/collaboration" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.collaborateWithHoma}
+                    {siteValue(t.collaborateWithHoma)}
                   </SSRSafeLink>
                 </li>
               </ul>
@@ -102,22 +111,28 @@ export function SSRFooter({ translations = {} }: SSRFooterProps) {
             {/* Column 3 */}
             <div className="flex flex-col gap-8 items-start md:items-end">
               <h3 className="text-[11px] font-medium tracking-[0.3em] uppercase opacity-80">
-                {t.support}
+                {siteValue(t.support)}
               </h3>
               <ul className="flex flex-col gap-5 text-start md:text-end text-content-secondary">
                 <li>
                   <SSRSafeLink to="/faq" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.faq}
+                    {siteValue(t.faq)}
                   </SSRSafeLink>
                 </li>
                 <li>
-                  <SSRSafeLink to="/terms" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.terms}
-                  </SSRSafeLink>
+                  <a href={`/terms${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">
+                    {siteValue(t.terms)}
+                  </a>
+                </li>
+                <li>
+                  <a href={`/support${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{siteValue(copy.supportLabel)}</a>
+                </li>
+                <li>
+                  <a href={`/privacy${informationQuery}`} className="hover:text-content-primary transition-colors text-p font-light">{siteValue(copy.privacyLabel)}</a>
                 </li>
                 <li>
                   <SSRSafeLink to="/contact" className="hover:text-content-primary transition-colors text-p font-light">
-                    {t.contactUs}
+                    {siteValue(t.contactUs)}
                   </SSRSafeLink>
                 </li>
               </ul>

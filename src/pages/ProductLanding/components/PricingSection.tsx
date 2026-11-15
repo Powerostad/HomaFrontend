@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { motion } from "motion/react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const Chip = () => (
@@ -14,6 +15,7 @@ const Chip = () => (
 );
 
 export function PricingSection() {
+  const { siteValue, siteDirection } = useSiteTranslation();
   const { t } = useTranslation();
   const [cycle, setCycle] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -79,7 +81,7 @@ export function PricingSection() {
   ];
 
   return (
-    <div className="bg-surface-default flex flex-col items-center justify-center py-24 px-4 relative overflow-hidden w-full" dir="rtl">
+    <div className="bg-surface-default flex flex-col items-center justify-center py-24 px-4 relative overflow-hidden w-full" dir={siteDirection()}>
       
       {/* Header */}
       <div className="relative z-10 text-center mb-20">
@@ -106,7 +108,7 @@ export function PricingSection() {
 
       {/* Cards Container */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl w-full z-10 items-end">
-        {cards.map((card, i) => (
+        {siteValue(cards.map((card, i) => (
             <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 50 }}
@@ -134,8 +136,8 @@ export function PricingSection() {
                          {/* Sticker Header */}
                          <div className="relative z-10 flex justify-between items-start">
                             <div className="flex flex-col items-start">
-                                <h3 className="text-[22px] font-black tracking-tighter uppercase font-sans leading-none mb-1">{card.name}</h3>
-                                <span className="font-mono text-[13px] uppercase tracking-wider opacity-80">{card.tier}</span>
+                                <h3 className="text-[22px] font-black tracking-tighter uppercase font-sans leading-none mb-1">{siteValue(card.name)}</h3>
+                                <span className="font-mono text-[13px] uppercase tracking-wider opacity-80">{siteValue(card.tier)}</span>
                             </div>
                             <div className="w-7 h-7 rounded-full border border-current opacity-20 flex items-center justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
@@ -146,8 +148,8 @@ export function PricingSection() {
                          <div className="relative z-10">
                             <div className="text-[10px] uppercase tracking-widest opacity-60 mb-2 font-mono">Total Balance</div>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-[42px] font-black tracking-tighter font-mono">{card.price}</span>
-                                {card.id !== 'ENT' && <span className="text-sm font-bold opacity-60">{t('common.toman', 'تومان')}</span>}
+                                <span className="text-[42px] font-black tracking-tighter font-mono">{siteValue(card.price)}</span>
+                                {siteValue(card.id !== 'ENT' && <span className="text-sm font-bold opacity-60">{t('common.toman', 'تومان')}</span>)}
                             </div>
                          </div>
                     </div>
@@ -168,7 +170,7 @@ export function PricingSection() {
                         {/* Row B: Card Number */}
                         <div className="px-2">
                              <div className="font-mono text-[15px] font-semibold text-white/60 tracking-[0.15em] group-hover:text-white/90 transition-colors duration-300 text-left dir-ltr">
-                                {card.code}
+                                {siteValue(card.code)}
                              </div>
                              <div className="flex gap-4 mt-2 text-[9px] text-white/30 font-mono uppercase tracking-widest">
                                 <span>EXP 05/28</span>
@@ -178,12 +180,12 @@ export function PricingSection() {
 
                         {/* Row C: Features */}
                         <div className="space-y-2 px-2">
-                            {card.features.map((feat, idx) => (
+                            {siteValue(card.features.map((feat, idx) => (
                                 <div key={idx} className="flex items-center gap-2 text-[13.5px] font-normal leading-[1.5] text-white/[0.84] font-vazirmatn">
                                     <div className={`w-1 h-1 rounded-full ${card.id === 'PRO' ? 'bg-[#DFFF00]' : 'bg-white/50'}`}></div>
-                                    <span>{feat}</span>
+                                    <span>{siteValue(feat)}</span>
                                 </div>
-                            ))}
+                            )))}
                         </div>
 
                         {/* Row D: CTA */}
@@ -199,12 +201,12 @@ export function PricingSection() {
                                 }
                             `}
                         >
-                            {t('landing.pricing.select', 'انتخاب')} {card.sub}
+                            {t('landing.pricing.select', 'انتخاب')} {siteValue(card.sub)}
                         </button>
                     </div>
                 </div>
             </motion.div>
-        ))}
+        )))}
       </div>
     </div>
   );

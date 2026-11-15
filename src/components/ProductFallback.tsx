@@ -1,7 +1,8 @@
-import { SimpleButton as Button } from "./SimpleButton";
-import { motion } from "motion/react";
+import { useSiteTranslation } from '@/i18n/siteCopy';
 import { AlertCircle, ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 import type { Product } from "../types/product";
+import { SimpleButton as Button } from "./SimpleButton";
 
 interface ProductFallbackProps {
   reason: "not_found" | "inactive" | "out_of_stock" | "error";
@@ -16,30 +17,31 @@ export function ProductFallback({
   onSelectProduct,
   onUploadForSuggestions
 }: ProductFallbackProps) {
+  const { siteText, siteValue, siteLocale } = useSiteTranslation();
   const getMessage = () => {
     switch (reason) {
       case "not_found":
         return {
-          title: "محصول یافت نشد",
-          message: "متأسفانه این محصول در سیستم ما موجود نیست.",
+          title: siteText("محصول یافت نشد"),
+          message: siteText("متأسفانه این محصول در سیستم ما موجود نیست."),
           icon: "❌"
         };
       case "inactive":
         return {
-          title: "محصول غیرفعال شده",
-          message: "این محصول دیگر در دسترس نیست.",
+          title: siteText("محصول غیرفعال شده"),
+          message: siteText("این محصول دیگر در دسترس نیست."),
           icon: "⚠️"
         };
       case "out_of_stock":
         return {
-          title: "محصول موجود نیست",
-          message: "این محصول فعلاً موجود نمی‌باشد.",
+          title: siteText("محصول موجود نیست"),
+          message: siteText("این محصول فعلاً موجود نمی‌باشد."),
           icon: "📦"
         };
       default:
         return {
-          title: "خطا در بارگذاری محصول",
-          message: "مشکلی پیش آمده. لطفاً دوباره تلاش کنید.",
+          title: siteText("خطا در بارگذاری محصول"),
+          message: siteText("مشکلی پیش آمده. لطفاً دوباره تلاش کنید."),
           icon: "⚠️"
         };
     }
@@ -57,7 +59,7 @@ export function ProductFallback({
       >
         {/* Header */}
         <div className="p-6 pb-4 text-center border-b border-gray-100">
-          <h3 className="text-gray-900">هوم ویژن</h3>
+          <h3 className="text-gray-900">{siteText("هوم ویژن")}</h3>
         </div>
 
         {/* Error State */}
@@ -68,24 +70,24 @@ export function ProductFallback({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-center mb-6"
           >
-            <div className="text-6xl mb-4">{content.icon}</div>
-            <h2 className="text-gray-900 mb-2">{content.title}</h2>
+            <div className="text-6xl mb-4">{siteValue(content.icon)}</div>
+            <h2 className="text-gray-900 mb-2">{siteValue(content.title)}</h2>
             <p className="text-gray-600 leading-relaxed">
-              {content.message}
+              {siteValue(content.message)}
             </p>
           </motion.div>
 
           {/* Suggested Products */}
-          {suggestedProducts.length > 0 && (
+          {siteValue(suggestedProducts.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mb-6"
             >
-              <h3 className="text-gray-900 mb-4">محصولات مشابه</h3>
+              <h3 className="text-gray-900 mb-4">{siteText("محصولات مشابه")}</h3>
               <div className="space-y-3">
-                {suggestedProducts.slice(0, 3).map((product) => (
+                {siteValue(suggestedProducts.slice(0, 3).map((product) => (
                   <motion.button
                     key={product.id}
                     whileHover={{ scale: 1.02 }}
@@ -95,24 +97,24 @@ export function ProductFallback({
                   >
                     <img 
                       src={product.thumbnail}
-                      alt={product.name}
+                      alt={siteValue(product.name)}
                       className="w-16 h-16 rounded-xl object-cover border border-gray-200"
                     />
                     <div className="flex-1 min-w-0 text-right">
-                      <h4 className="text-gray-900 truncate">{product.name}</h4>
-                      <p className="text-gray-600">{product.seller.name}</p>
-                      {product.price && (
+                      <h4 className="text-gray-900 truncate">{siteValue(product.name)}</h4>
+                      <p className="text-gray-600">{siteValue(product.seller.name)}</p>
+                      {siteValue(product.price && (
                         <p className="text-gray-900">
-                          {product.price.toLocaleString('fa-IR')} {product.currency}
+                          {siteValue(product.price.toLocaleString(siteLocale()))} {siteValue(product.currency)}
                         </p>
-                      )}
+                      ))}
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0 rotate-180" />
                   </motion.button>
-                ))}
+                )))}
               </div>
             </motion.div>
-          )}
+          ))}
 
           {/* Upload for Suggestions */}
           <motion.div
@@ -122,17 +124,15 @@ export function ProductFallback({
             className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 mb-6"
           >
             <div className="text-center mb-4">
-              <p className="text-gray-900 mb-2">عکس اتاقت رو آپلود کن</p>
+              <p className="text-gray-900 mb-2">{siteText("عکس اتاقت رو آپلود کن")}</p>
               <p className="text-gray-600">
-                محصولات مشابه رو روی اتاقت نشونت می‌دیم
-              </p>
+                {siteText("محصولات مشابه رو روی اتاقت نشونت می‌دیم")}</p>
             </div>
             <Button
               onClick={onUploadForSuggestions}
               className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-full transition-colors"
             >
-              آپلود عکس
-            </Button>
+              {siteText("آپلود عکس")}</Button>
           </motion.div>
 
           {/* Info */}
@@ -140,10 +140,9 @@ export function ProductFallback({
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-blue-900 mb-1">نیاز به کمک؟</p>
+                <p className="text-blue-900 mb-1">{siteText("نیاز به کمک؟")}</p>
                 <p className="text-blue-700">
-                  با پشتیبانی تماس بگیرید یا به صفحه اصلی برگردید.
-                </p>
+                  {siteText("با پشتیبانی تماس بگیرید یا به صفحه اصلی برگردید.")}</p>
               </div>
             </div>
           </div>

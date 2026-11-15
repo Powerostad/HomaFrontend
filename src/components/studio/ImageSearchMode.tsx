@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * ImageSearchMode - Overlay for selecting a region to search in Google Lens
  *
@@ -11,12 +12,12 @@
  * />
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Loader2 } from 'lucide-react';
 import { useImageSelection } from '@/hooks/useImageSelection';
-import { cropImageRegionAsync } from '@/utils/imageCrop';
 import { apiUpload } from '@/utils/apiClient';
+import { cropImageRegionAsync } from '@/utils/imageCrop';
+import { Loader2, Search, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface ImageSearchModeProps {
@@ -39,6 +40,7 @@ export function ImageSearchMode({
   imageRef,
   containerRef,
 }: ImageSearchModeProps) {
+  const { siteValue, siteText } = useSiteTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +68,7 @@ export function ImageSearchMode({
   const handleSearch = useCallback(async () => {
     try {
       if (!normalizedSelection || !imageRef.current) {
-        toast.error('لطفاً ناحیه‌ای را انتخاب کنید');
+        toast.error(siteText("لطفاً ناحیه‌ای را انتخاب کنید"));
         return;
       }
 
@@ -98,15 +100,15 @@ export function ImageSearchMode({
       if (!uploadResult.success) {
         // Handle rate limit
         if (uploadResult.statusCode === 429) {
-          toast.error('تعداد درخواست‌ها بیش از حد مجاز. کمی صبر کنید');
+          toast.error(siteText("تعداد درخواست‌ها بیش از حد مجاز. کمی صبر کنید"));
         } else {
-          toast.error(uploadResult.error || 'خطا در آپلود تصویر');
+          toast.error(uploadResult.error || siteText("خطا در آپلود تصویر"));
         }
         return;
       }
 
       if (!uploadResult.data?.url) {
-        toast.error('خطا در دریافت آدرس تصویر');
+        toast.error(siteText("خطا در دریافت آدرس تصویر"));
         return;
       }
 
@@ -119,26 +121,25 @@ export function ImageSearchMode({
         // Popup was blocked - show a clickable link
         toast.error(
           <div className="flex flex-col gap-2">
-            <span>لطفاً پاپ‌آپ را مجاز کنید</span>
+            <span>{siteText("لطفاً پاپ‌آپ را مجاز کنید")}</span>
             <a
               href={lensUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 underline"
             >
-              باز کردن گوگل لنز
-            </a>
+              {siteText("باز کردن گوگل لنز")}</a>
           </div>,
           { duration: 10000 }
         );
       } else {
-        toast.success('گوگل لنز در تب جدید باز شد');
+        toast.success(siteText("گوگل لنز در تب جدید باز شد"));
       }
 
       onSearchComplete(uploadResult.data.url);
     } catch (error) {
       console.error('[ImageSearchMode] Search failed:', error);
-      toast.error('خطای ناشناخته در جستجو');
+      toast.error(siteText("خطای ناشناخته در جستجو"));
       setIsUploading(false);
     }
   }, [normalizedSelection, imageRef, onSearchComplete]);
@@ -162,7 +163,7 @@ export function ImageSearchMode({
       >
         {/* Dark overlay with cutout for selection */}
         <div className="absolute inset-0 bg-black/50 pointer-events-none">
-          {normalizedSelection && (
+          {siteValue(normalizedSelection && (
             <div
               className="absolute bg-transparent"
               style={{
@@ -173,11 +174,11 @@ export function ImageSearchMode({
                 boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
               }}
             />
-          )}
+          ))}
         </div>
 
         {/* Selection rectangle */}
-        {normalizedSelection && (
+        {siteValue(normalizedSelection && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -192,16 +193,16 @@ export function ImageSearchMode({
             }}
           >
             {/* Corner handles (visual only) */}
-            {!isDrawing && (
+            {siteValue(!isDrawing && (
               <>
                 <div className="absolute -top-1 -left-1 w-3 h-3 bg-white rounded-sm" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-sm" />
                 <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white rounded-sm" />
                 <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white rounded-sm" />
               </>
-            )}
+            ))}
           </motion.div>
-        )}
+        ))}
 
         {/* Top bar */}
         <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center pointer-events-auto">
@@ -210,27 +211,25 @@ export function ImageSearchMode({
             className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-xl rounded-full text-white text-sm font-medium hover:bg-white/20 transition-all active:scale-95"
           >
             <X size={18} />
-            <span>لغو</span>
+            <span>{siteText("لغو")}</span>
           </button>
 
           <span className="text-white text-sm font-bold tracking-wide">
-            جستجو در گوگل
-          </span>
+            {siteText("جستجو در گوگل")}</span>
 
           <div className="w-[72px]" /> {/* Spacer for centering */}
         </div>
 
         {/* Bottom instruction / search button */}
         <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-4 pointer-events-auto">
-          {!normalizedSelection ? (
+          {siteValue(!normalizedSelection ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="px-6 py-3 bg-black/40 backdrop-blur-xl rounded-full border border-white/10"
             >
               <span className="text-white text-sm font-medium">
-                📍 یک کادر دور محصول موردنظر بکشید
-              </span>
+                {siteText("📍 یک کادر دور محصول موردنظر بکشید")}</span>
             </motion.div>
           ) : (
             <motion.button
@@ -242,19 +241,19 @@ export function ImageSearchMode({
                 isUploading ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
-              {isUploading ? (
+              {siteValue(isUploading ? (
                 <>
                   <Loader2 size={20} className="animate-spin" />
-                  <span>در حال آماده‌سازی...</span>
+                  <span>{siteText("در حال آماده‌سازی...")}</span>
                 </>
               ) : (
                 <>
                   <Search size={20} />
-                  <span>تأیید و جستجو</span>
+                  <span>{siteText("تأیید و جستجو")}</span>
                 </>
-              )}
+              ))}
             </motion.button>
-          )}
+          ))}
         </div>
       </motion.div>
     </AnimatePresence>

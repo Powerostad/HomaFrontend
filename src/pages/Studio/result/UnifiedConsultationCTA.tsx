@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * UnifiedConsultationCTA — Single consultation request for ALL non-purchasable items
  *
@@ -10,20 +11,18 @@
  * Uses CSS transitions only (no motion). All styling via CSS variables.
  * Fonts: Vazirmatn.
  */
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import {
-  Phone,
-  Check,
-  Wallet,
-  Send,
-  CheckCircle,
-  Puzzle,
-  Wrench,
-} from 'lucide-react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { toLocalizedDigits } from '@/utils/formatters';
-import type { CategoryGroup } from './types';
-import type { CompletionChecklistItem } from './types';
+import {
+  Check,
+  CheckCircle,
+  Phone,
+  Puzzle,
+  Send,
+  Wrench,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CategoryGroup, CompletionChecklistItem } from './types';
 
 const FONT = 'var(--font-family-vazirmatn)';
 
@@ -79,6 +78,7 @@ export function UnifiedConsultationCTA({
   sourcingItems,
   checkedSourcingIds,
 }: UnifiedConsultationCTAProps) {
+  const { siteText, siteValue } = useSiteTranslation();
   const [showSheet, setShowSheet] = useState(false);
 
   const selectedServices = useMemo(
@@ -99,7 +99,7 @@ export function UnifiedConsultationCTA({
 
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col studio-v9-consultation"
       style={{
         fontFamily: FONT,
         marginTop: 'var(--spacing-sm)',
@@ -130,8 +130,7 @@ export function UnifiedConsultationCTA({
               margin: 0,
             }}
           >
-            درخواست مشاوره
-          </h3>
+            {siteText("درخواست مشاوره")}</h3>
         </div>
         <p
           style={{
@@ -143,12 +142,11 @@ export function UnifiedConsultationCTA({
             margin: 0,
           }}
         >
-          خدمات اجرایی و موارد تکمیلی انتخابی‌تون رو یکجا درخواست مشاوره بدید
-        </p>
+          {siteText("خدمات اجرایی و موارد تکمیلی انتخابی‌تون رو یکجا درخواست مشاوره بدید")}</p>
       </div>
 
       {/* Selected services summary */}
-      {selectedServices.length > 0 && (
+      {siteValue(selectedServices.length > 0 && (
         <div className="flex flex-col" style={{ gap: '6px' }}>
           <span
             style={{
@@ -161,9 +159,8 @@ export function UnifiedConsultationCTA({
             }}
           >
             <Wrench size={9} strokeWidth={2} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
-            خدمات اجرایی
-          </span>
-          {selectedServices.map(item => (
+            {siteText("خدمات اجرایی")}</span>
+          {siteValue(selectedServices.map(item => (
             <div
               key={`svc-${item.itemId}`}
               className="flex items-center justify-between"
@@ -184,10 +181,10 @@ export function UnifiedConsultationCTA({
                     color: 'var(--editorial-charcoal)',
                   }}
                 >
-                  {item.categoryDisplay}
+                  {siteValue(item.categoryDisplay)}
                 </span>
               </div>
-              {item.designRationaleFa && (
+              {(
                 <span
                   className="flex items-center gap-1 tabular-nums"
                   style={{
@@ -197,17 +194,16 @@ export function UnifiedConsultationCTA({
                     color: 'var(--editorial-taupe)',
                   }}
                 >
-                  <Wallet size={9} strokeWidth={1.5} />
-                  {item.designRationaleFa}
+                  {siteText('هزینه نیازمند استعلام')}
                 </span>
               )}
             </div>
-          ))}
+          )))}
         </div>
-      )}
+      ))}
 
       {/* Selected sourcing items summary */}
-      {selectedSourcing.length > 0 && (
+      {siteValue(selectedSourcing.length > 0 && (
         <div className="flex flex-col" style={{ gap: '6px' }}>
           <span
             style={{
@@ -220,10 +216,9 @@ export function UnifiedConsultationCTA({
             }}
           >
             <Puzzle size={9} strokeWidth={2} style={{ display: 'inline', marginLeft: '4px', verticalAlign: 'middle' }} />
-            موارد تکمیلی
-          </span>
+            {siteText("موارد تکمیلی")}</span>
           <div className="flex flex-wrap" style={{ gap: '6px' }}>
-            {selectedSourcing.map(item => (
+            {siteValue(selectedSourcing.map(item => (
               <span
                 key={`src-${item.id}`}
                 className="inline-flex items-center gap-1"
@@ -239,12 +234,12 @@ export function UnifiedConsultationCTA({
                 }}
               >
                 <Check size={9} strokeWidth={2.5} style={{ color: 'var(--editorial-accent)' }} />
-                {item.name}
+                {siteValue(item.name)}
               </span>
-            ))}
+            )))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* Single CTA Button */}
       <button
@@ -264,11 +259,10 @@ export function UnifiedConsultationCTA({
           opacity: hasSelected ? 1 : 0.6,
           pointerEvents: hasSelected ? 'auto' : 'none',
         }}
-        aria-label="درخواست مشاوره برای موارد انتخابی"
+        aria-label={siteText("درخواست مشاوره برای موارد انتخابی")}
       >
         <Phone size={14} strokeWidth={2} />
-        درخواست مشاوره
-        {hasSelected && (
+        {siteText("درخواست مشاوره")}{siteValue(hasSelected && (
           <span
             className="tabular-nums"
             style={{
@@ -277,12 +271,12 @@ export function UnifiedConsultationCTA({
               opacity: 0.7,
             }}
           >
-            ({toLocalizedDigits(totalSelected)})
+            ({siteValue(toLocalizedDigits(totalSelected))})
           </span>
-        )}
+        ))}
       </button>
 
-      {!hasSelected && (
+      {siteValue(!hasSelected && (
         <span
           style={{
             fontSize: '11px',
@@ -292,9 +286,8 @@ export function UnifiedConsultationCTA({
             textAlign: 'center',
           }}
         >
-          ابتدا خدمات اجرایی یا موارد تکمیلی مورد نظر خود را انتخاب کنید
-        </span>
-      )}
+          {siteText("ابتدا خدمات اجرایی یا موارد تکمیلی مورد نظر خود را انتخاب کنید")}</span>
+      ))}
 
       {/* Unified Consultation Sheet */}
       <UnifiedConsultationSheet
@@ -323,6 +316,7 @@ function UnifiedConsultationSheet({
   selectedServices: CategoryGroup[];
   selectedSourcing: CompletionChecklistItem[];
 }) {
+  const { siteText, siteValue } = useSiteTranslation();
   const sheetRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -392,8 +386,8 @@ function UnifiedConsultationSheet({
   };
 
   const handleSubmit = useCallback(() => {
-    if (!formPhone.trim()) { setPhoneError('شماره تماس الزامی است'); return; }
-    if (!validatePhone(formPhone)) { setPhoneError('شماره تماس معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹)'); return; }
+    if (!formPhone.trim()) { setPhoneError(siteText("شماره تماس الزامی است")); return; }
+    if (!validatePhone(formPhone)) { setPhoneError(siteText("شماره تماس معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹)")); return; }
     setPhoneError(''); setSubmitting(true);
 
     setTimeout(() => {
@@ -404,9 +398,9 @@ function UnifiedConsultationSheet({
         phone: formPhone.trim(),
         notes: formNotes.trim(),
         serviceItems: selectedServices.map(item => ({
-          type: item.actionType || 'اقدام پیشنهادی',
+          type: item.actionType || siteText("اقدام پیشنهادی"),
           category: item.actionType || item.categoryDisplay,
-          estimate: item.designRationaleFa || ''
+          estimate: '' // Design rationale is not a monetary estimate.
         })),
         sourcingItems: selectedSourcing.map(item => ({
           name: item.name,
@@ -469,7 +463,7 @@ function UnifiedConsultationSheet({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="درخواست مشاوره"
+        aria-label={siteText("درخواست مشاوره")}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -484,7 +478,7 @@ function UnifiedConsultationSheet({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto overscroll-contain" style={{ maxHeight: '80vh' }}>
-          {submitted ? (
+          {siteValue(submitted ? (
             /* ── Success state ── */
             <div
               className="flex flex-col items-center transition-opacity duration-400"
@@ -502,17 +496,15 @@ function UnifiedConsultationSheet({
                 fontFamily: FONT, color: 'var(--editorial-charcoal)',
                 margin: 0, marginTop: 'var(--spacing-md)',
               }}>
-                درخواست شما ثبت شد
-              </h3>
+                {siteText("درخواست شما ثبت شد")}</h3>
               <p style={{
                 fontSize: 'var(--text-label-size)', fontWeight: 'var(--font-weight-regular)',
                 fontFamily: FONT, color: 'var(--editorial-taupe)',
                 marginTop: 'var(--spacing-xs)', lineHeight: 1.7,
               }}>
-                تیم مشاوره هُما به‌زودی با شما تماس خواهد گرفت
-              </p>
+                {siteText("تیم مشاوره هُما به‌زودی با شما تماس خواهد گرفت")}</p>
               <div className="flex flex-wrap justify-center gap-2" style={{ marginTop: 'var(--spacing-sm)' }}>
-                {selectedServices.map(item => (
+                {siteValue(selectedServices.map(item => (
                   <span
                     key={`svc-${item.itemId}`}
                     className="inline-flex items-center gap-1"
@@ -524,10 +516,10 @@ function UnifiedConsultationSheet({
                     }}
                   >
                     <Wrench size={9} strokeWidth={2} />
-                    {item.categoryDisplay}
+                    {siteValue(item.categoryDisplay)}
                   </span>
-                ))}
-                {selectedSourcing.map(item => (
+                )))}
+                {siteValue(selectedSourcing.map(item => (
                   <span
                     key={`src-${item.id}`}
                     className="inline-flex items-center gap-1"
@@ -539,9 +531,9 @@ function UnifiedConsultationSheet({
                     }}
                   >
                     <Puzzle size={9} strokeWidth={2} />
-                    {item.name}
+                    {siteValue(item.name)}
                   </span>
-                ))}
+                )))}
               </div>
             </div>
           ) : (
@@ -558,30 +550,27 @@ function UnifiedConsultationSheet({
                 fontFamily: FONT, color: 'var(--editorial-charcoal)',
                 margin: 0, letterSpacing: '0.01em',
               }}>
-                درخواست مشاوره
-              </h3>
+                {siteText("درخواست مشاوره")}</h3>
               <p style={{
                 fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
                 fontFamily: FONT, color: 'var(--editorial-taupe)',
                 marginTop: '6px', lineHeight: 1.6,
               }}>
-                اطلاعات تماس خود را وارد کنید تا تیم ما با شما تماس بگیرد
-              </p>
+                {siteText("اطلاعات تماس خود را وارد کنید تا تیم ما با شما تماس بگیرد")}</p>
 
               {/* ── Selected items grouped by type ── */}
               <div className="flex flex-col" style={{ gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-sm)' }}>
 
                 {/* Services */}
-                {selectedServices.length > 0 && (
+                {siteValue(selectedServices.length > 0 && (
                   <div className="flex flex-col" style={{ gap: '6px' }}>
                     <span style={{
                       fontSize: '10px', fontWeight: 'var(--font-weight-semibold)',
                       fontFamily: FONT, color: 'var(--editorial-taupe)',
                       letterSpacing: '0.06em',
                     }}>
-                      خدمات اجرایی
-                    </span>
-                    {selectedServices.map(item => (
+                      {siteText("خدمات اجرایی")}</span>
+                    {siteValue(selectedServices.map(item => (
                       <div
                         key={`svc-${item.itemId}`}
                         className="flex items-center justify-between"
@@ -595,40 +584,38 @@ function UnifiedConsultationSheet({
                           fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
                           fontFamily: FONT, color: 'var(--editorial-charcoal)',
                         }}>
-                          {item.categoryDisplay}
+                          {siteValue(item.categoryDisplay)}
                           <span style={{
                             fontWeight: 'var(--font-weight-regular)',
                             color: 'var(--editorial-taupe)',
                             marginRight: '4px',
                           }}>
-                            · {item.actionType || 'اقدام پیشنهادی'}
+                            · {siteValue(item.actionType || siteText("اقدام پیشنهادی"))}
                           </span>
                         </span>
-                        {item.designRationaleFa && (
+                        {(
                           <span className="flex items-center gap-1" style={{
                             fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
                             fontFamily: FONT, color: 'var(--editorial-taupe)',
                           }}>
-                            <Wallet size={10} strokeWidth={1.5} />
-                            {item.designRationaleFa}
+                            {siteText('هزینه نیازمند استعلام')}
                           </span>
                         )}
                       </div>
-                    ))}
+                    )))}
                   </div>
-                )}
+                ))}
 
                 {/* Sourcing items */}
-                {selectedSourcing.length > 0 && (
+                {siteValue(selectedSourcing.length > 0 && (
                   <div className="flex flex-col" style={{ gap: '6px' }}>
                     <span style={{
                       fontSize: '10px', fontWeight: 'var(--font-weight-semibold)',
                       fontFamily: FONT, color: 'var(--editorial-taupe)',
                       letterSpacing: '0.06em',
                     }}>
-                      موارد تکمیلی
-                    </span>
-                    {selectedSourcing.map(item => (
+                      {siteText("موارد تکمیلی")}</span>
+                    {siteValue(selectedSourcing.map(item => (
                       <div
                         key={`src-${item.id}`}
                         className="flex items-center"
@@ -649,7 +636,7 @@ function UnifiedConsultationSheet({
                         >
                           <ImageWithFallback
                             src={item.imageUrl}
-                            alt={item.name}
+                            alt={siteValue(item.name)}
                             className="w-full h-full object-cover"
                             loading="lazy"
                           />
@@ -659,32 +646,32 @@ function UnifiedConsultationSheet({
                           fontFamily: FONT, color: 'var(--editorial-charcoal)',
                           flex: 1,
                         }}>
-                          {item.name}
+                          {siteValue(item.name)}
                           <span style={{
                             fontWeight: 'var(--font-weight-regular)',
                             color: 'var(--editorial-taupe)',
                             marginRight: '4px',
                           }}>
-                            · {item.category}
+                            · {siteValue(item.category)}
                           </span>
                         </span>
                       </div>
-                    ))}
+                    )))}
                   </div>
-                )}
+                ))}
               </div>
 
               {/* Form Fields */}
               <div className="flex flex-col" style={{ gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
                 <div className="flex flex-col" style={{ gap: '6px' }}>
-                  <label htmlFor="unified-req-name" style={labelStyle}>نام شما</label>
+                  <label htmlFor="unified-req-name" style={labelStyle}>{siteText("نام شما")}</label>
                   <input
                     ref={nameInputRef}
                     id="unified-req-name"
                     type="text"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder="مثال: علی محمدی"
+                    placeholder={siteText("مثال: علی محمدی")}
                     style={inputStyle}
                     autoComplete="name"
                   />
@@ -692,8 +679,7 @@ function UnifiedConsultationSheet({
 
                 <div className="flex flex-col" style={{ gap: '6px' }}>
                   <label htmlFor="unified-req-phone" style={labelStyle}>
-                    شماره تماس
-                    <span style={{ color: 'var(--destructive)', marginRight: '2px' }}>*</span>
+                    {siteText("شماره تماس")}<span style={{ color: 'var(--destructive)', marginRight: '2px' }}>*</span>
                   </label>
                   <input
                     id="unified-req-phone"
@@ -710,29 +696,28 @@ function UnifiedConsultationSheet({
                     }}
                     autoComplete="tel"
                   />
-                  {phoneError && (
+                  {siteValue(phoneError && (
                     <span style={{
                       fontSize: '11px', fontWeight: 'var(--font-weight-regular)',
                       fontFamily: FONT, color: 'var(--destructive)', paddingRight: '4px',
                     }}>
-                      {phoneError}
+                      {siteValue(phoneError)}
                     </span>
-                  )}
+                  ))}
                 </div>
 
                 <div className="flex flex-col" style={{ gap: '6px' }}>
                   <label htmlFor="unified-req-notes" style={labelStyle}>
-                    توضیحات
-                    <span style={{
+                    {siteText("توضیحات")}<span style={{
                       fontWeight: 'var(--font-weight-regular)', color: 'var(--editorial-taupe)',
                       marginRight: '4px', fontSize: '11px',
-                    }}>(اختیاری)</span>
+                    }}>{siteText("(اختیاری)")}</span>
                   </label>
                   <textarea
                     id="unified-req-notes"
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
-                    placeholder="مثلاً: ترجیحاً صبح‌ها تماس بگیرید..."
+                    placeholder={siteText("مثلاً: ترجیحاً صبح‌ها تماس بگیرید...")}
                     rows={3}
                     style={{
                       ...inputStyle,
@@ -748,7 +733,7 @@ function UnifiedConsultationSheet({
 
               <div style={{ height: 'var(--spacing-sm)' }} />
             </div>
-          )}
+          ))}
         </div>
 
         {/* Sticky CTA */}
@@ -757,7 +742,7 @@ function UnifiedConsultationSheet({
           paddingBottom: 'max(var(--spacing-lg), env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--editorial-hairline)',
         }}>
-          {submitted ? (
+          {siteValue(submitted ? (
             <button
               onClick={onClose}
               className="w-full flex items-center justify-center cursor-pointer"
@@ -770,10 +755,9 @@ function UnifiedConsultationSheet({
                 fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-semibold)',
                 fontFamily: FONT, letterSpacing: '0.04em',
               }}
-              aria-label="بستن"
+              aria-label={siteText("بستن")}
             >
-              بستن
-            </button>
+              {siteText("بستن")}</button>
           ) : (
             <>
               <button
@@ -785,10 +769,9 @@ function UnifiedConsultationSheet({
                   fontSize: 'var(--text-caption-size)', fontWeight: 'var(--font-weight-regular)',
                   fontFamily: FONT, color: 'var(--editorial-taupe)', letterSpacing: '0.03em',
                 }}
-                aria-label="انصراف"
+                aria-label={siteText("انصراف")}
               >
-                انصراف
-              </button>
+                {siteText("انصراف")}</button>
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit || submitting}
@@ -804,9 +787,9 @@ function UnifiedConsultationSheet({
                   opacity: (!canSubmit || submitting) ? 0.5 : 1,
                   pointerEvents: (!canSubmit || submitting) ? 'none' : 'auto',
                 }}
-                aria-label="ثبت درخواست"
+                aria-label={siteText("ثبت درخواست")}
               >
-                {submitting ? (
+                {siteValue(submitting ? (
                   <div
                     className="animate-spin"
                     style={{
@@ -817,11 +800,11 @@ function UnifiedConsultationSheet({
                   />
                 ) : (
                   <Send size={14} strokeWidth={2} />
-                )}
-                {submitting ? 'در حال ثبت...' : `ثبت درخواست مشاوره (${toLocalizedDigits(totalItems)})`}
+                ))}
+                {siteValue(submitting ? siteText("در حال ثبت...") : siteText("ثبت درخواست مشاوره ({{v0}})", { v0: toLocalizedDigits(totalItems) }))}
               </button>
             </>
-          )}
+          ))}
         </div>
       </div>
     </>

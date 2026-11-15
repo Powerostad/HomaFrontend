@@ -1,11 +1,12 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 "use client";
 
-import {useEffect, useRef, useState} from "react";
-import {motion} from "motion/react";
-import {useNavigate} from "react-router-dom";
-import {useTranslation} from "react-i18next";
-import {OptimizedImage} from "../../../components/OptimizedImage";
-import {ChevronLeft, ChevronRight} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { OptimizedImage } from "../../../components/OptimizedImage";
 
 const rugBefore = "/images/comparison/rug/before.jpg";
 const rugAfter = "/images/comparison/rug/after.jpg";
@@ -24,6 +25,7 @@ type ComparisonItem = {
 };
 
 export function ComparisonSection() {
+  const { siteValue } = useSiteTranslation();
     const {t} = useTranslation();
     const navigate = useNavigate();
 
@@ -105,7 +107,7 @@ export function ComparisonSection() {
 
                     <div
                         className="mt-10 p-1 bg-black/5 backdrop-blur-sm rounded-sm border border-black/5 flex w-fit mx-auto">
-                        {COMPARISON_DATA.map((item) => (
+                        {siteValue(COMPARISON_DATA.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => {
@@ -119,9 +121,9 @@ export function ComparisonSection() {
                                     : "text-black/40 font-light hover:text-black"}
                 `}
                             >
-                                {item.label}
+                                {siteValue(item.label)}
                             </button>
-                        ))}
+                        )))}
                     </div>
                 </div>
 

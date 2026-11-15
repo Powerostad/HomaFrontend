@@ -1,3 +1,5 @@
+import { siteText } from '@/i18n/siteCopy';
+import { restoredUserText } from './userText';
 /**
  * Map backend chat events → the frontend Room Redesign view types.
  *
@@ -10,6 +12,7 @@
  *   issues (gaps) and existing_item_decisions (goods when kept); `pinsFromResult`
  *   turns those into `AnnotationPin`s for the active scene.
  */
+import type { AnnotationPin, ChatMessage, ChipGroup, CostLevel, ImpactItem, RedesignProduct, RoomVersion } from '../types';
 import type {
   BackendProduct,
   BackendRoomIssue,
@@ -18,7 +21,6 @@ import type {
   ResultEvent,
   SessionPayload,
 } from './redesignChatService';
-import type { AnnotationPin, ChatMessage, ChipGroup, CostLevel, ImpactItem, RedesignProduct, RoomVersion } from '../types';
 
 /** A product card plus the metadata the basket / selection needs. */
 export interface RedesignProductWithMeta extends RedesignProduct {
@@ -223,7 +225,7 @@ export function categoriesFromResult(result: ResultEvent): RedesignCategory[] {
       seen.add(p.product_id);
       products.push(transformProduct(p, item.category_code, item.scene_id));
     }
-    const title = item.category_fa || products[0]?.subtitle || 'پیشنهاد';
+    const title = item.category_fa || products[0]?.subtitle || siteText("پیشنهاد");
     const impactScore = item.scores?.impact_score ?? 0;
     return {
       id: `${item.category_code}:${item.scene_id ?? 'na'}`,
@@ -273,7 +275,7 @@ export function chipGroupsFromQuestions(evt: QuestionsEvent): ChipGroup[] {
         })),
         ...(q.allow_open_chat === false ? [] : [{
           id: `${groupId}:open-chat`,
-          label: q.open_chat_label_fa || 'ایده‌ی دیگری دارم',
+          label: q.open_chat_label_fa || siteText("ایده‌ی دیگری دارم"),
           icon: 'sparkles',
         }]),
       ],
@@ -496,7 +498,7 @@ export function rebuildSessionView(payload: SessionPayload): RebuiltSession {
       messages.push({
         id: `u:r:${rebuildSeq++}`,
         role: 'user',
-        text: (u.text || '').trim(),
+        text: restoredUserText(u.text, messages.every(m => m.role !== 'user') && !!firstImage, turn.text_origin),
         imageUrl: firstImage,
       });
       // A new user turn answers / supersedes any pending chips.

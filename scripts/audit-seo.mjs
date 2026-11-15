@@ -49,7 +49,7 @@ for (const path of ['/seo-audit-not-found-92841', '/store/seo-missing-store', '/
 for (const path of ['/basket', '/account/gallery', '/studio/upload', '/try-on/sample/upload', '/s/private-token']) {
   try { const page = await fetchPage(path); check(path, 'Private route initial noindex', page.status === 200 && page.robots?.includes('noindex'), { status: page.status, robots: page.robots }); } catch (error) { check(path, 'Private route initial noindex', false, error.message); }
 }
-for (const [path, target] of [['/shop', '/explore'], ['/studio', '/studio/upload'], ['/gallery?page=1', '/gallery']]) {
+for (const [path, target] of [['/shop', '/explore'], ['/studio/start', '/studio'], ['/gallery?page=1', '/gallery']]) {
   try { const page = await fetchPage(path); check(path, 'Permanent alias redirect', [301, 308].includes(page.status) && page.location === target, { status: page.status, target: page.location }); } catch (error) { check(path, 'Permanent alias redirect', false, error.message); }
 }
 if (args.includes('--crawl')) {

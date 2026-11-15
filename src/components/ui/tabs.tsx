@@ -18,12 +18,13 @@ function Tabs({
   );
 }
 
-function TabsList({
+const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>>(function TabsList({
   className,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+}, ref) {
   return (
     <TabsPrimitive.List
+      ref={ref}
       data-slot="tabs-list"
       className={cn(
         "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-xl p-[3px] flex",
@@ -32,7 +33,7 @@ function TabsList({
       {...props}
     />
   );
-}
+});
 
 function TabsTrigger({
   className,

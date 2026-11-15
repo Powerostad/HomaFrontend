@@ -1,3 +1,4 @@
+import { useSiteTranslation } from '@/i18n/siteCopy';
 /**
  * useStudioResult - Central state management hook for the Studio Result Page
  *
@@ -10,35 +11,31 @@
  *   'recommendations' - User selects/rejects items and browses products
  *   'basket'          - Final shopping list review before finalization
  */
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useStudio } from '@/context/StudioContext';
-import { useAuth } from '@/context/AuthContext';
 import { useUpload } from '@/context/AppProviders';
+import { useAuth } from '@/context/AuthContext';
 import { useBasket } from '@/context/BasketContext';
-import { toast } from 'sonner';
+import { useStudio } from '@/context/StudioContext';
 import {
+  getDownloadErrorMessage,
   prepareDownload,
   triggerDownload,
   triggerShare,
-  getDownloadErrorMessage,
   type PreparedDownload,
 } from '@/utils/downloadUtils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { applyPrimaryProducts } from './productChoices';
 // formatPriceFromRial available for consumers: import from '@/utils/formatters'
 import {
-  trackStudioResultViewed,
-  trackStudioResultAction,
   trackStudioProductClicked,
+  trackStudioResultAction,
+  trackStudioResultViewed,
 } from '@/analytics/events';
-import type { Product } from '../components/ProductDetailSheet';
 import type { RedesignSession } from '@/services/studioService';
 import { createImageCreditRequest } from '@/services/studioService';
-import {
-  type CategoryGroup,
-  type TierGroup,
-  matchedProductToUIProduct,
-} from './types';
+import type { Product } from '../components/ProductDetailSheet';
 import {
   calculateRecommendedTotalPrice,
   calculateSelectedPrice,
@@ -46,6 +43,11 @@ import {
   getResultImage,
   isAnalysisOnlyResult,
 } from './resultState';
+import {
+  matchedProductToUIProduct,
+  type CategoryGroup,
+  type TierGroup,
+} from './types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -106,6 +108,7 @@ export interface UseStudioResultReturn {
   // Basket product selection
   basketProductIds: Set<string>;
   toggleBasketProduct: (productId: string) => void;
+  makePrimaryProduct: (itemId: number, productId: string) => void;
 
   // Quantity controls
   quantityOverrides: Map<number, number>;
@@ -172,6 +175,7 @@ export interface UseStudioResultReturn {
 // ---------------------------------------------------------------------------
 
 export function useStudioResult(): UseStudioResultReturn {
+  const { siteText } = useSiteTranslation();
   const { t } = useTranslation();
   const navigate = useNavigate();
   // Route param is named "jobId" in App.tsx, but we use "sessionId" internally
@@ -206,6 +210,8 @@ export function useStudioResult(): UseStudioResultReturn {
   basketProductIdsRef.current = basketProductIds;
   const [quantityOverrides, setQuantityOverrides] = useState<Map<number, number>>(new Map());
   const [productQuantityOverrides, setProductQuantityOverrides] = useState<Map<string, number>>(new Map());
+  const [primaryProducts, setPrimaryProducts] = useState<Record<number, string>>({});
+  useEffect(() => { setPrimaryProducts({}); }, [sessionId, activeSessionId]);
   const [checklistCheckedIds, setChecklistCheckedIds] = useState<Set<number>>(new Set());
 
   // =========================================================================
@@ -396,7 +402,7 @@ export function useStudioResult(): UseStudioResultReturn {
   // Build category groups from session items
   const categoryGroups = useMemo<CategoryGroup[]>(() => {
     if (!activeSession?.items?.length) return [];
-    return activeSession.items
+    return applyPrimaryProducts(activeSession.items
       .map(item => ({
         category: item.category || item.type,
         categoryDisplay: item.categoryDisplay || item.type,
@@ -418,8 +424,23 @@ export function useStudioResult(): UseStudioResultReturn {
         impactLevel: (item.impactLevel || 'medium') as CategoryGroup['impactLevel'],
         actionType: item.actionType,
         actionGuidance: item.actionGuidance,
-      }));
-  }, [activeSession, quantityOverrides]);
+      })), primaryProducts);
+  }, [activeSession, quantityOverrides, primaryProducts]);
+
+  const makePrimaryProduct = useCallback((itemId: number, productId: string) => {
+    const group = categoryGroups.find(item => item.itemId === itemId);
+    const next = group?.products.find(product => product.id === productId);
+    const old = group?.products[0];
+    if (!group || !next || !old || old.id === next.id) return;
+    setPrimaryProducts(previous => ({ ...previous, [itemId]: next.id }));
+    setBasketProductIds(previous => {
+      if (!previous.has(old.id)) return previous;
+      const result = new Set(previous); result.delete(old.id);
+      if (next.uniqueLink) result.add(next.id);
+      return result;
+    });
+    setProductQuantityOverrides(previous => new Map(previous).set(old.id, group.quantity));
+  }, [categoryGroups]);
 
   // Keep a ref for use in callbacks that should not trigger re-renders
   // when categoryGroups change (e.g. acceptAllItems)
@@ -440,10 +461,10 @@ export function useStudioResult(): UseStudioResultReturn {
     return tiers.filter(tg => tg.items.length > 0);
   }, [categoryGroups]);
 
-  // Completion checklist: items with NO matched products (non-purchasable actions)
+  // External sourcing only; execution services have their own consultation path.
   // Derived from categoryGroups to avoid duplicating mapping logic
   const completionChecklistItems = useMemo<CategoryGroup[]>(() => {
-    return categoryGroups.filter(g => g.products.length === 0);
+    return categoryGroups.filter(g => g.actionStatus === 'custom_order');
   }, [categoryGroups]);
 
   // Flat product list (backward compat for context bar, etc.)
@@ -663,9 +684,9 @@ export function useStudioResult(): UseStudioResultReturn {
       });
 
       if (result.success) {
-        toast.success('درخواست شما ثبت شده است');
+        toast.success(siteText("درخواست شما ثبت شده است"));
       } else {
-        toast.error(result.error || 'خطا در ثبت درخواست اعتبار');
+        toast.error(result.error || siteText("خطا در ثبت درخواست اعتبار"));
       }
     } finally {
       setIsRequestingRedesignCredit(false);
@@ -893,6 +914,7 @@ export function useStudioResult(): UseStudioResultReturn {
     // Basket product selection
     basketProductIds,
     toggleBasketProduct,
+    makePrimaryProduct,
 
     // Quantity controls
     quantityOverrides,
