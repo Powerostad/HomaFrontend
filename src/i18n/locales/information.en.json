@@ -16,7 +16,8 @@
       {
         "title": "Using the Studio",
         "paragraphs": [
-          "Upload your room photo and describe what you want. Homa uses AI services for design, product search and optional image generation. Use the conversation attached to your design to request changes or ask questions."
+          "Upload your room photo and describe what you want. Homa uses AI services for design, product search and optional image generation. Your result can include layout suggestions, products and a design image.",
+          "Use the conversation attached to your design to make changes or ask questions. Starting a new request can take time and use account credits."
         ]
       },
       {
@@ -46,25 +47,29 @@
       {
         "title": "Account and design data",
         "paragraphs": [
-          "Account and login details are processed for account features. Uploaded photos, messages, design requests, outputs and execution status may be stored to resume and display conversations. Technical logs may include stages, errors, models, usage and model input or output for debugging."
+          "Account and login details are processed for account features. Uploaded photos, messages, design requests, outputs and execution status may be stored to resume and display conversations.",
+          "Technical logs may record request times, stages, errors, models and usage. Troubleshooting reports may also include model inputs and outputs."
         ]
       },
       {
         "title": "Model services",
         "paragraphs": [
-          "Text and images required for analysis, design, matching or image generation are sent to the active model provider or API gateway. Processing by those services follows their own terms. Only upload images you are allowed to use, and remove faces, documents and unnecessary private details."
+          "Text and images required for analysis, design, matching or image generation are sent to the active model provider or API gateway. Processing by those services follows their own terms.",
+          "Before uploading, remove or mask faces, documents, contact details and any private details that are unnecessary. Only upload images you are allowed to use."
         ]
       },
       {
         "title": "Public display and sharing",
         "paragraphs": [
-          "The public product gallery shows photos and prices. Internal catalogue information is excluded from the public product display. Anyone given a shared-result link may be able to see that result; do not publish sensitive links."
+          "The public product gallery shows photos and prices. Internal catalogue information is excluded from the public product display.",
+          "Anyone with a shared-result link may be able to view the result. Keep private conversation links and sensitive photos or results private."
         ]
       },
       {
         "title": "Retention and requests",
         "paragraphs": [
-          "This page does not announce a verified automatic deletion period for all photos, conversations, logs or backups. Removing a conversation from its list does not necessarily immediately erase every stored file or backup. Email support with an account or conversation reference to request access, correction or deletion; do not send passwords or login codes. Contact other services directly about data they retain independently."
+          "This page does not announce a verified automatic deletion period for all photos, conversations, logs or backups. Removing a conversation from its list does not necessarily immediately erase every stored file or backup.",
+          "Email support with an account or conversation reference to request access, correction or deletion. Keep passwords and login codes private. Contact other services directly about data they retain independently."
         ]
       }
     ]
@@ -76,7 +81,8 @@
       {
         "title": "Design and image suggestions",
         "paragraphs": [
-          "Homa uses AI to support design decisions. Outputs can contain mistakes. Verify dimensions, installation safety, feasibility and product suitability independently. A generated image does not guarantee exact colour, texture, scale or an actual installation outcome."
+          "Homa uses AI to support design decisions. Outputs can contain mistakes. Verify dimensions, installation safety, feasibility and product suitability independently.",
+          "A generated image cannot guarantee exact colour, texture, scale or the actual result. Consult a qualified professional for structural work, electrical work, installation and safety."
         ]
       },
       {
@@ -94,7 +100,8 @@
       {
         "title": "Your content and support",
         "paragraphs": [
-          "Use photos and content you have permission to use. Do not attempt unauthorised access or disruption. Contact FARBOD.LOTFI@PARSMEHRAGRO.COM about the service or your account data. These pages do not replace the terms independently provided by model services or sellers."
+          "Use photos and content you have permission to use. Do not attempt unauthorised access or disruption.",
+          "Contact FARBOD.LOTFI@PARSMEHRAGRO.COM about the service or your account data. Model providers and sellers have their own terms."
         ]
       }
     ]

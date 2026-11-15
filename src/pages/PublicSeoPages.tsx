@@ -1,5 +1,5 @@
-import { RoomEntrySection } from './ProductLanding/components/RoomEntrySection';
-import { HeroSection } from './ProductLanding/components/HeroSection';
+import { HomeIntro } from './ProductLanding/components/HomeIntro';
+import { HomeDetails } from './ProductLanding/components/HomeDetails';
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { siteLocale, useSiteTranslation } from '@/i18n/siteCopy';
 import { ARTICLES } from "@/seo/content";
@@ -22,7 +22,6 @@ import {
   Store as StoreIcon
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { InformationPage } from './Information/Page';
 
 type PublicPageProps = { data: PublicPageData };
@@ -53,11 +52,7 @@ function formatDimension(value?: string | null): string {
 
 /** Shares the editorial entry with the client landing, without router/provider dependencies. */
 export function SeoHome() {
-  const { t } = useTranslation();
-  return <><HeroSection /><RoomEntrySection /><nav className="flex flex-wrap justify-center gap-6 px-6 py-10 bg-surface-page text-content-secondary text-sm" aria-label={t('seo.home.routes', 'از کجا شروع می‌کنید؟')}>
-    <a href="/ai-interior-design">{t('seo.home.redesign', 'برای اتاقم ایده می‌خواهم')}</a>
-    <a href="/virtual-product-preview">{t('seo.home.preview', 'می‌خواهم محصولی را امتحان کنم')}</a>
-  </nav></>;
+  return <div className="homa-homepage"><HomeIntro /><HomeDetails /></div>;
 }
 
 function Breadcrumbs({ data }: PublicPageProps) {

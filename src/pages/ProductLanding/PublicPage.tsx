@@ -1,25 +1,17 @@
 import { Footer } from "../../components/Footer";
 import { PublicChromeHeader } from "../../seo/PublicChrome";
-import { RoomEntrySection } from './components/RoomEntrySection';
-import { HeroSection } from "./components/HeroSection";
-import { TrustBar } from "./components/TrustBar";
-import { OutputShowcase } from "./components/OutputShowcase";
-import { ComparisonSection } from "./components/ComparisonSection";
-import { ShoppingPropSection } from "./components/ShoppingPropSection";
+import { HomeIntro } from "./components/HomeIntro";
+import { HomeDetails } from "./components/HomeDetails";
 
 export interface ProductLandingContentProps {
   onStudioStart?: () => void;
-  onBrowseCollections?: () => void;
-  onCollaborate?: () => void;
 }
 
-/** Original landing sections, kept provider-free for the server document. */
-export function ProductLandingContent({ onStudioStart, onBrowseCollections, onCollaborate }: ProductLandingContentProps) {
-  void onBrowseCollections;
-  void onCollaborate;
-  return <main className="flex-grow"><HeroSection onGetStarted={onStudioStart} /><OutputShowcase onGetStarted={onStudioStart} /><TrustBar /><RoomEntrySection /><ComparisonSection /><ShoppingPropSection /></main>;
+/** Shared public content for the initial document and interactive homepage. */
+export function ProductLandingContent({ onStudioStart }: ProductLandingContentProps) {
+  return <main className="flex-grow"><HomeIntro onStudioStart={onStudioStart} /><HomeDetails onStudioStart={onStudioStart} /></main>;
 }
 
 export function SeoProductLandingPage({ controllersEnabled = false }: { controllersEnabled?: boolean }) {
-  return <div className="min-h-screen bg-surface-page flex flex-col"><PublicChromeHeader controllersEnabled={controllersEnabled} /><div className="h-[64px] md:h-[80px]" /><ProductLandingContent /><Footer /></div>;
+  return <div className="homa-homepage min-h-screen flex flex-col"><PublicChromeHeader controllersEnabled={controllersEnabled} /><div className="h-[64px] md:h-[80px]" /><ProductLandingContent /><Footer /></div>;
 }

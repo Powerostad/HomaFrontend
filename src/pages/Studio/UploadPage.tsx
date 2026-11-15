@@ -104,7 +104,7 @@ export function StudioUploadPage() {
         return;
       }
 
-      trackKPI('upload_started', { fileName: file.name, fileSize: file.size });
+      trackKPI('upload_started', { fileSize: file.size });
       trackStudioFileSelected({ file_size: file.size, file_type: file.type });
       setSelectedFile(file);
       setLocalSelectedFile(file);
@@ -186,7 +186,6 @@ export function StudioUploadPage() {
     }
     setPendingUploadAfterAuth(false);
 
-    trackKPI('upload_confirmed');
 
     // Clear any previous session state
     clearActiveSession();

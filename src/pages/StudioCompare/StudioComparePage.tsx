@@ -104,7 +104,6 @@ export default function StudioComparePage() {
       .catch(() => { if (active) { const item = newCase(); setCases([item]); setSelected(item.id); setReady(true); setMessage(copy('ذخیرهٔ مرورگر در دسترس نیست؛ خروجی JSON را دانلود کن.')); } });
     return () => { active = false; generation.current += 1; };
     // Account changes must discard the prior account's in-memory photos/votes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner]);
   useEffect(() => {
     if (!ready || !cases.length) return;
@@ -112,7 +111,6 @@ export default function StudioComparePage() {
     const timer = window.setTimeout(() => { void saveWorkspace(owner, cases).then(() => { if (active) setPersisted(true); })
       .catch(() => { if (active) setMessage(copy('ذخیرهٔ مرورگر انجام نشد؛ خروجی JSON را دانلود کن.')); }); }, 500);
     return () => { active = false; window.clearTimeout(timer); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner, ready, cases]);
   const update = (change: (item: ComparisonCase) => ComparisonCase) => setCases(items => items.map(item => item.id === current?.id ? change(item) : item));
   const perform = async (work: () => Promise<void>) => {

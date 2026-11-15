@@ -1,31 +1,43 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowDown, ArrowLeft, MoveHorizontal } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
-import { useSiteTranslation } from '@/i18n/siteCopy';
-import { AudienceNavigation } from './AudienceNavigation';
-import './studio-landing.css';
+import { homepageMedia } from './homepageMedia';
+import './homepage.css';
 
-export interface HeroSectionProps { onGetStarted?: () => void }
-
-/** The original image-led hero, shared by client and server-rendered landing. */
-export function HeroSection({ onGetStarted }: HeroSectionProps) {
+export function HeroSection({ onGetStarted }: { onGetStarted?: () => void }) {
   const { t } = useTranslation();
-  const { siteText: copy, siteDirection } = useSiteTranslation();
-  return <div className="home-landing" dir={siteDirection()}>
-    <AudienceNavigation />
-    <section className="home-editorial-hero">
-      <div className="home-editorial-visual">
-        <BeforeAfterSlider beforeImage="/images/hero/before.png" afterImage="/images/hero/after.png" priority />
+  return (
+    <section className="homa-home-hero homa-home-shell" aria-labelledby="homa-home-title">
+      <div className="homa-home-hero-top">
+        <div>
+          <p className="homa-home-eyebrow">{t('landing.experience.hero.eyebrow')}</p>
+          <h1 id="homa-home-title">
+            {t('landing.experience.hero.title')}<br />
+            <span>{t('landing.experience.hero.accent')}</span>
+          </h1>
+        </div>
+        <div className="homa-home-hero-intro">
+          <p>{t('landing.experience.hero.description')}</p>
+          <Link to="/studio" onClick={onGetStarted} className="homa-home-button">
+            {t('landing.experience.start')}<ArrowLeft size={18} aria-hidden="true" />
+          </Link>
+          <a href="#design-to-shop" className="homa-home-text-link">{t('landing.experience.hero.explore')}<ArrowDown size={15} aria-hidden="true" /></a>
+        </div>
       </div>
-      <div className="home-editorial-copy">
-        <span className="home-editorial-eyebrow">{t('landing.hero.editorial', 'Homa Editorial')}</span>
-        <h1>{t('landing.hero.title', 'هُما؛')} <em>{t('landing.hero.titleAccent', 'نسخه‌یِ بهترِ')}</em><br />{t('landing.hero.titleEnd', 'خونه‌ت.')}</h1>
-        <p>{t('landing.hero.description', 'هُما کمکت می‌کنه دکور مناسب خونه‌ت رو پیدا کنی.')}</p>
-        <a className="editorial-start" href="/studio" onClick={onGetStarted ? event => { event.preventDefault(); onGetStarted(); } : undefined}>
-          {t('landing.hero.cta', 'نسخهٔ جدیدِ خونه‌تو ببین')}<span><ArrowLeft size={16} /></span>
-        </a>
-      </div>
-      <p className="home-editorial-caption">{copy('قبل و بعد را با جابه‌جایی خط تصویر مقایسه کن.')}</p>
+      <figure className="homa-home-hero-figure">
+        <div className="homa-home-hero-image">
+          <BeforeAfterSlider beforeImage={homepageMedia.living.before} afterImage={homepageMedia.living.after} priority />
+          <div className="homa-home-image-labels" aria-hidden="true">
+            <span>{t('tryOn.result.after')}</span><span>{t('tryOn.result.before')}</span>
+          </div>
+          <a href="#design-to-shop" className="homa-home-photo-link"><span>{t('landing.experience.hero.photoLink')}</span><ArrowLeft size={18} aria-hidden="true" /></a>
+        </div>
+        <figcaption>
+          <span>{t('landing.experience.visualDisclosure')}</span>
+          <span><MoveHorizontal size={15} aria-hidden="true" />{t('landing.home.compareHint')}</span>
+        </figcaption>
+      </figure>
     </section>
-  </div>;
+  );
 }

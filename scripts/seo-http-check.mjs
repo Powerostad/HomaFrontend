@@ -1,47 +1,111 @@
-// Built-renderer integration gate. Fixtures are synthetic and never call production.
-import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+// Test the deployable Nginx + document-router image with a local blog fixture.
 import assert from 'node:assert/strict';
-import { startServer } from '../server.mjs';
+import { execFileSync } from 'node:child_process';
+import { createServer } from 'node:http';
+import { once } from 'node:events';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { setTimeout } from 'node:timers/promises';
 
+const image = process.argv[2];
+assert.ok(image, 'Usage: node scripts/seo-http-check.mjs <frontend-image>');
+const origin = 'https://myhoma.ir';
+const report = [];
+let container;
 let unavailable = false;
-const shops = [{ id: 1, slug: 'ci-shop', shop_name: 'فروشگاه آزمایشی', product_count: 21, logo_url: null }];
-const products = Array.from({ length: 21 }, (_, i) => ({ id: i + 1, unique_link: `ci-product-${i + 1}`, name: `فرش آزمایشی ${i + 1}`, shop_slug: 'ci-shop', shop_name: shops[0].shop_name, price: 12000000, description: 'توضیحات محصول آزمایشی برای بررسی محتوای صفحه و مسیر خرید', image_url: 'https://myhoma.ir/images/hero/after.webp' }));
-const api = createServer((req, res) => {
-  const url = new URL(req.url, 'http://localhost');
-  if (unavailable) { res.writeHead(503); res.end(); return; }
-  let records;
-  if (url.pathname === '/api/products/') records = products.filter((p) => (!url.searchParams.has('unique_link') || p.unique_link === url.searchParams.get('unique_link')) && (!url.searchParams.has('shop_slug') || p.shop_slug === url.searchParams.get('shop_slug')));
-  else if (url.pathname === '/api/shops/list/') records = shops.filter((s) => !url.searchParams.has('slug') || s.slug === url.searchParams.get('slug'));
-  else { res.writeHead(500); res.end('Unexpected API endpoint: detail lookups are forbidden'); return; }
-  const page = Number(url.searchParams.get('page') || 1), size = Number(url.searchParams.get('page_size') || 20);
-  if (page > 1 && (page - 1) * size >= records.length) { res.writeHead(404); res.end(); return; }
-  res.setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify({ success: true, data: { count: records.length, next: page * size < records.length ? '?page=' + (page + 1) : null, results: records.slice((page - 1) * size, page * size) } }));
+const post = {
+  slug: 'contract-fixture', title: 'Journal contract fixture', seo_title: 'Journal contract fixture',
+  excerpt: 'Public journal entry', meta_description: 'Public journal entry',
+  author_name: 'Homa', reading_minutes: 1, published_at: '2026-11-01', updated_at: '2026-11-01',
+  cover_url: '', cover_alt: '',
+  body_format: 'markdown', body: 'Public article content.',
+  category: { slug: 'layout', title: 'Layout', description: 'Layout guides' },
+};
+const fixture = createServer((req, res) => {
+  if (unavailable) { res.writeHead(503).end(); return; }
+  const pathname = new URL(req.url, origin).pathname;
+  const data = pathname === '/api/blog/posts/'
+    ? { kind: 'index', posts: [post], categories: [post.category], category: null, page: 1, count: 1, has_next: false }
+    : pathname === '/api/blog/sitemap/' ? { posts: [post] }
+    : pathname === '/api/blog/posts/contract-fixture/' ? { kind: 'article', post, related: [] } : null;
+  res.writeHead(data ? 200 : 404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ success: Boolean(data), data }));
 });
-await new Promise((done) => api.listen(0, '127.0.0.1', done));
-process.env.VITE_API_BASE_URL = `http://127.0.0.1:${api.address().port}`;
-process.env.SEO_INDEXABLE = 'true';
-process.env.SITE_URL = 'https://myhoma.ir';
-const server = await startServer({ port: 0 });
-const base = `http://127.0.0.1:${server.address().port}`;
+fixture.listen(0, '0.0.0.0');
+await once(fixture, 'listening');
+const docker = (...args) => execFileSync('docker', args, { encoding: 'utf8' }).trim();
+
 try {
+  container = docker('run', '-d', '-p', '127.0.0.1::80',
+    '--add-host', 'host.docker.internal:host-gateway',
+    '-e', `BLOG_API_URL=http://host.docker.internal:${fixture.address().port}/api/blog`,
+    '-e', `SITE_URL=${origin}`, image);
+  const base = 'http://' + docker('port', container, '80/tcp');
   for (let attempt = 0; attempt < 50; attempt++) {
-    if ((await fetch(base + '/sitemap.xml')).ok) break;
-    await new Promise((done) => setTimeout(done, 100));
+    const ready = await fetch(base + '/', { signal: AbortSignal.timeout(1000) }).catch(() => null);
+    if (ready?.ok) break;
+    await setTimeout(200);
   }
-  const audit = spawn(process.execPath, ['scripts/audit-seo.mjs', '--base', base, '--api-base', process.env.VITE_API_BASE_URL, '--indexable', '--crawl', '--out', 'reports/seo-ci'], { stdio: 'inherit' });
-  assert.equal(await new Promise((done) => audit.on('exit', done)), 0);
-  const wrong = await fetch(base + '/store/wrong/product/ci-product-1', { redirect: 'manual' });
-  assert.equal(wrong.status, 308);
-  assert.equal(wrong.headers.get('location'), '/store/ci-shop/product/ci-product-1');
+  async function request(path, options) {
+    const response = await fetch(base + path, { redirect: 'manual', signal: AbortSignal.timeout(8000), ...options });
+    const body = await response.text();
+    report.push({ path, userAgent: options?.headers?.['User-Agent'], status: response.status, bytes: Buffer.byteLength(body) });
+    return { response, body };
+  }
+  const agents = ['Mozilla/5.0', 'Googlebot', 'OAI-SearchBot', 'Bingbot'];
+  let homepage;
+  for (const agent of agents) {
+    const { response, body } = await request('/?utm_source=fixture', { headers: { 'User-Agent': agent } });
+    assert.equal(response.status, 200);
+    assert.equal((body.match(/<h1\b/g) ?? []).length, 1);
+    assert.match(body, /<h1[^>]*id="homa-home-title"/);
+    assert.match(body, /<title>[^<]*طراحی دکوراسیون خانه با هوش مصنوعی[^<]*<\/title>/);
+    assert.match(body, /هوش مصنوعی/);
+    assert.match(body, /href="\/studio"/);
+    assert.match(body, /href="\/blog\//);
+    assert.match(body, /href="\/hosts"/);
+    assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);
+    const desktopPreload = body.indexOf('href="/images/hero/before.webp"');
+    assert.ok(desktopPreload > body.indexOf('name="viewport"'));
+    assert.ok(desktopPreload < body.indexOf('<script type="module"'));
+    assert.match(body, /rel="canonical" href="https:\/\/myhoma\.ir\/"/);
+    assert.equal((body.match(/<meta name="description"/g) ?? []).length, 1);
+    const schema = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
+      .flatMap(match => JSON.parse(match[1]));
+    assert.deepEqual(schema.map(node => node['@type']), ['Organization', 'WebSite']);
+    if (homepage) assert.equal(body, homepage, agent + ' must get the browser document');
+    homepage = body;
+  }
+  const studio = await request('/studio/upload');
+  assert.equal(studio.response.status, 200);
+  assert.match(studio.response.headers.get('x-robots-tag'), /noindex/);
+  assert.equal((await request('/hosts')).response.status, 200);
+  const font = await fetch(base + '/fonts/vazirmatn-v33.003.woff2');
+  assert.equal(font.status, 200);
+  assert.match(font.headers.get('content-type'), /font\/woff2/);
+  assert.equal(Buffer.from(await font.arrayBuffer()).subarray(0, 4).toString(), 'wOF2');
+  assert.equal((await request('/store/private-fixture')).response.status, 404);
+  assert.equal((await request('/unknown-public-route')).response.status, 404);
+  assert.equal((await request('/blog/')).response.status, 308);
+  const journal = await request('/blog');
+  assert.equal(journal.response.status, 200);
+  assert.match(journal.body, /href="\/blog\/contract-fixture"/);
+  const article = await request('/blog/contract-fixture');
+  assert.equal(article.response.status, 200);
+  assert.match(article.body, /<h1>Journal contract fixture<\/h1>/);
+  assert.equal((await request('/blog/missing')).response.status, 404);
+  assert.match((await request('/blog/sitemap.xml')).body, /<loc>https:\/\/myhoma\.ir\/blog\/contract-fixture<\/loc>/);
+  assert.match((await request('/robots.txt')).body, /Sitemap:\s*https:\/\/myhoma\.ir\/sitemap\.xml/);
+  assert.match((await request('/sitemap.xml')).body, /<loc>https:\/\/myhoma\.ir\/<\/loc>/);
   unavailable = true;
-  const outage = await fetch(base + '/gallery?search=uncached-outage');
-  assert.equal(outage.status, 503);
-  assert.equal(outage.headers.get('retry-after'), '60');
-  assert.equal(outage.headers.get('cache-control'), 'no-store');
-  assert.equal((await fetch(base + '/sitemap.xml')).status, 200);
-  console.log('HTTP integration: audit, authoritative redirect, upstream outage and retained sitemap passed.');
+  assert.equal((await request('/blog?x=outage&page=2')).response.status, 503);
+  assert.equal((await request('/')).body, homepage);
+  console.log('Production HTTP contract passed.');
+} catch (error) {
+  if (container) console.error(docker('logs', '--tail', '25', container));
+  throw error;
 } finally {
-  await Promise.all([new Promise((done) => server.close(done)), new Promise((done) => api.close(done))]);
+  await mkdir('reports/seo-ci', { recursive: true });
+  await writeFile('reports/seo-ci/production-http.json', JSON.stringify(report, null, 2));
+  if (container) docker('rm', '-f', container);
+  fixture.close();
 }

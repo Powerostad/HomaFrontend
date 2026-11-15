@@ -6,8 +6,7 @@
  * - The <script> is injected at runtime from window.__APP_CONFIG__ values so
  *   the Umami host / website-id can change per environment without a rebuild.
  * - Disabled in dev mode by default (toggle via VITE_ENABLE_UMAMI_IN_DEV=true).
- * - Umami has no PostHog-style "super properties"; this wrapper injects
- *   `session_id` into every event payload manually.
+ * - Umami associates aggregate events with its own anonymous session.
  */
 
 import { appConfig } from '@/config/appConfig';
@@ -18,8 +17,6 @@ type UmamiApi = {
     event?: string | Record<string, unknown> | ((payload: Record<string, unknown>) => Record<string, unknown>),
     data?: Record<string, unknown>,
   ) => void;
-  // `identify` is version-dependent in self-hosted Umami — optional on purpose.
-  identify?: (id?: string | Record<string, unknown>, data?: Record<string, unknown>) => void;
 };
 
 declare global {
@@ -48,15 +45,18 @@ function sanitizeAnalyticsUrl(value: unknown): unknown {
       : parsed.origin;
     // Shared-page URLs contain a token after /s/. Keep the route useful for
     // aggregate analytics while dropping the token and all query fragments.
-    return pathname.replace(/^\/s\/[^/]+(?:\/.*)?$/, '/s');
+    return pathname
+      .replace(/^\/s\/[^/]+(?:\/.*)?$/, '/s')
+      .replace(/^(\/studio\/(?:chat|result|project)|\/redesign)\/[^/]+.*$/, '$1');
   } catch {
     return value.split(/[?#]/, 1)[0] || '/';
   }
 }
 
 function sanitizeAnalyticsPayload(_type: string, payload: Record<string, unknown>) {
+  const { id: _identifiedUser, ...anonymousPayload } = payload;
   return {
-    ...payload,
+    ...anonymousPayload,
     ...(payload.url !== undefined ? { url: sanitizeAnalyticsUrl(payload.url) } : {}),
     ...(payload.referrer !== undefined ? { referrer: sanitizeAnalyticsUrl(payload.referrer) } : {}),
   };
@@ -70,33 +70,17 @@ if (typeof window !== 'undefined') {
   window.homaAnalyticsBeforeSend = sanitizeAnalyticsPayload;
 }
 
-// ── homa_session_id ───────────────────────────────────────────────────────
-// Persisted per browser and attached to every event, since Umami has no
-// equivalent of PostHog super properties. Same localStorage key as SessionContext.
-const SESSION_STORAGE_KEY = 'homa_session_id';
-
-function getSessionId(): string {
-  try {
-    const existing = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (existing) return existing;
-    const id = crypto.randomUUID();
-    localStorage.setItem(SESSION_STORAGE_KEY, id);
-    return id;
-  } catch {
-    // localStorage unavailable (private browsing) — fall back gracefully.
-    return 'anonymous';
-  }
-}
-
 // ── Pre-load queue ────────────────────────────────────────────────────────
 // The Umami script loads asynchronously; events fired before it is ready
 // (e.g. on-mount events) are buffered here and flushed on the load event.
 let scriptLoaded = false;
+let scriptFailed = false;
 const pendingCalls: Array<() => void> = [];
 
 function runOrQueue(call: () => void) {
+  if (scriptFailed) return;
   if (scriptLoaded && window.umami) {
-    call();
+    try { call(); } catch { /* analytics must not interrupt the current action */ }
   } else {
     pendingCalls.push(call);
   }
@@ -125,6 +109,7 @@ if (isEnabled) {
   script.addEventListener('error', () => {
     // Umami unreachable — drop queued events so they don't leak memory.
     pendingCalls.length = 0;
+    scriptFailed = true;
   });
   document.head.appendChild(script);
   // Disable Umami's automatic pageview and queue one sanitized pageview so
@@ -140,42 +125,29 @@ if (isEnabled) {
 
 // ── Public API ────────────────────────────────────────────────────────────
 
-/**
- * Track a custom event. `session_id` is injected into every payload to
- * replace PostHog's super-property behavior. No-op when analytics is disabled.
- */
+const privateEventKeys = new Set([
+  'session_id', 'task_id', 'result_image_id', 'image_id', 'item_id', 'token', 'error_message', 'fileName',
+]);
+
+/** Track a custom event with a redacted landing path and event fields. */
 export function umamiTrack(event: string, data?: Record<string, unknown>) {
   if (!isEnabled) return;
   const payload = {
-    session_id: getSessionId(),
     landing_path: sanitizeAnalyticsUrl(window.location.href),
-    ...data,
+    ...Object.fromEntries(Object.entries(data ?? {}).filter(([key]) => !privateEventKeys.has(key))),
   };
   runOrQueue(() => window.umami?.track(event, payload));
 }
 
-/**
- * Associate the current session with a logged-in user.
- * `identify` is feature-detected since it is version-dependent in self-hosted Umami.
- */
-export function umamiIdentify(id: string, data?: Record<string, unknown>) {
+/** Funnel events contain only categorical data and sanitized paths. */
+export function umamiTrackAggregate(event: string, data: Record<string, string>) {
   if (!isEnabled) return;
-  runOrQueue(() => {
-    if (typeof window.umami?.identify === 'function') {
-      window.umami.identify(id, data);
-    }
-  });
-}
-
-/**
- * Clear user association on logout. Umami has no real reset, so this is a
- * best-effort call and a safe no-op where unsupported.
- */
-export function umamiReset() {
-  if (!isEnabled) return;
-  runOrQueue(() => {
-    if (typeof window.umami?.identify === 'function') {
-      window.umami.identify({});
-    }
-  });
+  const url = sanitizeAnalyticsUrl(window.location.href);
+  runOrQueue(() => window.umami?.track(payload => ({
+    ...sanitizeAnalyticsPayload('event', payload),
+    url,
+    title: url === '/' ? 'Homa homepage' : 'Homa Studio',
+    name: event,
+    data,
+  })));
 }
