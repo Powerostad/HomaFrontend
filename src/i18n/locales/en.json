@@ -920,26 +920,197 @@
     "formatInfo": "JPG, PNG, WebP — Max {{size}}MB"
   },
   "landing": {
+    "experience": {
+      "navigation": "Homepage navigation",
+      "nav": {
+        "designShop": "Design & shop",
+        "how": "How it works",
+        "examples": "Ideas & examples",
+        "questions": "Questions",
+        "hosts": "For hosts"
+      },
+      "start": "Start designing & choosing",
+      "visualDisclosure": "Illustrative images for exploring design ideas",
+      "hero": {
+        "eyebrow": "Homa · AI interior design",
+        "title": "From your room design,",
+        "accent": "to your next purchase.",
+        "description": "Start with your space. Explore a design, compare relevant products and keep refining your choices. Homa brings designing and shopping together.",
+        "explore": "See how",
+        "photoLink": "Your space. New possibilities."
+      },
+      "commerce": {
+        "eyebrow": "Design and shopping, together",
+        "title": "See the design.",
+        "accent": "Make it your choice.",
+        "description": "Explore the design, the reasoning and the shopping options together. Change your choices with your own room in mind.",
+        "imageAlt": "Illustrative living room with a rug and lighting",
+        "demoLabel": "Explore the Homa journey",
+        "room": "Living room",
+        "preview": "Illustrative design",
+        "stageLabel": "Explore the design and shopping stages",
+        "realProject": "This example introduces the journey. Product prices and availability are checked in your project.",
+        "cta": "Now try my own room"
+      },
+      "stages": {
+        "design": "Design",
+        "choose": "Choose",
+        "shop": "Shop"
+      },
+      "panels": {
+        "design": {
+          "title": "Start with what you have.",
+          "description": "Your wishes and the pieces you want to keep guide Homa's suggestions.",
+          "promptLabel": "For example",
+          "prompt": "Keep the sofas. Make the room warmer with a rug and lighting.",
+          "keep": "Tell Homa which pieces should stay"
+        },
+        "choose": {
+          "title": "A reason for every choice.",
+          "description": "Select a marker or an option to explore what matters when choosing each piece."
+        },
+        "shop": {
+          "title": "Take your choices to the shop.",
+          "description": "Relevant products, alternatives and the cost of your choices come together in your project.",
+          "summary": "Your design, selections and shopping journey in one place.",
+          "price": "Check prices, dimensions and product details",
+          "seller": "Continue your purchase with the seller"
+        }
+      },
+      "items": {
+        "rug": {
+          "title": "Living room rug",
+          "detail": "Size, colour and sofa arrangement",
+          "reason": "Check rug size against your furniture layout and walking space before choosing colour and pattern."
+        },
+        "light": {
+          "title": "Living room lighting",
+          "detail": "Light direction and how you use the room",
+          "reason": "Consider where you sit, read and relax when choosing your lighting."
+        },
+        "curtain": {
+          "title": "Window curtains",
+          "detail": "Daylight and privacy",
+          "reason": "Choose fabric and coverage for the light in your room and the privacy you need."
+        }
+      },
+      "flow": {
+        "eyebrow": "Your journey with Homa",
+        "title": "Design. Choose. Shop.",
+        "description": "Each choice connects to your own space. Revisit the design and explore your options as you go.",
+        "design": {
+          "title": "Show us your space",
+          "description": "Share a clear photo and tell Homa what should change and which pieces should stay."
+        },
+        "choose": {
+          "title": "Explore the design and products",
+          "description": "Review suggestions, ask questions and compare relevant products and alternatives."
+        },
+        "shop": {
+          "title": "Continue to your purchase",
+          "description": "Check your selections and available prices, then continue from your basket to the seller."
+        }
+      },
+      "preserve": {
+        "eyebrow": "Your home, your choices",
+        "title": "The pieces you love",
+        "accent": "are where design begins.",
+        "description": "Tell Homa which pieces you want to keep. Explore lighting, layout and new choices around your existing room.",
+        "promptLabel": "A wish to start with",
+        "prompt": "Keep the bed and rug. Make the room cosier with lighting and textiles.",
+        "cta": "Design my bedroom"
+      },
+      "examples": {
+        "eyebrow": "Ideas for your own home",
+        "title": "Explore a fresh perspective.",
+        "all": "Homa journal",
+        "imageLabel": "Visual guide",
+        "living": {
+          "title": "The same sofas. A fresh feeling.",
+          "description": "Explore how lighting, rugs and details can shape a living room."
+        },
+        "bedroom": {
+          "title": "A new feeling for your bedroom",
+          "description": "From textiles to bedside lighting, explore changes around your existing pieces."
+        }
+      },
+      "faq": {
+        "eyebrow": "Before you start",
+        "title": "Your questions, answered.",
+        "description": "Learn about photos, shopping, credits and design results.",
+        "support": "Help and support",
+        "start": {
+          "question": "What photo should I start with?",
+          "answer": "Choose a clear, well-lit photo that shows the main area and important furniture. Tell Homa what you want and which pieces should stay."
+        },
+        "buy": {
+          "question": "How do I get from a design to a purchase?",
+          "answer": "Explore identified products related to the suggestions, add your choices to the basket and continue with the seller. Some elements in a design are conceptual and still need a related product."
+        },
+        "cost": {
+          "question": "How are design and shopping costs calculated?",
+          "answer": "Design features depend on your account credits and enabled capabilities. Product prices are checked separately for your selections. Contact support for credit details."
+        },
+        "accuracy": {
+          "question": "How accurate is the design image?",
+          "answer": "The image helps you explore ideas and visual harmony. Verify room measurements, product specifications, stock and seller terms before purchasing or making changes."
+        }
+      },
+      "closing": {
+        "eyebrow": "Homa. A better version of your home.",
+        "title": "Your next room starts here."
+      }
+    },
+    "home": {
+      "compareLabel": "Compare before and after",
+      "visualCaption": "Illustrative Homa design",
+      "compareHint": "Drag to compare",
+      "spacesLabel": "Designed around your life",
+      "spacesTitle": "Where shall we start?",
+      "spacesDescription": "Choose a space and explore ideas in a photo of your own home.",
+      "rooms": {
+        "living": "Living room",
+        "bedroom": "Bedroom",
+        "kitchen": "Kitchen",
+        "balcony": "Balcony & terrace"
+      },
+      "journalLabel": "Homa journal",
+      "journalTitle": "The details that make a home.",
+      "allGuides": "All guides",
+      "readGuide": "Read the guide",
+      "guides": {
+        "rug": "Rug size comes before pattern",
+        "curtain": "Curtains that suit your space",
+        "bedroom": "A cosier room with the same bed"
+      },
+      "categories": {
+        "rug": "Rugs & layout",
+        "curtain": "Light & curtains",
+        "bedroom": "Bedroom comfort"
+      },
+      "startLabel": "It starts with a photo",
+      "startTitle": "See your own space afresh."
+    },
     "hero": {
       "editorial": "Homa Editorial",
       "title": "Homa;",
-      "titleAccent": "A better version of",
-      "titleEnd": "your home.",
-      "description": "Share a photo of your room. Discover what you can keep or rearrange, what could improve, and which products might fit if you need to buy.",
+      "titleAccent": "A better version",
+      "titleEnd": "of your home.",
+      "description": "Start with a photo of your home. Explore what to keep, what to move and which changes suit your space.",
       "cta": "Start with a photo of my room",
       "label": "AI interior design from a photo of your home",
-      "secondary": "Room design and buying guides"
+      "secondary": "Explore the interior design guides"
     },
     "decision": {
-      "eyebrow": "From your room to a clearer decision",
-      "title": "Before buying, see what really needs to change.",
-      "description": "Start with a photo of your space. Explore what to keep, what to rearrange, and where a new item could make a difference.",
-      "step1Title": "Your room photo",
-      "step1Text": "Upload a photo of your living room or bedroom to get ideas grounded in your actual space.",
-      "step2Title": "Explore changes",
-      "step2Text": "See which items might stay, move or be improved to make your room more cohesive.",
-      "step3Title": "Decide what to buy",
-      "step3Text": "If a purchase makes sense, explore suitable options. Not every item needs replacing.",
+      "eyebrow": "From a photo to a decision",
+      "title": "Good changes begin with your home.",
+      "description": "Explore choices shaped by your belongings, your taste and your own space.",
+      "step1Title": "Share a room photo",
+      "step1Text": "Choose a clear photo of your own room. Your design begins here.",
+      "step2Title": "Explore the possibilities",
+      "step2Text": "See how keeping, moving or changing pieces could work in your space.",
+      "step3Title": "Make your choice",
+      "step3Text": "If you need something new, explore options that suit the design.",
       "cta": "Explore my room in Homa",
       "blog": "Guides to rugs, curtains, layouts and room improvements"
     },

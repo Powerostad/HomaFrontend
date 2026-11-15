@@ -54,7 +54,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
         min={0}
         max={100}
         value={sliderPosition}
-        aria-label={t('landing.hero.compareLabel')}
+        aria-label={t('landing.home.compareLabel')}
         onChange={event => setSliderPosition(event.currentTarget.valueAsNumber)}
         className="absolute inset-0 z-30 h-full w-full cursor-ew-resize opacity-0 touch-pan-y"
       />

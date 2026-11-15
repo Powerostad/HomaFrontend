@@ -1,60 +1,77 @@
+import { useState } from 'react';
+import { ArrowLeft, RectangleHorizontal, Check, LampCeiling, Blinds, ShoppingBag, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from "react-i18next";
+import { useTranslation } from 'react-i18next';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { homepageMedia } from './homepageMedia';
 
-/**
- * Homepage-specific decision explainer. Text and links are ordinary HTML so
- * readers, assistive technology and crawlers can understand the same message.
- * No catalog data or unverifiable customer success claims are exposed.
- */
+const stages = ['design', 'choose', 'shop'] as const;
+const items = [
+  { id: 'rug', Icon: RectangleHorizontal, x: 43, y: 78 },
+  { id: 'light', Icon: LampCeiling, x: 52, y: 12 },
+  { id: 'curtain', Icon: Blinds, x: 64, y: 27 },
+] as const;
+
 export function HomeDecisionSection({ onStudioStart }: { onStudioStart?: () => void }) {
   const { t } = useTranslation();
+  const [stage, setStage] = useState<typeof stages[number]>('design');
+  const [selectedItem, setSelectedItem] = useState<typeof items[number]['id']>('rug');
   return (
-    <section
-      className="w-full bg-surface-default px-6 py-20 md:py-28 border-t border-black/[0.04]"
-      aria-labelledby="homa-decision-title"
-    >
-      <div className="max-w-6xl mx-auto">
-        <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
-          <p className="text-[11px] tracking-wider text-foreground/50 mb-5">{t('landing.decision.eyebrow', 'از مسئله خانه تا تصمیم بهتر')}</p>
-          <h2 id="homa-decision-title" className="text-[28px] md:text-[42px] leading-[1.5] font-light text-foreground mb-6">
-            {t('landing.decision.title', 'قبل از خرید، بفهم چه چیزی واقعاً باید تغییر کند.')}
-          </h2>
-          <p className="text-[15px] md:text-[17px] font-light leading-[2] text-foreground/70">
-            {t('landing.decision.description', 'هما از عکس فضای تو شروع می‌کند؛ چه چیزی بهتر است بماند، چه چیزی جابه‌جا شود و کجا محصول تازه‌ای کمک می‌کند؟')}
-          </p>
+    <section id="design-to-shop" className="homa-home-commerce homa-home-shell" aria-labelledby="homa-decision-title">
+      <header className="homa-home-section-header">
+        <div>
+          <p className="homa-home-eyebrow">{t('landing.experience.commerce.eyebrow')}</p>
+          <h2 id="homa-decision-title">{t('landing.experience.commerce.title')}<br /><span>{t('landing.experience.commerce.accent')}</span></h2>
         </div>
-
-        <ol className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 border-y border-black/10 py-10 md:py-14">
-          <li>
-            <span className="block text-[13px] text-foreground/40 mb-4" aria-hidden="true">۰۱</span>
-            <h3 className="text-[19px] font-normal text-foreground mb-3">{t('landing.decision.step1Title', 'عکس فضای خودت')}</h3>
-            <p className="text-[14px] font-light leading-[1.95] text-foreground/65">
-              {t('landing.decision.step1Text', 'یک تصویر از پذیرایی یا اتاق خوابت ارسال کن تا پیشنهادها بر اساس همان فضای موجود شکل بگیرند.')}
-            </p>
-          </li>
-          <li>
-            <span className="block text-[13px] text-foreground/40 mb-4" aria-hidden="true">۰۲</span>
-            <h3 className="text-[19px] font-normal text-foreground mb-3">{t('landing.decision.step2Title', 'بررسی تغییرها')}</h3>
-            <p className="text-[14px] font-light leading-[1.95] text-foreground/65">
-              {t('landing.decision.step2Text', 'ببین چه وسایلی را می‌توان حفظ یا جابه‌جا کرد و کدام تغییرها برای هماهنگی فضا مناسب‌ترند.')}
-            </p>
-          </li>
-          <li>
-            <span className="block text-[13px] text-foreground/40 mb-4" aria-hidden="true">۰۳</span>
-            <h3 className="text-[19px] font-normal text-foreground mb-3">{t('landing.decision.step3Title', 'تصمیم برای خرید')}</h3>
-            <p className="text-[14px] font-light leading-[1.95] text-foreground/65">
-              {t('landing.decision.step3Text', 'اگر خرید لازم بود، گزینه‌های متناسب با طراحی را بررسی کن؛ قرار نیست هر وسیله‌ای تعویض شود.')}
-            </p>
-          </li>
-        </ol>
-
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-8">
-          <Link to="/studio/upload" onClick={onStudioStart} className="inline-flex items-center justify-center min-h-[48px] bg-black text-white px-8 text-[13px] hover:bg-black/90 transition-colors">
-            {t('landing.decision.cta', 'بررسی فضای من در هما')}
-          </Link>
-          <a href="/blog/" className="inline-flex items-center min-h-[44px] text-[13px] underline underline-offset-4 text-foreground/70 hover:text-foreground transition-colors">
-            {t('landing.decision.blog', 'راهنماهای فرش، پرده، چیدمان و تغییر دکوراسیون')}
-          </a>
+        <p>{t('landing.experience.commerce.description')}</p>
+      </header>
+      <div className="homa-home-workspace">
+        <div className="homa-home-workspace-visual">
+          <OptimizedImage src={homepageMedia.living.after} alt={t('landing.experience.commerce.imageAlt')} lazy />
+          <span className="homa-home-demo-label">{t('landing.experience.commerce.demoLabel')}</span>
+          {stage === 'choose' && items.map(item => (
+            <button key={item.id} type="button" className="homa-home-hotspot" style={{ left: item.x + '%', top: item.y + '%' }}
+              aria-pressed={selectedItem === item.id} aria-label={t('landing.experience.items.' + item.id + '.title')}
+              onClick={() => setSelectedItem(item.id)}>
+              <Plus size={17} aria-hidden="true" />
+            </button>
+          ))}
+          <div className="homa-home-visual-note"><span>{t('landing.experience.commerce.room')}</span><span>{t('landing.experience.commerce.preview')}</span></div>
+        </div>
+        <div className="homa-home-workspace-panel">
+          <div className="homa-home-stage-switch" role="group" aria-label={t('landing.experience.commerce.stageLabel')}>
+            {stages.map(value => <button type="button" key={value} aria-pressed={stage === value} onClick={() => setStage(value)}>{t('landing.experience.stages.' + value)}</button>)}
+          </div>
+          <div className="homa-home-workspace-content" aria-live="polite">
+            <h3>{t('landing.experience.panels.' + stage + '.title')}</h3>
+            <p>{t('landing.experience.panels.' + stage + '.description')}</p>
+            {stage === 'design' && (
+              <div className="homa-home-design-note">
+                <span>{t('landing.experience.panels.design.promptLabel')}</span>
+                <p>{t('landing.experience.panels.design.prompt')}</p>
+                <div><Check size={16} aria-hidden="true" />{t('landing.experience.panels.design.keep')}</div>
+              </div>
+            )}
+            {stage === 'choose' && (
+              <div className="homa-home-item-options">
+                {items.map(({ id, Icon }) => <button type="button" key={id} aria-pressed={selectedItem === id} onClick={() => setSelectedItem(id)}>
+                  <span className="homa-home-item-icon"><Icon size={23} strokeWidth={1.25} aria-hidden="true" /></span>
+                  <span><strong>{t('landing.experience.items.' + id + '.title')}</strong><small>{t('landing.experience.items.' + id + '.detail')}</small></span>
+                  {selectedItem === id && <Check size={15} aria-hidden="true" />}
+                </button>)}
+                <p className="homa-home-item-explanation">{t('landing.experience.items.' + selectedItem + '.reason')}</p>
+              </div>
+            )}
+            {stage === 'shop' && <div className="homa-home-shopping-note">
+              <ShoppingBag size={28} strokeWidth={1.2} aria-hidden="true" />
+              <p>{t('landing.experience.panels.shop.summary')}</p>
+              <ul><li>{t('landing.experience.panels.shop.price')}</li><li>{t('landing.experience.panels.shop.seller')}</li></ul>
+            </div>}
+          </div>
+          <div className="homa-home-workspace-bottom">
+            <p>{t('landing.experience.commerce.realProject')}</p>
+            <Link to="/studio" onClick={onStudioStart} className="homa-home-text-link">{t('landing.experience.commerce.cta')}<ArrowLeft size={17} aria-hidden="true" /></Link>
+          </div>
         </div>
       </div>
     </section>

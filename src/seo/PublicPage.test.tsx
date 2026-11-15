@@ -37,13 +37,13 @@ describe("public HTML content", () => {
   it("renders a single homepage heading and two crawlable task paths without browser globals", () => {
     const html = render(base);
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('href="/studio/upload"');
+    expect(html).toContain('href="/studio"');
     expect(html).toContain('href="/blog/"');
     expect(html).toContain('href="/hosts"');
     expect(html).not.toContain('href="/studio/hosts"');
     expect(html).toContain('href="/studio?room=bedroom"');
-    expect(html).toContain('href="/ai-interior-design"');
-    expect(html).toContain('href="/virtual-product-preview"');
+    expect(html).toContain('id="design-to-shop"');
+    expect(html).toContain('id="home-faq"');
     expect(html).not.toContain("seo.home.");
   });
   it("renders acquisition guidance as visible text rather than translation keys", () => {
@@ -128,9 +128,9 @@ describe("public HTML content", () => {
     expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
-    expect(html).toContain("Choose a space.");
-    expect(html).toContain("Start with a photo of my room");
-    expect(html).toContain("HOMA for hosts");
+    expect(html).toContain("From your room design,");
+    expect(html).toContain("Start designing");
+    expect(html).toContain("For hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
     const data = { ...base, kind: "article" as const, path: "/contact" };

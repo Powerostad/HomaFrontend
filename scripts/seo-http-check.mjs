@@ -60,7 +60,7 @@ try {
     assert.match(body, /<h1[^>]*id="homa-home-title"/);
     assert.match(body, /<title>[^<]*طراحی دکوراسیون خانه با هوش مصنوعی[^<]*<\/title>/);
     assert.match(body, /هوش مصنوعی/);
-    assert.match(body, /href="\/studio\/upload"/);
+    assert.match(body, /href="\/studio"/);
     assert.match(body, /href="\/blog\//);
     assert.match(body, /href="\/hosts"/);
     assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);

@@ -683,27 +683,198 @@
     "formatInfo": "JPG, PNG, WebP — Max {{size}}MB"
   },
   "landing": {
+    "experience": {
+      "navigation": "Ana sayfa gezinmesi",
+      "nav": {
+        "designShop": "Tasarım ve alışveriş",
+        "how": "Nasıl çalışır?",
+        "examples": "Fikirler ve örnekler",
+        "questions": "Sorular",
+        "hosts": "Ev sahipleri için"
+      },
+      "start": "Tasarıma ve seçime başla",
+      "visualDisclosure": "Tasarım fikirlerini keşfetmek için örnek görseller",
+      "hero": {
+        "eyebrow": "Homa · Yapay zekâ ile iç tasarım",
+        "title": "Evinizin tasarımından,",
+        "accent": "yeni alışverişinize.",
+        "description": "Alanınızın fotoğrafıyla başlayın. Tasarımı keşfedin, ilgili ürünleri karşılaştırın ve seçimlerinizi geliştirin. Homa tasarım ve alışverişi birleştirir.",
+        "explore": "Nasıl olduğunu gör",
+        "photoLink": "Alanınız, yeni olasılıklar"
+      },
+      "commerce": {
+        "eyebrow": "Tasarım ve alışveriş bir arada",
+        "title": "Tasarımı görün.",
+        "accent": "Seçiminizi yapın.",
+        "description": "Tasarımı, önerinin nedenini ve alışveriş seçeneklerini birlikte inceleyin. Kendi odanıza göre seçimlerinizi değiştirin.",
+        "imageAlt": "Halı ve aydınlatmalı örnek oturma odası",
+        "demoLabel": "Homa deneyimini keşfedin",
+        "room": "Oturma odası",
+        "preview": "Örnek tasarım",
+        "stageLabel": "Tasarım ve alışveriş aşamalarını keşfedin",
+        "realProject": "Bu örnek deneyimi tanıtır. Fiyat ve stok bilgisi projenizde kontrol edilir.",
+        "cta": "Şimdi kendi odamı dene"
+      },
+      "stages": {
+        "design": "Tasarım",
+        "choose": "Seçim",
+        "shop": "Alışveriş"
+      },
+      "panels": {
+        "design": {
+          "title": "Elinizdekilerle başlayın.",
+          "description": "İstekleriniz ve korumak istediğiniz parçalar Homa'nın önerilerine yön verir.",
+          "promptLabel": "Örneğin",
+          "prompt": "Kanepeler kalsın. Halı ve aydınlatmayla odayı daha sıcak yap.",
+          "keep": "Kalmasını istediğiniz parçaları belirtin"
+        },
+        "choose": {
+          "title": "Her seçimin bir nedeni var.",
+          "description": "Her parçayı seçerken önemli noktaları keşfetmek için bir işaret veya seçenek seçin."
+        },
+        "shop": {
+          "title": "Seçimlerinizi alışverişe taşıyın.",
+          "description": "İlgili ürünler, alternatifler ve seçimlerinizin maliyeti projenizde bir araya gelir.",
+          "summary": "Tasarımınız, seçimleriniz ve alışveriş yolunuz bir yerde.",
+          "price": "Fiyat, ölçü ve ürün ayrıntılarını kontrol edin",
+          "seller": "Satıcıyla alışverişe devam edin"
+        }
+      },
+      "items": {
+        "rug": {
+          "title": "Oturma odası halısı",
+          "detail": "Boyut, renk ve kanepe düzeni",
+          "reason": "Renk ve desenden önce halı boyutunu mobilya düzeni ve geçiş alanıyla kontrol edin."
+        },
+        "light": {
+          "title": "Oturma odası aydınlatması",
+          "detail": "Işık yönü ve alanın kullanımı",
+          "reason": "Aydınlatmayı seçerken oturma, okuma ve dinlenme alanlarını düşünün."
+        },
+        "curtain": {
+          "title": "Pencere perdeleri",
+          "detail": "Gün ışığı ve mahremiyet",
+          "reason": "Kumaşı ve kapatıcılığı odanın ışığına ve mahremiyet ihtiyacına göre seçin."
+        }
+      },
+      "flow": {
+        "eyebrow": "Homa ile yolculuğunuz",
+        "title": "Tasarla. Seç. Alışveriş yap.",
+        "description": "Her seçim kendi alanınıza bağlıdır. Tasarıma dönün ve seçenekleri yeniden inceleyin.",
+        "design": {
+          "title": "Alanınızı gösterin",
+          "description": "Net bir fotoğraf paylaşın. Nelerin değişeceğini ve hangi parçaların kalacağını söyleyin."
+        },
+        "choose": {
+          "title": "Tasarımı ve ürünleri inceleyin",
+          "description": "Önerilere bakın, soru sorun ve ilgili ürünlerle alternatifleri karşılaştırın."
+        },
+        "shop": {
+          "title": "Alışverişe devam edin",
+          "description": "Seçimleri ve mevcut fiyatları kontrol edip sepetten satıcıya ilerleyin."
+        }
+      },
+      "preserve": {
+        "eyebrow": "Eviniz, seçimleriniz",
+        "title": "Sevdiğiniz parçalar",
+        "accent": "tasarımın başlangıcıdır.",
+        "description": "Hangi parçaları korumak istediğinizi söyleyin. Mevcut odanız için ışığı, düzeni ve yeni seçimleri keşfedin.",
+        "promptLabel": "Başlamak için bir istek",
+        "prompt": "Yatak ve halı kalsın. Işık ve kumaşlarla odayı daha sıcak yapalım.",
+        "cta": "Yatak odamı tasarla"
+      },
+      "examples": {
+        "eyebrow": "Kendi eviniz için fikirler",
+        "title": "Yeni olasılıkları görün.",
+        "all": "Homa dergisi",
+        "imageLabel": "Görsel rehber",
+        "living": {
+          "title": "Aynı kanepeler, yeni bir his",
+          "description": "Işık, halı ve detayların oturma odasını nasıl etkilediğini keşfedin."
+        },
+        "bedroom": {
+          "title": "Yatak odanızda yeni bir his",
+          "description": "Kumaştan başucu ışığına, mevcut parçalarla değişimi keşfedin."
+        }
+      },
+      "faq": {
+        "eyebrow": "Başlamadan önce",
+        "title": "Sorularınıza açık yanıtlar.",
+        "description": "Fotoğraflar, alışveriş, kredi ve tasarım sonuçlarını öğrenin.",
+        "support": "Yardım ve destek",
+        "start": {
+          "question": "Nasıl bir fotoğrafla başlamalıyım?",
+          "answer": "Ana alanı ve önemli mobilyaları gösteren net ve iyi aydınlatılmış bir fotoğraf seçin. İsteklerinizi ve kalacak parçaları belirtin."
+        },
+        "buy": {
+          "question": "Tasarımdan alışverişe nasıl geçerim?",
+          "answer": "Önerilerle ilgili belirlenmiş ürünleri inceleyin, seçimleri sepete ekleyin ve satıcıyla devam edin. Görseldeki bazı öğeler kavramsaldır ve ilgili ürünün bulunması gerekir."
+        },
+        "cost": {
+          "question": "Tasarım ve alışveriş maliyeti nasıl hesaplanır?",
+          "answer": "Tasarım özellikleri hesap kredisine ve etkin yeteneklere bağlıdır. Ürün fiyatları seçimleriniz için ayrı kontrol edilir. Kredi ayrıntıları için desteğe ulaşın."
+        },
+        "accuracy": {
+          "question": "Tasarım görseli ne kadar doğrudur?",
+          "answer": "Görsel fikirleri ve görsel uyumu keşfetmenizi sağlar. Satın almadan veya uygulamadan önce ölçüleri, özellikleri, stoku ve satıcı koşullarını doğrulayın."
+        }
+      },
+      "closing": {
+        "eyebrow": "Homa. Evinizin daha iyi bir hali.",
+        "title": "Eviniz için buradan başlayın."
+      }
+    },
+    "home": {
+      "compareLabel": "Önceki ve sonraki görüntüyü karşılaştır",
+      "visualCaption": "Homa tasarım görselleştirmesi",
+      "compareHint": "Karşılaştırmak için sürükleyin",
+      "spacesLabel": "Hayatınıza göre tasarım",
+      "spacesTitle": "Evin neresiyle başlayalım?",
+      "spacesDescription": "Bir alan seçin ve kendi evinizin fotoğrafında fikirleri keşfedin.",
+      "rooms": {
+        "living": "Oturma odası",
+        "bedroom": "Yatak odası",
+        "kitchen": "Mutfak",
+        "balcony": "Balkon ve teras"
+      },
+      "journalLabel": "Homa dergisi",
+      "journalTitle": "Bir evi ev yapan detaylar.",
+      "allGuides": "Tüm rehberler",
+      "readGuide": "Rehberi okuyun",
+      "guides": {
+        "rug": "Desenden önce halı ölçüsü",
+        "curtain": "Alanınıza uygun perdeler",
+        "bedroom": "Aynı yatakla daha sıcak bir oda"
+      },
+      "categories": {
+        "rug": "Halı ve yerleşim",
+        "curtain": "Işık ve perde",
+        "bedroom": "Yatak odası konforu"
+      },
+      "startLabel": "Bir fotoğrafla başlar",
+      "startTitle": "Kendi alanınıza yeniden bakın."
+    },
     "hero": {
       "compareLabel": "Önceki ve sonraki görüntüyü karşılaştır",
       "editorial": "Homa Editorial",
       "title": "Homa;",
-      "titleAccent": "Evinizin daha iyi",
-      "titleEnd": "versiyonu.",
-      "description": "Odanızın fotoğrafını paylaşın. Neleri koruyabileceğinizi, neleri yeniden düzenleyebileceğinizi ve alışveriş gerekirse hangi ürünlerin uyacağını keşfedin.",
+      "titleAccent": "Evinizin daha",
+      "titleEnd": "iyi bir hali.",
+      "description": "Evinizin fotoğrafıyla başlayın. Neleri koruyacağınızı, taşıyacağınızı ve hangi değişikliklerin alanınıza uyacağını keşfedin.",
       "cta": "Odamın fotoğrafıyla başla",
       "label": "Evinizin fotoğrafından yapay zekâ ile iç mekân tasarımı",
-      "secondary": "Dekorasyon ve alışveriş rehberleri"
+      "secondary": "İç tasarım rehberlerini keşfedin"
     },
     "decision": {
-      "eyebrow": "Odanızdan daha doğru kararlara",
-      "title": "Satın almadan önce gerçekten neyin değişmesi gerektiğini görün.",
-      "description": "Mekânınızın fotoğrafıyla başlayın. Neleri koruyup taşıyabileceğinizi ve nerede yeni bir ürünün işe yarayacağını keşfedin.",
-      "step1Title": "Odanızın fotoğrafı",
-      "step1Text": "Önerilerin gerçek mekânınıza dayanması için salonunuzun veya yatak odanızın fotoğrafını gönderin.",
-      "step2Title": "Değişiklikleri inceleyin",
-      "step2Text": "Hangi eşyaların kalabileceğini, taşınabileceğini veya iyileştirilebileceğini görün.",
-      "step3Title": "Alışverişe karar verin",
-      "step3Text": "Gerekliyse uygun ürünleri değerlendirin; her şeyi değiştirmeniz gerekmez.",
+      "eyebrow": "Bir fotoğraftan bir karara",
+      "title": "İyi değişiklikler evinizi tanımakla başlar.",
+      "description": "Eşyalarınız, zevkiniz ve kendi alanınız için seçenekleri keşfedin.",
+      "step1Title": "Odanızın fotoğrafını paylaşın",
+      "step1Text": "Kendi alanınızın net bir fotoğrafını seçin. Tasarım burada başlar.",
+      "step2Title": "Olasılıkları keşfedin",
+      "step2Text": "Eşyaları korumayı, taşımayı veya değiştirmeyi aynı alan üzerinde değerlendirin.",
+      "step3Title": "Seçiminizi yapın",
+      "step3Text": "Yeni bir şeye ihtiyacınız varsa tasarıma uygun seçenekleri keşfedin.",
       "cta": "Odamı Homa ile incele",
       "blog": "Halı, perde, yerleşim ve ev yenileme rehberleri"
     },

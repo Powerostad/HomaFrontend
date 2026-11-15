@@ -1,4 +1,3 @@
-const BlogPage = lazy(() => import("./blog/BlogPage").then(m => ({ default: m.BlogPage })));
 import { useSiteTranslation } from '@/i18n/siteCopy';
 import { lazy, Suspense } from "react";
 import { Navigate, BrowserRouter as Router, Route as RouterRoute, Routes as RouterRoutes } from "react-router-dom";
@@ -10,6 +9,7 @@ import { Layout } from "./layout/Layout";
 // Keep the existing loading boundary while loading page code only when its route is used.
 import { HomaLoader } from "./components/HomaLoader";
 import { ScrollToTop } from "./components/ScrollToTop";
+const BlogPage = lazy(() => import("./blog/BlogPage").then(m => ({ default: m.BlogPage })));
 const BasketPage = lazy(() => import("./pages/Basket").then(m => ({ default: m.BasketPage })));
 const CollaborationPage = lazy(() => import("./pages/Collaboration/Page").then(m => ({ default: m.CollaborationPage })));
 const ConfirmationPage = lazy(() => import("./pages/Confirmation").then(m => ({ default: m.ConfirmationPage })));
