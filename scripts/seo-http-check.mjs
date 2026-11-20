@@ -64,7 +64,7 @@ try {
     assert.match(body, /href="\/blog\//);
     assert.match(body, /href="\/hosts"/);
     assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);
-    const desktopPreload = body.indexOf('href="/images/hero/before.webp"');
+    const desktopPreload = body.indexOf('href="/images/home-editorial/hero.webp"');
     assert.ok(desktopPreload > body.indexOf('name="viewport"'));
     assert.ok(desktopPreload < body.indexOf('<script type="module"'));
     assert.match(body, /rel="canonical" href="https:\/\/myhoma\.ir\/"/);

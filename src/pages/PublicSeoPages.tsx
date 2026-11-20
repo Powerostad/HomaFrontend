@@ -1,5 +1,5 @@
-import { HomeIntro } from './ProductLanding/components/HomeIntro';
-import { HomeDetails } from './ProductLanding/components/HomeDetails';
+import { HomeScrollExperience } from './ProductLanding/components/HomeScrollExperience';
+import { HomeNavigation } from '@/components/HomeNavigation';
 import { ImageWithFallback } from "@/components/figma/ImageWithFallback";
 import { siteLocale, useSiteTranslation } from '@/i18n/siteCopy';
 import { ARTICLES } from "@/seo/content";
@@ -52,7 +52,7 @@ function formatDimension(value?: string | null): string {
 
 /** Shares the editorial entry with the client landing, without router/provider dependencies. */
 export function SeoHome() {
-  return <div className="homa-homepage"><HomeIntro /><HomeDetails /></div>;
+  return <div className="homa-homepage"><HomeNavigation /><main><HomeScrollExperience /></main></div>;
 }
 
 function Breadcrumbs({ data }: PublicPageProps) {

@@ -1,15 +1,207 @@
 {
-  "studioAudit": {"extraction":"Product need extraction","matching":"Product matching","versionFailed":"Version {{number}} · image failed","cost":"Costs","time":"Timing and stages","data":"Prompts and outputs","stage":"Stage","model":"Model","status":"Status","duration":"Duration","input":"Input tokens","output":"Output tokens","analysis":"Room analysis","design":"Design","search":"Product search","image":"Image generation","conversation":"Conversation and design","validation":"Output validation","other":"Internal processing","success":"Succeeded","failed":"Failed","running":"Running","pending":"Pending","allTurns":"All turns","allData":"All records","inputs":"Inputs","outputs":"Outputs","searches":"Searches","characters":"characters","receipt":"Billing receipt ID","calls":"Cost per call","partialCost":"Received costs only; unknown is not zero.","timeHint":"Concurrent stage times must not be added together. Total processing excludes time between your messages.","milliseconds":"ms","seconds":"seconds","minutes":"minutes","readInput":"Read exact input","readOutput":"Read exact output","versionPending":"Version {{number}} · image pending","versionReady":"Version {{number}}","records":"{{count}} records","estimated":"Telemetry estimate; not a confirmed charge"},
-  "studioOrder": {"summary": "{{orderCount}} {{unit}} for {{demand}} {{demandUnit}} of design demand", "unit": {"piece": "piece", "pair": "pair", "pack": "pack", "roll": "roll", "m": "metre", "m2": "square metre", "litre": "litre"}},
-  "studioV2": {"reviewTitle":"Product and bundle review","currentPlan":"Current plan and review","costGaps":"{{count}} unresolved cost lines","verificationGaps":"{{count}} specification or stock issues","imageScope":"The image is a concept. Product photos may represent a family, and room measurements and exact image execution are not independently verified.","invalidSelection":"Your exact selection needs review; no substitute was approved.","needsReview":"Review required","requiredSpecs":"Required specifications","specification":"Product specification","reviewOnly":"Needs verification; unavailable for final purchase.","source":"Check product source","requestReview":"Review specifications","retrySearch":"Search again","blockedActions":"{{count}} dependent actions are waiting for prerequisites.","purchaseBlocked":"These selections need review before adding to the basket. Check specifications, quantities, stock and shared budget.","priceChanged":"A price has changed. Refresh and review the plan before continuing.","cm":"cm","status":{"accepted":"Bundle checks passed","repaired":"Bundle adjusted for budget or stock","needs_information":"More information is needed","replan_required":"The selection or design needs revision"},"purchase":{"ready":"Ready for a fresh purchase check","needs_verification":"Needs verification","unavailable":"Unavailable"},"feedback":{"wrong_size":"Size does not fit","wrong_style":"Style does not fit","request_alternative":"Find another option"},"route":{"retry_search":"Search was unavailable. Retry this item.","review_selection":"Review your selected variant.","verify_product":"Check specifications or current stock and price.","revise_design":"Revise selection to fit the shared budget and stock.","source_product":"No eligible match found. Review the specification or sourcing."},"attribute":{"width_cm":"Width","length_cm":"Length","height_cm":"Height","material":"Material","functional_role":"Function","subtype":"Exact product type"}},
-  "studioLocal": {"hint":"Local preview — sample data and images, no sign-in required","noModel":"Saved in this browser only. Local preview does not call an AI model.","noCheckout":"This sample basket does not place orders.","imageError":"The sample image could not load.","analysis":"Sample analysis: balance rug texture, furniture and lighting.","report":"About this local preview","clearChat":"Clear sample chat"},
-  "studioProductLayout": {"suggestionNumber":"Option","makePrimary":"Use as main product","title":"Recommended products","more":"More","swap":"Swap","keyProduct":"Key product","why":"Why this choice?","details":"Details","updateTitle":"Update this look?","updateHint":"Chat with HOMA to change products or the style of your room.","yes":"Yes","no":"No"},
-  "studioGuide": {"guidedHelp":"Get guided help","guideHint":"Every step is optional. Only your choices are saved; this guide does not start analysis.","step":"Step {{number}} of {{total}}","skip":"Skip","next":"Continue","doneGuide":"Back to final review"},
-  "studioBenchmark": {"currentLook":"Your look & selections","selectionCount":"{{count}} selected products","knownSubtotal":"Known-price subtotal:","chooseProducts":"Explore suggestions and make your selections","editSelection":"Edit selections","selectionHint":"Main recommendations and your selected products. This list stays in sync with your basket.","swap":"Explore alternatives","closeAlternatives":"Close alternatives"},
-  "studioPrint": {"trigger":"Print report / PDF","title":"Room design report","hint":"Preview of this version. Select “Save as PDF” or your printer in the print dialog.","print":"Print / Save PDF","preparing":"Preparing images and fonts…","error":"Images or fonts are not ready. Check your connection and try again.","date":"Prepared:","before":"Before","after":"Proposed after","summary":"Design summary","problems":"Observed problems","solution":"Suggested solution","noProblems":"No separate documented findings are available for this version. Product selection reasons are not presented as observed defects.","changes":"Proposed changes","noChanges":"No changes are saved for this version.","products":"Product list","selectionHint":"Your selected products are shown for each suggestion; otherwise its main recommendation is included.","noProducts":"No catalogue products are saved for this version.","selected":"Your selection","recommended":"HOMA recommendation","quantity":"Quantity","unitPrice":"Unit price","lineTotal":"Line total","unknown":"Unknown price / request a quote","store":"Store","knownSubtotal":"Known-price subtotal","costHint":"This is not an invoice. Prices are from the saved design, may have changed, and exclude delivery, installation and services.","unknownCount":"{{count}} unpriced lines are excluded from the subtotal.","layout":"Layout changes without purchases","services":"Services and external sourcing","footer":"Prepared by HOMA from this saved design. The proposed image is a simulation; actual execution may differ.","missingImage":"Image unavailable or failed to load."},
-  "studioProductEdit": {"title":"Change this suggestion","context":"About the product “{{name}}”","label":"What would you prefer?","placeholder":"For example: lighter color, wood, smaller size or a specific budget…","hint":"The product name above is sent with your message. Opening this form or choosing a preset sends nothing.","alternative":"Suggest a different product instead of this one.","send":"Send request","sending":"Reviewing your request…","cancel":"Close","failed":"Submission was not confirmed. Your draft is saved; check the conversation status.","sent":"Your request is in the conversation."},
-  "studioReport": {"reportTitle":"Performance, prompts & costs","copy":"Copy full text","copied":"Copied","copyError":"Copy failed. Select and copy the text."},
-  "studioFlow": { "backToDesign": "Back to design" },
+  "studioAudit": {
+    "extraction": "Product need extraction",
+    "matching": "Product matching",
+    "versionFailed": "Version {{number}} · image failed",
+    "cost": "Costs",
+    "time": "Timing and stages",
+    "data": "Prompts and outputs",
+    "stage": "Stage",
+    "model": "Model",
+    "status": "Status",
+    "duration": "Duration",
+    "input": "Input tokens",
+    "output": "Output tokens",
+    "analysis": "Room analysis",
+    "design": "Design",
+    "search": "Product search",
+    "image": "Image generation",
+    "conversation": "Conversation and design",
+    "validation": "Output validation",
+    "other": "Internal processing",
+    "success": "Succeeded",
+    "failed": "Failed",
+    "running": "Running",
+    "pending": "Pending",
+    "allTurns": "All turns",
+    "allData": "All records",
+    "inputs": "Inputs",
+    "outputs": "Outputs",
+    "searches": "Searches",
+    "characters": "characters",
+    "receipt": "Billing receipt ID",
+    "calls": "Cost per call",
+    "partialCost": "Received costs only; unknown is not zero.",
+    "timeHint": "Concurrent stage times must not be added together. Total processing excludes time between your messages.",
+    "milliseconds": "ms",
+    "seconds": "seconds",
+    "minutes": "minutes",
+    "readInput": "Read exact input",
+    "readOutput": "Read exact output",
+    "versionPending": "Version {{number}} · image pending",
+    "versionReady": "Version {{number}}",
+    "records": "{{count}} records",
+    "estimated": "Telemetry estimate; not a confirmed charge"
+  },
+  "studioOrder": {
+    "summary": "{{orderCount}} {{unit}} for {{demand}} {{demandUnit}} of design demand",
+    "unit": {
+      "piece": "piece",
+      "pair": "pair",
+      "pack": "pack",
+      "roll": "roll",
+      "m": "metre",
+      "m2": "square metre",
+      "litre": "litre"
+    }
+  },
+  "studioV2": {
+    "reviewTitle": "Product and bundle review",
+    "currentPlan": "Current plan and review",
+    "costGaps": "{{count}} unresolved cost lines",
+    "verificationGaps": "{{count}} specification or stock issues",
+    "imageScope": "The image is a concept. Product photos may represent a family, and room measurements and exact image execution are not independently verified.",
+    "invalidSelection": "Your exact selection needs review; no substitute was approved.",
+    "needsReview": "Review required",
+    "requiredSpecs": "Required specifications",
+    "specification": "Product specification",
+    "reviewOnly": "Needs verification; unavailable for final purchase.",
+    "source": "Check product source",
+    "requestReview": "Review specifications",
+    "retrySearch": "Search again",
+    "blockedActions": "{{count}} dependent actions are waiting for prerequisites.",
+    "purchaseBlocked": "These selections need review before adding to the basket. Check specifications, quantities, stock and shared budget.",
+    "priceChanged": "A price has changed. Refresh and review the plan before continuing.",
+    "cm": "cm",
+    "status": {
+      "accepted": "Bundle checks passed",
+      "repaired": "Bundle adjusted for budget or stock",
+      "needs_information": "More information is needed",
+      "replan_required": "The selection or design needs revision"
+    },
+    "purchase": {
+      "ready": "Ready for a fresh purchase check",
+      "needs_verification": "Needs verification",
+      "unavailable": "Unavailable"
+    },
+    "feedback": {
+      "wrong_size": "Size does not fit",
+      "wrong_style": "Style does not fit",
+      "request_alternative": "Find another option"
+    },
+    "route": {
+      "retry_search": "Search was unavailable. Retry this item.",
+      "review_selection": "Review your selected variant.",
+      "verify_product": "Check specifications or current stock and price.",
+      "revise_design": "Revise selection to fit the shared budget and stock.",
+      "source_product": "No eligible match found. Review the specification or sourcing."
+    },
+    "attribute": {
+      "width_cm": "Width",
+      "length_cm": "Length",
+      "height_cm": "Height",
+      "material": "Material",
+      "functional_role": "Function",
+      "subtype": "Exact product type"
+    }
+  },
+  "studioLocal": {
+    "hint": "Local preview — sample data and images, no sign-in required",
+    "noModel": "Saved in this browser only. Local preview does not call an AI model.",
+    "noCheckout": "This sample basket does not place orders.",
+    "imageError": "The sample image could not load.",
+    "analysis": "Sample analysis: balance rug texture, furniture and lighting.",
+    "report": "About this local preview",
+    "clearChat": "Clear sample chat"
+  },
+  "studioProductLayout": {
+    "suggestionNumber": "Option",
+    "makePrimary": "Use as main product",
+    "title": "Recommended products",
+    "more": "More",
+    "swap": "Swap",
+    "keyProduct": "Key product",
+    "why": "Why this choice?",
+    "details": "Details",
+    "updateTitle": "Update this look?",
+    "updateHint": "Chat with HOMA to change products or the style of your room.",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "studioGuide": {
+    "guidedHelp": "Get guided help",
+    "guideHint": "Every step is optional. Only your choices are saved; this guide does not start analysis.",
+    "step": "Step {{number}} of {{total}}",
+    "skip": "Skip",
+    "next": "Continue",
+    "doneGuide": "Back to final review"
+  },
+  "studioBenchmark": {
+    "currentLook": "Your look & selections",
+    "selectionCount": "{{count}} selected products",
+    "knownSubtotal": "Known-price subtotal:",
+    "chooseProducts": "Explore suggestions and make your selections",
+    "editSelection": "Edit selections",
+    "selectionHint": "Main recommendations and your selected products. This list stays in sync with your basket.",
+    "swap": "Explore alternatives",
+    "closeAlternatives": "Close alternatives"
+  },
+  "studioPrint": {
+    "trigger": "Print report / PDF",
+    "title": "Room design report",
+    "hint": "Preview of this version. Select “Save as PDF” or your printer in the print dialog.",
+    "print": "Print / Save PDF",
+    "preparing": "Preparing images and fonts…",
+    "error": "Images or fonts are not ready. Check your connection and try again.",
+    "date": "Prepared:",
+    "before": "Before",
+    "after": "Proposed after",
+    "summary": "Design summary",
+    "problems": "Observed problems",
+    "solution": "Suggested solution",
+    "noProblems": "No separate documented findings are available for this version. Product selection reasons are not presented as observed defects.",
+    "changes": "Proposed changes",
+    "noChanges": "No changes are saved for this version.",
+    "products": "Product list",
+    "selectionHint": "Your selected products are shown for each suggestion; otherwise its main recommendation is included.",
+    "noProducts": "No catalogue products are saved for this version.",
+    "selected": "Your selection",
+    "recommended": "HOMA recommendation",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total",
+    "unknown": "Unknown price / request a quote",
+    "store": "Store",
+    "knownSubtotal": "Known-price subtotal",
+    "costHint": "This is not an invoice. Prices are from the saved design, may have changed, and exclude delivery, installation and services.",
+    "unknownCount": "{{count}} unpriced lines are excluded from the subtotal.",
+    "layout": "Layout changes without purchases",
+    "services": "Services and external sourcing",
+    "footer": "Prepared by HOMA from this saved design. The proposed image is a simulation; actual execution may differ.",
+    "missingImage": "Image unavailable or failed to load."
+  },
+  "studioProductEdit": {
+    "title": "Change this suggestion",
+    "context": "About the product “{{name}}”",
+    "label": "What would you prefer?",
+    "placeholder": "For example: lighter color, wood, smaller size or a specific budget…",
+    "hint": "The product name above is sent with your message. Opening this form or choosing a preset sends nothing.",
+    "alternative": "Suggest a different product instead of this one.",
+    "send": "Send request",
+    "sending": "Reviewing your request…",
+    "cancel": "Close",
+    "failed": "Submission was not confirmed. Your draft is saved; check the conversation status.",
+    "sent": "Your request is in the conversation."
+  },
+  "studioReport": {
+    "reportTitle": "Performance, prompts & costs",
+    "copy": "Copy full text",
+    "copied": "Copied",
+    "copyError": "Copy failed. Select and copy the text."
+  },
+  "studioFlow": {
+    "backToDesign": "Back to design"
+  },
   "studioCollection": {
     "workspaceTitle": "Your space, reimagined",
     "image": "Room",
@@ -20,33 +212,114 @@
     "noPhoto": "Product photo unavailable",
     "exploreProducts": "Explore the products"
   },
-  "studioPerformance": { "title": "Performance report", "hint": "Latest run in this conversation; timing includes queue wait. Unknown cost does not mean zero.", "refresh": "Refresh report", "pending": "The report completes after processing.", "unavailable": "No performance data for this run yet. Historical runs cannot be reconstructed.", "elapsed": "Total time", "calls": "API calls", "cost": "Estimated cost", "input": "Input tokens", "output": "Output tokens", "stages": "Stage details" },
+  "studioPerformance": {
+    "title": "Performance report",
+    "hint": "Latest run in this conversation; timing includes queue wait. Unknown cost does not mean zero.",
+    "refresh": "Refresh report",
+    "pending": "The report completes after processing.",
+    "unavailable": "No performance data for this run yet. Historical runs cannot be reconstructed.",
+    "elapsed": "Total time",
+    "calls": "API calls",
+    "cost": "Estimated cost",
+    "input": "Input tokens",
+    "output": "Output tokens",
+    "stages": "Stage details"
+  },
   "studioWorkspace": {
-    "studio": "Studio", "workspace": "Design workspace", "workbenchTitle": "Your space, through Homa’s eyes", "conversation": "Conversation", "products": "Products", "refine": "Refine in conversation", "awaitingDesign": "No design recommendation yet",
-    "entryTitle": "A better version of home starts here.", "entryHint": "Share a photo of your room. Talk through changes with Homa, then explore design recommendations and products that fit your space.",
-    "startSteps": "Start your design", "photoStep": "Room photo", "detailsStep": "Your brief", "uploadTitle": "Start with your own space", "dropHint": "Drop your photo here, or choose one from your device.", "choosePhoto": "Choose a room photo", "takePhoto": "Take a photo", "fileHint": "JPG, PNG, WebP or HEIC · up to 8 MB after conversion",
-    "photoTips": "What makes a good photo?", "photoTipsHint": "Photograph from a corner in good light, showing the floor, walls and main furniture. Avoid blurry photos or close-ups.", "exampleAlt": "Example of a clear room photo showing the floor and main furniture", "exampleLabel": "An example of a good angle", "exampleCaption": "This is an example. Your design starts with your own photo.", "yourRoom": "Your room photo", "photoReady": "Review your photo and brief before starting.",
-    "reviewTitle": "What would you like to change?", "reviewHint": "Start with just your photo, or tell Homa what you like and which pieces should stay.", "briefLabel": "Your brief", "briefPlaceholder": "For example: warmer and brighter, but keep the sofas and the current rug…", "preferences": "Room type, budget and pieces to keep (optional)", "roomType": "Room type", "smallPhoto": "This photo has a low resolution, so some details may be missed. Choose a clearer photo or continue with this one.", "start": "Start designing with Homa", "startHint": "Homa will analyse your space after you start. Refine the recommendation in the same conversation.", "savedHint": "After starting, your conversation is saved to your account. Return and continue from My designs.", "preparing": "Preparing your photo…", "photoError": "The photo could not be read. Choose a valid JPG, PNG or WebP under 8 MB. HEIC is supported after conversion.",
-    "rooms": { "accommodation_room": "Accommodation room", "accommodation_test": "Accommodation test", "bedroom": "Bedroom", "living_room": "Living room", "kitchen": "Kitchen", "balcony": "Balcony", "full_home": "Whole home", "not_sure": "Not sure" },
-    "goals": { "low_budget": "Low budget", "warmer": "Warmer and cosier", "modernize": "More modern", "declutter": "Less clutter", "improve_for_rent_or_sale": "Improve for sale or rent" }
+    "studio": "Studio",
+    "workspace": "Design workspace",
+    "workbenchTitle": "Your space, through Homa’s eyes",
+    "conversation": "Conversation",
+    "products": "Products",
+    "refine": "Refine in conversation",
+    "awaitingDesign": "No design recommendation yet",
+    "entryTitle": "A better version of home starts here.",
+    "entryHint": "Share a photo of your room. Talk through changes with Homa, then explore design recommendations and products that fit your space.",
+    "startSteps": "Start your design",
+    "photoStep": "Room photo",
+    "detailsStep": "Your brief",
+    "uploadTitle": "Start with your own space",
+    "dropHint": "Drop your photo here, or choose one from your device.",
+    "choosePhoto": "Choose a room photo",
+    "takePhoto": "Take a photo",
+    "fileHint": "JPG, PNG, WebP or HEIC · up to 8 MB after conversion",
+    "photoTips": "What makes a good photo?",
+    "photoTipsHint": "Photograph from a corner in good light, showing the floor, walls and main furniture. Avoid blurry photos or close-ups.",
+    "exampleAlt": "Example of a clear room photo showing the floor and main furniture",
+    "exampleLabel": "An example of a good angle",
+    "exampleCaption": "This is an example. Your design starts with your own photo.",
+    "yourRoom": "Your room photo",
+    "photoReady": "Review your photo and brief before starting.",
+    "reviewTitle": "What would you like to change?",
+    "reviewHint": "Start with just your photo, or tell Homa what you like and which pieces should stay.",
+    "briefLabel": "Your brief",
+    "briefPlaceholder": "For example: warmer and brighter, but keep the sofas and the current rug…",
+    "preferences": "Room type, budget and pieces to keep (optional)",
+    "roomType": "Room type",
+    "smallPhoto": "This photo has a low resolution, so some details may be missed. Choose a clearer photo or continue with this one.",
+    "start": "Start designing with Homa",
+    "startHint": "Homa will analyse your space after you start. Refine the recommendation in the same conversation.",
+    "savedHint": "After starting, your conversation is saved to your account. Return and continue from My designs.",
+    "preparing": "Preparing your photo…",
+    "photoError": "The photo could not be read. Choose a valid JPG, PNG or WebP under 8 MB. HEIC is supported after conversion.",
+    "rooms": {
+      "accommodation_room": "Accommodation room",
+      "accommodation_test": "Accommodation test",
+      "bedroom": "Bedroom",
+      "living_room": "Living room",
+      "kitchen": "Kitchen",
+      "balcony": "Balcony",
+      "full_home": "Whole home",
+      "not_sure": "Not sure"
+    },
+    "goals": {
+      "low_budget": "Low budget",
+      "warmer": "Warmer and cosier",
+      "modernize": "More modern",
+      "declutter": "Less clutter",
+      "improve_for_rent_or_sale": "Improve for sale or rent"
+    }
   },
   "studioDiagnostics": {
-    "handoffs": "Actual stage inputs & mother-output comparison", "handoffHint": "Inspect the analysis request, product search intent and image input for each turn. Execution constraints are recorded separately from the mother document.", "noHandoffs": "No handoffs in the loaded steps. Load older steps if available; capture starts with the new release.",
-    "analysisInput": "Analysis & conversation input", "imageInput": "Image generation input", "searchInput": "Product search input & results", "canonicalOutput": "1. Complete original mother output", "actualImagePrompt": "2. Actual prompt sent to the image model", "amendments": "3. Differences, constraints & reasons",
-    "title": "Prompt output & costs", "hint": "Private report for this conversation. Viewing it never generates an image.",
-    "session": "Conversation ID:", "loading": "Loading report…", "error": "Could not load the report. Close and reopen this panel.",
-    "cost": "Conversation API expenses", "total": "Recorded subtotal", "text": "Analysis & chat", "image": "Image generation",
-    "paid": "Paid from toman balance", "grant": "Grants & packages used", "unknown": "Unknown",
-    "pending": "Awaiting billing receipts", "partial": "Incomplete report; this is not the full conversation cost.",
-    "settled": "Recorded requests have confirmed costs.", "unavailable": "Older billing IDs were not recorded; costs cannot be reconstructed.",
+    "handoffs": "Actual stage inputs & mother-output comparison",
+    "handoffHint": "Inspect the analysis request, product search intent and image input for each turn. Execution constraints are recorded separately from the mother document.",
+    "noHandoffs": "No handoffs in the loaded steps. Load older steps if available; capture starts with the new release.",
+    "analysisInput": "Analysis & conversation input",
+    "imageInput": "Image generation input",
+    "searchInput": "Product search input & results",
+    "canonicalOutput": "1. Complete original mother output",
+    "actualImagePrompt": "2. Actual prompt sent to the image model",
+    "amendments": "3. Differences, constraints & reasons",
+    "title": "Prompt output & costs",
+    "hint": "Private report for this conversation. Viewing it never generates an image.",
+    "session": "Conversation ID:",
+    "loading": "Loading report…",
+    "error": "Could not load the report. Close and reopen this panel.",
+    "cost": "Conversation API expenses",
+    "total": "Recorded subtotal",
+    "text": "Analysis & chat",
+    "image": "Image generation",
+    "paid": "Paid from toman balance",
+    "grant": "Grants & packages used",
+    "unknown": "Unknown",
+    "pending": "Awaiting billing receipts",
+    "partial": "Incomplete report; this is not the full conversation cost.",
+    "settled": "Recorded requests have confirmed costs.",
+    "unavailable": "Older billing IDs were not recorded; costs cannot be reconstructed.",
     "costHint": "Text and image API only; excludes products, infrastructure and auxiliary services. No guessed USD-to-toman exchange rate.",
     "gaps": "Unmeasured requests: {{unknown}} · Pending receipts: {{pending}}",
-    "refresh": "Fetch actual expenses from AvalAI", "refresh_cooldown": "Wait 35 seconds before refreshing billing again.",
+    "refresh": "Fetch actual expenses from AvalAI",
+    "refresh_cooldown": "Wait 35 seconds before refreshing billing again.",
     "refresh_unavailable": "Billing service is unavailable; previously recorded costs are retained.",
-    "current": "Complete current mother-prompt document", "currentHint": "Accepted model output before UI summarization. Its fields are not translated or rewritten.",
-    "versions": "Output associated with image versions", "steps": "Output and execution by step", "turn": "Turn",
+    "current": "Complete current mother-prompt document",
+    "currentHint": "Accepted model output before UI summarization. Its fields are not translated or rewritten.",
+    "versions": "Output associated with image versions",
+    "steps": "Output and execution by step",
+    "turn": "Turn",
     "stepsHint": "model-response is model output before technical validation; render-audit is the actual image prompt. The primary step record shows acceptance or rejection. Older traces may be clipped or missing.",
-    "more": "Load older steps", "download": "Download JSON report", "private": "This report contains private room and conversation data. Downloads include loaded steps only; load older steps first to export more."
+    "more": "Load older steps",
+    "download": "Download JSON report",
+    "private": "This report contains private room and conversation data. Downloads include loaded steps only; load older steps first to export more."
   },
   "studioChat": {
     "title": "Design studio",
@@ -434,7 +707,11 @@
       "discuss": "Have feedback or a change in mind?",
       "acceptDecision": "Choose this design change",
       "decisionSelected": "Design change selected",
-      "tier": { "quick_win": "Quick changes", "enhancement": "Enhance your space", "structural": "Structural changes" }
+      "tier": {
+        "quick_win": "Quick changes",
+        "enhancement": "Enhance your space",
+        "structural": "Structural changes"
+      }
     },
     "title": "Homa Studio",
     "subtitle": "AI-powered room redesign",
@@ -672,7 +949,7 @@
         "recommendationsTitle": "Recommendations to explore",
         "noRecommendations": "No product recommendations are available for this space.",
         "hero": {
-      "compareLabel": "Compare before and after",
+          "compareLabel": "Compare before and after",
           "title": "Design result image",
           "generatedAlt": "Redesigned view of your space",
           "originalAlt": "Your space before redesign",
@@ -920,6 +1197,17 @@
     "formatInfo": "JPG, PNG, WebP — Max {{size}}MB"
   },
   "landing": {
+    "editorial": {
+      "journey": {
+        "design": "Design.",
+        "choose": "Choose.",
+        "shop": "Shop."
+      },
+      "shoppingTitle": "From the design,",
+      "shoppingAccent": "to your selections.",
+      "journalTitle": "The Homa Journal",
+      "heroDisclosure": "AI-generated concept image"
+    },
     "experience": {
       "navigation": "Homepage navigation",
       "nav": {
@@ -967,7 +1255,7 @@
         },
         "choose": {
           "title": "A reason for every choice.",
-          "description": "Select a marker or an option to explore what matters when choosing each piece."
+          "description": "Select an option to explore what matters when choosing each piece."
         },
         "shop": {
           "title": "Take your choices to the shop.",
@@ -1049,7 +1337,7 @@
         },
         "cost": {
           "question": "How are design and shopping costs calculated?",
-          "answer": "Design features depend on your account credits and enabled capabilities. Product prices are checked separately for your selections. Contact support for credit details."
+          "answer": "Get your photo and preferences ready before signing in. You can also try the homepage example without an account. Sign in to start the analysis. Creating or refining a design depends on your credits and the features available to your account. Products are priced separately from design credits. Check the seller’s price, stock and shipping."
         },
         "accuracy": {
           "question": "How accurate is the design image?",
@@ -1058,7 +1346,7 @@
       },
       "closing": {
         "eyebrow": "Homa. A better version of your home.",
-        "title": "Your next room starts here."
+        "title": "Start here for your home."
       }
     },
     "home": {
@@ -1179,6 +1467,445 @@
       "entFeature2": "Account manager",
       "entFeature3": "SLA contract",
       "entFeature4": "Hourly backup"
+    },
+    "redesign": {
+      "hero": "Reimagine",
+      "heroAccent": "your home.",
+      "promise": "From design to shopping, with you.",
+      "intro": "Share a photo, explore ideas, refine your design and choose pieces for your space.",
+      "start": "Start designing",
+      "explore": "Explore Homa",
+      "heroAlt": "Warm living room with furniture and a rug; inspirational image",
+      "manifest": "A fresh perspective.",
+      "manifestAccent": "A more considered choice.",
+      "manifestBody": "Homa connects what you imagine with what you choose for your home. Explore layouts, moods and relevant pieces, then continue your purchase with the seller.",
+      "designLabel": "Design in your space",
+      "story": "The same home.",
+      "storyAccent": "A different feeling.",
+      "storyBody": "Start with a room photo. Tell us the mood you want, what should stay and your shopping budget. Explore the proposal and discuss changes.",
+      "shopLink": "From design to product choices",
+      "flow": "It starts with a photo.",
+      "photoTitle": "Introduce your space",
+      "photoBody": "A photo, your wishes and the pieces you want to keep.",
+      "designTitle": "Explore a proposal",
+      "designBody": "Layout ideas and suggested changes for your room.",
+      "chooseTitle": "Refine and choose",
+      "chooseBody": "Review the design and compare relevant options.",
+      "buyTitle": "Decide what to buy",
+      "buyBody": "Review your selections and continue with the seller.",
+      "preserveLabel": "Change what matters",
+      "preserve": "Keep the things",
+      "preserveAccent": "you love.",
+      "preserveBody": "Sometimes a rug, light or textile changes how a room feels. Specify the pieces you want to keep as part of your design brief.",
+      "prompt": "“Keep the sofa. Suggest a better-fitting rug.”",
+      "bedroom": "Try it for your room",
+      "rugAlt": "Illustrative comparison of a rug change",
+      "compare": "Show before or after",
+      "shopLabel": "Design and shopping, connected",
+      "shopTitle": "A design you can choose from.",
+      "shopBody": "Consider each choice in the context of your space. In Studio, review product suggestions, reasons, placement and alternatives.",
+      "chooseElement": "Choose a room element",
+      "rug": "Rug",
+      "light": "Lighting",
+      "curtain": "Curtains",
+      "rugHeading": "Ground the arrangement.",
+      "rugReason": "Rug size and placement connect the sofa and table. Consider how it fits the seating area before choosing a pattern.",
+      "lightHeading": "Change the atmosphere.",
+      "lightReason": "A light beside the sofa can define a reading or relaxing corner. Placement matters as much as appearance.",
+      "curtainHeading": "Balance daylight and privacy.",
+      "curtainReason": "Choose curtain material and dimensions for your light and privacy needs. Colour is only part of the decision.",
+      "seller": "Confirm final price, availability and purchase terms with the seller.",
+      "ownProducts": "Explore options for your space",
+      "roomAlt": "Living room with rug, lighting and curtain selection points",
+      "concept": "Conceptual selection demo; this image is not a list of purchasable products.",
+      "refineLabel": "Keep the conversation going",
+      "refineTitle": "Your first idea is just the beginning.",
+      "refineBody": "Refine your request, ask for another option and review design versions. Your choices can shape the direction.",
+      "promptOne": "“I would like a lighter option.”",
+      "promptTwo": "“Preview this product in my room.”",
+      "promptThree": "“Let’s return to the previous design.”",
+      "promptHint": "Example requests. These links take you to Studio to begin."
+    },
+    "choices": {
+      "heading": "From a room design to a shopping list",
+      "intro": "HOMA designs on your room photo, finds pieces that fit the look and shows you where to get them.",
+      "selector": "Choose an example",
+      "after": "HOMA design",
+      "start": "Design and shop for my room",
+      "sample": "Illustrative designs. Confirm specifications and pricing with the seller or maker.",
+      "wardrobe": {
+        "name": "Wardrobe",
+        "question": "Could a wardrobe work in this corner?",
+        "answer": "See a full-height, two-door wardrobe in place of the rail. Take the design to a maker for measurements and a quote.",
+        "before": "Open clothes rail beside a bed with navy bedding",
+        "after": "Full-height wooden wardrobe in place of the rail",
+        "item": "Custom wood-look wardrobe",
+        "seller": "Estimate with Arayan Tarsim"
+      },
+      "bathroom": {
+        "name": "Bathroom",
+        "question": "Which vanity goes with these tiles?",
+        "answer": "HOMA pairs sand tiles with a wood-look vanity and a round mirror. Compare vanities that suit the design.",
+        "before": "Blue tiles, pedestal basin and rectangular mirror",
+        "after": "Sand tiles, wooden vanity and round mirror",
+        "item": "Wood-look vanity",
+        "seller": "Browse models at Caspian"
+      },
+      "curtain": {
+        "name": "Curtains",
+        "question": "Which curtains should I buy?",
+        "answer": "See ivory sheers and full-length side panels with your rug and sofas. Start with fabric for the sheer layer.",
+        "before": "Sheer curtain over the living room window",
+        "after": "Full-length drapes around the sheer curtain in the same room",
+        "item": "Plain ivory sheer",
+        "seller": "View fabric at Evim Decor"
+      },
+      "wallpaper": {
+        "name": "Wallpaper",
+        "question": "How will the pattern look across the wall?",
+        "answer": "See the botanical repeat behind the bed, then look up a similar motif in the seller’s collection.",
+        "before": "Plain wall behind the bed",
+        "after": "The same wall with botanical wallpaper",
+        "item": "Botanical wallpaper",
+        "seller": "See a similar pattern at Extreme Walls"
+      }
+    },
+    "scroll": {
+      "headline": "A new way to design and shop for your home.",
+      "intro": "Homa is your interior design assistant. See ideas in your own space, refine the design to your taste, and let Homa search for pieces that fit.",
+      "tagline": "From a first idea to a room you love.",
+      "discover": "Watch the room evolve",
+      "storyLabel": "The story of a room",
+      "roomAlt": "The same room at different stages",
+      "line0": "Start with what you own.",
+      "line0Body": "From your room photo, Homa suggests which pieces to keep and what to move.",
+      "line1": "Homa shows you a better version of your home.",
+      "line1Body": "Before buying, see how a new layout or a small change can bring the room together.",
+      "line2": "Buy only what you need.",
+      "line2Body": "For the design you choose, look for pieces with a clear place in your room and a price that fits your budget.",
+      "illustration": "Concept images created with AI",
+      "studioTitle": "A companion for the whole design journey.",
+      "studioBody": "From imagining a room to refining the design and choosing its pieces.",
+      "workspaceLabel": "Design experience preview",
+      "openStudio": "Open Studio",
+      "yourRoom": "Your room",
+      "workspacePrompt": "“Make it warmer. Keep the bed and wardrobe.”",
+      "warm": "Light design",
+      "dark": "Dark design",
+      "previewHint": "Switch between two proposals.",
+      "workspaceDisclosure": "Simplified experience preview with illustrative images.",
+      "featuresTitle": "Say what should change.",
+      "featuresBody": "A product, a fabric, a new feeling. Compare the effect of your choice in the room.",
+      "examples": "Change examples",
+      "request": "Your request",
+      "wardrobeTitle": "Design a built-in wardrobe.",
+      "wardrobePrompt": "“Replace the clothes rack with a floor-to-ceiling oak wardrobe.”",
+      "lampAlt": "Ceramic table lamp with a light shade",
+      "bathroomTitle": "See finishes in your space.",
+      "bathroomPrompt": "“Use cream tiles, a wood vanity and a round backlit mirror.”",
+      "bathroomMaterials": {
+        "label": "Example finishes and fixtures",
+        "wallTile": "Wall tile",
+        "floorTile": "Floor tile",
+        "vanity": "Vanity",
+        "faucet": "Faucet",
+        "mirror": "Mirror",
+        "light": "Lighting"
+      },
+      "curtainTitle": "Change the curtains.",
+      "curtainPrompt": "“Try floor-length cream drapes and light sheers on this window.”",
+      "fabricAlt": "Brown plaid fabric sample",
+      "wallpaperTitle": "Try a wallpaper swatch on your wall.",
+      "wallpaperPrompt": "“Apply cream-and-olive botanical wallpaper to the wall behind the bed.”",
+      "wallpaperAlt": "Botanical wallpaper swatch",
+      "examplesDisclosure": "Illustrative examples; these products and materials are not sale recommendations.",
+      "shopTitle": "From a design you love to shopping choices.",
+      "shopBody": "In Studio, review relevant suggestions, reasons and placement. Confirm specifications and purchase terms with the seller.",
+      "bedroom": "Start with a bedroom"
+    },
+    "beforeBuying": {
+      "title": "From choosing to designing and shopping with Homa",
+      "start": "Start with my room photo",
+      "next": "Continue the story",
+      "viewExample": "Explore a sample result",
+      "navigation": "Your journey with Homa",
+      "promptLabel": "Start with a request like this",
+      "prompt": "I want a warm, comfortable living room. Keep my current sofa.",
+      "problem": {
+        "label": "When choosing feels difficult",
+        "title": "Ready for a change,",
+        "emphasis": "but not sure what to buy?",
+        "body": "Which colour? Which style? Will it work with what I own? So many options, but no clear picture of how they will look in your home.",
+        "alt": "A person considering sofas, lighting, rugs and accessories for their home"
+      },
+      "room": {
+        "label": "First, understand your space",
+        "title": "Homa starts",
+        "emphasis": "with your home.",
+        "body": "Share a photo. Homa examines the layout and existing furniture. Tell it your needs, measurements and any constraints to consider.",
+        "alt": "Illustration of Homa examining a living room layout and existing furniture"
+      },
+      "options": {
+        "label": "Then, design around you",
+        "title": "Your taste. Your furniture.",
+        "emphasis": "A design for your home.",
+        "body": "Say what you love and what should stay. See a proposal in your own room, then refine it through conversation.",
+        "alt": "Reviewing a living room design based on needs, taste and existing furniture",
+        "needs": "Your needs",
+        "taste": "Your taste",
+        "keep": "What stays"
+      },
+      "purchase": {
+        "label": "Now, from design to shopping",
+        "title": "Start with a photo,",
+        "emphasis": "shop with a plan.",
+        "body": "Share a photo and see suggested pieces in your own room. Review the cost of each item alongside the design so you can decide where to spend your budget.",
+        "alt": "A living room with a cream sofa, round table, lighting and coordinated accessories",
+        "picks": "Living room estimate",
+        "sofa": "Light-coloured sofa",
+        "lamp": "Floor lamp",
+        "table": "Round table",
+        "unit": "Amounts in toman",
+        "rug": "Rug",
+        "art": "Wall art",
+        "total": "Total cost",
+        "disclosure": "Illustrative example with sample prices"
+      }
+    },
+    "accessories": {
+      "style": {
+        "title": "One living room, two different moods.",
+        "body": "Classic upholstery or clean lines and warm wood? See both styles in a photo of your own home with Homa, then decide what suits the room before you buy.",
+        "classic": "Classic styling",
+        "modern": "Modern styling",
+        "classicAlt": "Classic living room with ornate sofas, a patterned rug and floral wallpaper",
+        "modernAlt": "The same living room with simple light upholstery, wooden tables and green plants"
+      },
+      "title": "Give your home a fresh feel with a few accessories.",
+      "body": "Share a photo of your space. Homa shows how lamps, cushions and other details can work together in your room, so you can choose what to buy.",
+      "beforeAlt": "Living room before styling, with light sofas and a wooden table",
+      "afterAlt": "The same living room with warmer lighting, plants, cushions and new accessories"
+    },
+    "studioPath": {
+      "viewExample": "See a sample result",
+      "title": "Start with one photo",
+      "costTitle": "Design costs and credits",
+      "photo": {
+        "title": "Choose a room photo",
+        "body": "Use one clear photo of the space you want to change."
+      },
+      "request": {
+        "title": "Say what should stay",
+        "body": "Tell us your goal, what you want to keep and where you want a change."
+      },
+      "result": {
+        "title": "See the design and shopping options",
+        "body": "Compare your design with the original photo, see why things changed and explore related products."
+      },
+      "cost": {
+        "draft": {
+          "title": "Prepare your request",
+          "body": "Get your photo and preferences ready before signing in. You can also try the homepage example without an account."
+        },
+        "design": {
+          "title": "Analysis and design",
+          "body": "Sign in to start the analysis. Creating or refining a design depends on your credits and the features available to your account."
+        },
+        "purchase": {
+          "title": "Shopping for pieces",
+          "body": "Products are priced separately from design credits. Check the seller’s price, stock and shipping."
+        }
+      }
+    },
+    "studioExample": {
+      "previewTitle": "Homa, your designer and",
+      "previewTitleAccent": "smart shopping assistant",
+      "previewBody": "Homa shows the changes in a photo of your home and finds pieces for the look you like.",
+      "briefTitle": "Sample brief",
+      "briefBody": "Make the cabin brighter and cosier while keeping the bed and timber walls.",
+      "shopping": {
+        "tab": "Shopping",
+        "viewOption": "See a similar product",
+        "similar": "Similar to the rug in the design",
+        "spec": "Natural jute · {{size}} cm",
+        "rugLine": "Rug, one unit",
+        "curtainLine": "Curtains",
+        "curtainQuote": "Measure and request a quote",
+        "subtotal": "Subtotal for priced items",
+        "price": "{{value}} toman",
+        "checked": "Sample seller price checked on {{date}}.",
+        "exclusions": "Curtains and delivery are excluded. Check current price and stock with the seller.",
+        "seller": "View product at {{name}}"
+      },
+      "title": "Explore the result in Studio.",
+      "intro": "Compare the original photo and the new design, then select a marker to see why each change was suggested.",
+      "project": "Cabin bedroom",
+      "sample": "Sample project",
+      "recommendations": "Recommendations",
+      "analysis": "Room analysis",
+      "analysisTitle": "What changed?",
+      "keep": "Keep",
+      "keepBody": "Keep the bed and timber walls to retain the character of the cabin.",
+      "change": "Change",
+      "changeBody": "Orange curtains tinted the daylight and the floor had one continuous finish. Pale curtains and a textured rug change both.",
+      "curtain": {
+        "name": "Curtains",
+        "title": "Pale, light-filtering curtains",
+        "reason": "A lighter fabric softens daylight and lets the natural colour of the timber show.",
+        "placement": "Use around the room, with curtains that tie back on either side."
+      },
+      "rug": {
+        "name": "Rug",
+        "title": "A textured rug beside the bed",
+        "reason": "A pale rug defines the sleeping area and adds a softer surface underfoot.",
+        "placement": "Extend it from under the bed into the walkway beside it."
+      },
+      "shoppingList": {
+        "title": "Shopping list for this design",
+        "intro": "Suggested pieces for the cabin makeover",
+        "items": {
+          "rug": "Light rug with a natural texture",
+          "curtains": "Light, sheer curtains",
+          "bedding": "Light bedding, sheets and olive cushions",
+          "chair": "Wooden armchair and throw",
+          "mirror": "Full-length mirror with a wooden frame",
+          "table": "Bedside table and chair-side table",
+          "lamp": "Table lamp with warm light",
+          "pendant": "Woven pendant lampshade",
+          "plants": "Houseplants and woven planters",
+          "accessories": "Baskets, tray, candles and decorative accessories"
+        },
+        "compactItems": {
+          "rug": "Textured rug",
+          "curtains": "Light curtains",
+          "bedding": "Bedding & cushions",
+          "chair": "Armchair & throw",
+          "mirror": "Full-length mirror",
+          "table": "Side tables",
+          "lamp": "Table lamp",
+          "pendant": "Pendant light",
+          "plants": "Plants & planters",
+          "accessories": "Baskets & accessories"
+        }
+      }
+    },
+    "heroGallery": {
+      "pauseVideo": "Pause background video",
+      "playVideo": "Play background video",
+      "carousel": "carousel",
+      "label": "From design to shopping",
+      "choose": "Choose a space",
+      "previous": "Previous slide",
+      "next": "Next slide",
+      "compare": "Compare before and after",
+      "home": {
+        "label": "Design & shop"
+      },
+      "bedroom": {
+        "label": "Bedroom",
+        "title": "The same bed. A whole new feeling.",
+        "body": "Explore bedding, rugs and lighting in your room. Try your design in Homa, then choose the pieces to bring it together.",
+        "cta": "Design my bedroom"
+      },
+      "living": {
+        "label": "Living room",
+        "title": "Start with the sofa you already love.",
+        "body": "You do not need to replace everything. See rugs, colours and accessories in your space before choosing what to buy.",
+        "cta": "Reimagine my living room"
+      },
+      "cabin": {
+        "label": "For hosts",
+        "title": "A place your guests will want to stay.",
+        "body": "Give your guest space a fresh feeling, from layout ideas to choosing the pieces that complete the room.",
+        "cta": "Explore Homa for hosts"
+      }
+    },
+    "buyingJourney": {
+      "title": "From wanting a change to designing and shopping with Homa",
+      "navigation": "Five chapters of your home",
+      "start": "Start with my room photo",
+      "next": "Continue the story",
+      "viewExample": "Explore the studio example",
+      "scroll": "Scroll through the story",
+      "thought": {
+        "label": "A wish for change",
+        "title": "Ready for a change.",
+        "emphasis": "But where to begin?",
+        "body": "You look around your home and imagine a different feeling. You are not yet sure what to change, or what to keep.",
+        "alt": "A woman sits on her existing sofa, thinking about changing her living room",
+        "caption": "It starts here. Your home, and the things already in it.",
+        "ribbon": "You want a change at home. But you do not know where to begin."
+      },
+      "search": {
+        "label": "Too many choices",
+        "title": "So many choices.",
+        "emphasis": "Which fits your home?",
+        "body": "Everything looks good in the showroom. But next to your sofa, rug and lighting? It is hard to choose without seeing the whole picture.",
+        "question": "What if I buy it and it does not work in my room?",
+        "alt": "A black-and-white photograph of a woman seen from behind in a furniture showroom",
+        "caption": "It is about how your choices work together.",
+        "ribbon": "Hours of searching. Still unsure what works in your home."
+      },
+      "assistant": {
+        "label": "Meet Homa",
+        "title": "This is where",
+        "emphasis": "Homa joins you.",
+        "body": "Homa reviews your room and finds layout solutions for your furniture, taste and budget.",
+        "alt": "The same woman photographs the original living room with her phone",
+        "analysis": "A look at this living room",
+        "services": {
+          "review": "Layout review",
+          "personal": "Personal design",
+          "shop": "Shopping suggestions",
+          "plan": "Installation planning"
+        },
+        "layout": "Layout",
+        "keep": "Worth keeping",
+        "needs": "Your needs and taste",
+        "dimensions": "You also provide the room measurements and constraints.",
+        "ribbon": "Imagine having an interior designer by your side.",
+        "sample": "Illustrative example",
+        "direction": "Daylight",
+        "notes": {
+          "layout": "The coffee table sits close to the walkway. A more open layout could make it easier to move through the room.",
+          "keep": "The dining table already fits beside the kitchen. Keeping it leaves more of the budget for the seating area.",
+          "direction": "Daylight comes in at the balcony. Lighter curtains could carry it further into the room."
+        },
+        "seeDesign": "See the change Homa suggests."
+      },
+      "result": {
+        "label": "From design to shopping",
+        "title": "See it in your room.",
+        "emphasis": "Then decide what to buy.",
+        "body": "Explore the design and refine it through conversation. Homa searches for pieces that suit your plan, helping you move from an idea to a choice.",
+        "alt": "The supplied final living room design with a light sectional sofa, coffee table and warm lighting",
+        "picks": "Sample room estimate",
+        "sofa": "Sectional sofa",
+        "table": "Coffee table",
+        "light": "Pendant light",
+        "plan": "Check current prices and availability with the seller. Compare materials, dimensions and terms against your budget.",
+        "ribbon": "Know what to buy and where to find it.",
+        "atSeller": "Check at Zardaan"
+      },
+      "descriptor": "Your interior design assistant",
+      "designMyHome": "Design my home with Homa",
+      "previous": "Previous chapter",
+      "design": {
+        "layoutChange": "Two compact tables together leave room to pass beside the sofa.",
+        "label": "Designed with Homa",
+        "ribbon": "Now see the design in your home.",
+        "body": "Explore ideas for your space. Change the colours, furniture and layout and see the result on your room photo.",
+        "alt": "The same living room redesigned with a light sectional and pendant light",
+        "before": "Before",
+        "after": "Homa’s proposal",
+        "compare": "Compare the living room before and after",
+        "looks": "Three sofa colour ideas",
+        "lighting": "Warm pendant light",
+        "seating": "Light sectional",
+        "cream": "Cream",
+        "rust": "Terracotta",
+        "olive": "Olive"
+      }
     }
   },
   "footer": {

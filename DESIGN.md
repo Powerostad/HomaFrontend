@@ -3,6 +3,12 @@ version: alpha
 name: HOMA
 description: Persian-first AI furniture visualization and commerce
 colors:
+  story-olive: "#514B20"
+  story-sage: "#819F9D"
+  story-rose: "#EED1CE"
+  story-wine: "#4B1822"
+  story-header: "#C6C0AC"
+  story-indicator: "#7D9ECE"
   brand-primary: "#E31E24"
   brand-secondary: "#F5E6D3"
   surface-page: "#F7F7F5"
@@ -26,6 +32,12 @@ colors:
   editorial-accent: "#9A8C74"
   editorial-stone: "#FAF9F6"
   editorial-charcoal: "#1C1C1A"
+  editorial-paper: "#EEE8DE"
+  editorial-sand: "#D9C6AE"
+  editorial-terracotta: "#963916"
+  editorial-cocoa: "#342C27"
+  editorial-cream: "#F7F3EB"
+  editorial-ink-muted: "#7A6A56"
 typography:
   display:
     fontFamily: Vazirmatn
@@ -119,6 +131,42 @@ components:
 ---
 
 # HOMA Design System
+
+## Homepage redesign — 2026-11-16
+
+### Second-section photographic narrative — 2026-11-17
+
+The user's latest correction to `From Cluttered Living to HOMA Design.png`
+supersedes the four-photo overview. Section two opens directly on the first
+full-width photograph. The chapters are ordered right-to-left. Native vertical scroll advances into
+the next photograph on the left across diagonal seams; the rail translates
+right. Chapter navigation, arrows, swipes and reduced-motion scrolling follow
+that same direction, without mirroring the photographs. Each chapter
+has a reading pause; only its copy and HTML analysis/shopping overlays fade in
+when it is in view. Preserve RTL Persian text. Keep just the site's existing
+header, plus a connected five-step navigation and Studio CTA at the bottom;
+do not introduce an additional HOMA header inside the section. Use the four
+user-supplied photographs without regeneration. Responsive WebP compression
+and CSS cover framing are permitted.
+
+Desktop and mobile both start with a single full-width scene. Vertical scroll,
+horizontal swipes, chapter links and arrows navigate the same sequence.
+Reduced motion and short landscape screens use native horizontal scrolling
+without scroll-driven movement. No fake prices or automatic measurement claims.
+Use existing editorial cream/cocoa tokens and semantic inverse scrims.
+
+The user's eight mobile screenshots supersede the previous split-hero concept.
+The active entry is `HomeScrollExperience` with scoped `scroll-experience.css`.
+Required patterns: three full-viewport room states revealed by native scroll with
+stepped edges; a light frosted Studio preview with the cabin comparison and a shopping list of the visible design changes.
+The floating header has 10px outer insets and 56px height. Section five is a
+scroll sequence of four named examples. Each opens directly on a draggable
+before/after image. Pair the design decision with one sourcing link to a
+related product or a maker's quote page. Desktop uses a split layout and mobile
+places the brief above the photograph. Short screens and reduced-motion users
+can select examples without pinning. Keep routes,
+tracking and translated labels intact. Generated room/product examples are
+illustrative and do not represent a live model run or real catalogue offer.
 
 This file is the single source of truth for HOMA's visual language. It follows
 the [DESIGN.md format](https://github.com/google-labs-code/design.md/blob/main/docs/spec.md).

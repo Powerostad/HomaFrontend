@@ -24,17 +24,19 @@ interface HeroImagePanelProps {
   resultImage: string;
   conceptImage?: string;
   originalImage: string | null;
+  imageAlt?: { result: string; original: string };
   showOriginal: boolean;
-  isSaved: boolean;
-  isDownloading: boolean;
+  isSaved?: boolean;
+  isDownloading?: boolean;
   analysisOnly?: boolean;
   sessionId?: string;
   markers?: HeroMarker[];
+  activeMarkerId?: number;
   onToggleOriginal: (show: boolean) => void;
-  onToggleSaved: () => void;
-  onDownload: () => void;
-  onFullscreen: () => void;
-  onExit: () => void;
+  onToggleSaved?: () => void;
+  onDownload?: () => void;
+  onFullscreen?: () => void;
+  onExit?: () => void;
   onMarkerClick?: (itemId: number) => void;
   showSave?: boolean;
   showActions?: boolean;
@@ -73,16 +75,18 @@ function GlassButton({
   );
 }
 
-function HeroImageStage({
+export function HeroImageStage({
   resultImage,
   conceptImage,
   originalImage,
+  imageAlt,
   showOriginal,
   isSaved,
   isDownloading,
   analysisOnly = false,
   sessionId,
   markers = [],
+  activeMarkerId,
   onToggleOriginal,
   onToggleSaved,
   onDownload,
@@ -93,7 +97,8 @@ function HeroImageStage({
   showActions = true,
   onImageError,
   mobile = false,
-}: HeroImagePanelProps & { mobile?: boolean }) {
+  embedded = false,
+}: HeroImagePanelProps & { mobile?: boolean; embedded?: boolean }) {
   const { siteText, siteValue, siteDirection } = useSiteTranslation();
   const { t } = useSimpleTranslation();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
@@ -126,12 +131,14 @@ function HeroImageStage({
       {siteValue(resultImage ? (
         <AuthenticatedImage
           src={showingConcept ? conceptImage : resultImage}
-          alt={siteValue(analysisOnly
+          alt={imageAlt?.result ?? siteValue(analysisOnly
             ? t('studio.result.v2.analysisOnly.originalAlt', 'عکس اصلی فضای شما')
             : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما'))}
           skipAuth={resultImage.startsWith('data:')}
           className={`studio-hero-image ${showOriginal && hasGeneratedImage ? 'studio-hero-image-hidden' : ''}`}
           onError={onImageError}
+          loading={embedded ? 'lazy' : undefined}
+          aria-hidden={embedded && showOriginal && hasGeneratedImage ? true : undefined}
         />
       ) : (
         <div className="studio-hero-placeholder" role="img" aria-label={t('common.loading', 'در حال بارگذاری...')} />
@@ -140,15 +147,17 @@ function HeroImageStage({
       {siteValue(hasGeneratedImage && originalImage && (
         <AuthenticatedImage
           src={originalImage}
-          alt={t('studio.result.v2.hero.originalAlt', 'تصویر قبل از بازطراحی')}
+          alt={imageAlt?.original ?? t('studio.result.v2.hero.originalAlt', 'تصویر قبل از بازطراحی')}
           skipAuth={originalImage.startsWith('data:')}
           className={`studio-hero-image studio-hero-original ${showOriginal ? '' : 'studio-hero-image-hidden'}`}
+          loading={embedded ? 'lazy' : undefined}
+          aria-hidden={embedded && !showOriginal ? true : undefined}
         />
       ))}
 
       <div className="studio-hero-scrim" aria-hidden="true" />
 
-      {mobile && hasGeneratedImage && (
+      {mobile && hasGeneratedImage && onFullscreen && (
         <button
           type="button"
           className="studio-hero-image-open"
@@ -157,15 +166,15 @@ function HeroImageStage({
         />
       )}
 
-      <div className="studio-hero-toolbar studio-hero-toolbar-top">
-        <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
+      {(onExit || showActions) && <div className="studio-hero-toolbar studio-hero-toolbar-top">
+        {onExit && <GlassButton onClick={onExit} ariaLabel={t('common.back', 'بازگشت')}>
           <ArrowRight size={20} />
-        </GlassButton>
+        </GlassButton>}
         {showActions && <div className="studio-hero-toolbar-actions">
-          {showSave && <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
+          {showSave && onToggleSaved && <GlassButton onClick={onToggleSaved} active={isSaved} ariaLabel={isSaved ? t('studio.result.v2.saved', 'ذخیره شده') : t('common.save', 'ذخیره')}>
             <Heart size={19} fill={isSaved ? 'currentColor' : 'none'} />
           </GlassButton>}
-          {siteValue(!analysisOnly && (
+          {siteValue(!analysisOnly && onDownload && (
             <GlassButton onClick={onDownload} disabled={isDownloading} ariaLabel={t('common.download', 'دانلود')}>
               {siteValue(isDownloading ? <Loader2 size={19} className="animate-spin" /> : <Download size={19} />)}
             </GlassButton>
@@ -174,7 +183,7 @@ function HeroImageStage({
             <Share2 size={19} />
           </GlassButton>
         </div>}
-      </div>
+      </div>}
 
       {siteValue(analysisOnly && (
         <div className="studio-hero-analysis-badge">
@@ -190,7 +199,7 @@ function HeroImageStage({
             className={!showOriginal && !showingConcept ? 'is-active' : ''}
             aria-pressed={!showOriginal && !showingConcept}
             onClick={() => {
-              trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'after' });
+              if (!embedded) trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'after' });
               setSelectedConcept(undefined);
               onToggleOriginal(false);
             }}
@@ -206,7 +215,7 @@ function HeroImageStage({
             className={showOriginal ? 'is-active' : ''}
             aria-pressed={showOriginal}
             onClick={() => {
-              trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'before' });
+              if (!embedded) trackStudioResultAction({ action: 'before_after', session_id: sessionId || '', view: 'before' });
               setSelectedConcept(undefined);
               onToggleOriginal(true);
             }}
@@ -216,7 +225,7 @@ function HeroImageStage({
         </div>
       ))}
 
-      {siteValue(hasGeneratedImage && (
+      {siteValue(hasGeneratedImage && onFullscreen && (
         <button type="button" className="studio-hero-fullscreen" onClick={onFullscreen}>
           <Maximize2 size={16} />
           <span>{t('studio.result.v2.fullscreenView', 'نمای تمام‌صفحه')}</span>
@@ -232,6 +241,7 @@ function HeroImageStage({
               className="studio-hero-marker"
               style={{ left: `${entry.marker!.x * 100}%`, top: `${entry.marker!.y * 100}%` }}
               onClick={() => onMarkerClick?.(entry.itemId)}
+              aria-pressed={activeMarkerId === undefined ? undefined : activeMarkerId === entry.itemId}
               aria-label={siteText("{{v0}} {{v1}}: {{v2}}", { v0: t('studio.result.v2.hero.marker', 'پیشنهاد'), v1: entry.number, v2: entry.label })}
             >
               <span>{siteValue(entry.number)}</span>
@@ -240,7 +250,7 @@ function HeroImageStage({
         </div>
       ))}
 
-      {siteValue(hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
+      {siteValue(!embedded && hasGeneratedImage && !showOriginal && !showingConcept && visibleMarkers.length > 0 && (
         <div className="studio-hero-marker-legend" aria-label={t('studio.result.v2.hero.legend', 'راهنمای پیشنهادها')}>
           {siteValue(visibleMarkers.map((entry) => (
             <button type="button" key={entry.itemId} onClick={() => onMarkerClick?.(entry.itemId)}>

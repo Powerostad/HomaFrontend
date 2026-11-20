@@ -128,7 +128,7 @@ describe("public HTML content", () => {
     expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
-    expect(html).toContain("From your room design,");
+    expect(html).toContain("From your idea to the pieces you choose.");
     expect(html).toContain("Start designing");
     expect(html).toContain("For hosts");
   });
