@@ -18,18 +18,26 @@ const report:SessionDiagnosticsReport = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv('MODE', 'studio-local');
   owner = 'owner-1';
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?:boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
   vi.mocked(loadSessionDiagnostics).mockResolvedValue({ success:true, data:report });
   vi.mocked(refreshSessionExpenses).mockResolvedValue({ success:true, data:{ expenses:report.expenses } });
 });
-afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllEnvs(); });
 async function open() {
   await act(async () => root.render(<SessionDiagnostics sessionId="owner-session" />));
   await act(async () => container.querySelector('button')!.click());
 }
 describe('private session diagnostics', () => {
+  it('shows time and expenses without internal output in production', async () => {
+    vi.stubEnv('DEV', false);
+    await open();
+    expect(container.querySelectorAll('.studio-audit-nav a')).toHaveLength(2);
+    expect(container.textContent).not.toContain('EXACT OUTPUT');
+    expect(container.textContent).toContain('studioDiagnostics.cost');
+  });
   it('filters readable data by turn and separates exact prompt from its schema', async () => {
     vi.mocked(loadSessionDiagnostics).mockResolvedValue({ success: true, data: { ...report, traces: [
       { id: 1, turn_index: 1, step_name: 'payload', payload_name: 'handoff-analysis-server_scene_analysis-1', model: 'luna', status: 'payload', payload: { system_prompt: 'EXACT_PROMPT\n  spaces', output_schema: { required: ['original'] } } },

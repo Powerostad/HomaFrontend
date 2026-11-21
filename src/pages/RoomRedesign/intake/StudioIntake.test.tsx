@@ -33,7 +33,8 @@ describe('progressive Studio onboarding', () => {
     expect(container.querySelector('.studio-room-options')).toBeNull();
     expect(container.querySelectorAll('input[type=file]')).toHaveLength(2);
   });
-  it('submits the complete edited prompt in Studio', async () => {
+  it('submits the complete edited prompt in local Studio', async () => {
+    vi.stubEnv('MODE', 'studio-local');
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     flow.buildPayload.mockReturnValue({ image: flow.image, goals: [], createdAt: 'now' });
     const onStart = await render(vi.fn(), '/studio?room=accommodation_test');
@@ -67,11 +68,13 @@ describe('progressive Studio onboarding', () => {
     expect(onStart).not.toHaveBeenCalled();
     expect(flow.buildPayload).not.toHaveBeenCalled();
   });
-  it('uses room-specific images and hands off optional preferences only on final confirmation', async () => {
+  it('starts public Studio with user preferences and a server-managed prompt', async () => {
+    vi.stubEnv('DEV', false);
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     const payload = { image: flow.image, userNote: 'همین متن من', goals: [], createdAt: 'now' };
     flow.buildPayload.mockReturnValue(payload);
     const onStart = await render(vi.fn(), '/studio?audience=home&room=accommodation_room');
+    expect(container.querySelector('textarea')).toBeNull();
     await click('ادامه با این عکس'); await click('ادامه');
     const styles = container.querySelectorAll('.studio-mood-options [role=img]');
     expect(styles).toHaveLength(4);
@@ -81,7 +84,7 @@ describe('progressive Studio onboarding', () => {
     expect(container.querySelector('h1')?.textContent).toBe('طرح از همین‌جا شروع می‌شود.');
     expect(onStart).not.toHaveBeenCalled(); await click('شروع طراحی فضای من');
     expect(onStart).toHaveBeenCalledOnce();
-    expect(onStart).toHaveBeenCalledWith({ ...payload, roomType: 'accommodation_test', prefsUpdate: { room_type: 'accommodation_test', initial_image_prompt: 'Original complete image prompt', goals: [], preserved_items: [], budget_ceiling: null } });
+    expect(onStart).toHaveBeenCalledWith({ ...payload, roomType: 'accommodation_test', prefsUpdate: { room_type: 'accommodation_test', goals: [], preserved_items: [], budget_ceiling: null } });
     expect(flow.setNote).not.toHaveBeenCalled();
   });
   it('shows host-specific goals and keeps photo and choices when going back', async () => {
