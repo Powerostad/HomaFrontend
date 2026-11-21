@@ -1,0 +1,4 @@
+services:
+  openai-frontend:
+    image: homa-homepage-panel-b3499e4-pdsgql:latest
+    pull_policy: never

@@ -88,6 +88,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     status: <>
       <RefinementInvitePrototype onStart={draft => { if (draft !== undefined) setInput(draft); openChat(); }} />
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
+      {chat.conceptPreview && (chat.busy || chat.error) && <figure><img src={chat.conceptPreview} alt={t("studio.result.v2.concept", "کانسپت اولیه")} style={{ maxWidth: "100%", height: "auto" }} /><figcaption>{t("studio.result.v2.concept", "کانسپت اولیه")}</figcaption></figure>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
@@ -158,7 +159,7 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
   const starting = !!intake && !seeded.current && !chat.versions.length && !plan && !chat.error;
   const discovering = !reviewDismissed && (starting || reviewActive || (!!chat.sessionId && journeyPending(chat.sessionId)) || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
-  if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} originalImage={original}
+  if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} conceptImage={chat.conceptPreview} originalImage={original}
     sessionId={chat.sessionId} busy={chat.busy || starting} error={chat.error} autoRevealImage={!report?.image_pending && report?.image_status !== 'failed' && report?.image_status !== 'exported' && report?.image_url !== original ? report?.image_url : null} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage} stageKey={chat.status === 'rendering' ? 'render' : chat.stageKey}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={automatic => { if (!automatic && chat.sessionId) markJourneySeen(chat.sessionId); setJourneyStart(!!automatic); setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}

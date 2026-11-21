@@ -55,7 +55,7 @@ export interface HomaIntakePayload {
   roomType?: RoomType;
   goals: Goal[];
   userNote?: string;
-  prefsUpdate?: { room_type?: Exclude<RoomType, 'not_sure'>; goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[] };
+  prefsUpdate?: { room_type?: Exclude<RoomType, 'not_sure'>; goals?: string[]; preserved_items?: string[]; budget_ceiling?: number | null; style?: string[]; initial_image_prompt?: string };
   createdAt: string; // ISO 8601
 }
 
@@ -73,13 +73,7 @@ export interface GoalOption {
 
 /** Single-select room types (Persian labels, label-only chips). */
 export const ROOM_TYPES: readonly RoomTypeOption[] = [
-  { value: 'bedroom', label: 'اتاق خواب' },
-  { value: 'accommodation_room', label: 'اتاق اقامتگاه' },
-  { value: 'living_room', label: 'پذیرایی' },
-  { value: 'kitchen', label: 'آشپزخانه' },
-  { value: 'balcony', label: 'بالکن' },
-  { value: 'full_home', label: 'خانه کامل' },
-  { value: 'not_sure', label: 'مطمئن نیستم' },
+  { value: 'accommodation_test', label: 'استودیو' },
 ] as const;
 
 /** Multi-select goal chips (icons reuse the shared ICONS map). */

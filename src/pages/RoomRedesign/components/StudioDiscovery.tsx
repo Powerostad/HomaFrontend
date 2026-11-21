@@ -7,9 +7,9 @@ import { journeySeen, markJourneyPending, prepareResultImages } from '../service
 
 /** Existing job owner and route remain unchanged; presentation only. */
 export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionId, busy, error,
-  resultAvailable, autoRevealImage, onRetry, onComplete, onNew, onDiscuss, panel, tools, stage, stageKey }: {
+  resultAvailable, conceptImage, autoRevealImage, onRetry, onComplete, onNew, onDiscuss, panel, tools, stage, stageKey }: {
   plan: ExecutionPlan | null; originalImage: string | null; sessionId: string | null; busy: boolean; error: string | null;
-  resultAvailable: boolean; autoRevealImage?: string | null; stage?: string | null; stageKey?: string | null; analysisPreview?: AnalysisPreview | null;
+  resultAvailable: boolean; conceptImage?: string | null; autoRevealImage?: string | null; stage?: string | null; stageKey?: string | null; analysisPreview?: AnalysisPreview | null;
   onRetry: () => void; onComplete: (automatic?: boolean) => void; onNew: () => void; onDiscuss: () => void; panel?: ReactNode; tools?: ReactNode;
 }) {
   const { siteText: copy } = useSiteTranslation();
@@ -27,7 +27,7 @@ export function StudioDiscovery({ plan, analysisPreview, originalImage, sessionI
     }, () => { if (!controller.signal.aborted) setAssetError(true); });
     return () => controller.abort();
   }, [readyForReveal, autoRevealImage, originalImage, sessionId, retryImages]);
-  return <HomaLoadingExperience jobId={sessionId || 'new'} originalImage={originalImage} analysis={analysisPreview}
+  return <HomaLoadingExperience jobId={sessionId || 'new'} originalImage={originalImage} conceptImage={conceptImage} analysis={analysisPreview}
     plan={plan} busy={busy || (readyForReveal && !assetError)} error={error || (assetError ? copy('تصویر طرح هنوز بارگذاری نشده؛ می‌توانی دوباره عکس را بررسی کنی یا پیشنهادهای آماده را ببینی.') : null)}
     complete={(!autoRevealImage || !originalImage) && !busy && !!plan && !error}
     stageKey={stageKey || (resultAvailable ? 'finalize' : undefined)} statusLabel={readyForReveal ? copy('طرح آماده است؛ در حال بارگذاری عکس‌های قبل و بعد…') : stage}

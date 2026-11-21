@@ -9,6 +9,7 @@ import './loading-v5.css';
 import '@/pages/Studio/result/v9-polished.css';
 
 export interface HomaLoadingProps {
+  conceptImage?: string | null;
   jobId: string; originalImage: string | null; analysis?: AnalysisPreview | null;
   analysisReady?: boolean; plan?: ExecutionPlan | null; busy: boolean;
   stageKey?: string | null; statusLabel?: string | null; error: string | null;
@@ -46,7 +47,7 @@ export function HomaLoadingExperience(props: HomaLoadingProps) {
   return <LoadingJob key={props.jobId} {...props} />;
 }
 
-function LoadingJob({ originalImage, analysis = null, analysisReady = false, plan = null, busy, stageKey,
+function LoadingJob({ conceptImage, originalImage, analysis = null, analysisReady = false, plan = null, busy, stageKey,
   statusLabel, error, complete, onComplete, onRetry, onNew, onDiscuss, tools, panel }: HomaLoadingProps) {
   const { siteText: copy } = useSiteTranslation();
   const [introduction, setIntroduction] = useState<'comparison' | 'moodboard' | 'complete'>('comparison');
@@ -121,6 +122,8 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
           <p className="homa-loading-description">{error || copy(story.description)}</p>
         </div>
         <div className="homa-loading-visual">
+          {conceptImage && <section className="homa-loading-layer homa-loading-personal" data-active="true"><AuthenticatedImage src={conceptImage} alt={copy("کانسپت اولیه")} /></section>}
+          {!conceptImage && <>
           <section className="homa-loading-layer" data-active={moment === 'comparison'} aria-hidden={moment !== 'comparison'}>
             <SampleComparison active={moment === 'comparison' && !error} />
           </section>
@@ -130,8 +133,9 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
           {hasAnalysis && originalImage && !photoFailed && personal && <section className="homa-loading-layer homa-loading-personal" data-active="true">
             <AuthenticatedImage src={originalImage} alt={copy('عکس اصلی فضای شما')} onError={() => setPhotoFailed(true)} />
           </section>}
+          </>}
         </div>
-        <div className="homa-loading-photo-label">{copy(personal ? 'عکس اصلی فضای شما' : moment === 'comparison' ? 'پروژهٔ نمونه؛ نتیجهٔ فضای شما نیست' : 'الهام تصویری نمونه')}</div>
+        <div className="homa-loading-photo-label">{copy(conceptImage ? 'کانسپت اولیه؛ بررسی محصولات جداگانه ادامه دارد' : personal ? 'عکس اصلی فضای شما' : moment === 'comparison' ? 'پروژهٔ نمونه؛ نتیجهٔ فضای شما نیست' : 'الهام تصویری نمونه')}</div>
         <div className="homa-loading-copy">
           <div className="homa-loading-status" role="status" aria-live="polite"><i aria-hidden="true" data-running={busy && !error} /><span>{status}</span></div>
           {!!compactNarratives.length && <details className="homa-loading-detail" dir="rtl">

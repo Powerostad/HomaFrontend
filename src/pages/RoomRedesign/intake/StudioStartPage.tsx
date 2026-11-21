@@ -23,7 +23,8 @@ export function StudioStartPage({ host = false }: { host?: boolean }) {
   if (sessionId) return <ProtectedRoute fallback="modal"><></></ProtectedRoute>;
   return <>{import.meta.env.DEV && import.meta.env.MODE === 'studio-local' && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) &&
     <div className="px-6 py-3 text-end text-xs text-content-secondary"><Link className="underline underline-offset-4" to="/studio/catalogue">{copy('مدیریت کاتالوگ')}</Link></div>}
-    <StudioIntake key={host ? 'host' : 'home'} host={host} onStartAnalysis={payload => isLoggedIn ? setConfirmed(payload) : setPending(payload)} />
+    <StudioIntake key={host ? 'host' : 'home'} host={host} requiresSignIn={!isLoggedIn} showCreditPurchase={!host && isLoggedIn}
+      onStartAnalysis={payload => isLoggedIn ? setConfirmed(payload) : setPending(payload)} />
     <AuthModal isOpen={!!pending && !isLoggedIn} onClose={() => setPending(null)}
       onSuccess={(user, tokens) => { login(user, tokens); setConfirmed(pending); setPending(null); }} />
   </>;

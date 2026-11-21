@@ -1,4 +1,3 @@
-import { trackStudioFunnelMilestone } from '@/analytics/studioFunnel';
 import { siteText } from '@/i18n/siteCopy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChatSession, loadChatSession, loadChatSessionStatus, requestRender, streamChatTurn, type DesignOperation, type DesignVersion, type ExecutionPlan, type SessionPayload, type StreamTurnParams } from '../services/redesignChatService';
@@ -43,6 +42,7 @@ export function useRedesignChat(path?: string) {
   const [status, setStatus] = useState('idle');
   const [stage, setStage] = useState<string | null>(null);
   const [stageKey, setStageKey] = useState<string | null>(null);
+  const [conceptPreview, setConceptPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [hydrating, setHydrating] = useState(!!path);
@@ -70,6 +70,7 @@ export function useRedesignChat(path?: string) {
     setChipGroups(rebuilt.chipGroups);
     setCurrentExecution(data.current_execution || null);
     setAnalysisPreview(data.analysis_preview || null);
+    setConceptPreview(data.concept_preview?.url || null);
     setCurrentBaseVersionId(data.current_base_version_id || 'original');
     setOriginalImage(data.original_image || rebuilt.versions[0]?.imageUrl || null);
     const next = data.versions?.length ? data.versions : rebuilt.versions.slice(1).map(v => ({ version_id: v.id, base_version_id: 'original', image_url: v.imageUrl, explanation: '', execution: null, legacy_incomplete: true }));
@@ -215,15 +216,8 @@ export function useRedesignChat(path?: string) {
           ? old.map(m => m.id === messageId ? { ...m, text: m.text + delta } : m)
           : [...old, { id: messageId, role: 'assistant', text: delta }]);
       },
-      onStage: event => {
-        if (!isCurrent()) return;
-        if (params.images?.length && (!params.action || params.action === 'chat')) {
-          trackStudioFunnelMilestone('studio_upload_confirmed', params.sessionId);
-          trackStudioFunnelMilestone('studio_processing_started', params.sessionId);
-        }
-        setStage(event.label_fa);
-        setStageKey(event.key || null);
-      },
+      onStage: event => { if (isCurrent()) { setStage(event.label_fa); setStageKey(event.key || null); } },
+      onConcept: event => { if (isCurrent()) setConceptPreview(event.url); },
       onAnalysis: event => { if (isCurrent()) setAnalysisPreview(event); },
       onQuestions: event => { if (isCurrent()) setChipGroups(chipGroupsFromQuestions(event)); },
       onResult: event => {
@@ -272,6 +266,7 @@ export function useRedesignChat(path?: string) {
     // Resolve uncertainty before accepting another edit.
     if (operation.current?.status === 'running') return false;
     pendingArgs.current = args;
+    setConceptPreview(null);
     locked.current = true; setStatus('creating');
     let sid = sidRef.current;
     if (!sid) {
@@ -373,5 +368,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { conceptPreview, sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }
