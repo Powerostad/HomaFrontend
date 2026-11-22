@@ -11,3 +11,4 @@ Disallow: /account/
 Disallow: /login
 
 Sitemap: https://myhoma.ir/sitemap.xml
+Sitemap: https://myhoma.ir/blog/sitemap.xml
