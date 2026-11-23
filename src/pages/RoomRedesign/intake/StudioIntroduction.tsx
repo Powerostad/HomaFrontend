@@ -82,7 +82,7 @@ export function StudioIntroduction({ autoOpen, accountId }: { autoOpen: boolean;
             <DialogDescription>{label(step + '.body')}</DialogDescription>
           </div>
           {step === 'concept' && <figure className="sg-visual sg-compare">
-            <BeforeAfterSlider beforeImage="/images/home-hero/cabin-before.webp" afterImage={cabinAfter} />
+            <BeforeAfterSlider beforeImage="/images/home-hero/cabin-before.webp" afterImage={cabinAfter} initialPosition={50} />
             <figcaption dir="ltr">
               <span className="sg-pill" dir={i18n.dir()}>{label('proposal')}</span>
               <span className="sg-pill" dir={i18n.dir()}>{label('original')}</span>

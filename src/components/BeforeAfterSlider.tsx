@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { OptimizedImage } from './OptimizedImage';
 
 interface BeforeAfterSliderProps {
+  initialPosition?: number;
   beforeImage: string;
   afterImage: string;
   className?: string;
@@ -14,9 +15,9 @@ interface BeforeAfterSliderProps {
   lazy?: boolean;
 }
 
-export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false }: BeforeAfterSliderProps) {
+export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false, initialPosition = 35 }: BeforeAfterSliderProps) {
   const { t } = useTranslation();
-  const [sliderPosition, setSliderPosition] = useState(35);
+  const [sliderPosition, setSliderPosition] = useState(initialPosition);
 
   return (
     <div
