@@ -41,7 +41,7 @@ describe("public HTML content", () => {
     expect(html).toContain('href="/blog/"');
     expect(html).toContain('href="/hosts"');
     expect(html).not.toContain('href="/studio/hosts"');
-    expect(html).toContain('href="/studio?room=bedroom"');
+    expect(html).toContain('id="design-steps"');
     expect(html).toContain('id="design-to-shop"');
     expect(html).toContain('id="home-faq"');
     expect(html).not.toContain("seo.home.");
@@ -60,7 +60,7 @@ describe("public HTML content", () => {
     const html = render({ ...base, path: '/hosts' });
     expect(html.match(/<h1/g)).toHaveLength(1);
     expect(html).toContain('href="/studio/hosts"');
-    expect(html).toContain('href="/studio/hosts?room=bedroom"');
+    expect(html).toContain('href="/studio/hosts?room=accommodation_test"');
     expect(html).toContain('اقامتگاهت؛');
     expect(html).not.toContain('/images/hero/before.png');
   });
@@ -128,8 +128,8 @@ describe("public HTML content", () => {
     expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
-    expect(html).toContain("From your idea to the pieces you choose.");
-    expect(html).toContain("Start designing");
+    expect(html).toContain("<h1>A new way to design and shop for your home.</h1>");
+    expect(html).toContain(one.t("landing.redesign.start"));
     expect(html).toContain("For hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
