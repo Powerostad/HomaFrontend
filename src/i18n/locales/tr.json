@@ -1642,5 +1642,66 @@
     "toman": "Tümen",
     "style": "Stil",
     "showDesign": "Önerilen tasarımımı göster"
+  },
+  "studioIntro": {
+  "studio": "Homa Stüdyo",
+  "guide": "Stüdyo nasıl yardımcı olur?",
+  "original": "Önce",
+  "proposal": "Homa tasarımı",
+  "afterAlt": "Aynı odada açık renk perdeler ve yatağın yanında dokuma halı",
+  "credit": "Düzeltmeler dahil her yeni görsel bir tasarım kredisi kullanır.",
+  "stepCount": "{{current}} / {{total}}",
+  "skip": "Doğrudan stüdyoya geç",
+  "back": "Geri",
+  "next": "İleri",
+  "start": "Evimi tasarlamaya başla",
+  "homa": "Homa",
+  "guideCredit": "Yeni görseller ayrı bir tasarım kredisi gerektirebilir. Ücreti onaylamadan önce görürsün.",
+  "concept": {
+    "eyebrow": "Daha iyi bir oda evinde başlar",
+    "title": "Her ev daha güzel olabilir.",
+    "body": "Yerleşim, renk ve eşyalardaki küçük değişiklikler odanın havasını değiştirir. Homa, kendi odanın iyileştirilmiş hâlini gösterir.",
+    "note": "Uygun eşyalarını koruyarak odanın nasıl değişebileceğini gör."
+  },
+  "plan": {
+    "eyebrow": "Fikirden değişiklik planına",
+    "title": "Odan için neyi değiştirmen gerekir?",
+    "body": "Homa neyin kalacağını, neyin değişeceğini ve nelerin eklenebileceğini gösterir.",
+    "keep": "Uygun parçaları koru",
+    "keepDetail": "Mevcut yatak ve ahşap tavan",
+    "change": "Parçaları uyumlu hâle getir",
+    "changeDetail": "Perde renkleri ve yatak örtüsü",
+    "add": "Odayı tamamla",
+    "addDetail": "Halı ve başucu lambası",
+    "note": "Önerilen görselin yanında uygulanabilir bir değişiklik planı alırsın."
+  },
+  "shop": {
+    "eyebrow": "Tasarımdan alışverişe",
+    "title": "Tasarımı tamamlayan ürünleri bul.",
+    "body": "Homa tasarıma ve odana uygun ürünleri mağazalarda arar.",
+    "rug": "Jüt halı",
+    "curtain": "Açık renk perde",
+    "lamp": "Ahşap lamba",
+    "locate": "Ürünün yerini gör",
+    "tryRug": "Benzer halıyı odada gör",
+    "rugPreview": "Benzer halı önizlemesi",
+    "seller": "Satıcıda görüntüle",
+    "note": "Önerilen parçaların tasarımda nereye yerleştiğini gör."
+  },
+  "consult": {
+    "eyebrow": "Sonraki adımlar için danışmanlık",
+    "title": "Bir sonraki kararın için destek al.",
+    "body": "Alternatif bulmak, tasarımı geliştirmek veya alışveriş için Homa’ya danış.",
+    "fabric": "Bu perdeleri bulamıyorum.",
+    "fabricAnswer": "Tasarım sonucunda perdenin yanındaki Homa takip seçeneğini seç ve danışma isteğini gönder.",
+    "revision": "Oda biraz daha sıcak görünsün.",
+    "revisionAnswer": "Hangi bölümün daha sıcak görünmesini istediğini söyle, tasarımı buna göre düzenleyelim.",
+    "budget": "Önce perde mi halı mı?",
+    "budgetAnswer": "Önceliğin gün ışığıysa önce perdeyi değiştir. Halıyı sonra alabilirsin.",
+    "fabricLabel": "Alternatif bul",
+    "revisionLabel": "Tasarımı düzenle",
+    "budgetLabel": "Seçim için danış",
+    "note": "Sonraki kararlarına aynı tasarımdan devam edebilirsin."
   }
+}
 }

@@ -44,6 +44,7 @@ export function useRedesignChat(path?: string) {
   const [stageKey, setStageKey] = useState<string | null>(null);
   const [conceptPreview, setConceptPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [turnAccepted, setTurnAccepted] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [hydrating, setHydrating] = useState(!!path);
   const sidRef = useRef<string | null>(null);
@@ -127,6 +128,7 @@ export function useRedesignChat(path?: string) {
         const child = ops.find(o => o.operation_id === tracked?.render_operation_id);
         const failed = child?.status === 'failed' ? child : tracked?.status === 'failed' ? tracked : !key ? ops[0]?.status === 'failed' ? ops[0] : undefined : undefined;
         if (failed) { operation.current = failed; setError(localizedFailure(failed.error)); break; }
+        if (tracked?.status === 'succeeded') setTurnAccepted(true);
         if (!active) {
           if (tracked?.render_operation_id && !child) { await pause(); continue; }
           if (key && !tracked) {
@@ -160,6 +162,7 @@ export function useRedesignChat(path?: string) {
     sidRef.current = path || null; setSessionId(path || null);
     setMessages([]); setVersions([]); versionsRef.current = []; setChipGroups([]);
     setCurrentExecution(null);
+    setTurnAccepted(false);
     setAnalysisPreview(null);
     setOriginalImage(null); setError(null); setUnavailable(false); setStatus('idle'); setStageKey(null); locked.current = false;
     viewedRef.current = 'original'; following.current = true; setViewedId('original');
@@ -210,6 +213,7 @@ export function useRedesignChat(path?: string) {
     const messageId = crypto.randomUUID();
     setChipGroups([]);
     const transport = await streamChatTurn(params, {
+      onSession: () => { if (isCurrent()) setTurnAccepted(true); },
       onSay: delta => {
         if (!isCurrent()) return;
         setMessages(old => old.some(m => m.id === messageId)
@@ -368,5 +372,5 @@ export function useRedesignChat(path?: string) {
     const label = chipGroups.find(g => g.id === groupId)?.chips.find(c => c.id === chipId)?.label;
     if (label) void sendTurn({ text: label });
   };
-  return { conceptPreview, sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
+  return { conceptPreview, sessionId, messages, chipGroups, versions, currentExecution, analysisPreview, currentBaseVersionId, originalImage, viewedId, selectVersion, selectedVersion: versions.find(v => v.version_id === viewedId), status, stage, stageKey, error, unavailable, hydrating, turnAccepted, busy: ['creating', 'streaming', 'rendering'].includes(status), sendTurn, selectChip, retry, newVersionReady: !!readyId && viewedId !== readyId };
 }

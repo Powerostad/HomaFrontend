@@ -1,0 +1,4 @@
+services:
+  openai-frontend:
+    image: homa-studio-intake-front-20261123-kmg7t3:latest
+    pull_policy: never

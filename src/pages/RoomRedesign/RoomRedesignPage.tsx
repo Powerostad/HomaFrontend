@@ -17,6 +17,7 @@ import { useConversationStudioResult } from './hooks/useConversationStudioResult
 import { useRedesignChat } from './hooks/useRedesignChat';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { StudioIntake } from './intake/StudioIntake';
+import type { StudioSubmission } from './intake/StudioHomeIntake';
 import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { ExecutionPlan } from './services/redesignChatService';
@@ -98,7 +99,10 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   }} />{onboarding.hintVisible && <RefinementCoachmarkPrototype onDismiss={onboarding.dismiss} onStart={openChat} />}</RefinementPrototypeShell>;
 }
 
-export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: HomaIntakePayload | null } = {}) {
+export function RoomRedesignPage({ initialIntake = null, onInitialProgress }: {
+  initialIntake?: HomaIntakePayload | null;
+  onInitialProgress?: (state: StudioSubmission) => void;
+} = {}) {
   const { sessionId: path } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -132,7 +136,13 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     title?.setAttribute('tabindex', '-1');
     title?.focus({ preventScroll: true });
   }, [reviewDismissed]);
-  useEffect(() => { if (chat.sessionId && !path) navigate(`/studio/chat/${chat.sessionId}`, { replace: true }); }, [chat.sessionId, path, navigate]);
+  const awaitingAcceptance = !!onInitialProgress && !chat.turnAccepted;
+  useEffect(() => {
+    if (chat.sessionId && !path && !awaitingAcceptance) navigate(`/studio/chat/${chat.sessionId}`, { replace: true });
+  }, [chat.sessionId, path, navigate, awaitingAcceptance]);
+  useEffect(() => {
+    onInitialProgress?.({ accepted: chat.turnAccepted, busy: chat.busy || !chat.error, error: chat.error, retry: chat.retry });
+  }, [onInitialProgress, chat.turnAccepted, chat.busy, chat.error, chat.retry]);
   useEffect(() => {
     if (!intake || seeded.current || path) return;
     const timer = setTimeout(() => {
@@ -153,6 +163,7 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     setInput('');
     void chat.sendTurn({ text: draft }).then(accepted => { if (!accepted) setInput(current => current || draft); });
   };
+  if (awaitingAcceptance) return null;
   if (chat.hydrating || chat.unavailable || (path && chat.sessionId && chat.sessionId !== path)) return <div className="studio-result-page" dir={i18n.dir()}><Header /><main className="studio-archive-page"><div className="studio-page-state" role={chat.unavailable ? 'alert' : 'status'}>
     {chat.unavailable ? <><h1>{t('studioChat.unavailableTitle')}</h1><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></> : <><Loader2 className="studio-spinner" /><p>{t('studioChat.loading')}</p></>}
   </div></main></div>;

@@ -2050,5 +2050,66 @@
     "productAdded": "Added",
     "productChanged": "Updated",
     "removed": "Removed from this design"
+  },
+  "studioIntro": {
+  "studio": "Homa Studio",
+  "guide": "What can the studio do?",
+  "original": "Before",
+  "proposal": "Homa’s design",
+  "afterAlt": "The same room with light curtains and a woven bedside rug",
+  "credit": "Each image generation uses one design credit. A revision that generates a new image also uses one credit.",
+  "stepCount": "{{current}} of {{total}}",
+  "skip": "Go straight to the studio",
+  "back": "Back",
+  "next": "Next",
+  "start": "Start my design",
+  "homa": "Homa",
+  "guideCredit": "New images may use a separate design credit. You’ll see the cost before you confirm.",
+  "concept": {
+    "eyebrow": "A better room starts at home",
+    "title": "Every home has room for improvement.",
+    "body": "Small changes in layout, colour and furnishings can change how a room feels. Homa Studio finds those opportunities and shows you an improved version of your own space.",
+    "note": "See what your room could become while keeping the pieces that work."
+  },
+  "plan": {
+    "eyebrow": "From concept to a plan",
+    "title": "What would make your room work better?",
+    "body": "Homa shows what to keep, what to adjust and what to add.",
+    "keep": "Keep what works",
+    "keepDetail": "The original bed and timber ceiling",
+    "change": "Bring the room together",
+    "changeDetail": "Curtain colours and bedding",
+    "add": "Complete the room",
+    "addDetail": "A matching rug and bedside lamp",
+    "note": "Get a practical plan for your existing room alongside the proposed image."
+  },
+  "shop": {
+    "eyebrow": "From design to shopping",
+    "title": "Find the pieces that bring the design together.",
+    "body": "Homa finds products from retailers that fit the design so you can choose what suits your space.",
+    "rug": "Jute rug",
+    "curtain": "Light curtains",
+    "lamp": "Wooden lamp",
+    "locate": "See where it goes",
+    "tryRug": "Preview a similar rug in the room",
+    "rugPreview": "Similar rug preview",
+    "seller": "View at the retailer",
+    "note": "See where the suggested pieces fit in this design."
+  },
+  "consult": {
+    "eyebrow": "Advice along the way",
+    "title": "Get help with the next decision.",
+    "body": "Ask Homa to help find alternatives, refine the design or choose what to buy.",
+    "fabric": "I can’t find these curtains.",
+    "fabricAnswer": "Select “Let Homa follow up” next to the curtains in your design results and submit the consultation request.",
+    "revision": "I’d like the room to feel warmer.",
+    "revisionAnswer": "Tell us which part should feel warmer and we can adjust the design to suit.",
+    "budget": "Curtains or rug first?",
+    "budgetAnswer": "If daylight is your priority, start with the curtains. The rug can wait.",
+    "fabricLabel": "Find a substitute",
+    "revisionLabel": "Refine the design",
+    "budgetLabel": "Get advice on what to buy",
+    "note": "Come back to this design for the decisions you make next."
   }
+}
 }

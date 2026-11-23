@@ -15,12 +15,13 @@ vi.mock('../Studio/result/HeroImagePanel', () => ({ DesktopHeroPanel: ({ resultI
 vi.mock('../Studio/components/ProductDetailSheet', () => ({ ProductDetailSheet: ({ onPreview }: { onPreview?: () => void }) => <div><button onClick={onPreview}>Preview lamp</button></div> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }), siteText: (value: string) => value }));
 vi.mock('react-i18next', async importOriginal => ({ ...await importOriginal<typeof import('react-i18next')>(), useTranslation: () => ({ t: (key: string) => key, i18n: { dir: () => 'rtl', language: 'fa' } }) }));
-const testState = vi.hoisted(() => ({ failed: false, processing: false, starting: false, send: vi.fn(async () => true) }));
+const testState = vi.hoisted(() => ({ failed: false, processing: false, starting: false, accepted: false, send: vi.fn(async () => true) }));
 const fixturePlan = vi.hoisted((): ExecutionPlan => ({ purchases: [{ item_id: 'lamp', category: 'Lighting', quantity: 1, reason_fa: 'Canonical report', relation: 'similar', alternatives: [], product: { product_id: 7, name: 'Lamp', price_rial: 100000, image_url: '', unique_link: 'lamp' } }], free_actions: [], surface_actions: [], known_subtotal_rial: 100000, unknown_cost_item_ids: [], budget_ceiling_toman: null, budget_status: 'complete' }));
 vi.mock('./hooks/useRedesignChat', () => ({ useRedesignChat: () => ({ sessionId: testState.starting ? null : 'saved', messages: [], chipGroups: [],
   versions: testState.failed || testState.processing || testState.starting ? [] : [{ version_id: 'v1', image_url: 'render.jpg', execution: fixturePlan }],
   currentExecution: testState.starting ? null : fixturePlan,
   originalImage: testState.starting ? null : 'photo.jpg', selectedVersion: undefined, viewedId: 'original', busy: testState.processing,
+  turnAccepted: testState.accepted, retry: vi.fn(),
   error: testState.failed ? 'Image failed' : null, status: 'idle', selectVersion: vi.fn(), sendTurn: testState.send, selectChip: vi.fn() }) }));
 
 async function mount() {
@@ -48,16 +49,32 @@ describe('original Studio result flow with conversation', () => {
       expect(testState.send).not.toHaveBeenCalled();
     } finally { testState.processing = false; await ui.cleanup(); }
   });
-  it('opens sample inspiration after intake and keeps the private photo hidden until analysis', async () => {
+  it('waits for the server to accept the first turn before showing the room photo in processing', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     testState.starting = true; testState.send.mockClear();
     const container = document.createElement('div'), root = createRoot(container);
+    const onInitialProgress = vi.fn();
+    const render = () => act(async () => root.render(<MemoryRouter initialEntries={['/studio']}><Routes><Route path="/studio" element={<RoomRedesignPage onInitialProgress={onInitialProgress} initialIntake={{ image: { dataUrl: 'data:image/jpeg;base64,original', width: 1200, height: 900, source: 'gallery' }, goals: [], createdAt: 'now' }} />} /></Routes></MemoryRouter>));
     try {
-      await act(async () => root.render(<MemoryRouter initialEntries={['/studio']}><Routes><Route path="/studio" element={<RoomRedesignPage initialIntake={{ image: { dataUrl: 'data:image/jpeg;base64,original', width: 1200, height: 900, source: 'gallery' }, goals: [], createdAt: 'now' }} />} /></Routes></MemoryRouter>));
+      await render();
+      expect(container.querySelector('.homa-loading-screen')).toBeNull();
+      expect(onInitialProgress).toHaveBeenLastCalledWith(expect.objectContaining({ accepted: false, busy: true }));
+      testState.failed = true;
+      await render();
+      expect(container.querySelector('.homa-loading-screen')).toBeNull();
+      expect(onInitialProgress).toHaveBeenLastCalledWith(expect.objectContaining({ accepted: false, busy: false, error: 'Image failed' }));
+      testState.failed = false;
+      testState.accepted = true;
+      testState.processing = true;
+      await render();
       expect(container.querySelector('.homa-loading-screen[data-moment=comparison]')).not.toBeNull();
-      expect(container.querySelector('[src="data:image/jpeg;base64,original"]')).toBeNull();
+      expect(container.querySelector('.homa-loading-personal [src="data:image/jpeg;base64,original"]')).not.toBeNull();
       expect(container.querySelector('.studio-invoice')).toBeNull();
-    } finally { await act(async () => root.unmount()); testState.starting = false; testState.send.mockClear(); }
+    } finally {
+      await act(async () => root.unmount());
+      testState.starting = false; testState.accepted = false; testState.failed = false; testState.processing = false;
+      testState.send.mockClear();
+    }
   });
   it('keeps product feedback in the main card disclosure and product details readable', async () => {
     const ui = await mount();

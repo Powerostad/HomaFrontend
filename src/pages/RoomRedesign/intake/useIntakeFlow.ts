@@ -44,9 +44,9 @@ export interface UseIntakeFlow {
   buildPayload: () => HomaIntakePayload | null;
 }
 
-export function useIntakeFlow(): UseIntakeFlow {
+export function useIntakeFlow(initialImage: IntakeImage | null = null): UseIntakeFlow {
   const [step, setStep] = useState<IntakeStep>('photo');
-  const [image, setImage] = useState<IntakeImage | null>(null);
+  const [image, setImage] = useState<IntakeImage | null>(initialImage);
   const [imageTooSmall, setImageTooSmall] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
