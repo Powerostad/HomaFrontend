@@ -1,4 +1,8 @@
 {
+  "publicShowcase": {
+    "seoTitle": "Home decor and furnishing ideas",
+    "description": "Find ideas for your home, browse furnishings by category and compare listed prices."
+  },
   "studioAudit": {
     "extraction": "Product need extraction",
     "matching": "Product matching",

@@ -9,6 +9,7 @@ import { Footer } from '../components/Footer';
 import { createPublicI18n } from './i18n';
 import { escapeHtml } from './metadata';
 import { AppProvider } from '../context/AppContext';
+import { PublicShowcase, showcaseSeo } from '../pages/Explore/PublicShowcase';
 import { ContactPage } from '../pages/Contact/Page';
 import { FAQPage } from '../pages/FAQ/Page';
 import { CollaborationPage } from '../pages/Collaboration/Page';
@@ -16,6 +17,7 @@ import { CollaborationPage } from '../pages/Collaboration/Page';
 const pages = {
   '/': { ...homepageMetadata, title: `${homepageMetadata.title} | HOMA` },
   '/hosts': { title: 'طراحی اقامتگاه برای میزبان‌ها | هُما', description: 'از عکس آگهی تا راحتی مهمان؛ طراحی فضای اقامتگاه با هما.' },
+  '/explore': { ...showcaseSeo, title: showcaseSeo.title + ' | HOMA' },
   '/contact': { title: 'تماس با هما', description: 'راه‌های تماس با پشتیبانی استودیو و تیم هما.' },
   '/faq': { title: 'سؤال‌های متداول هما', description: 'پاسخ پرسش‌های رایج دربارهٔ طراحی، تصاویر و استفاده از هما.' },
   '/collaboration': { title: 'همکاری با هما', description: 'درخواست همکاری فروشگاه‌ها و برندها با هما.' },
@@ -30,7 +32,7 @@ const homePreloads = [
 export function renderMarketingDocument(path: keyof typeof pages, template: string) {
   const page = pages[path];
   const i18n = createPublicI18n();
-  const content = path === '/' ? <SeoProductLandingPage /> : path === '/hosts' ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /><main><HostsLandingContent /></main><Footer /></> : path === '/contact' ? <ContactPage staticDocument /> : path === '/faq' ? <FAQPage staticDocument /> : <CollaborationPage staticDocument />;
+  const content = path === '/' ? <SeoProductLandingPage /> : path === '/hosts' ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /><main><HostsLandingContent /></main><Footer /></> : path === '/explore' ? <PublicShowcase staticDocument /> : path === '/contact' ? <ContactPage staticDocument /> : path === '/faq' ? <FAQPage staticDocument /> : <CollaborationPage staticDocument />;
   const markup = renderToStaticMarkup(<StaticRouter location={path}><I18nextProvider i18n={i18n}><AppProvider>{content}</AppProvider></I18nextProvider></StaticRouter>);
   const canonical = `https://myhoma.ir${path}`;
   const schema = JSON.stringify([{ '@context': 'https://schema.org', '@type': 'Organization', name: 'HOMA | هما', url: 'https://myhoma.ir', logo: 'https://myhoma.ir/icons/homa-icon-512.png' }, { '@context': 'https://schema.org', '@type': 'WebSite', name: 'HOMA | هما', url: 'https://myhoma.ir', inLanguage: 'fa-IR' }]).replace(/</g, '\\u003c');

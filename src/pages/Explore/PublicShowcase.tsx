@@ -3,18 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { fetchPublicShowcase, fetchPublicShowcaseGroups, fetchPublicCategories, type PublicShowcaseProduct, type PublicShowcaseCategory, type PublicShowcaseGroup } from '@/services/publicShowcaseService';
 import { formatPriceFromRial } from '@/utils/formatters';
 import { Header } from '@/components/Header';
+import { PublicChromeHeader } from '@/seo/PublicChrome';
 import { Footer } from '@/components/Footer';
 import { useSeo } from '@/hooks/useSeo';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Button } from '@/components/ui/button';
 
-export function PublicShowcase() {
+export const showcaseSeo = {
+  title: 'ایده‌های دکوراسیون و انتخاب وسایل خانه',
+  description: 'برای چیدمان خانه ایده بگیرید، نمونهٔ وسایل را بر اساس دسته ببینید و قیمت‌های اعلام‌شده را مقایسه کنید.',
+  canonical: 'https://myhoma.ir/explore',
+  image: 'https://myhoma.ir/images/seo/homa-preview.png',
+};
+
+export function PublicShowcase({ staticDocument = false }: { staticDocument?: boolean }) {
   const { t, i18n } = useTranslation();
   const [rows, setRows] = useState<PublicShowcaseProduct[]>([]);
   const [groups, setGroups] = useState<PublicShowcaseGroup[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
-  const [category, setCategory] = useState(() => new URLSearchParams(window.location.search).get('category') || '');
+  const [category, setCategory] = useState(() => staticDocument ? '' : new URLSearchParams(window.location.search).get('category') || '');
   const [categories, setCategories] = useState<PublicShowcaseCategory[]>([]);
   useEffect(() => {
     const back = () => setCategory(new URLSearchParams(window.location.search).get('category') || '');
@@ -30,7 +38,8 @@ export function PublicShowcase() {
   };
   const flatten = (nodes: PublicShowcaseCategory[], depth = 0): { node: PublicShowcaseCategory; depth: number }[] => nodes.flatMap(node => [{ node, depth }, ...flatten(node.children, depth + 1)]);
   const selectedRoot = categories.find(root => flatten([root]).some(x => x.node.code === category));
-  useSeo({ title: i18n.language.startsWith('en') ? 'Product inspiration' : 'ایده‌های انتخاب محصول', description: '' });
+  const description = t('publicShowcase.description', showcaseSeo.description);
+  useSeo({ ...showcaseSeo, title: t('publicShowcase.seoTitle', showcaseSeo.title), description });
   useEffect(() => {
     const controller = new AbortController();
     setStatus('loading');
@@ -44,13 +53,14 @@ export function PublicShowcase() {
     }).catch(() => { if (!controller.signal.aborted) setStatus('error'); });
     return () => controller.abort();
   }, [attempt, category]);
-  return <><Header /><main className="max-w-7xl mx-auto px-5 md:px-12 py-12 md:py-20" dir={i18n.dir()}>
-    <h1 className="text-2xl md:text-4xl font-light text-content-primary mb-10">{t('publicShowcase.title', 'ایده‌هایی برای فضای تو')}</h1>
+  return <>{staticDocument ? <><PublicChromeHeader /><div className="h-[64px] md:h-[80px]" /></> : <Header />}<main className="max-w-7xl mx-auto px-5 md:px-12 py-12 md:py-20" dir={i18n.dir()}>
+    <h1 className="text-2xl md:text-4xl font-light text-content-primary mb-4">{t('publicShowcase.title', 'ایده‌هایی برای فضای تو')}</h1>
+    <p className="mb-10 text-content-secondary">{description}</p>
     <nav aria-label={t('publicShowcase.categories', 'دسته‌بندی محصولات')} className="flex gap-3 overflow-x-auto pb-2 mb-6 md:flex-wrap">
       {[{ code: '', label: t('publicShowcase.all', 'همه دسته‌ها'), children: [] }, ...categories].map(node => <a key={node.code} href={`/explore${node.code ? `?category=${encodeURIComponent(node.code)}` : ''}`} aria-current={node.code === (selectedRoot?.code || '') ? 'page' : undefined} onClick={event => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && event.button === 0) { event.preventDefault(); choose(node.code); } }} className={`inline-flex shrink-0 whitespace-nowrap min-h-11 items-center px-4 py-2 border rounded-full text-sm transition-colors ${node.code === (selectedRoot?.code || '') ? 'bg-content-primary text-content-inverse border-content-primary' : 'border-border-subtle text-content-primary'}`}>{node.label}</a>)}
     </nav>
     {selectedRoot && selectedRoot.children.length > 0 && <label className="flex flex-wrap items-center gap-3 mb-8 text-sm">{t('publicShowcase.subcategory', 'زیردسته')}<select aria-label={t('publicShowcase.subcategory', 'زیردسته')} value={category} onChange={event => choose(event.target.value)} className="min-h-11 max-w-full border border-border-subtle rounded-lg bg-surface-default px-4 py-2 text-content-primary">{flatten([selectedRoot]).map(({ node, depth }) => <option key={node.code} value={node.code}>{depth === 0 ? `${t('publicShowcase.all', 'همه دسته‌ها')} · ${node.label}` : `${'— '.repeat(depth - 1)}${node.label}`}</option>)}</select></label>}
-    {status === 'loading' && <p role="status">{t('publicShowcase.loading', 'در حال دریافت تصاویر…')}</p>}
+    {!staticDocument && status === 'loading' && <p role="status">{t('publicShowcase.loading', 'در حال دریافت تصاویر…')}</p>}
     {status === 'error' && <div role="status"><p>{t('publicShowcase.error', 'تصاویر فعلاً بارگذاری نشدند.')}</p><Button variant="outline" className="mt-4" onClick={() => setAttempt(x => x + 1)}>{t('publicShowcase.retry', 'تلاش دوباره')}</Button></div>}
     {status === 'ready' && rows.length === 0 && groups.length === 0 && <p role="status">{t('publicShowcase.empty', 'در این دسته فعلاً تصویری برای نمایش نداریم.')}</p>}
     {status === 'ready' && !category && <div className="space-y-14 md:space-y-20">{groups.map(group => <section key={group.category.code} aria-labelledby={`category-${group.category.code}`}>

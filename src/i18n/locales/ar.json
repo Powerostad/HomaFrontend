@@ -1,4 +1,8 @@
 {
+  "publicShowcase": {
+    "seoTitle": "أفكار لتزيين المنزل واختيار الأثاث",
+    "description": "استلهم أفكاراً لمنزلك، وتصفّح الأثاث حسب الفئة وقارن الأسعار المعروضة."
+  },
   "studioOrder": {
     "summary": "{{orderCount}} {{unit}} لتلبية احتياج {{demand}} {{demandUnit}}",
     "unit": {

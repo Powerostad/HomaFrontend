@@ -12,7 +12,7 @@ const launcher = await readFile('render-bot-entrypoint.sh');
 if (launcher.includes(13)) throw new Error('Production shell launcher must use LF line endings');
 const template = await readFile('dist/index.html', 'utf8');
 await mkdir('dist/marketing', { recursive: true });
-for (const [path, file] of [['/', 'home'], ['/hosts', 'hosts'], ['/contact', 'contact'], ['/faq', 'faq'], ['/collaboration', 'collaboration']]) {
+for (const [path, file] of [['/', 'home'], ['/hosts', 'hosts'], ['/explore', 'explore'], ['/contact', 'contact'], ['/faq', 'faq'], ['/collaboration', 'collaboration']]) {
   const html = renderMarketingDocument(path, template);
   if (!html.includes('<h1') || !html.includes('rel="canonical"') || !html.includes('/studio')) throw new Error('Incomplete public document: ' + path);
   if (path === '/collaboration' && !html.includes('<fieldset disabled=""')) throw new Error('The static form must wait for client initialization, not submit personal information in a GET URL');

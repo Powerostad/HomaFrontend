@@ -6,7 +6,10 @@ export function documentRoute(pathname) {
   if (/%(?:2f|5c|00)/i.test(pathname) || pathname.includes('\\')) return { status: 404 };
   const path = pathname.replace(/\/+$/, '') || '/';
   if (redirects[path]) return { status: 308, location: redirects[path] };
-  if (publicPaths.has(path)) return { status: 200, path, public: true };
+  if (publicPaths.has(path)) {
+    if (pathname !== path) return { status: 308, location: path };
+    return { status: 200, path, public: true };
+  }
   if (privatePaths.test(path)) return { status: 200, path, public: false };
   return { status: 404 };
 }

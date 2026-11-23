@@ -1,4 +1,8 @@
 {
+  "publicShowcase": {
+    "seoTitle": "Ev dekorasyonu ve mobilya fikirleri",
+    "description": "Eviniz için fikir alın, ürünleri kategorilere göre inceleyin ve listelenen fiyatları karşılaştırın."
+  },
   "studioOrder": {
     "summary": "{{demand}} {{demandUnit}} ihtiyaç için {{orderCount}} {{unit}}",
     "unit": {

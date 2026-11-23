@@ -14,3 +14,7 @@ test('public pages stay public and aliases retain navigation', () => {
   for (const path of ['/', '/hosts', '/explore', '/faq', '/contact', '/collaboration']) assert.equal(documentRoute(path).public, true);
   assert.deepEqual(documentRoute('/gallery'), { status: 308, location: '/explore' });
 });
+
+test('public trailing slashes redirect to the sitemap URL', () => {
+  assert.deepEqual(documentRoute('/explore/'), { status: 308, location: '/explore' });
+});
