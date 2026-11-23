@@ -3,4 +3,4 @@ services:
     image: homa-frontend-seo-20261124-brtfn4:latest
     pull_policy: never
     environment:
-      VITE_UMAMI_SRC: https://myhoma.ir/homa-metrics.js
+      VITE_UMAMI_SRC: https://myhoma.ir/assets/homa-metrics/v1/script.js
