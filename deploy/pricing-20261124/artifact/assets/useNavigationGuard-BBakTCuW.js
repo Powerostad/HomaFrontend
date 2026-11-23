@@ -1,0 +1,1 @@
+import{r as t}from"./react-vendor-DzhG1eCk.js";function u(e,a){t.useEffect(()=>{if(!e)return;const r=n=>(n.preventDefault(),n.returnValue="","");return window.addEventListener("beforeunload",r),()=>{window.removeEventListener("beforeunload",r)}},[e])}export{u};

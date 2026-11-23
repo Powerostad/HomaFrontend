@@ -5,7 +5,9 @@ export function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const anchor = document.getElementById(window.location.hash.slice(1));
+    if (anchor) anchor.scrollIntoView();
+    else window.scrollTo(0, 0);
   }, [pathname]);
 
   return null;

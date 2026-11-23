@@ -1,6 +1,7 @@
 import { Footer } from "../../components/Footer";
 import { HomeNavigation } from "../../components/HomeNavigation";
 import { HomeScrollExperience } from "./components/HomeScrollExperience";
+import { HomePricing } from "./components/HomePricing";
 
 export interface ProductLandingContentProps {
   onStudioStart?: () => void;
@@ -8,7 +9,7 @@ export interface ProductLandingContentProps {
 
 /** Shared public content for the initial document and interactive homepage. */
 export function ProductLandingContent({ onStudioStart }: ProductLandingContentProps) {
-  return <main className="flex-grow"><HomeScrollExperience onStudioStart={onStudioStart} /></main>;
+  return <main className="flex-grow"><HomeScrollExperience onStudioStart={onStudioStart} /><HomePricing /></main>;
 }
 
 export function SeoProductLandingPage() {

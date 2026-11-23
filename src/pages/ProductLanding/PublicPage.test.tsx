@@ -47,6 +47,17 @@ describe('shared homepage document', () => {
     expect(html).toContain('/images/home-hero/studio-sample-lohals.webp');
     expect(html).not.toContain('studio-workspace-nav');
     expect(html).toContain('id="home-faq"');
-    expect(html.match(/<details>/g)).toHaveLength(4);
+    const pricingStart = html.indexOf('id="pricing"');
+    expect(pricingStart).toBeGreaterThan(html.indexOf('id="home-faq"'));
+    expect(pricingStart).toBeLessThan(html.lastIndexOf('<footer'));
+    expect(html.slice(0, pricingStart).match(/<details>/g)).toHaveLength(4);
+    const pricing = html.slice(pricingStart, html.lastIndexOf('</main>'));
+    expect(pricing).toContain('data-plan="Starter"');
+    expect(pricing).toContain('data-plan="Pro"');
+    expect(pricing).toContain('data-plan="Max"');
+    expect(html).toContain('href="#pricing"');
+    for (const card of pricing.matchAll(/<article[\s\S]*?<\/article>/g)) {
+      expect(card[0].indexOf('homa-pricing__choose')).toBeGreaterThan(card[0].indexOf('homa-pricing__card-service'));
+    }
   });
 });

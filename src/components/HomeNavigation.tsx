@@ -19,6 +19,7 @@ export function HomeNavigation({ utilities }: { utilities?: ReactNode }) {
     ['#design-steps', t('landing.experience.nav.how')],
     ['/blog/', t('landing.experience.examples.all')],
     ['/hosts', t('landing.experience.nav.hosts')],
+    ['#pricing', t('landing.experience.nav.pricing')],
   ];
   return <Dialog.Root open={open} onOpenChange={setOpen}>
     <header className={'homa-editorial-header' + (overPhoto ? ' is-over-photo' : '')}>

@@ -1,0 +1,4 @@
+services:
+  openai-frontend:
+    image: homa-pricing-20261124-0mov03:latest
+    pull_policy: never
