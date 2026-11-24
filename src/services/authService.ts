@@ -150,7 +150,7 @@ export async function sendOTP(phone: string): Promise<OTPSendResult> {
       phone_number: normalizedPhone,
       purpose: 'login',
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -187,7 +187,7 @@ export async function verifyOTP(phone: string, otpCode: string): Promise<OTPVeri
       otp_code: otpCode,
       purpose: 'login',
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -245,7 +245,7 @@ export async function resendOTP(phone: string): Promise<OTPSendResult> {
       phone_number: normalizedPhone,
       purpose: 'login',
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -279,7 +279,7 @@ export async function checkUser(phone: string): Promise<CheckUserResult> {
       phone_number: normalizedPhone,
       check_only: true,
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -314,7 +314,7 @@ export async function setPassword(
       password: password,
       confirm_password: confirmPassword,
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -371,7 +371,7 @@ export async function loginWithPassword(phone: string, password: string): Promis
       phone_number: normalizedPhone,
       password: password,
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -419,7 +419,7 @@ export async function sendOTPForReset(phone: string): Promise<OTPSendResult> {
       phone_number: normalizedPhone,
       purpose: 'reset_password',
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success && response.data) {
@@ -459,7 +459,7 @@ export async function resetPassword(
       new_password: newPassword,
       confirm_password: newPassword,
     },
-    { skipAuth: true }
+    { skipAuth: true, skipRetryOn401: true }
   );
 
   if (response.success) {

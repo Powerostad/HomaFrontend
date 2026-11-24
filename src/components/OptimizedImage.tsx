@@ -7,6 +7,7 @@ interface OptimizedImageProps {
   className?: string;
   priority?: boolean;       // true for LCP images (adds fetchpriority="high")
   lazy?: boolean;           // true for below-fold images
+  mobileVariant?: boolean;  // Set false for assets without a -mobile.webp sibling
 }
 
 /**
@@ -30,6 +31,7 @@ export function OptimizedImage({
   className = '',
   priority = false,
   lazy = false,
+  mobileVariant = true,
 }: OptimizedImageProps) {
   const { siteValue } = useSiteTranslation();
   const [error, setError] = useState(false);
@@ -70,11 +72,11 @@ export function OptimizedImage({
   return (
     <picture>
       {/* Mobile WebP (smaller file for viewports < 768px) */}
-      <source
+      {mobileVariant && <source
         media="(max-width: 767px)"
         srcSet={webpMobileSrc}
         type="image/webp"
-      />
+      />}
       {/* Desktop WebP */}
       <source
         srcSet={webpSrc}

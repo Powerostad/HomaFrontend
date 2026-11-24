@@ -32,17 +32,26 @@ function restoreSelection(key: string): Selection {
 function toggle<T>(items: T[], value: T) { return items.includes(value) ? items.filter(item => item !== value) : [...items, value]; }
 function quantity(value: number) { return Number.isFinite(value) ? Math.max(1, Math.min(99, Math.round(value))) : 1; }
 
-export function useConversationStudioResult({ plan, previousPlan = null, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat, onChooseProduct }: {
+interface ConversationResultOptions {
   previousPlan?: ExecutionPlan | null;
   plan: ExecutionPlan | null; sessionId: string | null; versionId: string; resultImage: string; originalImage: string | null;
   showOriginal: boolean; onToggleOriginal: (show: boolean) => void; onOpenChat: () => void;
   onChooseProduct?: (product: Product) => void;
-}): StudioResultViewState {
+}
+
+export function useConversationStudioResult(options: ConversationResultOptions): StudioResultViewState {
+  return useConversationResultState(options, useBasket());
+}
+
+export function useStudioResultPreview(options: Pick<ConversationResultOptions, 'plan' | 'originalImage' | 'resultImage' | 'showOriginal' | 'onToggleOriginal'>): StudioResultViewState {
+  return useConversationResultState({ ...options, sessionId: null, versionId: 'preview', onOpenChat: () => {} });
+}
+
+function useConversationResultState({ plan, previousPlan = null, sessionId, versionId, resultImage, originalImage, showOriginal, onToggleOriginal, onOpenChat, onChooseProduct }: ConversationResultOptions, basket?: ReturnType<typeof useBasket>): StudioResultViewState {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const basket = useBasket();
   const storageKey = `homa.studio.selection:${sessionId || 'new'}:${versionId}`;
-  const [selection, setSelection] = useState(() => restoreSelection(storageKey));
+  const [selection, setSelection] = useState(() => basket ? restoreSelection(storageKey) : emptySelection());
   const selectionKey = useRef(storageKey);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isSaved, setIsSaved] = useState(!!sessionId);
@@ -60,15 +69,19 @@ export function useConversationStudioResult({ plan, previousPlan = null, session
     const key = group.workspaceKey || String(group.itemId);
     if (groupIds.current.key !== storageKey) {
       let entries: [string, number][] = [];
-      try { entries = JSON.parse(sessionStorage.getItem(`${storageKey}:groups`) || '[]'); } catch { /* optional memory */ }
+      if (basket) {
+        try { entries = JSON.parse(sessionStorage.getItem(`${storageKey}:groups`) || '[]'); } catch { /* optional memory */ }
+      }
       groupIds.current = { key: storageKey, ids: new Map(entries) };
     }
     const ids = groupIds.current.ids;
     if (!ids.has(key)) ids.set(key, Math.max(0, ...ids.values()) + 1);
     return { ...group, itemId: ids.get(key)! };
-  }), [plan, previousPlan, storageKey]);
+  }), [plan, previousPlan, storageKey, !!basket]);
   useEffect(() => {
-    try { sessionStorage.setItem(`${storageKey}:groups`, JSON.stringify([...groupIds.current.ids])); } catch { /* optional memory */ }
+    if (basket) {
+      try { sessionStorage.setItem(`${storageKey}:groups`, JSON.stringify([...groupIds.current.ids])); } catch { /* optional memory */ }
+    }
     const next = new Map(baseGroups.map(group => [group.workspaceKey || String(group.itemId), group.products[0]?.id || '']));
     const changed = baseGroups.filter(group => {
       const key = group.workspaceKey || String(group.itemId);
@@ -84,7 +97,7 @@ export function useConversationStudioResult({ plan, previousPlan = null, session
     if (changed.length || quantityChanged.length) setSelection(previous => ({ ...previous,
       primary: Object.fromEntries(Object.entries(previous.primary).filter(([id]) => !changed.some(group => group.itemId === Number(id)))),
       quantities: Object.fromEntries(Object.entries(previous.quantities).filter(([id]) => !quantityChanged.some(group => group.itemId === Number(id)))) }));
-  }, [baseGroups, storageKey]);
+  }, [baseGroups, storageKey, !!basket]);
   const categoryGroups = useMemo(() => (isV2 && onChooseProduct ? baseGroups : applyPrimaryProducts(baseGroups, selection.primary)).map(group => ({ ...group, quantity: isV2 ? group.quantity : quantity(selection.quantities[group.itemId] ?? group.quantity) })), [baseGroups, selection.quantities, selection.primary, isV2, onChooseProduct]);
   const tierGroups = useMemo<TierGroup[]>(() => (['quick_win', 'enhancement', 'structural'] as const)
     .map(tier => ({ tier, items: categoryGroups.filter(group => group.interventionTier === tier) })).filter(group => group.items.length), [categoryGroups]);
@@ -99,20 +112,21 @@ export function useConversationStudioResult({ plan, previousPlan = null, session
   const productAlternatives = selectedProduct ? categoryGroups.find(group => group.products.some(product => product.id === selectedProduct.id))?.products.filter(product => product.id !== selectedProduct.id) || [] : [];
   const summaries = Object.values(plan?.studio_documents || {}).flatMap(document => document?.user_facing_summary ? [document.user_facing_summary] : []);
   useEffect(() => {
+    if (!basket) return;
     if (selectionKey.current !== storageKey) {
       selectionKey.current = storageKey;
       setSelection(restoreSelection(storageKey));
       return;
     }
     try { sessionStorage.setItem(storageKey, JSON.stringify(selection)); } catch { /* Selection still works without storage. */ }
-  }, [selection, storageKey]);
+  }, [selection, storageKey, !!basket]);
   const scrollToCard = useCallback((id: number) => {
     const card = document.getElementById(`recommendation-${id}`);
     card?.scrollIntoView({ block: 'start', behavior: 'instant' });
     card?.focus({ preventScroll: true });
   }, []);
   const handleFinalize = async () => {
-    if (finalizing.current || !selectedLines.length) return;
+    if (!basket || finalizing.current || !selectedLines.length) return;
     finalizing.current = true;
     setIsFinalizing(true);
     try {

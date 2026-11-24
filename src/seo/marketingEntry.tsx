@@ -22,8 +22,7 @@ const pages = {
 };
 
 const homePreloads = [
-  '<link rel="preload" as="image" href="/images/hero/before.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high">',
-  '<link rel="preload" as="image" href="/images/hero/before-mobile.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high">',
+  '<link rel="preload" as="image" href="/images/home-story/bedroom-original.jpg" type="image/jpeg" fetchpriority="high">',
   '<link rel="preload" as="font" href="/fonts/vazirmatn-v33.003.woff2" type="font/woff2" fetchpriority="low" crossorigin>',
 ].join('');
 

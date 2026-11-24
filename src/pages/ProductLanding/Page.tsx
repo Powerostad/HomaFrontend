@@ -47,7 +47,7 @@ export function ProductLandingPage() {
 
   return (
     <div className="homa-homepage min-h-screen flex flex-col">
-      <Header />
+      <Header editorial hideSpacer />
       <ProductLandingContent onStudioStart={trackHomepageStudioClick} />
       <Footer />
     </div>

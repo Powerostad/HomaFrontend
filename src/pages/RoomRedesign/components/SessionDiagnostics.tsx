@@ -10,6 +10,7 @@ import { stageKey } from '../services/diagnosticFormatting';
 
 export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: string; busy?: boolean }) {
   const { t, i18n } = useTranslation();
+  const internalTools = import.meta.env.DEV && import.meta.env.MODE === 'studio-local';
   const { user } = useAuth();
   const ownerId = user?.id;
   const contentId = useId();
@@ -65,7 +66,7 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
   return <section className="studio-unified-report" dir={i18n.dir()}>
     <Button className="studio-report-trigger" variant="ghost" aria-expanded={open} aria-controls={contentId} onClick={() => setOpen(value => !value)}><FileJson size={20} aria-hidden="true" /><span>{t('studioReport.reportTitle')}</span><ChevronDown size={18} aria-hidden="true" /></Button>
     {open && <div id={contentId} className="studio-diagnostics-body">
-        <nav className="studio-audit-nav" aria-label={t('studioReport.reportTitle')}>{['cost', 'time', 'data'].map(key => <a key={key} href={`#${contentId}-${key}`}>{t(`studioAudit.${key}`)}</a>)}</nav>
+        <nav className="studio-audit-nav" aria-label={t('studioReport.reportTitle')}>{(internalTools ? ['cost', 'time', 'data'] : ['cost', 'time']).map(key => <a key={key} href={`#${contentId}-${key}`}>{t(`studioAudit.${key}`)}</a>)}</nav>
         <p className="studio-caption">{t('studioDiagnostics.hint')}</p>
         <p className="studio-caption">{t('studioDiagnostics.session')} <bdi>{sessionId}</bdi></p>
         {loading && <p role="status"><Loader2 size={18} className="studio-spinner" aria-hidden="true" />{t('studioDiagnostics.loading')}</p>}
@@ -87,6 +88,7 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
             {!!expenses?.receipts?.length && <div className="studio-audit-table-wrap"><table className="studio-audit-table"><caption>{t('studioAudit.calls')}</caption><thead><tr><th>{t('studioDiagnostics.turn')}</th><th>{t('studioAudit.stage')}</th><th>{t('studioAudit.model')}</th><th>USD</th><th>{t('studioDiagnostics.paid')}</th></tr></thead><tbody>{expenses.receipts.map(receipt => <tr key={receipt.request_id}><td>{receipt.turn_index ?? '—'}</td><th scope="row">{t(`studioAudit.${receipt.kind === 'image' ? 'image' : stageKey(receipt.stage || 'text')}`)}</th><td><bdi>{receipt.model || '—'}</bdi></td><td>{money(receipt.usd, 'USD')}</td><td>{money(receipt.paid_toman ?? null, t('redesignJourney.toman'))}</td></tr>)}</tbody></table></div>}
           </section>
           <div id={`${contentId}-time`}><PerformancePanel key={`${sessionId}/${ownerId}`} sessionId={sessionId} busy={busy} embedded /></div>
+          {internalTools && <>
           <div id={`${contentId}-data`} className="studio-audit-data-heading"><h3>{t('studioAudit.data')}</h3><div className="studio-audit-filters"><label>{t('studioDiagnostics.turn')}<select value={turn} onChange={event => setTurn(event.target.value)}><option value="all">{t('studioAudit.allTurns')}</option>{turns.map(value => <option value={String(value)} key={value}>{value}</option>)}</select></label><label>{t('studioAudit.data')}<select value={dataKind} onChange={event => setDataKind(event.target.value)}>{[['all', 'allData'], ['input', 'inputs'], ['output', 'outputs'], ['search', 'searches']].map(([value, key]) => <option key={value} value={value}>{t(`studioAudit.${key}`)}</option>)}</select></label><span>{t('studioAudit.records', { count: traces.length })}</span></div></div>
           <details><summary>{t('studioDiagnostics.current')}</summary><p className="studio-caption">{t('studioDiagnostics.currentHint')}</p><JsonValue value={report.documents} /></details>
           <details><summary>{t('studioDiagnostics.versions')}</summary><JsonValue value={report.versions} /></details>
@@ -103,6 +105,7 @@ export function SessionDiagnostics({ sessionId, busy = false }: { sessionId: str
           </section>
           <Button disabled={loading} onClick={download}><Download size={18} aria-hidden="true" />{t('studioDiagnostics.download')}</Button>
           <p className="studio-caption">{t('studioDiagnostics.private')}</p>
+          </>}
         </>}
       </div>}
   </section>;

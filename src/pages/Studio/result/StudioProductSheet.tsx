@@ -12,11 +12,11 @@ import type { RefineProduct } from './ProductRefinement';
 import { StudioSkuDetails } from './StudioSkuDetails';
 
 /** A single portal above the workspace: photo first, one contextual action. */
-export function StudioProductSheet({ sessionId, product, isOpen, onClose, isAlternative, onMakePrimary, isInBasket, onToggleBasket, onPreview, previewBusy = false }: {
+export function StudioProductSheet({ sessionId, product, isOpen, onClose, isAlternative, onMakePrimary, isInBasket, onToggleBasket, onPreview, previewBusy = false, preview = false }: {
   sessionId?: string; product: Product; isOpen: boolean; onClose: () => void;
   isAlternative: boolean; onMakePrimary: () => void;
   isInBasket: boolean; onToggleBasket: () => void;
-  onRefineProduct?: RefineProduct; onPreview?: () => void; previewBusy?: boolean;
+  onRefineProduct?: RefineProduct; onPreview?: () => void; previewBusy?: boolean; preview?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [detail, setDetail] = useState<{ key: string; data?: APIProduct; failed?: boolean }>();
@@ -26,7 +26,7 @@ export function StudioProductSheet({ sessionId, product, isOpen, onClose, isAlte
   useEffect(() => {
     if (!isOpen) return;
     setPhotoIndex(0);
-    if (!product.uniqueLink) return;
+    if (preview || !product.uniqueLink) return;
     const controller = new AbortController();
     setDetail({ key });
     fetchProduct(product.uniqueLink, { signal: controller.signal, sessionId }).then(result => {
@@ -35,7 +35,7 @@ export function StudioProductSheet({ sessionId, product, isOpen, onClose, isAlte
       if (!controller.signal.aborted) setDetail({ key, failed: true });
     });
     return () => controller.abort();
-  }, [isOpen, key, product.uniqueLink, reload, sessionId]);
+  }, [isOpen, key, product.uniqueLink, reload, sessionId, preview]);
   const data = detail?.key === key ? detail.data : undefined;
   const seenPhotos = new Set<string>();
   const gallery = [product.image, ...(data?.galleryImages || [])].filter(url => {
@@ -75,7 +75,7 @@ export function StudioProductSheet({ sessionId, product, isOpen, onClose, isAlte
         <div className="studio-selection-sheet-copy"><h2>{product.name}</h2><strong>{product.priceUnknown ? t('redesignJourney.unpriced') : formatPriceFromRial(product.price, true)}</strong>
           <StudioSkuDetails product={product} />
           {data?.shopName && <p className="studio-merchant-store">{t('studioMerchant.store', 'فروشگاه')}: {data.shopName}</p>}
-          {!!product.uniqueLink && !data && (detail?.key !== key || !detail.failed) && <p role="status">{t('studioMerchant.loading', 'در حال دریافت مشخصات و تصاویر محصول…')}</p>}
+          {!preview && !!product.uniqueLink && !data && (detail?.key !== key || !detail.failed) && <p role="status">{t('studioMerchant.loading', 'در حال دریافت مشخصات و تصاویر محصول…')}</p>}
           {detail?.key === key && detail.failed && <div className="studio-merchant-error" role="status">
             <p>{t('studioMerchant.loadError', 'مشخصات کامل محصول بارگذاری نشد.')}</p>
             <Button variant="outline" onClick={() => setReload(value => value + 1)}>{t('studioMerchant.retry', 'تلاش دوباره')}</Button>

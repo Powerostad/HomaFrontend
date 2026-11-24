@@ -61,6 +61,7 @@ const LocalStudioCompare = import.meta.env.DEV && import.meta.env.MODE === 'stud
   && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   ? lazy(() => import('./pages/StudioCompare/StudioComparePage')) : null;
 
+const LocalPricingPreview = import.meta.env.DEV ? lazy(() => import('./pages/ProductLanding/PricingPreviewPage')) : null;
 const LocalModelCompare = LocalStudioCompare ? lazy(() => import('./pages/StudioCompare/ModelComparePage')) : null;
 const LocalDiscoveryPreview = (LocalStudioCompare || LocalStudioPreview) ? lazy(() => import('./pages/Studio/dev/DiscoveryPreview')) : null;
 const LocalCatalogue = LocalStudioCompare ? lazy(() => import('./pages/Catalogue/CataloguePage')) : null;
@@ -76,6 +77,7 @@ export default function App() {
             <RouterRoutes>
             <RouterRoute path="/" element={<Layout />}>
               <RouterRoute index element={LocalStudioPreview ? <Navigate to="/studio" replace /> : <ProductLandingPage />} />
+              {LocalPricingPreview && <RouterRoute path="pricing-preview" element={<LocalPricingPreview />} />}
               <RouterRoute path="hosts" element={<HostsLandingPage />} />
               <RouterRoute path="gallery" element={<Navigate to="/explore" replace />} />
               <RouterRoute path="explore" element={<PublicShowcase />} />

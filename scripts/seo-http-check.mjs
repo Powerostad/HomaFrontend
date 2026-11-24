@@ -57,16 +57,16 @@ try {
     const { response, body } = await request('/?utm_source=fixture', { headers: { 'User-Agent': agent } });
     assert.equal(response.status, 200);
     assert.equal((body.match(/<h1\b/g) ?? []).length, 1);
-    assert.match(body, /<h1[^>]*id="homa-home-title"/);
+    assert.match(body, /id="home-shopping"/);
     assert.match(body, /<title>[^<]*طراحی دکوراسیون خانه با هوش مصنوعی[^<]*<\/title>/);
     assert.match(body, /هوش مصنوعی/);
     assert.match(body, /href="\/studio"/);
     assert.match(body, /href="\/blog\//);
     assert.match(body, /href="\/hosts"/);
     assert.match(body, /rel="preload" as="font" href="\/fonts\/vazirmatn-v33\.003\.woff2"/);
-    const desktopPreload = body.indexOf('href="/images/hero/before.webp"');
-    assert.ok(desktopPreload > body.indexOf('name="viewport"'));
-    assert.ok(desktopPreload < body.indexOf('<script type="module"'));
+    const fontPreload = body.indexOf('rel="preload" as="font" href="/fonts/vazirmatn-v33.003.woff2"');
+    assert.ok(fontPreload > body.indexOf('name="viewport"'));
+    assert.ok(fontPreload < body.indexOf('<script type="module"'));
     assert.match(body, /rel="canonical" href="https:\/\/myhoma\.ir\/"/);
     assert.equal((body.match(/<meta name="description"/g) ?? []).length, 1);
     const schema = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
@@ -83,6 +83,19 @@ try {
   assert.equal(font.status, 200);
   assert.match(font.headers.get('content-type'), /font\/woff2/);
   assert.equal(Buffer.from(await font.arrayBuffer()).subarray(0, 4).toString(), 'wOF2');
+  for (const variant of ['desktop', 'mobile']) {
+    const path = '/images/home-editorial/hero-' + variant + '.mp4';
+    const metadata = await fetch(base + path, { method: 'HEAD' });
+    assert.equal(metadata.status, 200, path);
+    assert.match(metadata.headers.get('content-type'), /^video\/mp4\b/);
+    assert.equal(metadata.headers.get('accept-ranges'), 'bytes');
+    const partial = await fetch(base + path, { headers: { Range: 'bytes=0-63' } });
+    assert.equal(partial.status, 206, path);
+    assert.match(partial.headers.get('content-range'), /^bytes 0-63\/\d+$/);
+    const header = Buffer.from(await partial.arrayBuffer());
+    assert.equal(header.length, 64);
+    assert.equal(header.subarray(4, 8).toString(), 'ftyp');
+  }
   assert.equal((await request('/store/private-fixture')).response.status, 404);
   assert.equal((await request('/unknown-public-route')).response.status, 404);
   assert.equal((await request('/blog/')).response.status, 308);

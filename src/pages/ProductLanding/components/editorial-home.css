@@ -1,0 +1,273 @@
+/* Homa editorial homepage. All page colors derive from semantic tokens. */
+.homa-homepage {
+  --home-paper: var(--color-editorial-paper);
+  --home-sand: var(--color-editorial-sand);
+  --home-cocoa: var(--color-editorial-cocoa);
+  --home-cream: var(--color-editorial-cream);
+  background: var(--home-paper);
+  color: var(--color-content-primary);
+}
+.homa-home-shell { width: min(1320px, calc(100% - 120px)); margin-inline: auto; }
+.homa-homepage a { text-decoration: none; }
+.homa-homepage section[id] { scroll-margin-top: 90px; }
+.homa-homepage :is(a,button,summary):focus-visible { outline: 2px solid currentColor; outline-offset: 7px; }
+.homa-editorial-menu :is(a,button,select):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.homa-homepage h2 { font-size: clamp(42px, 4.5vw, 68px); font-weight: 400; line-height: 1.5; letter-spacing: -.045em; margin: 0; }
+.homa-homepage h2 span { color: var(--color-editorial-ink-muted); }
+.homa-home-eyebrow { font-size: 13px; line-height: 1.8; margin: 0 0 24px; }
+.homa-homepage figure { margin: 0; }
+.homa-homepage figcaption { font-size: 12px; line-height: 1.8; padding-block: 16px; }
+.homa-home-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 38px; min-height: 58px; padding: 16px 24px; border-radius: var(--radius-sm); background: var(--home-cocoa); color: var(--home-cream); font-size: 15px; line-height: 1.8; }
+.homa-home-button:hover { background: var(--color-content-primary); }
+.homa-home-text-link { display: inline-flex; align-items: center; gap: 28px; font-size: 15px; padding-block: 18px; line-height: 1.8; }
+.homa-home-text-link:hover { text-decoration: underline; text-underline-offset: 6px; }
+[dir=ltr] :is(.homa-home-button,.homa-home-text-link,.homa-editorial-journal a,.homa-editorial-menu a) > svg { transform: scaleX(-1); }
+.homa-editorial-header { position: fixed; inset: 0 0 auto; z-index: var(--z-fixed); height: 88px; padding-inline: 60px; display: flex; align-items: center; justify-content: space-between; gap: 28px; background: var(--home-paper, var(--color-editorial-paper)); color: var(--color-content-primary); }
+.homa-editorial-header.is-over-photo { background: transparent; color: var(--color-editorial-cream); }
+.homa-editorial-brand { font-family: var(--font-family-sf-pro); font-size: 29px; letter-spacing: .16em; font-weight: 400; line-height: 1; }
+.homa-editorial-desktop-nav { display: flex; gap: 36px; font-size: 14px; line-height: 1.8; }
+.homa-editorial-desktop-nav a { padding-block: 14px; }
+.homa-editorial-utilities { display: flex; align-items: center; gap: 24px; }
+.homa-editorial-account { display: flex; align-items: center; gap: 20px; }
+.homa-editorial-utilities button { display: flex; align-items: center; gap: 4px; background: none; border: 0; color: inherit; padding: 10px; cursor: pointer; }
+.homa-editorial-menu-overlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--color-surface-inverse) 30%, transparent); z-index: var(--z-modal-backdrop); }
+.homa-editorial-menu {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: var(--z-modal);
+  width: min(400px, 100%);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-editorial-cream);
+  color: var(--color-editorial-cocoa);
+  box-shadow: var(--shadow-xl);
+}
+.homa-editorial-menu-top { display: flex; justify-content: space-between; align-items: center; }
+.homa-editorial-menu button { display: grid; place-items: center; width: 44px; height: 44px; color: inherit; background: none; border: 0; border-radius: var(--radius-full); cursor: pointer; }
+.homa-editorial-menu > nav { padding-block: var(--space-6); display: flex; flex-direction: column; }
+.homa-editorial-menu > nav a { color: inherit; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 52px; padding: var(--space-2); border-block-end: 1px solid var(--color-border-subtle); font-size: var(--text-lg); font-weight: 500; text-decoration: none; }
+.homa-editorial-menu > nav svg { flex: none; }
+.homa-editorial-menu :is(button, nav a):hover { background: var(--color-editorial-paper); }
+.homa-editorial-menu-bottom { display: flex; gap: var(--space-2) var(--space-4); align-items: center; flex-wrap: wrap; font-size: var(--text-sm); }
+.homa-editorial-menu-bottom a { color: inherit; padding-block: var(--space-3); }
+.homa-editorial-menu-bottom a:hover { text-decoration: underline; }
+.homa-home-hero { height: 100svh; min-height: 740px; max-height: none; position: relative; isolation: isolate; overflow: hidden; color: var(--home-cream); background: var(--home-cocoa); }
+.homa-editorial-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; z-index: -1; }
+.homa-editorial-hero-copy { position: absolute; inset-inline-start: 6%; top: 20%; width: min(64%, 900px); }
+.homa-home-hero h1 { font-size: clamp(64px, 6.7vw, 108px); font-weight: 400; line-height: 1.42; letter-spacing: -.05em; margin: 0 0 26px; }
+.homa-home-hero h1 span { color: var(--home-cream); }
+[dir=ltr] .homa-editorial-hero-copy { inset-inline-start: auto; inset-inline-end: 6%; }
+[dir=ltr] .homa-home-hero h1 { font-size: clamp(64px, 5vw, 84px); line-height: 1.2; }
+.homa-editorial-hero-copy > p { max-width: 560px; font-size: 17px; line-height: 2; margin: 0 0 30px; }
+.homa-home-hero .homa-home-button { background: var(--home-cream); color: var(--home-cocoa); }
+.homa-home-hero .homa-home-button:hover { background: var(--home-sand); }
+.homa-editorial-hero-bottom { position: absolute; inset-inline: 5%; bottom: 28px; display: flex; flex-direction: row-reverse; align-items: end; justify-content: space-between; gap: 30px; }
+.homa-editorial-hero-bottom > span:first-child { font-size: 11px; max-width: 230px; line-height: 1.8; }
+.homa-editorial-hero-bottom a { color: inherit; padding: 18px; align-self: center; }
+.homa-editorial-signature { font-family: var(--font-family-sf-pro); font-size: clamp(55px, 8vw, 120px); font-weight: 300; line-height: .8; letter-spacing: -.04em; }
+.homa-home-commerce { padding-block: 120px; }
+.homa-home-section-header { display: flex; align-items: end; justify-content: space-between; gap: 90px; margin-bottom: 50px; }
+.homa-home-section-header > p { max-width: 370px; font-size: 17px; line-height: 2; margin: 0 0 10px; }
+.homa-editorial-comparison-image { height: min(70vw, 720px); position: relative; isolation: isolate; }
+.homa-home-image-labels { position: absolute; inset: 24px 24px auto; z-index: var(--z-dropdown); display: flex; justify-content: space-between; direction: ltr; pointer-events: none; }
+.homa-home-image-labels span { background: var(--home-paper); color: var(--home-cocoa); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; }
+.homa-editorial-comparison figcaption { display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+.homa-editorial-comparison figcaption > span:last-child { display: flex; align-items: center; gap: 10px; }
+.homa-editorial-journey { background: var(--home-sand); padding-block: 130px; }
+.homa-editorial-journey-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: 100px; }
+.homa-editorial-journey-layout h2 { font-size: clamp(64px, 6vw, 92px); line-height: 1.5; }
+.homa-editorial-journey-layout h2 span { display: block; color: var(--home-cocoa); }
+.homa-editorial-journey-layout header > p:last-child { max-width: 400px; font-size: 17px; line-height: 2; margin-top: 35px; }
+.homa-editorial-journey ol { list-style: none; margin: 0; padding: 0; }
+.homa-editorial-journey li { display: grid; grid-template-columns: 65px 1fr 130px; gap: 24px; align-items: center; padding-block: 35px; border-top: 1px solid var(--color-editorial-rule); }
+.homa-editorial-journey li:last-child { border-bottom: 1px solid var(--color-editorial-rule); }
+.homa-editorial-step-number { font-size: 60px; font-weight: 200; color: var(--home-cocoa); line-height: 1; }
+.homa-editorial-journey h3 { font-size: 23px; font-weight: 500; line-height: 1.6; margin: 0 0 14px; }
+.homa-editorial-journey li p { font-size: 14px; line-height: 2; margin: 0; }
+
+.homa-editorial-journey li img { width: 130px; height: 175px; object-fit: cover; border-radius: var(--radius-sm); }
+.homa-editorial-preserve { display: grid; grid-template-columns: .85fr 1.15fr; gap: 100px; padding-block: 150px; align-items: start; }
+.homa-home-preserve-image { height: 670px; }
+.homa-editorial-preserve-copy { padding-top: 80px; }
+.homa-editorial-preserve-copy > p:not(.homa-home-eyebrow) { max-width: 520px; margin: 30px 0; font-size: 17px; line-height: 2; }
+.homa-editorial-preserve blockquote { margin: 40px 0 25px; position: relative; }
+.homa-editorial-preserve blockquote > span { font-family: Georgia, serif; font-size: 90px; color: var(--color-editorial-accent); line-height: .7; display: block; }
+.homa-editorial-preserve blockquote p { font-size: clamp(24px, 2.5vw, 37px); line-height: 1.9; margin: 0; }
+.homa-editorial-shopping { background: var(--home-sand); padding-block: 120px; }
+
+.homa-home-workspace { display: grid; grid-template-columns: 1.05fr .95fr; gap: 100px; align-items: start; }
+.homa-home-workspace-visual { position: relative; min-height: 800px; }
+.homa-home-workspace-visual > picture { display: contents; }
+.homa-home-workspace-visual img { width: 100%; height: 800px; object-fit: cover; object-position: center; }
+.homa-home-demo-label { position: absolute; top: 20px; inset-inline-start: 20px; background: var(--home-paper); padding: 7px 12px; font-size: 12px; border-radius: var(--radius-sm); }
+.homa-home-visual-note { font-size: 12px; line-height: 1.8; padding-top: 16px; }
+
+.homa-home-workspace-panel { padding-top: 45px; min-width: 0; }
+.homa-home-workspace-panel > h2 { margin-bottom: 35px; }
+.homa-home-stage-switch { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--color-editorial-rule); margin-bottom: 35px; }
+.homa-home-stage-switch button { font-family: inherit; font-size: 14px; line-height: 1.8; color: var(--home-cocoa); background: none; border: 0; padding: 18px 4px; cursor: pointer; }
+.homa-home-stage-switch button[aria-pressed=true] { box-shadow: inset 0 -2px var(--home-cocoa); font-weight: 600; }
+.homa-home-workspace-content { min-height: 320px; }
+.homa-home-workspace-content h3 { font-size: 28px; font-weight: 400; line-height: 1.7; margin: 0 0 16px; }
+.homa-home-workspace-content > p { font-size: 15px; line-height: 2; margin: 0 0 25px; }
+.homa-home-design-note > span { font-size: 12px; }
+.homa-home-design-note p { font-size: 25px; line-height: 1.9; margin: 18px 0; }
+.homa-home-design-note > div { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+.homa-home-item-options > button { display: flex; width: 100%; align-items: center; gap: 20px; text-align: start; color: var(--home-cocoa); background: none; border: 0; border-bottom: 1px solid var(--color-editorial-rule); padding: 18px 0; cursor: pointer; }
+.homa-home-item-options > button > span:nth-child(2) { flex: 1; }
+.homa-home-item-options strong { display: block; font-size: 18px; font-weight: 500; line-height: 1.8; }
+.homa-home-item-options small { display: block; font-size: 13px; line-height: 1.8; }
+.homa-home-item-options > button[aria-pressed=true] { border-bottom-color: var(--home-cocoa); }
+.homa-home-item-explanation { font-size: 14px; line-height: 2; margin: 20px 0; }
+.homa-home-shopping-note p { font-size: 23px; line-height: 1.9; }
+.homa-home-shopping-note ul { padding-inline-start: 20px; font-size: 15px; line-height: 2; }
+.homa-home-workspace-bottom { margin-top: 25px; border-top: 1px solid var(--color-editorial-rule); padding-top: 22px; }
+.homa-home-workspace-bottom > p { font-size: 12px; line-height: 2; }
+.homa-editorial-journal { padding-block: 135px; }
+.homa-editorial-journal > header { display: grid; grid-template-columns: 1fr auto; gap: 5px 40px; align-items: end; margin-bottom: 70px; }
+.homa-editorial-journal > header > .homa-home-eyebrow { grid-column: 1/-1; margin-bottom: 0; }
+.homa-editorial-journal h2 { font-size: clamp(70px, 8vw, 116px); line-height: 1.35; }
+.homa-editorial-journal-spread { display: grid; grid-template-columns: 1.55fr .7fr; gap: 80px; align-items: start; }
+.homa-editorial-journal a { color: inherit; }
+.homa-editorial-journal-lead { margin-top: 110px; }
+.homa-editorial-journal :is(picture,figure) { display: block; }
+.homa-editorial-journal-lead img { width: 100%; height: 570px; object-fit: cover; object-position: center 65%; }
+.homa-editorial-journal-side img { width: 100%; height: 420px; object-fit: cover; }
+.homa-editorial-journal h3 { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 25px; font-weight: 400; line-height: 1.8; margin: 5px 0; }
+.homa-editorial-journal h3 svg { flex-shrink: 0; }
+.homa-editorial-journal-reading { display: flex; align-items: center; gap: 20px; margin-top: 55px; padding-top: 24px; border-top: 1px solid var(--color-editorial-rule); font-size: 16px; line-height: 1.8; }
+.homa-editorial-faq { background: var(--home-cocoa); color: var(--home-cream); padding-block: 120px 100px; }
+.homa-editorial-faq header { text-align: center; margin-bottom: 65px; }
+.homa-editorial-faq h2 { font-size: clamp(44px, 5.5vw, 80px); }
+.homa-home-questions { max-width: 1080px; margin-inline: auto; }
+.homa-home-questions details { border-top: 1px solid var(--color-editorial-rule-light); }
+.homa-home-questions details:last-child { border-bottom: 1px solid var(--color-editorial-rule-light); }
+.homa-home-questions summary { display: flex; justify-content: space-between; align-items: center; gap: 30px; cursor: pointer; list-style: none; font-size: 25px; line-height: 1.8; padding-block: 35px; }
+.homa-home-questions summary::-webkit-details-marker { display: none; }
+.homa-home-questions summary svg { flex-shrink: 0; transition: transform .2s ease; }
+.homa-home-questions details[open] summary svg { transform: rotate(45deg); }
+.homa-home-questions details > p { max-width: 850px; font-size: 17px; line-height: 2.1; margin: 0; padding-block: 0 36px; }
+.homa-editorial-faq > .homa-home-shell > a { display: flex; width: fit-content; margin: 25px auto 0; color: inherit; }
+.homa-editorial-closing { text-align: center; padding-top: 110px; }
+.homa-editorial-closing h2 { max-width: 1050px; margin: 0 auto 45px; }
+.homa-editorial-closing .homa-home-button { background: var(--home-cream); color: var(--home-cocoa); }
+.hs-page .homa-editorial-faq h2 { font-size: clamp(32px,3.8vw,54px); line-height: 1.5; }
+.hs-page .homa-home-questions summary { font-size: clamp(17px,1.6vw,23px); }
+.hs-page .homa-editorial-closing { margin-block-start: 64px; padding-block-start: 64px; border-block-start: 1px solid var(--color-editorial-rule-light); }
+.hs-page .homa-editorial-closing .homa-home-button { color: var(--home-cocoa); }
+.hs-page .homa-editorial-closing .homa-home-button:hover { background: var(--home-sand); }
+@media(max-width:760px) {
+  .hs-page .homa-home-shell { width: calc(100% - 48px); }
+  .hs-page .homa-editorial-closing { margin-block-start: 40px; padding-block-start: 48px; }
+}
+.homa-homepage > footer { --color-surface-page: var(--home-paper); padding-top: 70px; }
+@media (max-width: 1100px) {
+  .homa-home-shell { width: calc(100% - 64px); }
+  .homa-editorial-header { padding-inline: 32px; }
+  .homa-editorial-desktop-nav { gap: 20px; font-size: 12px; }
+  .homa-editorial-account { gap: 5px; }
+  .homa-editorial-hero-copy { width: 72%; inset-inline-start: 5%; }
+  .homa-home-hero h1 { font-size: 72px; }
+  .homa-home-section-header { gap: 45px; }
+  .homa-editorial-journey-layout { gap: 50px; grid-template-columns: 1fr 1.2fr; }
+  .homa-editorial-journey li { grid-template-columns: 50px 1fr; gap: 20px; }
+  .homa-editorial-journey li img { display: none; }
+  .homa-editorial-preserve { gap: 50px; }
+  .homa-home-workspace { gap: 50px; }
+  .homa-home-workspace-visual, .homa-home-workspace-visual img { min-height: 700px; height: 700px; }
+}
+@media (max-width: 767px) {
+  .homa-home-shell { width: calc(100% - 40px); }
+  .homa-editorial-header { height: 70px; padding-inline: 20px; gap: 20px; }
+  .homa-editorial-brand { font-size: 25px; }
+  .homa-editorial-desktop-nav, .homa-editorial-account { display: none; }
+  .homa-editorial-menu { width: 100%; padding: var(--space-5); }
+  .homa-home-hero { height: 100svh; min-height: 680px; max-height: none; }
+  .homa-editorial-hero-photo { object-position: 42% center; }
+  .homa-editorial-hero-copy { top: 19%; inset-inline: 20px; width: auto; }
+  .homa-home-hero h1 { font-size: clamp(40px, 12.8vw, 65px); line-height: 1.55; letter-spacing: -.045em; margin-bottom: 24px; }
+  [dir=ltr] .homa-editorial-hero-copy { inset-inline: 20px; }
+  [dir=ltr] .homa-home-hero h1 { font-size: clamp(34px, 9.5vw, 52px); line-height: 1.2; }
+  .homa-editorial-hero-copy > p { font-size: 15px; line-height: 2; max-width: 370px; margin-bottom: 28px; }
+  .homa-home-button { font-size: 14px; min-height: 54px; gap: 30px; padding: 14px 18px; }
+  .homa-editorial-hero-bottom { inset-inline: 20px; bottom: 26px; gap: 18px; flex-wrap: wrap; }
+  .homa-editorial-hero-bottom > span:first-child { font-size: 10px; max-width: 165px; }
+  .homa-editorial-signature { font-size: 58px; }
+  .homa-editorial-hero-bottom a { padding: 4px; }
+  .homa-homepage h2 { font-size: 37px; line-height: 1.6; letter-spacing: -.035em; }
+  .homa-home-eyebrow { font-size: 12px; margin-bottom: 18px; }
+  .homa-home-commerce { padding-block: 70px; }
+  .homa-home-section-header { display: block; margin-bottom: 30px; }
+  .homa-home-section-header > p { margin: 22px 0 0; max-width: 100%; font-size: 15px; }
+  .homa-editorial-comparison-image { height: 430px; margin-inline: -20px; }
+  .homa-home-image-labels { inset: 15px 15px auto; }
+  .homa-home-image-labels span { padding: 6px 12px; font-size: 12px; }
+  .homa-homepage figcaption { font-size: 11px; gap: 15px; }
+  .homa-editorial-comparison figcaption > span:last-child { gap: 7px; }
+  .homa-home-text-link { font-size: 14px; gap: 20px; }
+  .homa-editorial-journey { padding-block: 65px; }
+  .homa-editorial-journey-layout { display: block; }
+  .homa-editorial-journey-layout h2 { font-size: 66px; line-height: 1.5; }
+  .homa-editorial-journey-layout header > p:last-child { font-size: 15px; margin-top: 25px; }
+  .homa-editorial-journey ol { margin-top: 40px; }
+  .homa-editorial-journey li { grid-template-columns: 50px 1fr; padding-block: 28px; }
+  .homa-editorial-step-number { font-size: 48px; }
+  .homa-editorial-journey li h3 { font-size: 21px; }
+  .homa-editorial-journey li p { font-size: 14px; }
+  .homa-editorial-journey li img { display: block; grid-column: 2; width: 100%; height: 140px; }
+  .homa-editorial-preserve { display: flex; flex-direction: column; padding-block: 70px; gap: 35px; }
+  .homa-editorial-preserve > figure { width: 82%; align-self: flex-end; }
+  .homa-home-preserve-image { height: 420px; }
+  .homa-editorial-preserve-copy { padding-top: 0; }
+  .homa-editorial-preserve h2 { font-size: 32px; }
+  .homa-editorial-preserve-copy > p:not(.homa-home-eyebrow) { font-size: 15px; margin-block: 24px; }
+  .homa-editorial-preserve blockquote { margin-block: 30px 12px; }
+  .homa-editorial-preserve blockquote p { font-size: 26px; line-height: 1.9; }
+  .homa-editorial-shopping { padding-block: 65px; }
+  .homa-home-workspace { display: flex; flex-direction: column; gap: 35px; }
+  .homa-home-workspace-visual { min-height: 0; height: auto; width: 85%; align-self: flex-start; }
+  .homa-home-workspace-visual img { min-height: 0; height: 430px; }
+  .homa-home-workspace-panel { padding-top: 0; width: 100%; }
+  .homa-home-workspace-panel > h2 { margin-bottom: 18px; }
+  .homa-home-stage-switch button { font-size: 13px; padding-block: 18px; }
+  .homa-home-workspace-content { min-height: 330px; }
+  .homa-home-workspace-content h3 { font-size: 24px; }
+  .homa-home-design-note p { font-size: 23px; }
+  .homa-editorial-journal { padding-block: 70px; }
+  .homa-editorial-journal > header { display: block; margin-bottom: 35px; }
+  .homa-editorial-journal h2 { font-size: 58px; line-height: 1.4; margin-top: 16px; }
+  .homa-editorial-journal-spread { display: block; }
+  .homa-editorial-journal-lead { display: block; margin-top: 0; }
+  .homa-editorial-journal-lead img { height: 390px; }
+  .homa-editorial-journal-side { display: block; width: 76%; margin-top: 45px; margin-inline-start: auto; }
+  .homa-editorial-journal-side img { height: 330px; }
+  .homa-editorial-journal h3 { font-size: 22px; gap: 15px; }
+  .homa-editorial-journal-reading { font-size: 14px; margin-top: 35px; }
+  .homa-editorial-faq { padding-block: 65px; }
+  .homa-editorial-faq header { text-align: start; margin-bottom: 35px; }
+  .homa-editorial-faq h2 { font-size: 40px; line-height: 1.6; }
+  .homa-home-questions summary { font-size: 19px; padding-block: 27px; gap: 20px; }
+  .homa-home-questions details > p { font-size: 15px; padding-bottom: 28px; }
+  .homa-editorial-closing { text-align: start; padding-top: 70px; }
+  .homa-editorial-closing h2 { font-size: 38px; margin-bottom: 30px; }
+  .homa-homepage > footer { padding: 45px 20px 25px; }
+  .homa-homepage > footer .max-w-7xl > div:first-child { gap: 35px; margin-bottom: 30px; padding-bottom: 35px; }
+  .homa-homepage > footer .flex-1.grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+  .homa-homepage > footer ul { gap: 14px; }
+  .homa-homepage > footer li a { font-size: 12px; }
+  .homa-homepage > footer p { font-size: 13px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .homa-editorial-hero-copy { animation: homa-editorial-arrive .65s ease-out both; }
+  .homa-home-button, .homa-editorial-desktop-nav a { transition: background .2s ease, color .2s ease; }
+}
+@keyframes homa-editorial-arrive { from { opacity: .5; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .homa-homepage *, .homa-editorial-menu * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+.homa-editorial-menu select { color: inherit; background: var(--color-editorial-paper); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); font: inherit; min-height: 44px; padding: var(--space-2) var(--space-3); }

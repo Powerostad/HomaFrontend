@@ -214,6 +214,7 @@ export interface StageEvent {
 }
 
 export interface StreamTurnHandlers {
+  onConcept?: (e: {url: string; operation_id: string}) => void;
   onAnalysis?: (e: import('./discoveryReview').AnalysisPreview) => void;
   onSession?: (e: SessionEvent) => void;
   onSay?: (delta: string) => void;
@@ -449,6 +450,7 @@ export interface SessionTurn {
   events?: SessionTurnEvent[];
 }
 export interface SessionPayload {
+  concept_preview?: {url: string; operation_id: string} | null;
   analysis_preview?: import('./discoveryReview').AnalysisPreview | null;
   design_version?: string;
   search_version?: string;
@@ -488,6 +490,9 @@ export async function streamChatTurn(
   const onEvent = (e: ChatSocketEvent) => {
     if (e.operationId) handlers.onRenderEvent?.(e);
     switch (e.event) {
+      case 'concept_image':
+        handlers.onConcept?.(e.data as {url: string; operation_id: string});
+        break;
       case 'analysis':
         handlers.onAnalysis?.(e.data as import('./discoveryReview').AnalysisPreview);
         break;

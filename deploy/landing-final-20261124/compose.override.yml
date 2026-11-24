@@ -1,0 +1,3 @@
+services:
+  openai-frontend:
+    image: homa-landing-final-20261124:latest

@@ -9,18 +9,21 @@ import { toLocalizedDigits } from "../utils/formatters";
 import { AuthModal } from "./AuthModal";
 import { BilingualSwitch } from './BilingualSwitch';
 import { UnifiedMenu } from "./SidebarMenu";
+import { HomeNavigation } from './HomeNavigation';
 
 interface HeaderProps {
   theme?: "light" | "dark";
   transparent?: boolean;
   disableNavigation?: boolean;
   hideSpacer?: boolean;
+  editorial?: boolean;
 }
 
 export function Header({
   transparent = false,
   disableNavigation = false,
-  hideSpacer = false
+  hideSpacer = false,
+  editorial = false
 }: HeaderProps) {
   const { siteValue } = useSiteTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,7 +58,12 @@ export function Header({
 
   return (
     <>
+      {editorial && <HomeNavigation utilities={<>
+        <button onClick={openBasket} aria-label={t('basket.title')}><ShoppingBag size={21} strokeWidth={1.3} />{itemCount > 0 && <span>{toLocalizedDigits(itemCount)}</span>}</button>
+        {isLoggedIn ? <Link to="/account/gallery" aria-label={t('nav.myProjects')}><User size={21} strokeWidth={1.3} /></Link> : <button onClick={() => setIsAuthOpen(true)} aria-label={t('auth.login')}><User size={21} strokeWidth={1.3} /></button>}
+      </>} />}
       <header
+        hidden={editorial}
         className={`fixed top-0 left-0 right-0 w-full transition-all duration-500 ${transparent
             ? "bg-transparent border-transparent"
             : "bg-surface-page/90 backdrop-blur-xl border-b"

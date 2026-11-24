@@ -12,11 +12,13 @@ interface BeforeAfterSliderProps {
   priority?: boolean;
   /** Set to true for below-fold images to enable lazy loading */
   lazy?: boolean;
+  mobileVariant?: boolean;
+  initialPosition?: number;
 }
 
-export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false }: BeforeAfterSliderProps) {
+export function BeforeAfterSlider({ beforeImage, afterImage, className = '', priority = false, lazy = false, mobileVariant = true, initialPosition = 35 }: BeforeAfterSliderProps) {
   const { t } = useTranslation();
-  const [sliderPosition, setSliderPosition] = useState(35);
+  const [sliderPosition, setSliderPosition] = useState(initialPosition);
 
   return (
     <div
@@ -27,6 +29,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
       <div className="absolute inset-0 w-full h-full">
         <OptimizedImage
           src={beforeImage}
+          mobileVariant={mobileVariant}
           alt={t('tryOn.result.before')}
           className="w-full h-full object-cover"
           priority={priority}
@@ -43,6 +46,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, className = '', pri
       >
         <OptimizedImage
           src={afterImage}
+          mobileVariant={mobileVariant}
           alt={t('tryOn.result.after')}
           className="w-full h-full object-cover"
           lazy={lazy}

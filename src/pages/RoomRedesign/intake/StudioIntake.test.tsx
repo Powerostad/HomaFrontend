@@ -8,6 +8,7 @@ import { StudioIntake } from './StudioIntake';
 const flow = vi.hoisted(() => ({ image: null as null | { dataUrl: string }, preparing: false, imageTooSmall: false,
   error: null, note: '', pickImage: vi.fn(), setNote: vi.fn(), buildPayload: vi.fn() }));
 vi.mock('./useIntakeFlow', () => ({ useIntakeFlow: () => flow }));
+vi.mock('@/utils/apiClient', () => ({ apiGet: vi.fn(async () => ({ success: true, data: { prompt: 'Original complete image prompt', version: 'test' } })) }));
 vi.mock('@/components/Header', () => ({ Header: () => <header>HOMA</header> }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteText: (v: string) => v, siteDirection: () => 'rtl', siteLocale: () => 'fa-IR' }) }));
 
@@ -26,26 +27,33 @@ const render = async (onStart = vi.fn(), url = '/studio', host = false) => {
   return onStart;
 };
 describe('progressive Studio onboarding', () => {
-  it('offers accommodation room and submits its distinct room type', async () => {
+  it('opens the Studio photo step from the public route', async () => {
+    await render();
+    expect(container.querySelector('h1')?.textContent).toBe('همین فضا را به ما نشان بده.');
+    expect(container.querySelector('.studio-room-options')).toBeNull();
+    expect(container.querySelectorAll('input[type=file]')).toHaveLength(2);
+  });
+  it('submits the complete edited prompt in local Studio', async () => {
+    vi.stubEnv('MODE', 'studio-local');
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     flow.buildPayload.mockReturnValue({ image: flow.image, goals: [], createdAt: 'now' });
-    const onStart = await render();
-    const option = [...container.querySelectorAll<HTMLButtonElement>('.studio-room-options button')]
-      .find(button => button.querySelector('b')?.textContent === 'اتاق اقامتگاه');
-    expect(option).toBeDefined();
-    await act(async () => option!.click());
-    expect(option!.getAttribute('aria-pressed')).toBe('true');
-    await click('ادامه'); await click('ادامه با این عکس'); await click('ادامه'); await click('ادامه'); await click('ادامه');
+    const onStart = await render(vi.fn(), '/studio?room=accommodation_test');
+    const textarea = container.querySelector<HTMLTextAreaElement>('textarea')!;
+    expect(textarea.value).toBe('Original complete image prompt');
+    const exact = 'Edited prompt {literal}\nKeep every word.';
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, exact);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await click('ادامه با این عکس'); await click('ادامه'); await click('ادامه'); await click('ادامه');
     await click('شروع طراحی فضای من');
-    expect(onStart).toHaveBeenCalledWith(expect.objectContaining({
-      roomType: 'accommodation_room', prefsUpdate: expect.objectContaining({ room_type: 'accommodation_room' }),
-    }));
+    expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ prefsUpdate: expect.objectContaining({room_type:'accommodation_test',initial_image_prompt:exact}) }));
   });
   it('collects the paid render choice before creating the first local session', async () => {
     vi.stubEnv('MODE', 'studio-local');
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     flow.buildPayload.mockReturnValue({ image: flow.image, goals: [], createdAt: 'now' });
-    const onStart = await render(vi.fn(), '/studio?room=bedroom');
+    const onStart = await render(vi.fn(), '/studio?room=accommodation_room');
     await click('ادامه با این عکس'); await click('ادامه'); await click('ادامه'); await click('ادامه');
     const radio = container.querySelectorAll<HTMLInputElement>('input[name="image-output-mode"]');
     expect(radio[0].checked).toBe(true);
@@ -54,39 +62,36 @@ describe('progressive Studio onboarding', () => {
     await click('شروع طراحی فضای من');
     expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ imageOutputMode: 'api' }));
   });
-  it('starts with room selection in the dedicated home journey and requires a photo', async () => {
+  it('requires a photo before advancing through Studio', async () => {
     const onStart = await render();
-    expect(container.querySelector('h1')?.textContent).toBe('از کدام فضا شروع کنیم؟');
-    expect(container.textContent).not.toContain('اقامتگاه من');
-    expect(container.querySelector('textarea')).toBeNull();
-    await click('ادامه');
-    expect(container.querySelector('h1')?.textContent).toBe('همین فضا را به ما نشان بده.');
     expect([...container.querySelectorAll('button')].find(b => b.textContent === 'ادامه با این عکس')?.disabled).toBe(true);
-    expect(container.querySelectorAll('input[type=file]')).toHaveLength(2);
-    expect(onStart).not.toHaveBeenCalled(); expect(flow.buildPayload).not.toHaveBeenCalled();
+    expect(onStart).not.toHaveBeenCalled();
+    expect(flow.buildPayload).not.toHaveBeenCalled();
   });
-  it('uses room-specific images and hands off optional preferences only on final confirmation', async () => {
+  it('starts public Studio with user preferences and a server-managed prompt', async () => {
+    vi.stubEnv('DEV', false);
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     const payload = { image: flow.image, userNote: 'همین متن من', goals: [], createdAt: 'now' };
     flow.buildPayload.mockReturnValue(payload);
-    const onStart = await render(vi.fn(), '/studio?audience=home&room=bedroom');
+    const onStart = await render(vi.fn(), '/studio?audience=home&room=accommodation_room');
+    expect(container.querySelector('textarea')).toBeNull();
     await click('ادامه با این عکس'); await click('ادامه');
     const styles = container.querySelectorAll('.studio-mood-options [role=img]');
     expect(styles).toHaveLength(4);
-    expect(styles[0].getAttribute('aria-label')).toContain('اتاق خواب');
+    expect(styles[0].getAttribute('aria-label')).toContain('استودیو');
     expect(styles[0].getAttribute('viewBox')).toBe('0.5 0.5 99 99');
     await click('ادامه'); await click('ادامه');
     expect(container.querySelector('h1')?.textContent).toBe('طرح از همین‌جا شروع می‌شود.');
     expect(onStart).not.toHaveBeenCalled(); await click('شروع طراحی فضای من');
     expect(onStart).toHaveBeenCalledOnce();
-    expect(onStart).toHaveBeenCalledWith({ ...payload, roomType: 'bedroom', prefsUpdate: { room_type: 'bedroom', goals: [], preserved_items: [], budget_ceiling: null } });
+    expect(onStart).toHaveBeenCalledWith({ ...payload, roomType: 'accommodation_test', prefsUpdate: { room_type: 'accommodation_test', goals: [], preserved_items: [], budget_ceiling: null } });
     expect(flow.setNote).not.toHaveBeenCalled();
   });
   it('shows host-specific goals and keeps photo and choices when going back', async () => {
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
     await render(vi.fn(), '/studio/hosts', true);
     expect(container.textContent).toContain('طراحی اقامتگاه');
-    await click('ادامه'); await click('ادامه با این عکس');
+    await click('ادامه با این عکس');
     expect(container.textContent).toContain('جذاب‌تر در عکس آگهی');
     expect(container.textContent).not.toContain('تازه‌تر و امروزی‌تر');
     await act(async () => (container.querySelector('.studio-goal-options button') as HTMLButtonElement).click());
@@ -96,11 +101,33 @@ describe('progressive Studio onboarding', () => {
   });
   it('prevents invalid budgets and permits no-purchase instead of an invented amount', async () => {
     flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
-    await render(vi.fn(), '/studio?room=kitchen');
+    await render(vi.fn(), '/studio?room=accommodation_room');
     await click('ادامه با این عکس'); await click('ادامه'); await click('ادامه');
     await click('سقف بودجه دارم'); await click('ادامه');
     expect(container.querySelector('[role=alert]')?.textContent).toBe('یک مبلغ معتبر و بیشتر از صفر وارد کن.');
     await click('فعلاً خرید نمی‌کنم'); await click('ادامه');
     expect(container.querySelector('h1')?.textContent).toBe('طرح از همین‌جا شروع می‌شود.');
   });
+  it('returns directly to review after editing a choice without starting a request', async () => {
+    flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
+    const onStart = await render(vi.fn(), '/studio?room=bedroom');
+    await click('ادامه با این عکس');
+    await click('ادامه با پیشنهاد هما');
+    expect(container.querySelector('h1')?.textContent).toBe('طرح از همین‌جا شروع می‌شود.');
+    const editBudget = container.querySelector<HTMLButtonElement>('button[aria-label="ویرایش بودجه"]')!;
+    await act(async () => editBudget.click());
+    await click('ذخیره و بازگشت به مرور');
+    expect(container.querySelector('h1')?.textContent).toBe('طرح از همین‌جا شروع می‌شود.');
+    expect(container.querySelector('.studio-original-photo')?.getAttribute('src')).toBe(flow.image.dataUrl);
+    expect(onStart).not.toHaveBeenCalled();
+  });
+  it('explains sign-in before submitting a guest draft', async () => {
+    flow.image = { dataUrl: 'data:image/jpeg;base64,original' };
+    await act(async () => root.render(<MemoryRouter initialEntries={['/studio?room=bedroom']}><StudioIntake requiresSignIn onStartAnalysis={vi.fn()} /></MemoryRouter>));
+    await click('ادامه با این عکس');
+    await click('ادامه با پیشنهاد هما');
+    expect(container.textContent).toContain('ورود و شروع طراحی');
+    expect(container.textContent).toContain('عکس و انتخاب‌هایت حفظ می‌شوند.');
+  });
+
 });

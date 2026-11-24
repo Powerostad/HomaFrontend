@@ -17,7 +17,7 @@ vi.mock('../RoomRedesignPage', () => ({ RoomRedesignPage: (props: unknown) => {
 vi.mock('@/components/AuthModal', () => ({ AuthModal: ({ isOpen, onSuccess, onClose }: { isOpen: boolean; onSuccess: (u: object, t: object) => void; onClose: () => void }) => isOpen ? <div><button onClick={onClose}>cancel</button><button onClick={() => { onSuccess({}, {}); onClose(); }}>sign in</button></div> : null }));
 
 describe('deferred Studio sign-in', () => {
-  it('retains the draft on cancellation and hands off the same payload after sign-in closes its modal', async () => {
+  it('retains the draft through cancellation and sign-in, and starts only after a new confirmation', async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     state.isLoggedIn = false; state.renderChat.mockClear(); state.login.mockImplementation(() => { state.isLoggedIn = true; });
     const container = document.createElement('div'), root = createRoot(container);
@@ -29,7 +29,10 @@ describe('deferred Studio sign-in', () => {
       await click('confirm'); expect(state.renderChat).not.toHaveBeenCalled(); await click('cancel');
       expect(container.querySelector('input')).toBe(originalInput); expect(originalInput.value).toBe('edited draft');
       await click('confirm'); await click('sign in');
-      expect(state.renderChat).toHaveBeenCalledWith({ initialIntake: state.payload });
+      expect(container.querySelector('input')).toBe(originalInput);
+      expect(state.renderChat).not.toHaveBeenCalled();
+      await click('confirm');
+      expect(state.renderChat).toHaveBeenCalledWith(expect.objectContaining({ initialIntake: state.payload }));
     } finally { await act(async () => root.unmount()); }
   });
   it.each(['/studio', '/studio/hosts'])('keeps the active chat mounted while %s becomes its canonical session URL', async entry => {

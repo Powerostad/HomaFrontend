@@ -9,6 +9,7 @@ import './loading-v5.css';
 import '@/pages/Studio/result/v9-polished.css';
 
 export interface HomaLoadingProps {
+  conceptImage?: string | null;
   jobId: string; originalImage: string | null; analysis?: AnalysisPreview | null;
   analysisReady?: boolean; plan?: ExecutionPlan | null; busy: boolean;
   stageKey?: string | null; statusLabel?: string | null; error: string | null;
@@ -46,7 +47,7 @@ export function HomaLoadingExperience(props: HomaLoadingProps) {
   return <LoadingJob key={props.jobId} {...props} />;
 }
 
-function LoadingJob({ originalImage, analysis = null, analysisReady = false, plan = null, busy, stageKey,
+function LoadingJob({ conceptImage, originalImage, analysis = null, analysisReady = false, plan = null, busy, stageKey,
   statusLabel, error, complete, onComplete, onRetry, onNew, onDiscuss, tools, panel }: HomaLoadingProps) {
   const { siteText: copy } = useSiteTranslation();
   const [introduction, setIntroduction] = useState<'comparison' | 'moodboard' | 'complete'>('comparison');
@@ -91,7 +92,7 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
   const moment = loadingMoment({ introduction, analysisReady: hasAnalysis,
     photoAvailable: !!originalImage && !photoFailed, hasPlan: !!plan, stageKey });
   // Keep the user's room and its findings visible while the renderer runs.
-  const personal = introduction === 'complete' && hasAnalysis && !!originalImage && !photoFailed;
+  const personal = !!originalImage && !photoFailed;
   const index = Math.min(findingIndex, Math.max(0, slides.length - 1));
   const slide = slides[index];
   useEffect(() => {
@@ -104,7 +105,9 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
     !busy && !complete ? 'پاسخ این مرحله آماده است؛ گفت‌وگو را بررسی کن.'
       : !hasAnalysis ? 'در حال شناخت و تحلیل فضا…' : !plan ? 'در حال طراحی تغییرات…'
         : stageKey === 'render' ? 'در حال آماده‌سازی خروجی طراحی…' : 'در حال یافتن محصولات متناسب…');
-  const story = narrative[moment];
+  const story = personal && !hasAnalysis
+    ? { title: 'طراحی از فضای خودت شروع می‌شود.', description: 'هما عکس و انتخاب‌هایت را بررسی می‌کند تا پیشنهاد متناسب با خانه‌ات آماده شود.' }
+    : narrative[moment];
   const retry = () => { completed.current = false; setExtended(false); setIntroduction('comparison'); onRetry(); };
   const stageIndex = Math.max(0, ['analyze', 'design', 'search', 'render', 'finalize'].indexOf(stageKey || 'analyze'));
   return <div className="homa-loading-page homa-v9" dir="rtl">
@@ -121,17 +124,20 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
           <p className="homa-loading-description">{error || copy(story.description)}</p>
         </div>
         <div className="homa-loading-visual">
-          <section className="homa-loading-layer" data-active={moment === 'comparison'} aria-hidden={moment !== 'comparison'}>
-            <SampleComparison active={moment === 'comparison' && !error} />
+          {conceptImage && <section className="homa-loading-layer homa-loading-personal" data-active="true"><AuthenticatedImage src={conceptImage} alt={copy("کانسپت اولیه")} /></section>}
+          {!conceptImage && <>
+          <section className="homa-loading-layer" data-active={!personal && moment === 'comparison'} aria-hidden={personal || moment !== 'comparison'}>
+            <SampleComparison active={!personal && moment === 'comparison' && !error} />
           </section>
           <section className="homa-loading-layer" data-active={!personal && (moment === 'moodboard' || moment === 'finishing')} aria-hidden={personal || (moment !== 'moodboard' && moment !== 'finishing')}>
             <Moodboard active={!personal && (moment === 'moodboard' || moment === 'finishing')} />
           </section>
-          {hasAnalysis && originalImage && !photoFailed && personal && <section className="homa-loading-layer homa-loading-personal" data-active="true">
+          {personal && originalImage && <section className="homa-loading-layer homa-loading-personal" data-active="true">
             <AuthenticatedImage src={originalImage} alt={copy('عکس اصلی فضای شما')} onError={() => setPhotoFailed(true)} />
           </section>}
+          </>}
         </div>
-        <div className="homa-loading-photo-label">{copy(personal ? 'عکس اصلی فضای شما' : moment === 'comparison' ? 'پروژهٔ نمونه؛ نتیجهٔ فضای شما نیست' : 'الهام تصویری نمونه')}</div>
+        <div className="homa-loading-photo-label">{copy(conceptImage ? 'کانسپت اولیه؛ بررسی محصولات جداگانه ادامه دارد' : personal ? 'عکس اصلی فضای شما' : moment === 'comparison' ? 'پروژهٔ نمونه؛ نتیجهٔ فضای شما نیست' : 'الهام تصویری نمونه')}</div>
         <div className="homa-loading-copy">
           <div className="homa-loading-status" role="status" aria-live="polite"><i aria-hidden="true" data-running={busy && !error} /><span>{status}</span></div>
           {!!compactNarratives.length && <details className="homa-loading-detail" dir="rtl">
@@ -139,7 +145,7 @@ function LoadingJob({ originalImage, analysis = null, analysisReady = false, pla
             {compactNarratives.map((text, index) => <p key={index} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{text}</p>)}
           </details>}
           {!error && <div className="homa-loading-detail">
-            {personal && <div className="homa-loading-insight">
+            {personal && hasAnalysis && <div className="homa-loading-insight">
               <div className="homa-loading-insight-card" key={slide?.id || 'approach'} aria-live={paused ? 'polite' : 'off'}>
                 <span>{copy(slide?.label || 'رویکرد هما')}</span>
                 <p dir="auto">{slide?.observation || copy('عناصر مناسب حفظ می‌شوند؛ نیاز هر فضاست که مسیر تغییر را مشخص می‌کند.')}</p>

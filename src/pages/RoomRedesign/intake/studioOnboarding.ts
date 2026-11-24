@@ -1,15 +1,9 @@
-import type { Goal, HomaIntakePayload, RoomType } from './intakeTypes';
+import { ROOM_TYPES, type Goal, type HomaIntakePayload, type RoomType } from './intakeTypes';
 
 export type Audience = 'home' | 'host';
 export type VisualRoom = 'living_room' | 'bedroom' | 'accommodation_room' | 'accommodation_test' | 'kitchen' | 'balcony';
-export const ROOMS: { id: VisualRoom; label: string; hint: string; row: number }[] = [
-  { id: 'living_room', label: 'پذیرایی و نشیمن', hint: 'جایی برای کنار هم بودن', row: 1 },
-  { id: 'bedroom', label: 'اتاق خواب', hint: 'آرامش، نور و لایه‌های نرم', row: 0 },
-  { id: 'accommodation_room', label: 'اتاق اقامتگاه', hint: 'فضایی برای اقامت مهمان', row: 0 },
-  ...((import.meta.env.DEV || import.meta.env.VITE_IMAGE_FIRST_ENABLED === 'true') ? [{ id: 'accommodation_test' as const, label: 'اقامتگاه تست', hint: 'اول طراحی تصویر، بعد پیدا کردن محصول', row: 0 }] : []),
-  { id: 'kitchen', label: 'آشپزخانه', hint: 'کاربردی‌تر، مرتب‌تر، دلپذیرتر', row: 2 },
-  { id: 'balcony', label: 'بالکن و تراس', hint: 'یک گوشهٔ دنج در هوای آزاد', row: 3 },
-];
+export const ROOMS = ROOM_TYPES.map(room => ({ id: room.value as VisualRoom, label: room.label,
+  hint: room.value === 'accommodation_test' ? 'اول طراحی تصویر، بعد پیدا کردن محصول' : 'فضایی برای اقامت مهمان', row: 0 }));
 export const MOODS = [
   { id: 'quiet', name: 'مدرنِ آرام', description: 'خطوط ساده، رنگ‌های روشن و جزئیات کم', preference: 'مدرن آرام؛ رنگ‌های خنثی روشن، خطوط ساده و جزئیات کم', col: 0 },
   { id: 'natural', name: 'گرمای طبیعی', description: 'چوب، بافت‌های طبیعی و رنگ‌های خاکی', preference: 'طبیعی گرم؛ چوب، بافت طبیعی، رنگ‌های خاکی و نور ملایم', col: 1 },
@@ -62,9 +56,8 @@ export function buildOnboardingPayload(payload: HomaIntakePayload, choices: Onbo
     budget_ceiling: choices.budgetMode === 'none' ? 0 : choices.budgetMode === 'limit' ? budgetAmount(choices.budget) : null,
   } };
 }
-export function initialChoices(search: string, host = false): OnboardingChoices {
-  const params = new URLSearchParams(search);
-  const room = ROOMS.find(item => item.id === params.get('room'))?.id || 'not_sure';
+export function initialChoices(_search: string, host = false): OnboardingChoices {
+  const room = 'accommodation_test' as const;
   return { audience: host ? 'host' : 'home', room, goals: [], mood: null,
     budgetMode: 'unknown', budget: '', preserved: '', scope: 'open' };
 }

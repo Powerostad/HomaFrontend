@@ -17,6 +17,7 @@ import { useConversationStudioResult } from './hooks/useConversationStudioResult
 import { useRedesignChat } from './hooks/useRedesignChat';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { StudioIntake } from './intake/StudioIntake';
+import type { StudioSubmission } from './intake/StudioHomeIntake';
 import { composeIntakeText } from './intake/composeIntakeText';
 import type { HomaIntakePayload } from './intake/intakeTypes';
 import type { ExecutionPlan } from './services/redesignChatService';
@@ -88,6 +89,7 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
     status: <>
       <RefinementInvitePrototype onStart={draft => { if (draft !== undefined) setInput(draft); openChat(); }} />
       {chat.busy && <div className="studio-conversation-status" role="status"><Loader2 size={16} className="studio-spinner" />{statusText}</div>}
+      {chat.conceptPreview && (chat.busy || chat.error) && <figure><img src={chat.conceptPreview} alt={t("studio.result.v2.concept", "کانسپت اولیه")} style={{ maxWidth: "100%", height: "auto" }} /><figcaption>{t("studio.result.v2.concept", "کانسپت اولیه")}</figcaption></figure>}
       {chat.error && <div className="studio-flow-error" role="alert"><p>{siteValue(chat.error)}</p><Button variant="outline" disabled={chat.busy} onClick={() => void chat.retry()}>{t('redesignJourney.retry')}</Button></div>}
     </>,
     details: plan ? <ExecutionPanel plan={plan} busy={chat.busy} section="plan" onPreview={() => {}} /> : null,
@@ -97,7 +99,10 @@ export function ConversationResult({ chat, plan, versionId, resultImage, origina
   }} />{onboarding.hintVisible && <RefinementCoachmarkPrototype onDismiss={onboarding.dismiss} onStart={openChat} />}</RefinementPrototypeShell>;
 }
 
-export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: HomaIntakePayload | null } = {}) {
+export function RoomRedesignPage({ initialIntake = null, onInitialProgress }: {
+  initialIntake?: HomaIntakePayload | null;
+  onInitialProgress?: (state: StudioSubmission) => void;
+} = {}) {
   const { sessionId: path } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -131,7 +136,13 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     title?.setAttribute('tabindex', '-1');
     title?.focus({ preventScroll: true });
   }, [reviewDismissed]);
-  useEffect(() => { if (chat.sessionId && !path) navigate(`/studio/chat/${chat.sessionId}`, { replace: true }); }, [chat.sessionId, path, navigate]);
+  const awaitingAcceptance = !!onInitialProgress && !chat.turnAccepted;
+  useEffect(() => {
+    if (chat.sessionId && !path && !awaitingAcceptance) navigate(`/studio/chat/${chat.sessionId}`, { replace: true });
+  }, [chat.sessionId, path, navigate, awaitingAcceptance]);
+  useEffect(() => {
+    onInitialProgress?.({ accepted: chat.turnAccepted, busy: chat.busy || !chat.error, error: chat.error, retry: chat.retry });
+  }, [onInitialProgress, chat.turnAccepted, chat.busy, chat.error, chat.retry]);
   useEffect(() => {
     if (!intake || seeded.current || path) return;
     const timer = setTimeout(() => {
@@ -152,13 +163,14 @@ export function RoomRedesignPage({ initialIntake = null }: { initialIntake?: Hom
     setInput('');
     void chat.sendTurn({ text: draft }).then(accepted => { if (!accepted) setInput(current => current || draft); });
   };
+  if (awaitingAcceptance) return null;
   if (chat.hydrating || chat.unavailable || (path && chat.sessionId && chat.sessionId !== path)) return <div className="studio-result-page" dir={i18n.dir()}><Header /><main className="studio-archive-page"><div className="studio-page-state" role={chat.unavailable ? 'alert' : 'status'}>
     {chat.unavailable ? <><h1>{t('studioChat.unavailableTitle')}</h1><p>{t('redesignJourney.unavailable')}</p><Button asChild><Link to="/studio/projects">{t('studioChat.archive')}</Link></Button></> : <><Loader2 className="studio-spinner" /><p>{t('studioChat.loading')}</p></>}
   </div></main></div>;
   if (!path && !intake) return <StudioIntake onStartAnalysis={payload => { setIntake(payload); setReviewActive(true); setReviewDismissed(false); }} />;
   const starting = !!intake && !seeded.current && !chat.versions.length && !plan && !chat.error;
   const discovering = !reviewDismissed && (starting || reviewActive || (!!chat.sessionId && journeyPending(chat.sessionId)) || (!chat.versions.length && (chat.busy || !!plan || !!chat.error)));
-  if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} originalImage={original}
+  if (discovering) return <StudioDiscovery key={chat.sessionId || path || 'new'} plan={plan} analysisPreview={chat.analysisPreview} conceptImage={chat.conceptPreview} originalImage={original}
     sessionId={chat.sessionId} busy={chat.busy || starting} error={chat.error} autoRevealImage={!report?.image_pending && report?.image_status !== 'failed' && report?.image_status !== 'exported' && report?.image_url !== original ? report?.image_url : null} resultAvailable={!!report?.image_url && !report.image_pending} stage={chat.stage} stageKey={chat.status === 'rendering' ? 'render' : chat.stageKey}
     onRetry={() => void chat.retry()} onNew={fresh} onDiscuss={() => setChatOpen(true)}
     onComplete={automatic => { if (!automatic && chat.sessionId) markJourneySeen(chat.sessionId); setJourneyStart(!!automatic); setReviewDismissed(true); setReviewActive(false); setChatOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }}

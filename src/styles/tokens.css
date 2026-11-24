@@ -14,6 +14,20 @@
  */
 
 :root {
+  --color-story-olive: #514B20;
+  --color-story-sage: #819F9D;
+  --color-story-rose: #EED1CE;
+  --color-story-wine: #4B1822;
+  --color-story-header: #C6C0AC;
+  --color-story-indicator: #7D9ECE;
+  --color-editorial-paper: #EEE8DE;
+  --color-editorial-sand: #D9C6AE;
+  --color-editorial-terracotta: #963916;
+  --color-editorial-cocoa: #342C27;
+  --color-editorial-cream: #F7F3EB;
+  --color-editorial-ink-muted: #7A6A56;
+  --color-editorial-rule: rgba(52, 44, 39, .25);
+  --color-editorial-rule-light: rgba(247, 243, 235, .3);
   /* ========================================
      BRAND COLORS
      ======================================== */

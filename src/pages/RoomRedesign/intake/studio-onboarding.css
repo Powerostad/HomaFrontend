@@ -73,6 +73,9 @@
 .studio-onboarding-summary dd { line-height:1.8; }
 .studio-onboarding-summary button { font-size:12px; text-decoration:underline; text-underline-offset:4px; min-height:44px; }
 .studio-final-note { margin-top:24px; }
+.studio-prompt-editor > .studio-final-note { display:grid; align-items:stretch; gap:10px; }
+.studio-prompt-editor textarea { width:100%; min-height:20rem; line-height:1.8; font-size:14px; }
+.studio-prompt-editor button { min-height:44px; }
 .studio-onboarding-actions { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:28px; margin-top:24px; border-top:1px solid var(--color-border-subtle); }
 .studio-onboarding-back { display:flex; align-items:center; gap:6px; font-size:12px!important; min-height:44px; }
 .studio-onboarding-footnote { margin-top:16px; color:var(--color-content-secondary); font-size:12px; line-height:1.9; }
@@ -98,3 +101,18 @@
 .studio-output-options label { display:flex; align-items:flex-start; gap:10px; padding:12px; font-size:13px; cursor:pointer; border:1px solid var(--color-border-subtle); }
 .studio-output-options label:has(input:checked) { border-color:var(--color-content-primary); background:var(--color-surface-muted); }
 .studio-output-options input { margin-top:4px; flex-shrink:0; accent-color:var(--color-content-primary); }
+
+.studio-onboarding-route { display:flex; justify-content:center; gap:clamp(18px,4vw,56px); margin:0 auto 28px; padding:0; list-style:none; color:var(--color-content-secondary); font-size:13px; }
+.studio-onboarding-route li { display:flex; align-items:center; gap:10px; }
+.studio-onboarding-route li>span { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--color-border-subtle); border-radius:50%; }
+.studio-onboarding-route [aria-current=step] { color:var(--color-content-primary); font-weight:600; }
+.studio-onboarding-route [aria-current=step]>span { background:var(--color-content-primary); color:var(--color-content-inverse); border-color:var(--color-content-primary); }
+.studio-onboarding-route [data-complete=true]>span { border-color:var(--color-editorial-accent); }
+@media(max-width:767px) {
+ .studio-onboarding-route { gap:16px; font-size:11px; margin-bottom:20px; }
+ .studio-onboarding-route li { gap:6px; }
+ .studio-onboarding-route li>span { width:24px; height:24px; }
+ .studio-onboarding-layout { min-height:0; }
+ .studio-onboarding-body { padding-bottom:0; }
+ .studio-onboarding-footnote { margin-bottom:18px; }
+}

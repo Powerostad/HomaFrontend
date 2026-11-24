@@ -41,7 +41,7 @@ describe("public HTML content", () => {
     expect(html).toContain('href="/blog/"');
     expect(html).toContain('href="/hosts"');
     expect(html).not.toContain('href="/studio/hosts"');
-    expect(html).toContain('href="/studio?room=bedroom"');
+    expect(html).toContain('id="home-shopping"');
     expect(html).toContain('id="design-to-shop"');
     expect(html).toContain('id="home-faq"');
     expect(html).not.toContain("seo.home.");
@@ -128,8 +128,8 @@ describe("public HTML content", () => {
     expect(html).toContain('class="seo-public" dir="ltr" lang="en"');
     expect(html).toContain('class="seo-header" lang="en" dir="ltr"');
     expect(html).toContain("Products");
-    expect(html).toContain("From your room design,");
-    expect(html).toContain("Start designing");
+    expect(html).toContain(one.t("landing.scroll.headline"));
+    expect(html).toContain(one.t("landing.choices.start"));
     expect(html).toContain("For hosts");
   });
   it("shows verified Instagram support and an explicit unavailable fallback", () => {
