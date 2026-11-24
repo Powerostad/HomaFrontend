@@ -8,7 +8,7 @@ import { DesktopHeroPanel, MobileHeroSection, type HeroMarker } from './HeroImag
 vi.mock('@/analytics/events', () => ({ trackStudioResultAction: vi.fn() }));
 vi.mock('@/i18n/siteCopy', () => ({ useSiteTranslation: () => ({ siteValue: (value: unknown) => value, siteText: (value: string) => value, siteDirection: () => 'rtl' }) }));
 vi.mock('./types', () => ({ useSimpleTranslation: () => ({ t: (_key: string, fallback: string) => fallback }) }));
-vi.mock('@/components/figma/AuthenticatedImage', () => ({ AuthenticatedImage: () => <img alt="room" /> }));
+vi.mock('@/components/figma/AuthenticatedImage', () => ({ AuthenticatedImage: ({ skipAuth: _skipAuth, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { skipAuth?: boolean }) => <img {...props} /> }));
 
 function render(markers: HeroMarker[], showOriginal = false) {
   return renderToStaticMarkup(<DesktopHeroPanel resultImage="render.jpg" originalImage="original.jpg" showOriginal={showOriginal}
@@ -60,6 +60,24 @@ describe('mobile room photo', () => {
       expect(ui.props.onFullscreen).toHaveBeenCalledTimes(1);
       await act(async () => ui.container.querySelector<HTMLButtonElement>('.studio-hero-toolbar button')!.click());
       expect(ui.props.onExit).toHaveBeenCalledTimes(1);
+    } finally { await ui.cleanup(); }
+  });
+
+  it('keeps concept and result images mounted while switching views', async () => {
+    const ui = await mount({ conceptImage: 'concept.jpg' });
+    try {
+      const result = ui.container.querySelector<HTMLImageElement>('img[src="render.jpg"]')!;
+      const concept = ui.container.querySelector<HTMLImageElement>('img[src="concept.jpg"]')!;
+      expect(concept.getAttribute('loading')).toBe('eager');
+      expect(concept.getAttribute('aria-hidden')).toBe('true');
+      const buttons = ui.container.querySelectorAll<HTMLButtonElement>('.studio-hero-before-after button');
+      await act(async () => buttons[1].click());
+      expect(concept.getAttribute('aria-hidden')).toBe('false');
+      expect(result.classList.contains('studio-hero-image-hidden')).toBe(true);
+      await act(async () => buttons[0].click());
+      expect(result.classList.contains('studio-hero-image-hidden')).toBe(false);
+      expect(ui.container.querySelector('img[src="render.jpg"]')).toBe(result);
+      expect(ui.container.querySelector('img[src="concept.jpg"]')).toBe(concept);
     } finally { await ui.cleanup(); }
   });
 

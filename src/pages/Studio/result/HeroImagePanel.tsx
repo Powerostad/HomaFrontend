@@ -130,18 +130,30 @@ export function HeroImageStage({
     <div className="studio-hero-stage" dir={siteDirection()} data-actions={showActions}>
       {siteValue(resultImage ? (
         <AuthenticatedImage
-          src={showingConcept ? conceptImage : resultImage}
+          src={resultImage}
           alt={imageAlt?.result ?? siteValue(analysisOnly
             ? t('studio.result.v2.analysisOnly.originalAlt', 'عکس اصلی فضای شما')
             : t('studio.result.v2.hero.generatedAlt', 'تصویر بازطراحی‌شده فضای شما'))}
           skipAuth={resultImage.startsWith('data:')}
-          className={`studio-hero-image ${showOriginal && hasGeneratedImage ? 'studio-hero-image-hidden' : ''}`}
+          className={`studio-hero-image ${(showOriginal || showingConcept) && hasGeneratedImage ? 'studio-hero-image-hidden' : ''}`}
           onError={onImageError}
           loading={embedded ? 'lazy' : undefined}
-          aria-hidden={embedded && showOriginal && hasGeneratedImage ? true : undefined}
+          aria-hidden={(showOriginal || showingConcept) && hasGeneratedImage ? true : undefined}
         />
       ) : (
         <div className="studio-hero-placeholder" role="img" aria-label={t('common.loading', 'در حال بارگذاری...')} />
+      ))}
+
+      {siteValue(hasGeneratedImage && conceptImage && (
+        <AuthenticatedImage
+          key={conceptImage}
+          src={conceptImage}
+          alt={t('studio.result.v2.concept', 'کانسپت اولیه')}
+          className={`studio-hero-image ${showingConcept ? '' : 'studio-hero-image-hidden'}`}
+          loading={embedded ? 'lazy' : 'eager'}
+          decoding="async"
+          aria-hidden={!showingConcept}
+        />
       ))}
 
       {siteValue(hasGeneratedImage && originalImage && (

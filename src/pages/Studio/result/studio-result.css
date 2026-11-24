@@ -44,12 +44,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity var(--transition-slow), transform var(--transition-slow);
+  transition: opacity 150ms ease;
 }
 
 .studio-hero-image-hidden {
   opacity: 0;
-  transform: scale(1.015);
+  pointer-events: none;
 }
 
 .studio-hero-original {
